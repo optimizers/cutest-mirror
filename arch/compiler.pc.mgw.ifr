@@ -1,0 +1,34 @@
+# Intel ifort compiler
+# Windows (pc version)
+#
+# Fortran compilation and loading
+#
+
+FORTRAN='ifort -nologo'
+BASIC='-c'
+LIBCMD=''
+MODCMD='-module:$MOD -I$MOD -Vaxlib'
+MVMODS=':'
+OPTIMIZATION='-O'
+NOOPTIMIZATION='-Od'
+DEBUG=
+OPENMP=
+F77='-fixed -warn'
+F90='-warn'
+F95='-warn'
+NOFMAIN=''
+CCONDEF=
+USUAL=
+SPECIAL=
+F77SUFFIX=f90
+F95SUFFIX=f90
+TIMER=GEN
+BLAS=
+LAPACK=
+HSL=
+METIS='-lgalahad_metis'
+PARDISO='-lgalahad_pardiso'
+WSMP='-lgalahad_wsmp'
+NOT95=IS95
+NOT64=NOT64
+BINSHELL=sh

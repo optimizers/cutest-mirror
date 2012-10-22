@@ -1,0 +1,34 @@
+# AbSoft f95 compiler
+
+#
+#  Fortran compilation and loading
+#
+
+FORTRAN='f90 -ea'
+BASIC='-c'
+LIBCMD=''
+MODCMD='-p$MOD'
+MVMODS='$(MV) -f $(OBJ)/*.mod $(MOD)/'
+OPTIMIZATION='-O2'
+NOOPTIMIZATION='-O0'
+DEBUG=
+OPENMP=
+F77='-f fixed -w'
+F90='-w'
+F95='-w'
+NOFMAIN=''
+CCONDEF=
+USUAL=
+SPECIAL=
+F77SUFFIX=f90
+F95SUFFIX=f95
+TIMER=GEN
+BLAS=
+LAPACK=
+HSL=
+METIS='-lgalahad_metis'
+PARDISO='-lgalahad_pardiso'
+WSMP='-lgalahad_wsmp'
+NOT95=IS95
+NOT64=NOT64
+BINSHELL=sh
