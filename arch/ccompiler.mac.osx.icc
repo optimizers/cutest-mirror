@@ -1,0 +1,9 @@
+# ICC
+
+#
+#  C compilation and loading
+#
+
+CC=icc
+CCBASIC='-c -ansi -vec-report0' # -mmacosx-version-min=10.4'
+CCDEBUG=#-DDEBUG_GALAHAD

@@ -1,0 +1,9 @@
+# PCC for 64-bit
+
+#
+#  C compilation and loading
+#
+
+CC=pgcc
+CCBASIC='-c -Xs'
+CCDEBUG=#-DDEBUG_GALAHAD

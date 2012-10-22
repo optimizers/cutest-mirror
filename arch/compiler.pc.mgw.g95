@@ -1,0 +1,37 @@
+# GNU g95 compiler
+# Windows (pc version)
+#
+# Fortran compilation and loading
+#
+
+FORTRAN='g95 -fno-second-underscore'
+BASIC='-c'
+LIBCMD=''
+#MODCMD='-module $MOD -I$MOD'
+MODCMD='-I$MOD'
+MVMODS='$(MV) -f $(OBJ)/*.mod $(MOD)/'
+#MVMODS=':'
+OPTIMIZATION='-O'
+NOOPTIMIZATION='-O0'
+DEBUG= -g
+OPENMP=
+F77='-ffixed-form'
+F90=''
+F95=''
+NOFMAIN=''
+CCONDEF=
+USUAL=
+SPECIAL=
+F77SUFFIX=f90
+F95SUFFIX=f90
+TIMER=GEN
+BLAS=
+LAPACK=
+HSL=
+METIS='-lgalahad_metis'
+PARDISO='-lgalahad_pardiso'
+WSMP='-lgalahad_wsmp'
+NOT95=IS95
+NOT64=NOT64
+BINSHELL=sh
+MA97BUG=g95

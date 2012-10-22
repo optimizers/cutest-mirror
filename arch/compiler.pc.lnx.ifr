@@ -1,0 +1,37 @@
+# Intel ifort compiler
+#
+# Fortran compilation and loading
+#
+
+#for ifc pre version 8 replace next line by
+#FORTRAN='ifc'
+FORTRAN='ifort'
+BASIC='-c'
+LIBCMD=''
+#for ifc pre version 7 replace next line by 
+#MODCMD='-cl,$MOD/work.pcl -Vaxlib'
+MODCMD='-module $MOD -I$MOD -Vaxlib'
+MVMODS=':'
+OPTIMIZATION='-O'
+NOOPTIMIZATION='-O0'
+DEBUG=
+OPENMP='-openmp'
+F77='-fixed -warn -warn nointerfaces'
+F90='-warn'
+F95='-warn'
+NOFMAIN=''
+CCONDEF=
+USUAL=
+SPECIAL=
+F77SUFFIX=f90
+F95SUFFIX=f90
+TIMER=GEN
+BLAS=
+LAPACK=
+HSL=
+METIS='-lgalahad_metis'
+PARDISO='-lgalahad_pardiso'
+WSMP='-lgalahad_wsmp'
+NOT95=IS95
+NOT64=NOT64
+BINSHELL=sh

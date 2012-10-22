@@ -1,0 +1,35 @@
+# NAG nagfor compiler for Windows-based PCs under MINGW
+#
+#  Fortran compilation and loading
+#
+
+FORTRAN='nagfor'
+# for compiler version pre 5.2 replace by
+#FORTRAN='f95'
+BASIC='-c -dcfuns'
+LIBCMD=''
+MODCMD='-I$MOD'
+MVMODS='$(MV) -f $(OBJ)/*.mod $(MOD)/'
+OPTIMIZATION='-O'
+NOOPTIMIZATION='-O0'
+DEBUG=
+OPENMP=
+F77='-fixed -w'
+F90='-w'
+F95='-w'
+NOFMAIN=''
+CCONDEF=
+USUAL=
+SPECIAL=
+F77SUFFIX=f90
+F95SUFFIX=f95
+TIMER=NAG
+BLAS=
+LAPACK=
+HSL=
+METIS='-lgalahad_metis'
+PARDISO='-lgalahad_pardiso'
+WSMP='-lgalahad_wsmp'
+NOT95=IS95
+NOT64=NOT64
+BINSHELL=sh
