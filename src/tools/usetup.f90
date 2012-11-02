@@ -1,5 +1,7 @@
 ! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE USETUP( INPUT, IOUT, N, X, BL, BU, NMAX )
+      SUBROUTINE USETUP( data, INPUT, IOUT, N, X, BL, BU, NMAX )
+      USE CUTEST
+      TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
       INTEGER :: INPUT, IOUT, N, NMAX
       REAL ( KIND = wp ) :: X( NMAX ), BL( NMAX ), BU( NMAX )
@@ -10,123 +12,6 @@
 !  Nick Gould, for CGT productions,
 !  30th October, 1991.
 
-
-!  Workspace arrays.
-
-      INTEGER :: LIWK, LWK, LFUVAL, LLOGIC, LCHARA
-
-! ---------------------------------------------------------------------
-
-!  Parameters whose value might be changed by the user:
-
-!  The following parameters define the sizes of problem
-!  dependent arrays. These may be changed by the user to
-!  suit a particular problem or system configuration.
-
-!  The TOOLS will issue error messages if any of these sizes
-!  is too small, telling which parameter to increase.
-
-! ---------------------------------------------------------------------
-
-      INCLUDE 'tools.siz'
-
-      INTEGER :: IWK( LIWK )
-      LOGICAL :: LOGI ( LLOGIC )
-      CHARACTER ( LEN = 10 ) :: CHA ( LCHARA )
-      REAL ( KIND = wp ) :: WK ( LWK )
-      REAL ( KIND = wp ) :: FUVALS ( LFUVAL )
-
-! ---------------------------------------------------------------------
-
-!  End of parameters which might be changed by the user.
-
-! ---------------------------------------------------------------------
-
-!  integer variables from the GLOBAL common block.
-
-      INTEGER :: NG, NELNUM, NGEL, NVARS, NNZA, NGPVLU
-      INTEGER :: NEPVLU, NG1, NEL1, ISTADG, ISTGP, ISTADA
-      INTEGER :: ISTAEV, ISTEP, ITYPEG, KNDOFC, ITYPEE
-      INTEGER :: IELING, IELVAR, ICNA, ISTADH, INTVAR, IVAR
-      INTEGER :: ICALCF, ITYPEV, IWRK, A, B
-      INTEGER :: U, GPVALU, EPVALU
-      INTEGER :: ESCALE, GSCALE, VSCALE, GVALS, XT, DGRAD
-      INTEGER :: Q, WRK, INTREP, GXEQX, GNAMES, VNAMES
-      INTEGER :: LO, CH, LIWORK, LWORK, NGNG, FT
-      INTEGER :: LA, LB, NOBJGR, LU, LELVAR
-      INTEGER :: LSTAEV, LSTADH, LNTVAR, LCALCF
-      INTEGER :: LELING, LINTRE, LFT, LGXEQX, LSTADG, LGVALS
-      INTEGER :: LICNA, LSTADA, LKNDOF, LGPVLU, LEPVLU
-      INTEGER :: LGSCAL, LESCAL, LVSCAL, LCALCG
-
-!  integer variables from the LOCAL common block.
-
-      INTEGER :: LFXI, LGXI, LHXI, LGGFX, LDX, LGRJAC
-      INTEGER :: LQGRAD, LBREAK, LP, LXCP, LX0, LGX0
-      INTEGER :: LDELTX, LBND, LWKSTR, LSPTRS, LSELTS, LINDEX
-      INTEGER :: LSWKSP, LSTAGV, LSTAJC, LIUSED, LFREEC
-      INTEGER :: LNNONZ, LNONZ2, LSYMMD, LSYMMH, NELTYP, NGRTYP
-      INTEGER :: LSLGRP, LSVGRP, LGCOLJ, LVALJR, LSEND
-      INTEGER :: LNPTRS, LNELTS, LNNDEX, LNWKSP, LNSTGV
-      INTEGER :: LNSTJC, LNIUSE, LNFREC, LNNNON, LNNNO2, LNSYMD
-      INTEGER :: LNSYMH, LNLGRP, LNVGRP, LNGCLJ, LNVLJR, LNQGRD
-      INTEGER :: LNBRAK, LNP, LNBND, LNFXI, LNGXI, LNGUVL
-      INTEGER :: LNHXI, LNHUVL, LNGGFX, LNDX, LNGRJC, LIWK2
-      INTEGER :: LWK2, MAXSIN, NINVAR, MAXSEL, LNIWTR
-      INTEGER :: NTYPE, NSETS, LSTYPE, LSSWTR, LSSIWT
-      INTEGER :: LSIWTR, LSWTRA, LNTYPE, LNSWTR, LNSIWT
-      INTEGER :: LNWTRA, LSISET, LSSVSE, LNISET, LNSVSE
-      LOGICAL :: ALTRIV, FIRSTG
-
-!  variables from the PRFCTS common block
-
-      INTEGER :: NC2OF, NC2OG, NC2OH,  NC2CF,  NC2CG,  NC2CH
-      INTEGER :: NHVPR, PNC
-      REAL :: SUTIME, STTIME
-
-!  the common blocks
-
-      COMMON / GLOBAL /  IWK, WK, FUVALS, LOGI, &
-                         NG, NELNUM, NGEL, NVARS, NNZA, NGPVLU, &
-                         NEPVLU, NG1, NEL1, ISTADG, ISTGP, ISTADA, &
-                         ISTAEV, ISTEP, ITYPEG, KNDOFC, ITYPEE, &
-                         IELING, IELVAR, ICNA, ISTADH, INTVAR, IVAR, &
-                         ICALCF, ITYPEV, IWRK, A, B, &
-                         U, GPVALU, EPVALU, &
-                         ESCALE, GSCALE, VSCALE, GVALS, XT, DGRAD, &
-                         Q, WRK, INTREP, GXEQX, GNAMES, VNAMES, &
-                         LO, CH, LIWORK, LWORK, NGNG, FT, &
-                         ALTRIV, FIRSTG, &
-                         LA, LB, NOBJGR, LU, LELVAR, &
-                         LSTAEV, LSTADH, LNTVAR, LCALCF, &
-                         LELING, LINTRE, LFT, LGXEQX, LSTADG, LGVALS, &
-                         LICNA, LSTADA, LKNDOF, LGPVLU, LEPVLU, &
-                         LGSCAL, LESCAL, LVSCAL, LCALCG
-      COMMON / CHARA /   CHA
-      COMMON / LOCAL /   LFXI, LGXI, LHXI, LGGFX, LDX, LGRJAC, &
-                         LQGRAD, LBREAK, LP, LXCP, LX0, LGX0, &
-                         LDELTX, LBND, LWKSTR, LSPTRS, LSELTS, LINDEX, &
-                         LSWKSP, LSTAGV, LSTAJC, LIUSED, LFREEC, &
-                         LNNONZ, LNONZ2, LSYMMD, LSYMMH, &
-                         LSLGRP, LSVGRP, LGCOLJ, LVALJR, LSEND, &
-                         LNPTRS, LNELTS, LNNDEX, LNWKSP, LNSTGV, &
-                         LNSTJC, LNIUSE, LNFREC, LNNNON, LNNNO2, LNSYMD, &
-                         LNSYMH, LNLGRP, LNVGRP, LNGCLJ, LNVLJR, LNQGRD, &
-                         LNBRAK, LNP, LNBND, LNFXI, LNGXI, LNGUVL, &
-                         LNHXI, LNHUVL, LNGGFX, LNDX, LNGRJC, LIWK2, &
-                         LWK2, MAXSIN, NINVAR, MAXSEL, NTYPE, &
-                         NSETS, LSTYPE, LSSWTR, LSSIWT, LSIWTR, &
-                         LSWTRA, LNTYPE, LNSWTR, LNSIWT, LNIWTR, &
-                         LNWTRA, LSISET, LSSVSE, LNISET, LNSVSE
-      INTEGER :: IOUT2
-      COMMON / OUTPUT /  IOUT2
-      COMMON / PRFCTS /  NC2OF, NC2OG, NC2OH, NC2CF, NC2CG, NC2CH, &
-                         NHVPR, PNC, SUTIME, STTIME
-      INTEGER :: NUMVAR, NUMCON
-      COMMON / DIMS /    NUMVAR, NUMCON
-      SAVE             / GLOBAL /, / LOCAL /, / CHARA /, / OUTPUT /, &
-                       / DIMS /, / PRFCTS /
-
 !  local variables.
 
       INTEGER :: IALGOR, IPRINT, INFORM, I, NSLACK
@@ -136,8 +21,8 @@
       CHARACTER ( LEN = 8 ) :: PNAME
       CHARACTER ( LEN = 10 ) :: CHTEMP
       EXTERNAL :: RANGE, CPUTIM
-      SUTIME = CPUTIM( DUM )
-      IOUT2 = IOUT
+      data%sutime = CPUTIM( DUM )
+      data%iout2 = IOUT
       DEBUG = .FALSE.
       DEBUG = DEBUG .AND. IOUT > 0
       IPRINT = 0
@@ -145,14 +30,14 @@
 
 !  Input the problem dimensions.
 
-      READ( INPUT, 1001 ) N, NG, NELNUM, NGEL, NVARS, NNZA, NGPVLU, &
-                          NEPVLU, NELTYP, NGRTYP
+      READ( INPUT, 1001 ) N, data%ng, data%nelnum, data%ngel, data%nvars, data%nnza, data%ngpvlu, &
+                          data%nepvlu, NELTYP, NGRTYP
       IF ( N <= 0 ) THEN
          CLOSE( INPUT )
          IF ( IOUT > 0 ) WRITE( IOUT, 2020 )
          STOP
       END IF
-      IF ( NG <= 0 ) THEN
+      IF ( data%ng <= 0 ) THEN
          CLOSE( INPUT )
          IF ( IOUT > 0 ) WRITE( IOUT, 2030 )
          STOP
@@ -173,126 +58,126 @@
 
 !  Set useful integer values.
 
-      NG1 = NG + 1
-      NGNG = NG + NG
-      NEL1 = NELNUM + 1
+      data%ng1 = data%ng + 1
+      data%ngng = data%ng + data%ng
+      data%nel1 = data%nelnum + 1
 
 !  Partition the integer workspace.
 
       ISTADG = 0
-      ISTGP = ISTADG + NG1
-      ISTADA = ISTGP + NG1
-      ISTAEV = ISTADA + NG1
-      ISTEP = ISTAEV + NEL1
-      ITYPEG = ISTEP + NEL1
-      KNDOFC = ITYPEG + NG
-      ITYPEE = KNDOFC + NG
-      IELING = ITYPEE + NELNUM
-      IELVAR = IELING + NGEL
-      ICNA = IELVAR + NVARS
-      ISTADH = ICNA + NNZA
-      INTVAR = ISTADH + NEL1
-      IVAR = INTVAR + NEL1
+      ISTGP = ISTADG + data%ng1
+      ISTADA = ISTGP + data%ng1
+      ISTAEV = ISTADA + data%ng1
+      ISTEP = ISTAEV + data%nel1
+      ITYPEG = ISTEP + data%nel1
+      KNDOFC = ITYPEG + data%ng
+      ITYPEE = KNDOFC + data%ng
+      IELING = ITYPEE + data%nelnum
+      IELVAR = IELING + data%ngel
+      ICNA = IELVAR + data%nvars
+      ISTADH = ICNA + data%nnza
+      INTVAR = ISTADH + data%nel1
+      IVAR = INTVAR + data%nel1
       ICALCF = IVAR + N
-      ITYPEV = ICALCF + MAX( NELNUM, NG )
+      ITYPEV = ICALCF + MAX( data%nelnum, data%ng )
       IWRK = ITYPEV + N
-      LIWORK = LIWK - IWRK
+      data%liwork = LIWK - IWRK
 
 !  Ensure there is sufficient room.
 
-      IF ( LIWORK < 0 ) THEN
+      IF ( data%liwork < 0 ) THEN
          CLOSE( INPUT )
          IF ( IOUT > 0 ) WRITE( IOUT, 2000 ) &
-             'IWK   ', 'LIWK  ', - LIWORK
+             'IWK   ', 'LIWK  ', - data%liwork
          STOP
       END IF
 
 !  Partition the real workspace.
 
       A = 0
-      B = A + NNZA
-      U = B + NG
-      GPVALU = U + NG
-      EPVALU = GPVALU + NGPVLU
-      ESCALE = EPVALU + NEPVLU
-      GSCALE = ESCALE + NGEL
-      VSCALE = GSCALE + NG
+      B = A + data%nnza
+      U = B + data%ng
+      GPVALU = U + data%ng
+      EPVALU = GPVALU + data%ngpvlu
+      ESCALE = EPVALU + data%nepvlu
+      GSCALE = ESCALE + data%ngel
+      VSCALE = GSCALE + data%ng
       GVALS = VSCALE + N
-      XT = GVALS + 3 * NG
+      XT = GVALS + 3 * data%ng
       DGRAD = XT + N
       Q = DGRAD + N
       FT = Q + N
-      WRK = FT + NG
-      LWORK = LWK - WRK
+      WRK = FT + data%ng
+      data%lwork = LWK - WRK
 
 !  Ensure there is sufficient room.
 
-      IF ( LWORK < 0 ) THEN
+      IF ( data%lwork < 0 ) THEN
          CLOSE( INPUT )
          IF ( IOUT > 0 ) WRITE( IOUT, 2000 ) &
-             'WK   ', 'LWK   ', - LWORK
+             'WK   ', 'LWK   ', - data%lwork
          STOP
       END IF
 
 !  Partition the logical workspace.
 
       INTREP = 0
-      GXEQX = INTREP + NELNUM
-      LO = GXEQX + NGNG
+      GXEQX = INTREP + data%nelnum
+      data%lo = GXEQX + data%ngng
 
 !  Ensure there is sufficient room.
 
-      IF ( LLOGIC < LO ) THEN
+      IF ( LLOGIC < data%lo ) THEN
          CLOSE( INPUT )
          IF ( IOUT > 0 ) WRITE( IOUT, 2000 ) &
-             'LOGI  ', 'LLOGIC', LO - LLOGIC
+             'LOGI  ', 'LLOGIC', data%lo - LLOGIC
          STOP
       END IF
 
 !  Partition the character workspace.
 
       GNAMES = 0
-      VNAMES = GNAMES + NG
-      CH = VNAMES + N
+      VNAMES = GNAMES + data%ng
+      data%ch = VNAMES + N
 
 !  Ensure there is sufficient room.
 
-      IF ( LCHARA < CH + 1 ) THEN
+      IF ( LCHARA < data%ch + 1 ) THEN
          CLOSE( INPUT )
          IF ( IOUT > 0 ) WRITE( IOUT, 2000 ) &
-             'CHA   ', 'LCHARA', CH + 1 - LCHARA
+             'CHA   ', 'LCHARA', data%ch + 1 - LCHARA
          STOP
       END IF
 
 !  Record the lengths of arrays.
 
-      LSTADG = MAX( 1, NG1 )
-      LSTADA = MAX( 1, NG1 )
-      LSTAEV = MAX( 1, NEL1 )
-      LKNDOF = MAX( 1, NG )
-      LELING = MAX( 1, NGEL )
-      LELVAR = MAX( 1, NVARS )
-      LICNA = MAX( 1, NNZA )
-      LSTADH = MAX( 1, NEL1 )
-      LNTVAR = MAX( 1, NEL1 )
-      LCALCF = MAX( 1, NELNUM, NG )
-      LCALCG = MAX( 1, NG )
-      LA = MAX( 1, NNZA )
-      LB = MAX( 1, NG )
-      LU = MAX( 1, NG )
-      LESCAL = MAX( 1, NGEL )
-      LGSCAL = MAX( 1, NG )
-      LVSCAL = MAX( 1, N )
-      LFT = MAX( 1, NG )
-      LGVALS = MAX( 1, NG )
-      LINTRE = MAX( 1, NELNUM )
-      LGXEQX = MAX( 1, NGNG )
-      LGPVLU = MAX( 1, NGPVLU )
-      LEPVLU = MAX( 1, NEPVLU )
-!     LSTGP = MAX( 1, NG1 )
-!     LSTEP = MAX( 1, NEL1 )
-!     LTYPEG = MAX( 1, NG )
-!     LTYPEE = MAX( 1, NELNUM )
+      data%lstadg = MAX( 1, data%ng1 )
+      data%lstada = MAX( 1, data%ng1 )
+      data%lstaev = MAX( 1, data%nel1 )
+      data%lkndof = MAX( 1, data%ng )
+      data%leling = MAX( 1, data%ngel )
+      data%lelvar = MAX( 1, data%nvars )
+      data%licna = MAX( 1, data%nnza )
+      data%lstadh = MAX( 1, data%nel1 )
+      data%lntvar = MAX( 1, data%nel1 )
+      data%lcalcf = MAX( 1, data%nelnum, data%ng )
+      data%lcalcg = MAX( 1, data%ng )
+      data%la = MAX( 1, data%nnza )
+      data%lb = MAX( 1, data%ng )
+      data%lu = MAX( 1, data%ng )
+      data%lescal = MAX( 1, data%ngel )
+      data%lgscal = MAX( 1, data%ng )
+      data%lvscal = MAX( 1, N )
+      data%lft = MAX( 1, data%ng )
+      data%lgvals = MAX( 1, data%ng )
+      data%lintre = MAX( 1, data%nelnum )
+      data%lgxeqx = MAX( 1, data%ngng )
+      data%lgpvlu = MAX( 1, data%ngpvlu )
+      data%lepvlu = MAX( 1, data%nepvlu )
+!     LSTGP = MAX( 1, data%ng1 )
+!     LSTEP = MAX( 1, data%nel1 )
+!     LTYPEG = MAX( 1, data%ng )
+!     LTYPEE = MAX( 1, data%nelnum )
 !     LIVAR = MAX( 1, N )
 !     LBL = MAX( 1, N )
 !     LBU = MAX( 1, N )
@@ -306,48 +191,48 @@
 !  elements and the identity of the objective function group.
 
       IF ( IALGOR == 2 ) THEN
-         READ( INPUT, 1002 ) NSLACK, NOBJGR
+         READ( INPUT, 1002 ) NSLACK, data%nobjgr
       ELSE
          NSLACK = 0
       END IF
-      IF ( DEBUG ) WRITE( IOUT, 1100 ) PNAME, N, NG, NELNUM
-      CHA( CH + 1 ) = PNAME // '  '
+      IF ( DEBUG ) WRITE( IOUT, 1100 ) PNAME, N, data%ng, data%nelnum
+      data%pname = PNAME // '  '
 
 !  Input the starting addresses of the elements in each group,
 !  of the parameters used for each group and
 !  of the nonzeros of the linear element in each group.
 
-      READ( INPUT, 1010 ) ( IWK( ISTADG + I ), I = 1, NG1 )
+      READ( INPUT, 1010 ) ( data%ISTADG( I ), I = 1, data%ng1 )
       IF ( DEBUG ) WRITE( IOUT, 1110 ) 'ISTADG', &
- ( IWK( ISTADG + I ), I = 1, NG1 )
-      READ( INPUT, 1010 ) ( IWK( ISTGP + I ), I = 1, NG1 )
+ ( data%ISTADG( I ), I = 1, data%ng1 )
+      READ( INPUT, 1010 ) ( data%ISTGP( I ), I = 1, data%ng1 )
       IF ( DEBUG ) WRITE( IOUT, 1110 ) 'ISTGP ', &
- ( IWK( ISTGP + I ), I = 1, NG1 )
-      READ( INPUT, 1010 ) ( IWK( ISTADA + I ), I = 1, NG1 )
+ ( data%ISTGP( I ), I = 1, data%ng1 )
+      READ( INPUT, 1010 ) ( data%ISTADA( I ), I = 1, data%ng1 )
       IF ( DEBUG ) WRITE( IOUT, 1110 ) 'ISTADA', &
- ( IWK( ISTADA + I ), I = 1, NG1 )
+ ( data%ISTADA( I ), I = 1, data%ng1 )
 
 !  Input the starting addresses of the variables and parameters
 !  in each element.
 
-      READ( INPUT, 1010 ) ( IWK( ISTAEV + I ), I = 1, NEL1 )
+      READ( INPUT, 1010 ) ( data%ISTAEV( I ), I = 1, data%nel1 )
       IF ( DEBUG ) WRITE( IOUT, 1110 ) 'ISTAEV', &
- ( IWK( ISTAEV + I ), I = 1, NEL1 )
-      READ( INPUT, 1010 ) ( IWK( ISTEP + I ), I = 1, NEL1 )
+ ( data%ISTAEV( I ), I = 1, data%nel1 )
+      READ( INPUT, 1010 ) ( data%ISTEP( I ), I = 1, data%nel1 )
       IF ( DEBUG ) WRITE( IOUT, 1110 ) 'ISTEP ', &
- ( IWK( ISTEP + I ), I = 1, NEL1 )
+ ( data%ISTEP( I ), I = 1, data%nel1 )
 
 !  Input the group type of each group
 
-      READ( INPUT, 1010 ) ( IWK( ITYPEG + I ), I = 1, NG )
+      READ( INPUT, 1010 ) ( data%ITYPEG( I ), I = 1, data%ng )
       IF ( DEBUG ) WRITE( IOUT, 1110 ) 'ITYPEG', &
- ( IWK( ITYPEG + I ), I = 1, NG )
+ ( data%ITYPEG( I ), I = 1, data%ng )
       IF ( IALGOR >= 2 ) THEN
-         READ( INPUT, 1010 )( IWK( KNDOFC + I ), I = 1, NG )
+         READ( INPUT, 1010 )( data%KNDOFC( I ), I = 1, data%ng )
          IF ( DEBUG ) WRITE( IOUT, 1110 ) 'KNDOFC', &
- ( IWK( KNDOFC + I ), I = 1, NG )
-         DO 10 I = 1, NG
-            IF ( ABS( IWK( KNDOFC + I ) ) >= 2 ) THEN
+ ( data%KNDOFC( I ), I = 1, data%ng )
+         DO 10 I = 1, data%ng
+            IF ( ABS( data%KNDOFC( I ) ) >= 2 ) THEN
                CLOSE( INPUT )
                IF ( IOUT > 0 ) WRITE( IOUT, 2010 )
                STOP
@@ -357,45 +242,45 @@
 
 !  Input the element type of each element
 
-      READ( INPUT, 1010 ) ( IWK( ITYPEE + I ), I = 1, NELNUM )
+      READ( INPUT, 1010 ) ( data%ITYPEE( I ), I = 1, data%nelnum )
       IF ( DEBUG ) WRITE( IOUT, 1110 ) 'ITYPEE', &
- ( IWK( ITYPEE + I ), I = 1, NELNUM )
+ ( data%ITYPEE( I ), I = 1, data%nelnum )
 
 !  Input the number of internal variables for each element.
 
-      READ( INPUT, 1010 ) ( IWK( INTVAR + I ), I = 1, NELNUM )
+      READ( INPUT, 1010 ) ( data%INTVAR( I ), I = 1, data%nelnum )
       IF ( DEBUG ) WRITE( IOUT, 1110 ) 'INTVAR', &
- ( IWK( INTVAR + I ), I = 1, NELNUM )
+ ( data%INTVAR( I ), I = 1, data%nelnum )
 
 !  Input the identity of each individual element.
 
-      READ( INPUT, 1010 ) ( IWK( IELING + I ), I = 1, NGEL )
+      READ( INPUT, 1010 ) ( data%IELING( I ), I = 1, data%ngel )
       IF ( DEBUG ) WRITE( IOUT, 1110 ) 'IELING', &
- ( IWK( IELING + I ), I = 1, NGEL )
+ ( data%IELING( I ), I = 1, data%ngel )
 
 !  Input the variables in each group's elements.
 
-      NVARS = IWK( ISTAEV + NEL1 ) - 1
-      READ( INPUT, 1010 ) ( IWK( IELVAR + I ), I = 1, NVARS )
+      data%nvars = data%ISTAEV( data%nel1 ) - 1
+      READ( INPUT, 1010 ) ( data%IELVAR( I ), I = 1, data%nvars )
       IF ( DEBUG ) WRITE( IOUT, 1110 ) 'IELVAR', &
- ( IWK( IELVAR + I ), I = 1, NVARS )
+ ( data%IELVAR( I ), I = 1, data%nvars )
 
 !  Input the column addresses of the nonzeros in each linear element.
 
-      READ( INPUT, 1010 ) ( IWK( ICNA + I ), I = 1, NNZA )
+      READ( INPUT, 1010 ) ( data%ICNA( I ), I = 1, data%nnza )
       IF ( DEBUG ) WRITE( IOUT, 1110 ) 'ICNA  ', &
- ( IWK( ICNA + I ), I = 1, NNZA )
+ ( data%ICNA( I ), I = 1, data%nnza )
 
 !  Input the values of the nonzeros in each linear element, the
 !  constant term in each group, the lower and upper bounds on
 !  the variables and the starting point for the minimization.
 
-      READ( INPUT, 1020 ) ( WK( A + I ), I = 1, NNZA )
+      READ( INPUT, 1020 ) ( data%A( I ), I = 1, data%nnza )
       IF ( DEBUG ) WRITE( IOUT, 1120 ) 'A     ', &
- ( WK( A + I ), I = 1, NNZA )
-      READ( INPUT, 1020 ) ( WK( B + I ), I = 1, NG )
+ ( data%A( I ), I = 1, data%nnza )
+      READ( INPUT, 1020 ) ( data%B( I ), I = 1, data%ng )
       IF ( DEBUG ) WRITE( IOUT, 1120 ) 'B     ', &
- ( WK( B + I ), I = 1, NG )
+ ( data%B( I ), I = 1, data%ng )
       IF ( IALGOR <= 2 ) THEN
          READ( INPUT, 1020 ) ( BL( I ), I = 1, N )
          IF ( DEBUG ) WRITE( IOUT, 1120 ) 'BL    ', &
@@ -408,52 +293,52 @@
 !  Use GVALS and FT as temporary storage for the constraint bounds.
 
          READ( INPUT, 1020 ) ( BL( I ), I = 1, N ), &
- ( WK( GVALS + I ), I = 1, NG )
+ ( data%GVALS( I ), I = 1, data%ng )
          IF ( DEBUG ) WRITE( IOUT, 1120 ) 'BL    ', &
- ( BL( I ), I = 1, N ), ( WK( GVALS + I ), I = 1, NG )
+ ( BL( I ), I = 1, N ), ( data%GVALS( I ), I = 1, data%ng )
          READ( INPUT, 1020 ) ( BU( I ), I = 1, N ), &
- ( WK( FT + I ), I = 1, NG )
+ ( data%FT( I ), I = 1, data%ng )
          IF ( DEBUG ) WRITE( IOUT, 1120 ) 'BU    ', &
- ( BU( I ), I = 1, N ), ( WK( FT + I ), I = 1, NG )
+ ( BU( I ), I = 1, N ), ( data%FT( I ), I = 1, data%ng )
       END IF
       READ( INPUT, 1020 ) ( X( I ), I = 1, N )
       IF ( DEBUG ) WRITE( IOUT, 1120 ) 'X     ', &
  ( X( I ), I = 1, N )
       IF ( IALGOR >= 2 ) THEN
-         READ( INPUT, 1020 )( WK( U + I ), I = 1, NG )
+         READ( INPUT, 1020 )( data%U( I ), I = 1, data%ng )
          IF ( DEBUG ) WRITE( IOUT, 1120 ) 'U     ', &
- ( WK( U + I ), I = 1, NG )
+ ( data%U( I ), I = 1, data%ng )
       END IF
 
 !  Input the parameters in each group.
 
-      READ( INPUT, 1020 ) ( WK( GPVALU + I ), I = 1, NGPVLU )
+      READ( INPUT, 1020 ) ( data%GPVALU( I ), I = 1, data%ngpvlu )
       IF ( DEBUG ) WRITE( IOUT, 1120 ) 'GPVALU', &
- ( WK( GPVALU + I ), I = 1, NGPVLU )
+ ( data%GPVALU( I ), I = 1, data%ngpvlu )
 
 !  Input the parameters in each individual element.
 
-      READ( INPUT, 1020 ) ( WK( EPVALU + I ), I = 1, NEPVLU )
+      READ( INPUT, 1020 ) ( data%EPVALU( I ), I = 1, data%nepvlu )
       IF ( DEBUG ) WRITE( IOUT, 1120 ) 'EPVALU', &
- ( WK( EPVALU + I ), I = 1, NEPVLU )
+ ( data%EPVALU( I ), I = 1, data%nepvlu )
 
 !  Input the scale factors for the nonlinear elements.
 
-      READ( INPUT, 1020 ) ( WK( ESCALE + I ), I = 1, NGEL )
+      READ( INPUT, 1020 ) ( data%ESCALE( I ), I = 1, data%ngel )
       IF ( DEBUG ) WRITE( IOUT, 1120 ) 'ESCALE', &
- ( WK( ESCALE + I ), I = 1, NGEL )
+ ( data%ESCALE( I ), I = 1, data%ngel )
 
 !  Input the scale factors for the groups.
 
-      READ( INPUT, 1020 ) ( WK( GSCALE + I ), I = 1, NG )
+      READ( INPUT, 1020 ) ( data%GSCALE( I ), I = 1, data%ng )
       IF ( DEBUG ) WRITE( IOUT, 1120 ) 'GSCALE', &
- ( WK( GSCALE + I ), I = 1, NG )
+ ( data%GSCALE( I ), I = 1, data%ng )
 
 !  Input the scale factors for the variables.
 
-      READ( INPUT, 1020 ) ( WK( VSCALE + I ), I = 1, N )
+      READ( INPUT, 1020 ) ( data%VSCALE( I ), I = 1, N )
       IF ( DEBUG ) WRITE( IOUT, 1120 ) 'VSCALE', &
- ( WK( VSCALE + I ), I = 1, N )
+ ( data%VSCALE( I ), I = 1, N )
 
 !  Input the lower and upper bounds on the objective function.
 
@@ -464,24 +349,24 @@
 !  Input a logical array which says whether an element has internal
 !  varaiables.
 
-      READ( INPUT, 1030 ) ( LOGI( INTREP + I ), I = 1, NELNUM )
+      READ( INPUT, 1030 ) ( data%INTREP( I ), I = 1, data%nelnum )
       IF ( DEBUG ) WRITE( IOUT, 1130 ) 'INTREP', &
- ( LOGI( INTREP + I ), I = 1, NELNUM )
+ ( data%INTREP( I ), I = 1, data%nelnum )
 
 !  Input a logical array which says whether a group is trivial.
 
-      READ( INPUT, 1030 ) ( LOGI( GXEQX + I ), I = 1, NG )
+      READ( INPUT, 1030 ) ( data%GXEQX( I ), I = 1, data%ng )
       IF ( DEBUG ) WRITE( IOUT, 1130 ) 'GXEQX ', &
- ( LOGI( GXEQX + I ), I = 1, NG )
+ ( data%GXEQX( I ), I = 1, data%ng )
 
 !  Input the names given to the groups and to the variables.
 
-      READ( INPUT, 1040 ) ( CHA( GNAMES + I ), I = 1, NG )
+      READ( INPUT, 1040 ) ( data%GNAMES( I ), I = 1, data%ng )
       IF ( DEBUG ) WRITE( IOUT, 1140 ) 'GNAMES', &
- ( CHA( GNAMES + I ), I = 1, NG )
-      READ( INPUT, 1040 ) ( CHA( VNAMES + I ), I = 1, N )
+ ( data%GNAMES( I ), I = 1, data%ng )
+      READ( INPUT, 1040 ) ( data%VNAMES( I ), I = 1, N )
       IF ( DEBUG ) WRITE( IOUT, 1140 ) 'VNAMES', &
- ( CHA( VNAMES + I ), I = 1, N )
+ ( data%VNAMES( I ), I = 1, N )
 
 !  Dummy input for the names given to the element and group types.
 
@@ -490,91 +375,91 @@
 
 !  Input the type of each variable.
 
-      READ( INPUT, 1010 ) ( IWK( ITYPEV + I ), I = 1, N )
+      READ( INPUT, 1010 ) ( data%ITYPEV( I ), I = 1, N )
       CLOSE( INPUT )
 
-      NUMVAR = N
+      data%numvar = N
 
 
-!  Partition the workspace arrays FUVALS, IWK and WK. Initialize
+!  Partition the workspace arrays data%FUVALS, IWK and WK. Initialize
 !  certain portions of IWK.
 
-      FIRSTG = .TRUE.
+      data%firstg = .TRUE.
       FDGRAD = .FALSE.
-      CALL DINITW( N, NG, NELNUM, IWK(IELING + 1), LELING, IWK(ISTADG + 1), &
-          LSTADG, IWK(IELVAR + 1), LELVAR, IWK(ISTAEV + 1), LSTAEV, &
-          IWK(INTVAR + 1), LNTVAR, IWK(ISTADH + 1), LSTADH, &
-          IWK(ICNA + 1), LICNA, IWK(ISTADA + 1), LSTADA, &
-          IWK(ITYPEE + 1), LINTRE, &
-          LOGI(GXEQX + 1), LGXEQX, LOGI(INTREP + 1), LINTRE, &
-          LFUVAL, ALTRIV, .TRUE., FDGRAD, LFXI,LGXI,LHXI,LGGFX, &
-          LDX, LGRJAC, LQGRAD, LBREAK, LP,     LXCP, LX0,  &
-          LGX0, LDELTX, LBND,   LWKSTR, LSPTRS, LSELTS, LINDEX,  &
-          LSWKSP, LSTAGV, LSTAJC, LIUSED, LFREEC, LNNONZ, LNONZ2,  &
-          LSYMMD, LSYMMH, LSLGRP, LSVGRP, LGCOLJ, LVALJR, LSEND,  &
-          LNPTRS, LNELTS, LNNDEX, LNWKSP, LNSTGV, LNSTJC, LNIUSE,  &
-          LNFREC, LNNNON, LNNNO2, LNSYMD, LNSYMH, LNLGRP, LNVGRP, &
-          LNGCLJ, LNVLJR, LNQGRD, LNBRAK, LNP,    LNBND, &
-          LNFXI,  LNGXI,  LNGUVL, LNHXI,  LNHUVL, LNGGFX, &
-          LNDX, LNGRJC, LIWK2, LWK2, MAXSIN, NINVAR, &
-          NTYPE, NSETS, MAXSEL, LSTYPE, LSSWTR, LSSIWT, &
-          LSIWTR, LSWTRA, LNTYPE, LNSWTR, LNSIWT, LNIWTR, &
-          LNWTRA, LSISET, LSSVSE, LNISET, LNSVSE, RANGE, &
-          IWK(IWRK + 1),LIWORK,WK(WRK + 1),LWORK,IPRINT,IOUT,INFORM )
+      CALL DINITW( N, data%ng, data%nelnum, data%IELING, data%leling, data%ISTADG, &
+          data%lstadg, data%IELVAR, data%lelvar, data%ISTAEV, data%lstaev, &
+          data%INTVAR, data%lntvar, data%ISTADH, data%lstadh, &
+          data%ICNA, data%licna, data%ISTADA, data%lstada, &
+          data%ITYPEE, data%lintre, &
+          data%GXEQX, data%lgxeqx, data%INTREP, data%lintre, &
+          LFUVAL, data%altriv, .TRUE., FDGRAD, data%lfxi,LGXI,LHXI,LGGFX, &
+          data%ldx, data%lgrjac, data%lqgrad, data%lbreak, data%lp,     data%lxcp, data%lx0,  &
+          data%lgx0, data%ldeltx, data%lbnd,   data%lwkstr, data%lsptrs, data%lselts, data%lindex,  &
+          data%lswksp, data%lstagv, data%lstajc, data%liused, data%lfreec, data%lnnonz, data%lnonz2,  &
+          data%lsymmd, data%lsymmh, data%lslgrp, data%lsvgrp, data%lgcolj, data%lvaljr, data%lsend,  &
+          data%lnptrs, data%lnelts, data%lnndex, data%lnwksp, data%lnstgv, data%lnstjc, data%lniuse,  &
+          data%lnfrec, data%lnnnon, data%lnnno2, data%lnsymd, data%lnsymh, data%lnlgrp, data%lnvgrp, &
+          data%lngclj, data%lnvljr, data%lnqgrd, data%lnbrak, data%lnp,    data%lnbnd, &
+          data%lnfxi,  data%lngxi,  data%lnguvl, data%lnhxi,  data%lnhuvl, data%lnggfx, &
+          data%lndx, data%lngrjc, data%liwk2, data%lwk2, data%maxsin, data%ninvar, &
+          data%ntype, data%nsets, data%maxsel, data%lstype, data%lsswtr, data%lssiwt, &
+          data%lsiwtr, data%lswtra, data%lntype, data%lnswtr, data%lnsiwt, data%lniwtr, &
+          data%lnwtra, data%lsiset, data%lssvse, data%lniset, data%lnsvse, RANGE, &
+          data%IWORK(IWRK + 1),LIWORK,data%WRK,LWORK,IPRINT,IOUT,INFORM )
       IF ( INFORM /= 0 ) STOP
 
 !  Shift the starting addresses for the real workspace relative to WRK.
 
-      LQGRAD = LQGRAD + WRK
-      LBREAK = LBREAK + WRK
-      LP = LP + WRK
-      LXCP = LXCP + WRK
-      LX0 = LX0 + WRK
-      LGX0 = LGX0 + WRK
-      LDELTX = LDELTX + WRK
-      LBND = LBND + WRK
-      LSWTRA = LSWTRA + WRK
-      LWKSTR = LWKSTR + WRK
+      data%lqgrad = data%lqgrad + WRK
+      data%lbreak = data%lbreak + WRK
+      data%lp = data%lp + WRK
+      data%lxcp = data%lxcp + WRK
+      data%lx0 = data%lx0 + WRK
+      data%lgx0 = data%lgx0 + WRK
+      data%ldeltx = data%ldeltx + WRK
+      data%lbnd = data%lbnd + WRK
+      data%lswtra = data%lswtra + WRK
+      data%lwkstr = data%lwkstr + WRK
 
 !  Shift the starting addresses for the integer workspace relative
 !  to IWRK.
 
-      LSPTRS = LSPTRS + IWRK
-      LSELTS = LSELTS + IWRK
-      LINDEX = LINDEX + IWRK
-      LSWKSP = LSWKSP + IWRK
-      LSTAGV = LSTAGV + IWRK
-      LSTAJC = LSTAJC + IWRK
-      LIUSED = LIUSED + IWRK
-      LFREEC = LFREEC + IWRK
-      LNNONZ = LNNONZ + IWRK
-      LNONZ2 = LNONZ2 + IWRK
-      LSYMMD = LSYMMD + IWRK
-      LSYMMH = LSYMMH + IWRK
-      LSLGRP = LSLGRP + IWRK
-      LSVGRP = LSVGRP + IWRK
-      LGCOLJ = LGCOLJ + IWRK
-      LVALJR = LVALJR + IWRK
-      LSTYPE = LSTYPE + IWRK
-      LSSWTR = LSSWTR + IWRK
-      LSSIWT = LSSIWT + IWRK
-      LSIWTR = LSIWTR + IWRK
-      LSISET = LSISET + IWRK
-      LSSVSE = LSSVSE + IWRK
-      LSEND = LSEND + IWRK
+      data%lsptrs = data%lsptrs + IWRK
+      data%lselts = data%lselts + IWRK
+      data%lindex = data%lindex + IWRK
+      data%lswksp = data%lswksp + IWRK
+      data%lstagv = data%lstagv + IWRK
+      data%lstajc = data%lstajc + IWRK
+      data%liused = data%liused + IWRK
+      data%lfreec = data%lfreec + IWRK
+      data%lnnonz = data%lnnonz + IWRK
+      data%lnonz2 = data%lnonz2 + IWRK
+      data%lsymmd = data%lsymmd + IWRK
+      data%lsymmh = data%lsymmh + IWRK
+      data%lslgrp = data%lslgrp + IWRK
+      data%lsvgrp = data%lsvgrp + IWRK
+      data%lgcolj = data%lgcolj + IWRK
+      data%lvaljr = data%lvaljr + IWRK
+      data%lstype = data%lstype + IWRK
+      data%lsswtr = data%lsswtr + IWRK
+      data%lssiwt = data%lssiwt + IWRK
+      data%lsiwtr = data%lsiwtr + IWRK
+      data%lsiset = data%lsiset + IWRK
+      data%lssvse = data%lssvse + IWRK
+      data%lsend = data%lsend + IWRK
 
 !  Initialize the performance counters and variables
 
-      NC2OF = 0
-      NC2OG = 0
-      NC2OH = 0
-      NC2CF = 0
-      NC2CG = 0
-      NC2CH = 0
-      NHVPR = 0
-      PNC = 0
-      STTIME = CPUTIM( DUM )
-      SUTIME = STTIME - SUTIME
+      data%nc2of = 0
+      data%nc2og = 0
+      data%nc2oh = 0
+      data%nc2cf = 0
+      data%nc2cg = 0
+      data%nc2ch = 0
+      data%nhvpr = 0
+      data%pnc = 0
+      data%sttime = CPUTIM( DUM )
+      data%sutime = data%sttime - data%sutime
       RETURN
 
 !  Non-executable statements.

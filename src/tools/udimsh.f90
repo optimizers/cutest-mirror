@@ -1,5 +1,7 @@
 ! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE UDIMSH( NNZH )
+      SUBROUTINE UDIMSH( data, NNZH )
+      USE CUTEST
+      TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
       INTEGER :: NNZH
 
@@ -13,122 +15,35 @@
 !  i.e., the entry H(i) has row index IRNH(i)
 !  for i = 1, ...., NNZH.
 
-!  Based on the minimization subroutine LANCELOT/SBMIN
+!  Based on the minimization subroutine data%laNCELOT/SBMIN
 !  by Conn, Gould and Toint.
 
 !  Nick Gould, for CGT productions,
 !  August 1999.
 
-      INTEGER :: LIWK, LWK, LFUVAL, LLOGIC, LCHARA
 
 ! ---------------------------------------------------------------------
 
-!  Parameters whose value might be changed by the user:
 
-!  The following parameters define the sizes of problem
-!  dependent arrays. These may be changed by the user to
-!  suit a particular problem or system configuration.
 
-!  The TOOLS will issue error messages if any of these sizes
-!  is too small, telling which parameter to increase.
 
 ! ---------------------------------------------------------------------
 
-      INCLUDE 'tools.siz'
 
-      INTEGER :: IWK( LIWK )
-      LOGICAL :: LOGI ( LLOGIC )
-      CHARACTER ( LEN = 10 ) :: CHA ( LCHARA )
-      REAL ( KIND = wp ) :: WK ( LWK )
-      REAL ( KIND = wp ) :: FUVALS ( LFUVAL )
 
 ! ---------------------------------------------------------------------
 
-!  End of parameters which might be changed by the user.
 
 ! ---------------------------------------------------------------------
 
 !  integer variables from the GLOBAL common block.
 
-      INTEGER :: NG, NELNUM, NGEL, NVARS, NNZA, NGPVLU
-      INTEGER :: NEPVLU, NG1, NEL1, ISTADG, ISTGP, ISTADA
-      INTEGER :: ISTAEV, ISTEP, ITYPEG, KNDOFC, ITYPEE
-      INTEGER :: IELING, IELVAR, ICNA, ISTADH, INTVAR, IVAR
-      INTEGER :: ICALCF, ITYPEV, IWRK, A, B
-      INTEGER :: U, GPVALU, EPVALU
-      INTEGER :: ESCALE, GSCALE, VSCALE, GVALS, XT, DGRAD
-      INTEGER :: Q, WRK, INTREP, GXEQX, GNAMES, VNAMES
-      INTEGER :: LO, CH, LIWORK, LWORK, NGNG, FT
-      INTEGER :: LA, LB, NOBJGR, LU, LELVAR
-      INTEGER :: LSTAEV, LSTADH, LNTVAR, LCALCF
-      INTEGER :: LELING, LINTRE, LFT, LGXEQX, LSTADG, LGVALS
-      INTEGER :: LICNA, LSTADA, LKNDOF, LGPVLU, LEPVLU
-      INTEGER :: LGSCAL, LESCAL, LVSCAL, LCALCG
 
 !  integer variables from the LOCAL common block.
 
-      INTEGER :: LFXI, LGXI, LHXI, LGGFX, LDX, LGRJAC
-      INTEGER :: LQGRAD, LBREAK, LP, LXCP, LX0, LGX0
-      INTEGER :: LDELTX, LBND, LWKSTR, LSPTRS, LSELTS, LINDEX
-      INTEGER :: LSWKSP, LSTAGV, LSTAJC, LIUSED, LFREEC
-      INTEGER :: LNNONZ, LNONZ2, LSYMMD, LSYMMH
-      INTEGER :: LSLGRP, LSVGRP, LGCOLJ, LVALJR, LSEND
-      INTEGER :: LNPTRS, LNELTS, LNNDEX, LNWKSP, LNSTGV
-      INTEGER :: LNSTJC, LNIUSE, LNFREC, LNNNON, LNNNO2, LNSYMD
-      INTEGER :: LNSYMH, LNLGRP, LNVGRP, LNGCLJ, LNVLJR, LNQGRD
-      INTEGER :: LNBRAK, LNP, LNBND, LNFXI, LNGXI, LNGUVL
-      INTEGER :: LNHXI, LNHUVL, LNGGFX, LNDX, LNGRJC, LIWK2
-      INTEGER :: LWK2, MAXSIN, NINVAR, MAXSEL
-      INTEGER :: NTYPE, NSETS, LSTYPE, LSSWTR, LSSIWT, LSIWTR
-      INTEGER :: LSWTRA, LNTYPE, LNSWTR, LNSIWT, LNIWTR
-      INTEGER :: LNWTRA, LSISET, LSSVSE, LNISET, LNSVSE
-      LOGICAL :: ALTRIV, FIRSTG
 
 !  integer variables from the PRFCTS common block.
 
-      INTEGER :: NC2OF, NC2OG, NC2OH, NC2CF, NC2CG, NC2CH
-      INTEGER :: NHVPR, PNC
-      REAL :: SUTIME, STTIME
-      COMMON / GLOBAL /  IWK, WK, FUVALS, LOGI, &
-                         NG, NELNUM, NGEL, NVARS, NNZA, NGPVLU, &
-                         NEPVLU, NG1, NEL1, ISTADG, ISTGP, ISTADA, &
-                         ISTAEV, ISTEP, ITYPEG, KNDOFC, ITYPEE, &
-                         IELING, IELVAR, ICNA, ISTADH, INTVAR, IVAR, &
-                         ICALCF, ITYPEV, IWRK, A, B, &
-                         U, GPVALU, EPVALU, &
-                         ESCALE, GSCALE, VSCALE, GVALS, XT, DGRAD, &
-                         Q, WRK, INTREP, GXEQX, GNAMES, VNAMES, &
-                         LO, CH, LIWORK, LWORK, NGNG, FT, &
-                         ALTRIV, FIRSTG, &
-                         LA, LB, NOBJGR, LU, LELVAR, &
-                         LSTAEV, LSTADH, LNTVAR, LCALCF, &
-                         LELING, LINTRE, LFT, LGXEQX, LSTADG, LGVALS, &
-                         LICNA, LSTADA, LKNDOF, LGPVLU, LEPVLU, &
-                         LGSCAL, LESCAL, LVSCAL, LCALCG
-      COMMON / CHARA /   CHA
-      COMMON / LOCAL /   LFXI, LGXI, LHXI, LGGFX, LDX, LGRJAC, &
-                         LQGRAD, LBREAK, LP, LXCP, LX0, LGX0, &
-                         LDELTX, LBND, LWKSTR, LSPTRS, LSELTS, LINDEX, &
-                         LSWKSP, LSTAGV, LSTAJC, LIUSED, LFREEC, &
-                         LNNONZ, LNONZ2, LSYMMD, LSYMMH, &
-                         LSLGRP, LSVGRP, LGCOLJ, LVALJR, LSEND, &
-                         LNPTRS, LNELTS, LNNDEX, LNWKSP, LNSTGV, &
-                         LNSTJC, LNIUSE, LNFREC, LNNNON, LNNNO2, LNSYMD, &
-                         LNSYMH, LNLGRP, LNVGRP, LNGCLJ, LNVLJR, LNQGRD, &
-                         LNBRAK, LNP, LNBND, LNFXI, LNGXI, LNGUVL, &
-                         LNHXI, LNHUVL, LNGGFX, LNDX, LNGRJC, LIWK2, &
-                         LWK2, MAXSIN, NINVAR, MAXSEL, NTYPE, &
-                         NSETS, LSTYPE, LSSWTR, LSSIWT, LSIWTR, &
-                         LSWTRA, LNTYPE, LNSWTR, LNSIWT, LNIWTR, &
-                         LNWTRA, LSISET, LSSVSE, LNISET, LNSVSE
-      COMMON / PRFCTS /  NC2OF, NC2OG, NC2OH, NC2CF, NC2CG, NC2CH, &
-                         NHVPR, PNC, SUTIME, STTIME
-      INTEGER :: IOUT
-      COMMON / OUTPUT /  IOUT
-      INTEGER :: NUMVAR, NUMCON
-      COMMON / DIMS /    NUMVAR, NUMCON
-      SAVE             / GLOBAL /, / LOCAL /, / CHARA /, / OUTPUT /, &
-                       / DIMS   /, / PRFCTS /
 
 !  Local variables
 
@@ -140,10 +55,10 @@
 !  Ensure that there is sufficient space
 
       NNZH = 0
-      NEWPT = NUMVAR + 1
-      LIRNH = ( LIWK2 - 2 * NUMVAR ) / 3
-      IRNH = LSEND
-      LNXTRW = ( LIWK2 - LIRNH ) / 2
+      NEWPT = data%numvar + 1
+      LIRNH = ( data%liwk2 - 2 * data%numvar ) / 3
+      IRNH = data%lsend
+      LNXTRW = ( data%liwk2 - LIRNH ) / 2
       NXTRW1 = IRNH + LIRNH
       NXTRW2 = NXTRW1 + LNXTRW
       IF ( NEWPT > LNXTRW .OR. LIRNH <= 0 ) GO TO 900
@@ -155,37 +70,37 @@
 !  Initialize the link list which points to the row numbers which
 !  are used in the columns of the assembled Hessian
 
-      DO 20 I = 1, NUMVAR
-         IWK( NXTRW1 + I ) = - 1
+      DO 20 I = 1, data%numvar
+         data%IWORK( NXTRW1 + I ) = - 1
    20 CONTINUE
 
 ! -------------------------------------------------------
 !  Form the rank-one second order term for the IG-th group
 ! -------------------------------------------------------
 
-      DO 200 IG = 1, NG
-         IF ( LOGI( GXEQX + IG ) ) GO TO 200
+      DO 200 IG = 1, data%ng
+         IF ( data%GXEQX( IG ) ) GO TO 200
          IG1 = IG + 1
-         LISTVS = IWK( LSTAGV + IG )
-         LISTVE = IWK( LSTAGV + IG1 ) - 1
+         LISTVS = data%IWORK( data%lstagv + IG )
+         LISTVE = data%IWORK( data%lstagv + IG1 ) - 1
 
 !  Form the J-th column of the rank-one matrix
 
          DO 190 L = LISTVS, LISTVE
-            J = IWK( LSVGRP + L )
+            J = data%IWORK( data%lsvgrp + L )
             IF ( J == 0 ) GO TO 190
 
 !  Find the entry in row I of this column
 
             DO 180 K = LISTVS, LISTVE
-               I = IWK( LSVGRP + K )
+               I = data%IWORK( data%lsvgrp + K )
                IF ( I == 0 .OR. I > J ) GO TO 180
 
 !  Obtain the appropriate storage location in H for the new entry
 
                ISTART = J
   150          CONTINUE
-               INEXT = IWK( NXTRW1 + ISTART )
+               INEXT = data%IWORK( NXTRW1 + ISTART )
                IF ( INEXT == - 1 ) THEN
                   IF ( NEWPT > LNXTRW ) GO TO 900
 
@@ -194,16 +109,16 @@
 
                   NNZH = NNZH + 1
                   IF ( NNZH > LIRNH ) GO TO 900
-                  IWK( IRNH + NNZH ) = I
-                  IWK( NXTRW1 + ISTART ) = NEWPT
-                  IWK( NXTRW2 + ISTART ) = NNZH
-                  IWK( NXTRW1 + NEWPT ) = - 1
+                  data%IWORK( IRNH + NNZH ) = I
+                  data%IWORK( NXTRW1 + ISTART ) = NEWPT
+                  data%IWORK( NXTRW2 + ISTART ) = NNZH
+                  data%IWORK( NXTRW1 + NEWPT ) = - 1
                   NEWPT = NEWPT + 1
                ELSE
 
 !  Continue searching the linked list for an entry in row I, column J
 
-                  IF ( IWK( IRNH + IWK( NXTRW2 + ISTART ) )/=I ) THEN
+                  IF ( data%IWORK( IRNH + data%IWORK( NXTRW2 + ISTART ) )/=I ) THEN
                      ISTART = INEXT
                      GO TO 150
                   END IF
@@ -216,17 +131,17 @@
 !  Add on the low rank first order terms for the I-th group
 ! --------------------------------------------------------
 
-      DO 300 IG = 1, NG
+      DO 300 IG = 1, data%ng
          IG1 = IG + 1
 
 !  See if the group has any nonlinear elements
 
-         DO 290 IELL = IWK( ISTADG + IG ), IWK( ISTADG + IG1 ) - 1
-            IEL = IWK( IELING + IELL )
-            LISTVS = IWK( ISTAEV + IEL )
-            LISTVE = IWK( ISTAEV + IEL + 1 ) - 1
+         DO 290 IELL = data%ISTADG( IG ), data%ISTADG( IG1 ) - 1
+            IEL = data%IELING( IELL )
+            LISTVS = data%ISTAEV( IEL )
+            LISTVE = data%ISTAEV( IEL + 1 ) - 1
             DO 250 L = LISTVS, LISTVE
-               J = IWK( IELVAR + L )
+               J = data%IELVAR( L )
                IF ( J /= 0 ) THEN
 
 !  The IEL-th element has an internal representation.
@@ -235,7 +150,7 @@
 !  Find the entry in row I of this column
 
                   DO 240 K = LISTVS, L
-                     I = IWK( IELVAR + K )
+                     I = data%IELVAR( K )
                      IF ( I /= 0 ) THEN
 
 !  Only the upper triangle of the matrix is stored
@@ -252,7 +167,7 @@
 
                         ISTART = JJ
   230                   CONTINUE
-                        INEXT = IWK( NXTRW1 + ISTART )
+                        INEXT = data%IWORK( NXTRW1 + ISTART )
                         IF ( INEXT == - 1 ) THEN
                            IF ( NEWPT > LNXTRW ) GO TO 900
 
@@ -261,16 +176,16 @@
 
                            NNZH = NNZH + 1
                            IF ( NNZH > LIRNH ) GO TO 900
-                           IWK( IRNH + NNZH ) = II
-                           IWK( NXTRW1 + ISTART ) = NEWPT
-                           IWK( NXTRW2 + ISTART ) = NNZH
-                           IWK( NXTRW1 + NEWPT ) = - 1
+                           data%IWORK( IRNH + NNZH ) = II
+                           data%IWORK( NXTRW1 + ISTART ) = NEWPT
+                           data%IWORK( NXTRW2 + ISTART ) = NNZH
+                           data%IWORK( NXTRW1 + NEWPT ) = - 1
                            NEWPT = NEWPT + 1
                         ELSE
 
 !  Continue searching the linked list for an entry in row I, column J
 
-                           IF ( IWK( IRNH + IWK( NXTRW2 + ISTART ) ) &
+                           IF ( data%IWORK( IRNH + data%IWORK( NXTRW2 + ISTART ) ) &
  == II ) THEN
                            ELSE
                               ISTART = INEXT

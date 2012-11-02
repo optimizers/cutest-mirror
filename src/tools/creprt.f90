@@ -1,5 +1,11 @@
 ! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE CREPRT( CALLS, TIME )
+      SUBROUTINE CREPRT( data, CALLS, TIME )
+      USE CUTEST
+      IMPLICIT NONE
+      TYPE ( CUTEST_data_type ) :: data
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+      REAL :: CALLS( 7 )
+      REAL :: TIME( 2 )
 
 !  This routine returns the value of the various counters maintained by the
 !  CUTEr tools to the user.  The counters are:
@@ -16,49 +22,36 @@
 !    TIME( 2 ): CPU time (in seconds) since the end of CSETUP
 
 !  Note that each constraint function is counted separately.
-!  Evaluating all the constraints thus results in PNC evaluations, where
-!  PNC is the number of constraints in the problem.  Note that PNC does not
+!  Evaluating all the constraints thus results in data%pnc evaluations, where
+!  data%pnc is the number of constraints in the problem.  Note that data%pnc does not
 !  include repetitions for constraints having full ranges.  Also note that
 
 !  N. Gould, D. Orban & Ph. Toint for CUTEr, 2001.
 
-      IMPLICIT NONE
-      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-
 !  output arguments
 
-      REAL :: CALLS( 7 )
-      REAL :: TIME( 2 )
 
-!  variables from the PRFCTS common block
-
-      INTEGER :: NC2OF, NC2OG, NC2OH, NC2CF, NC2CG, NC2CH
-      INTEGER :: NHVPR, PNC
-      REAL :: SUTIME, STTIME
-      COMMON / PRFCTS /  NC2OF, NC2OG, NC2OH, NC2CF, NC2CG, NC2CH, &
-                         NHVPR, PNC, SUTIME, STTIME
-      SAVE             / PRFCTS /
 
 !  local variables
 
       REAL :: CPUTIM, DUM
       EXTERNAL :: CPUTIM
 
-      TIME( 2 ) = CPUTIM( DUM ) - STTIME
-      TIME( 1 ) = SUTIME
+      TIME( 2 ) = CPUTIM( DUM ) - data%sttime
+      TIME( 1 ) = data%sutime
 
-      CALLS( 1 ) = NC2OF
-      CALLS( 2 ) = NC2OG
-      CALLS( 3 ) = NC2OH
-      CALLS( 4 ) = NHVPR
-      IF( PNC > 0 ) THEN
-        CALLS( 5 ) = NC2CF / PNC
-        CALLS( 6 ) = NC2CG / PNC
-        CALLS( 7 ) = NC2CH / PNC
+      CALLS( 1 ) = data%nc2of
+      CALLS( 2 ) = data%nc2og
+      CALLS( 3 ) = data%nc2oh
+      CALLS( 4 ) = data%nhvpr
+      IF( data%pnc > 0 ) THEN
+        CALLS( 5 ) = data%nc2cf / data%pnc
+        CALLS( 6 ) = data%nc2cg / data%pnc
+        CALLS( 7 ) = data%nc2ch / data%pnc
       ELSE
-        CALLS( 5 ) = NC2CF
-        CALLS( 6 ) = NC2CG
-        CALLS( 7 ) = NC2CH
+        CALLS( 5 ) = data%nc2cf
+        CALLS( 6 ) = data%nc2cg
+        CALLS( 7 ) = data%nc2ch
       ENDIF
 
       RETURN
