@@ -1,6 +1,6 @@
 ! THIS VERSION: CUTEST 1.0 - 24/10/2012 AT 13:00 GMT.
 
-!-*-*-*-*-*-*-*-*-*-*-*- S I F D E C O D E   M O D U L E -*-*-*-*-*-*-*-*-*-*-
+!-*-*-*-*-*-*-*-*-*-*-*-*-*- C U T E S T   M O D U L E -*-*-*-*-*-*-*-*-*-*-*-*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
 !  Principal author: Nick Gould
@@ -34,27 +34,6 @@
       REAL ( KIND = wp ), PARAMETER :: zero = 0.0_wp
       REAL ( KIND = wp ), PARAMETER :: one = 1.0_wp
 
-!  initial integer workspace
-
-      INTEGER, PARAMETER :: liwk = 40000000
-
-!  initial real precision workspace
-
-      INTEGER, PARAMETER :: lwk = 50000000
-
-!  initial logical workspace
-
-      INTEGER, PARAMETER :: llogic = 2000000
-
-!  initial character workspace
-
-      INTEGER, PARAMETER :: lchara = 2000000
-
-!  initial length of workspace to store the problem's function and 
-!  derivatives values
-
-      INTEGER,  PARAMETER :: lfuval = 8000000
-
 !-------------------------------------------------
 !  D e r i v e d   t y p e   d e f i n i t i o n s
 !-------------------------------------------------
@@ -67,20 +46,55 @@
 
 !  Integer variables from the GLOBAL common block.
 
-        INTEGER :: ng, nelnum, ngel, nvars, nnza, ngpvlu
-        INTEGER :: nepvlu, ng1, nel1, istadg, istgp, istada
-        INTEGER :: istaev, istep, itypeg, kndofc, itypee
-        INTEGER :: ieling, ielvar, icna, istadh, intvar, ivar
-        INTEGER :: icalcf, itypev, iwrk, a, b
-        INTEGER :: u, gpvalu, epvalu
-        INTEGER :: escale, gscale, vscale, gvals, xt, dgrad
-        INTEGER :: q, wrk, intrep, gxeqx, gnames, vnames
-        INTEGER :: lo, ch, liwork, lwork, ngng, ft
-        INTEGER :: la, lb, nobjgr, lu, lelvar
-        INTEGER :: lstaev, lstadh, lntvar, lcalcf
-        INTEGER :: leling, lintre, lft, lgxeqx, lstadg, lgvals
-        INTEGER :: licna, lstada, lkndof, lgpvlu, lepvlu
-        INTEGER :: lgscal, lescal, lvscal, lcalcg            
+        INTEGER :: ng, nelnum, ngel, nvars, nnza, ngpvlu, nepvlu, ng1, nel1
+        INTEGER :: lo, ch, liwork, lwork, ngng, la, lb, nobjgr, lu, lelvar
+        INTEGER :: lstaev, lstadh, lntvar, lcalcf, leling, lintre, lft
+        INTEGER :: lgxeqx, licna, lstada, lkndof, lgpvlu, lepvlu
+        INTEGER :: lstadg, lgvals, lgscal, lescal, lvscal, lcalcg            
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISTADG
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISTGP
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISTADA
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISTAEV
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISTEP
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: ITYPEG
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: KNDOFC
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: ITYPEE
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: IELING
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: IELVAR
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: ICNA
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISTADH
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: INTVAR
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: IVAR
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: ICALCF
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: ITYPEV
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: IWORK
+        REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: A
+        REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: B
+        REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: U
+        REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: GPVALU
+        REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: EPVALU
+        REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: ESCALE
+        REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: GSCALE
+        REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: VSCALE
+        REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: GVALS
+        REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: XT
+        REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: DGRAD
+        REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: Q
+        REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: FT
+        REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: WRK
+        LOGICAL, ALLOCATABLE, DIMENSION( : ) :: INTREP
+        LOGICAL, ALLOCATABLE, DIMENSION( : ) :: GXEQX
+        LOGICAL, ALLOCATABLE, DIMENSION( : ) :: LOGIC
+        CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : ) :: GNAMES
+        CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : ) :: VNAMES
+        CHARACTER ( LEN = 10 ) :: pname
+        REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: FUVALS
+!       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: FXI
+!       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: GXI
+!       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: HXI
+!       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: GGFX
+!       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: DX
+!       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: GRJAC
 
 !  Integer variables from the LOCAL common block.
 
@@ -117,14 +131,6 @@
 !  variables from the DIMS common block
 
         INTEGER :: numvar, numcon
-
-!  workspace arrays
-
-        INTEGER :: IWK( liwk )
-        LOGICAL :: LOGI( llogic )
-        CHARACTER ( len = 10 ):: CHA( lchara )
-        REAL ( KIND = wp ):: WK lwk )
-        REAL ( KIND = wp ) :: FUVALS( lfuval )
 
       END TYPE CUTEST_data_type
 

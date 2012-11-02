@@ -1,5 +1,7 @@
 ! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE UFN ( N, X, F )
+      SUBROUTINE UFN ( data, N, X, F )
+      USE CUTEST
+      TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
       INTEGER :: N
       REAL ( KIND = wp ) :: F
@@ -13,114 +15,31 @@
 !  Nick Gould, for CGT productions.
 !  July 1991.
 
-      INTEGER :: LIWK, LWK, LFUVAL, LLOGIC, LCHARA
 
 ! ---------------------------------------------------------------------
 
-!  Parameters whose value might be changed by the user:
 
-!  The following parameters define the sizes of problem
-!  dependent arrays. These may be changed by the user to
-!  suit a particular problem or system configuration.
 
-!  The TOOLS will issue error messages if any of these sizes
-!  is too small, telling which parameter to increase.
 
 ! ---------------------------------------------------------------------
 
-      INCLUDE 'tools.siz'
 
-      INTEGER :: IWK( LIWK )
-      LOGICAL :: LOGI ( LLOGIC )
-      CHARACTER ( LEN = 10 ) :: CHA ( LCHARA )
-      REAL ( KIND = wp ) :: WK ( LWK )
-      REAL ( KIND = wp ) :: FUVALS ( LFUVAL )
 
 ! ---------------------------------------------------------------------
 
-!  End of parameters which might be changed by the user.
 
 ! ---------------------------------------------------------------------
 
 !  integer variables from the GLOBAL common block.
 
-      INTEGER :: NG, NELNUM, NGEL, NVARS, NNZA, NGPVLU
-      INTEGER :: NEPVLU, NG1, NEL1, ISTADG, ISTGP, ISTADA
-      INTEGER :: ISTAEV, ISTEP, ITYPEG, KNDOFC, ITYPEE
-      INTEGER :: IELING, IELVAR, ICNA, ISTADH, INTVAR, IVAR
-      INTEGER :: ICALCF, ITYPEV, IWRK, A, B
-      INTEGER :: U, GPVALU, EPVALU
-      INTEGER :: ESCALE, GSCALE, VSCALE, GVALS, XT, DGRAD
-      INTEGER :: Q, WRK, INTREP, GXEQX, GNAMES, VNAMES
-      INTEGER :: LO, CH, LIWORK, LWORK, NGNG, FT
-      INTEGER :: LA, LB, NOBJGR, LU, LELVAR
-      INTEGER :: LSTAEV, LSTADH, LNTVAR, LCALCF
-      INTEGER :: LELING, LINTRE, LFT, LGXEQX, LSTADG, LGVALS
-      INTEGER :: LICNA, LSTADA, LKNDOF, LGPVLU, LEPVLU
-      INTEGER :: LGSCAL, LESCAL, LVSCAL, LCALCG
 
 !  integer variables from the LOCAL common block.
 
-      INTEGER :: LFXI, LGXI, LHXI, LGGFX, LDX, LGRJAC
-      INTEGER :: LQGRAD, LBREAK, LP, LXCP, LX0, LGX0
-      INTEGER :: LDELTX, LBND, LWKSTR, LSPTRS, LSELTS, LINDEX
-      INTEGER :: LSWKSP, LSTAGV, LSTAJC, LIUSED, LFREEC
-      INTEGER :: LNNONZ, LNONZ2, LSYMMD, LSYMMH
-      INTEGER :: LSLGRP, LSVGRP, LGCOLJ, LVALJR, LSEND
-      INTEGER :: LNPTRS, LNELTS, LNNDEX, LNWKSP, LNSTGV
-      INTEGER :: LNSTJC, LNIUSE, LNFREC, LNNNON, LNNNO2, LNSYMD
-      INTEGER :: LNSYMH, LNLGRP, LNVGRP, LNGCLJ, LNVLJR, LNQGRD
-      INTEGER :: LNBRAK, LNP, LNBND, LNFXI, LNGXI, LNGUVL
-      INTEGER :: LNHXI, LNHUVL, LNGGFX, LNDX, LNGRJC, LIWK2
-      INTEGER :: LWK2, MAXSIN, NINVAR, MAXSEL
-      INTEGER :: NTYPE, NSETS, LSTYPE, LSSWTR, LSSIWT, LSIWTR
-      INTEGER :: LSWTRA, LNTYPE, LNSWTR, LNSIWT, LNIWTR
-      INTEGER :: LNWTRA, LSISET, LSSVSE, LNISET, LNSVSE
-      LOGICAL :: ALTRIV, FIRSTG
 
-!  variables from the PRFCTS common block
 
-      INTEGER :: NC2OF, NC2OG, NC2OH,  NC2CF,  NC2CG,  NC2CH
-      INTEGER :: NHVPR, PNC
-      REAL :: SUTIME, STTIME
 
 !  the common blocks
 
-      COMMON / GLOBAL /  IWK, WK, FUVALS, LOGI, &
-                         NG, NELNUM, NGEL, NVARS, NNZA, NGPVLU, &
-                         NEPVLU, NG1, NEL1, ISTADG, ISTGP, ISTADA, &
-                         ISTAEV, ISTEP, ITYPEG, KNDOFC, ITYPEE, &
-                         IELING, IELVAR, ICNA, ISTADH, INTVAR, IVAR, &
-                         ICALCF, ITYPEV, IWRK, A, B, &
-                         U, GPVALU, EPVALU, &
-                         ESCALE, GSCALE, VSCALE, GVALS, XT, DGRAD, &
-                         Q, WRK, INTREP, GXEQX, GNAMES, VNAMES, &
-                         LO, CH, LIWORK, LWORK, NGNG, FT, &
-                         ALTRIV, FIRSTG, &
-                         LA, LB, NOBJGR, LU, LELVAR, &
-                         LSTAEV, LSTADH, LNTVAR, LCALCF, &
-                         LELING, LINTRE, LFT, LGXEQX, LSTADG, LGVALS, &
-                         LICNA, LSTADA, LKNDOF, LGPVLU, LEPVLU, &
-                         LGSCAL, LESCAL, LVSCAL, LCALCG
-      COMMON / CHARA /   CHA
-      COMMON / LOCAL /   LFXI, LGXI, LHXI, LGGFX, LDX, LGRJAC, &
-                         LQGRAD, LBREAK, LP, LXCP, LX0, LGX0, &
-                         LDELTX, LBND, LWKSTR, LSPTRS, LSELTS, LINDEX, &
-                         LSWKSP, LSTAGV, LSTAJC, LIUSED, LFREEC, &
-                         LNNONZ, LNONZ2, LSYMMD, LSYMMH, &
-                         LSLGRP, LSVGRP, LGCOLJ, LVALJR, LSEND, &
-                         LNPTRS, LNELTS, LNNDEX, LNWKSP, LNSTGV, &
-                         LNSTJC, LNIUSE, LNFREC, LNNNON, LNNNO2, LNSYMD, &
-                         LNSYMH, LNLGRP, LNVGRP, LNGCLJ, LNVLJR, LNQGRD, &
-                         LNBRAK, LNP, LNBND, LNFXI, LNGXI, LNGUVL, &
-                         LNHXI, LNHUVL, LNGGFX, LNDX, LNGRJC, LIWK2, &
-                         LWK2, MAXSIN, NINVAR, MAXSEL, NTYPE, &
-                         NSETS, LSTYPE, LSSWTR, LSSIWT, LSIWTR, &
-                         LSWTRA, LNTYPE, LNSWTR, LNSIWT, LNIWTR, &
-                         LNWTRA, LSISET, LSSVSE, LNISET, LNSVSE
-      COMMON / PRFCTS /  NC2OF, NC2OG, NC2OH, NC2CF, NC2CG, NC2CH, &
-                         NHVPR, PNC, SUTIME, STTIME
-      SAVE             / GLOBAL /, / LOCAL /, / CHARA /, / PRFCTS /
 
 !  local variables.
 
@@ -130,68 +49,68 @@
 
 !  increment the counter for calls to the objective function value
 
-      NC2OF = NC2OF + 1
+      data%nc2of = data%nc2of + 1
 
 !  there are non-trivial group functions.
 
-      DO 10 I = 1, MAX( NELNUM, NG )
-        IWK( ICALCF + I ) = I
+      DO 10 I = 1, MAX( data%nelnum, data%ng )
+        data%ICALCF( I ) = I
    10 CONTINUE
 
 !  evaluate the element function values.
 
-      CALL ELFUN ( FUVALS, X, WK( EPVALU + 1 ), NELNUM, &
-                   IWK( ITYPEE + 1 ), IWK( ISTAEV + 1 ), &
-                   IWK( IELVAR + 1 ), IWK( INTVAR + 1 ), &
-                   IWK( ISTADH + 1 ), IWK( ISTEP + 1 ), &
-                   IWK( ICALCF + 1 ),  &
-                   LINTRE, LSTAEV, LELVAR, LNTVAR, LSTADH,  &
-                   LNTVAR, LINTRE, LFUVAL, LVSCAL, LEPVLU,  &
+      CALL ELFUN ( data%FUVALS, X, data%EPVALU( 1 ), data%nelnum, &
+                   data%ITYPEE( 1 ), data%ISTAEV( 1 ), &
+                   data%IELVAR( 1 ), data%INTVAR( 1 ), &
+                   data%ISTADH( 1 ), data%ISTEP( 1 ), &
+                   data%ICALCF( 1 ),  &
+                   data%lintre, data%lstaev, data%lelvar, data%lntvar, data%lstadh,  &
+                   data%lntvar, data%lintre, LFUVAL, data%lvscal, data%lepvlu,  &
                    1, IFSTAT )
 
 !  compute the group argument values ft.
 
-      DO 100 IG = 1, NG
-         FTT = - WK( B + IG )
+      DO 100 IG = 1, data%ng
+         FTT = - data%B( IG )
 
 !  include the contribution from the linear element.
 
-         DO 30 J = IWK( ISTADA + IG ), IWK( ISTADA + IG + 1 ) - 1
-            FTT = FTT + WK( A + J ) * X( IWK( ICNA + J ) )
+         DO 30 J = data%ISTADA( IG ), data%ISTADA( IG + 1 ) - 1
+            FTT = FTT + data%A( J ) * X( data%ICNA( J ) )
    30    CONTINUE
 
 !  include the contributions from the nonlinear elements.
 
-         DO 60 J = IWK( ISTADG + IG ), IWK( ISTADG + IG + 1 ) - 1
-            FTT = FTT + WK( ESCALE + J ) * FUVALS( IWK( IELING + J ) )
+         DO 60 J = data%ISTADG( IG ), data%ISTADG( IG + 1 ) - 1
+            FTT = FTT + data%ESCALE( J ) * data%FUVALS( data%IELING( J ) )
    60    CONTINUE
-         WK( FT + IG ) = FTT
+         data%FT( IG ) = FTT
   100 CONTINUE
 
 !  compute the group function values.
 
 !  all group functions are trivial.
 
-      IF ( ALTRIV ) THEN
-!D       F = DDOT( NG, WK( GSCALE + 1 ), 1, WK( FT + 1 ), 1 )
-      CALL DCOPY( NG, WK( FT + 1 ), 1, WK( GVALS + 1 ), 1 )
-      CALL DSETVL( NG, WK( GVALS + NG + 1 ), 1, ONE )
+      IF ( data%altriv ) THEN
+!D       F = DDOT( data%ng, data%GSCALE( 1 ), 1, data%FT( 1 ), 1 )
+      CALL DCOPY( data%ng, data%FT( 1 ), 1, data%GVALS( 1 ), 1 )
+      CALL DSETVL( data%ng, data%GVALS( data%ng + 1 ), 1, ONE )
       ELSE
 
 !  evaluate the group function values.
 
-         CALL GROUP ( WK ( GVALS + 1 ), NG, WK( FT + 1 ), &
-                      WK ( GPVALU + 1 ), NG, &
-                      IWK( ITYPEG + 1 ), IWK( ISTGP + 1 ), &
-                      IWK( ICALCF + 1 ), &
-                      LCALCG, NG1, LCALCG, LCALCG, LGPVLU, &
+         CALL GROUP ( data%GVALS( 1 ), data%ng, data%FT( 1 ), &
+                      data%GPVALU( 1 ), data%ng, &
+                      data%ITYPEG( 1 ), data%ISTGP( 1 ), &
+                      data%ICALCF( 1 ), &
+                      data%lcalcg, data%ng1, data%lcalcg, data%lcalcg, data%lgpvlu, &
                       .FALSE., IGSTAT )
          F = ZERO
-         DO 220 IG = 1, NG
-            IF ( LOGI( GXEQX + IG ) ) THEN
-               F = F + WK( GSCALE + IG ) * WK( FT + IG )
+         DO 220 IG = 1, data%ng
+            IF ( data%GXEQX( IG ) ) THEN
+               F = F + data%GSCALE( IG ) * data%FT( IG )
             ELSE
-               F = F + WK( GSCALE + IG ) * WK( GVALS + IG )
+               F = F + data%GSCALE( IG ) * data%GVALS( IG )
             END IF
   220    CONTINUE
       END IF
