@@ -1,6 +1,6 @@
 ! THIS VERSION: CUTEST 1.0 - 24/10/2012 AT 13:00 GMT.
 
-!-*-*-*-*-*-*-*-*-*-*-*-*-*- C U T E S T   M O D U L E -*-*-*-*-*-*-*-*-*-*-*-*-
+!-*-*-*-*-*-*-*-*-*-*-*-*-*- C U T E S T   m O D U l E -*-*-*-*-*-*-*-*-*-*-*-*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
 !  Principal author: Nick Gould
@@ -51,22 +51,22 @@
         INTEGER :: lstaev, lstadh, lntvar, lcalcf, leling, lintre, lft
         INTEGER :: lgxeqx, licna, lstada, lkndof, lgpvlu, lepvlu
         INTEGER :: lstadg, lgvals, lgscal, lescal, lvscal, lcalcg            
-        INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISTADG
-        INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISTGP
-        INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISTADA
-        INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISTAEV
-        INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISTEP
-        INTEGER, ALLOCATABLE, DIMENSION( : ) :: ITYPEG
-        INTEGER, ALLOCATABLE, DIMENSION( : ) :: KNDOFC
-        INTEGER, ALLOCATABLE, DIMENSION( : ) :: ITYPEE
-        INTEGER, ALLOCATABLE, DIMENSION( : ) :: IELING
-        INTEGER, ALLOCATABLE, DIMENSION( : ) :: IELVAR
-        INTEGER, ALLOCATABLE, DIMENSION( : ) :: ICNA
-        INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISTADH
-        INTEGER, ALLOCATABLE, DIMENSION( : ) :: INTVAR
-        INTEGER, ALLOCATABLE, DIMENSION( : ) :: IVAR
-        INTEGER, ALLOCATABLE, DIMENSION( : ) :: ICALCF
-        INTEGER, ALLOCATABLE, DIMENSION( : ) :: ITYPEV
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: istadg
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: istgp
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: istada
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: istaev
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: istep
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: itypeg
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: kndofc
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: itypee
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: ieling
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: ielvar
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: icna
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: istadh
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: intvar
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: ivar
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: icalcf
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: itypev
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: IWORK
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: A
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: B
@@ -76,14 +76,14 @@
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: ESCALE
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: GSCALE
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: VSCALE
-        REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: GVALS
+        REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: gvals
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: XT
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: DGRAD
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: Q
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: FT
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: WRK
-        LOGICAL, ALLOCATABLE, DIMENSION( : ) :: INTREP
-        LOGICAL, ALLOCATABLE, DIMENSION( : ) :: GXEQX
+        LOGICAL, ALLOCATABLE, DIMENSION( : ) :: intrep
+        LOGICAL, ALLOCATABLE, DIMENSION( : ) :: gxeqx
         LOGICAL, ALLOCATABLE, DIMENSION( : ) :: LOGIC
         CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : ) :: GNAMES
         CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : ) :: VNAMES

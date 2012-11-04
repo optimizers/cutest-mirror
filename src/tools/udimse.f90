@@ -1,10 +1,10 @@
 ! ( Last modified on 10 Sepc 2004 at 16:45:38 )
 !  Correction: 10/Sep/2004: undeclared integer variable declared
-      SUBROUTINE UDIMSE( data, NE, NZH, NZIRNH )
+      SUBROUTINE UDIMSE( data, ne, nzh, nzirnh )
       USE CUTEST
       TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: NE, NZH, NZIRNH
+      INTEGER :: ne, nzh, nzirnh
 
 !  Compute the number of elements and the space required to store
 !  the Hessian matrix of the objective function of a problem
@@ -20,11 +20,11 @@
 !  H is stored as a list of the row indices involved in each element
 !  and the upper triangle of H_i (stored by rows or columns). 
 
-!  NE (integer) number of elements
-!  NZH (integer) number of entries needed to store the real values of
+!  ne (integer) number of elements
+!  nzh (integer) number of entries needed to store the real values of
 !                   H. Specifically, the sum of the number of entries in
 !                   the upper triangle of each H_i.
-!  NZIRNH (integer) number of entries needed to store the integer entries
+!  nzirnh (integer) number of entries needed to store the integer entries
 !                   of H. Specifically, the sum of the row dimensions of 
 !                   each H_i.
 
@@ -60,27 +60,27 @@
 
 !  Local variables
 
-      INTEGER :: IG, NVARG, IG1
+      INTEGER :: ig, nvarg, ig1
 
 !  Initilaize counts
 
-      NE = 0
-      NZH = 0
-      NZIRNH = 0
+      ne = 0
+      nzh = 0
+      nzirnh = 0
 
 !  Loop over the groups
 
-      DO 10 IG = 1, data%ng
-         IG1 = IG + 1
+      DO 10 ig = 1, data%ng
+         ig1 = ig + 1
 
 !  Only consider nonlinear groups
 
-         IF ( data%ISTADG( IG ) < data%ISTADG( IG1 ) .OR.  &
-              .NOT. data%GXEQX( IG ) ) THEN
-            NE = NE + 1
-            NVARG = data%IWORK( data%lstagv + IG1 ) - data%IWORK( data%lstagv + IG )
-            NZIRNH = NZIRNH + NVARG
-            NZH = NZH + ( NVARG * ( NVARG + 1 ) ) / 2
+         IF ( data%ISTADG( ig ) < data%ISTADG( ig1 ) .OR.  &
+              .NOT. data%GXEQX( ig ) ) THEN
+            ne = ne + 1
+            nvarg = data%IWORK( data%lstagv + ig1 ) - data%IWORK( data%lstagv + ig )
+            nzirnh = nzirnh + nvarg
+            nzh = nzh + ( nvarg * ( nvarg + 1 ) ) / 2
          END IF
    10 CONTINUE
       RETURN

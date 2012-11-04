@@ -1,14 +1,14 @@
 ! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE UEH( data, N, X, NE, IRNHI, LIRNHI, LE, &
-                         IPRNHI, HI, LHI, IPRHI, BYROWS )
+      SUBROUTINE UEH( data, n, X, ne, IRNHI, lirnhi, le, &
+                         IPRNHI, HI, lhi, IPRHI, BYROWS )
       USE CUTEST
       TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: N, NE, LE, LIRNHI, LHI 
+      INTEGER :: n, ne, le, lirnhi, lhi 
       LOGICAL :: BYROWS
-      INTEGER :: IRNHI ( LIRNHI )
-      INTEGER :: IPRNHI( LE ), IPRHI ( LE )
-      REAL ( KIND = wp ) :: X ( N ), HI ( LHI )
+      INTEGER :: IRNHI ( lirnhi )
+      INTEGER :: IPRNHI( le ), IPRHI ( le )
+      REAL ( KIND = wp ) :: X ( n ), HI ( lhi )
                          
 
 !  Compute the Hessian matrix of a group partially separable function
@@ -25,7 +25,7 @@
 !  and the upper triangle of H_i (stored by rows or columns). 
 !  Specifically,
 
-!  NE (integer) number of elements
+!  ne (integer) number of elements
 !  IRNHI (integer array) a list of the row indices involved which each
 !          element. Those for element i directly proceed those for 
 !          element i + 1, i = 1, ..., NE-1
@@ -75,16 +75,16 @@
 
 !  Local variables
 
-      INTEGER :: I, J, IFSTAT, IGSTAT
-      INTEGER :: IG, LIWKH, INFORM
-      REAL ( KIND = wp ) :: ZERO, ONE, FTT
-      PARAMETER ( ZERO = 0.0_wp, ONE = 1.0_wp )
-!D    EXTERNAL           RANGE, ELFUN, GROUP, DELGRD, DASMBE
+      INTEGER :: i, j, ifstat, igstat
+      INTEGER :: ig, liwkh, inform
+      REAL ( KIND = wp ) :: zero, one, ftt
+      PARAMETER ( zero = 0.0_wp, one = 1.0_wp )
+!D    EXTERNAL           RANGE, ELFUN, GROUP, ELGRD, ASMBE
 
 !  there are non-trivial group functions.
 
-      DO 10 I = 1, MAX( data%nelnum, data%ng )
-        data%ICALCF( I ) = I
+      DO 10 i = 1, MAX( data%nelnum, data%ng )
+        data%ICALCF( i ) = i
    10 CONTINUE
 
 !  evaluate the element function values.
@@ -95,8 +95,8 @@
                    data%ISTADH( 1 ), data%ISTEP( 1 ), &
                    data%ICALCF( 1 ),  &
                    data%lintre, data%lstaev, data%lelvar, data%lntvar, data%lstadh,  &
-                   data%lntvar, data%lintre, LFUVAL, data%lvscal, data%lepvlu,  &
-                   1, IFSTAT )
+                   data%lntvar, data%lintre, lfuval, data%lvscal, data%lepvlu,  &
+                   1, ifstat )
 
 !  evaluate the element function gradients and Hessians.
 
@@ -106,32 +106,32 @@
                    data%ISTADH( 1 ), data%ISTEP( 1 ), &
                    data%ICALCF( 1 ),  &
                    data%lintre, data%lstaev, data%lelvar, data%lntvar, data%lstadh,  &
-                   data%lntvar, data%lintre, LFUVAL, data%lvscal, data%lepvlu,  &
-                   3, IFSTAT )
+                   data%lntvar, data%lintre, lfuval, data%lvscal, data%lepvlu,  &
+                   3, ifstat )
 
 !  compute the group argument values ft.
 
-      DO 70 IG = 1, data%ng
-         FTT = - data%B( IG )
+      DO 70 ig = 1, data%ng
+         ftt = - data%B( ig )
 
 !  include the contribution from the linear element.
 
-         DO 30 J = data%ISTADA( IG ), data%ISTADA( IG + 1 ) - 1
-            FTT = FTT + data%A( J ) * X( data%ICNA( J ) )
+         DO 30 j = data%ISTADA( ig ), data%ISTADA( ig + 1 ) - 1
+            ftt = ftt + data%A( j ) * X( data%ICNA( j ) )
    30    CONTINUE
 
 !  include the contributions from the nonlinear elements.
 
-         DO 60 J = data%ISTADG( IG ), data%ISTADG( IG + 1 ) - 1
-            FTT = FTT + data%ESCALE( J ) * data%FUVALS( data%IELING( J ) )
+         DO 60 j = data%ISTADG( ig ), data%ISTADG( ig + 1 ) - 1
+            ftt = ftt + data%ESCALE( j ) * data%FUVALS( data%IELING( j ) )
    60    CONTINUE
-         data%FT( IG ) = FTT
+         data%FT( ig ) = ftt
 
 !  Record the derivatives of trivial groups.
 
-         IF ( data%GXEQX( IG ) ) THEN
-            data%GVALS( data%ng + IG ) = ONE
-            data%GVALS( 2 * data%ng + IG ) = ZERO
+         IF ( data%GXEQX( ig ) ) THEN
+            data%GVALS( data%ng + ig ) = one
+            data%GVALS( 2 * data%ng + ig ) = zero
          END IF
    70 CONTINUE
 
@@ -142,11 +142,11 @@
             data%ITYPEG( 1 ), data%ISTGP( 1 ), &
             data%ICALCF( 1 ), &
             data%lcalcg, data%ng1, data%lcalcg, data%lcalcg, data%lgpvlu, &
-            .TRUE., IGSTAT )
+            .TRUE., igstat )
 
 !  Compute the gradient value.
 
-      CALL DELGRD( N, data%ng, data%firstg, data%ICNA( 1 ), data%licna, &
+      CALL ELGRD( n, data%ng, data%firstg, data%ICNA( 1 ), data%licna, &
                    data%ISTADA( 1 ), data%lstada, data%IELING( 1 ), &
                    data%leling, data%ISTADG( 1 ), data%lstadg, &
                    data%ITYPEE( 1 ), data%lintre, &
@@ -158,7 +158,7 @@
                    data%FUVALS, data%lnguvl, data%FUVALS( data%lggfx + 1 ), &
                    data%GSCALE( 1 ), data%lgscal, &
                    data%ESCALE( 1 ), data%lescal, data%FUVALS( data%lgrjac + 1 ), &
-                   data%lngrjc, data%WRK( 1 ), data%WRK( N + 1 ), data%maxsel, &
+                   data%lngrjc, data%WRK( 1 ), data%WRK( n + 1 ), data%maxsel, &
                    data%GXEQX( 1 ), data%lgxeqx, &
                    data%INTREP( 1 ), data%lintre, RANGE )
       data%firstg = .FALSE.
@@ -166,19 +166,19 @@
 !  Define the real work space needed for ASMBE.
 !  Ensure that there is sufficient space.
 
-      IF ( data%lwk2 < N + 3 * data%maxsel ) THEN
-         IF ( IOUT > 0 ) WRITE( IOUT, 2000 )
+      IF ( data%lwk2 < n + 3 * data%maxsel ) THEN
+         IF ( iout > 0 ) WRITE( iout, 2000 )
          STOP
       END IF
 
 !  Define the integer work space needed for ASMBE.
 !  Ensure that there is sufficient space.
 
-      LIWKH = data%liwk2 - N
+      liwkh = data%liwk2 - n
 
 !  Assemble the Hessian.
 
-      CALL DASMBE( N, data%ng, data%maxsel,  &
+      CALL ASMBE( n, data%ng, data%maxsel,  &
                    data%ISTADH( 1 ), data%lstadh, &
                    data%ICNA( 1 ), data%licna, &
                    data%ISTADA( 1 ), data%lstada, &
@@ -189,20 +189,20 @@
                    data%ISTAEV( 1 ), data%lstaev, &
                    data%IWORK( data%lstagv + 1 ), data%lnstgv, &
                    data%IWORK( data%lsvgrp + 1 ), data%lnvgrp, &
-                   data%IWORK( LIWKH + 1 ), data%liwk2 - LIWKH, &
+                   data%IWORK( liwkh + 1 ), data%liwk2 - liwkh, &
                    data%A( 1 ), data%la, data%FUVALS, data%lnguvl, data%FUVALS, data%lnhuvl, &
                    data%GVALS( data%ng + 1 ), data%GVALS( 2 * data%ng + 1 ), &
                    data%GSCALE( 1 ), data%ESCALE( 1 ), data%lescal, &
                    data%WRK( 1 ), data%lwk2 - data%ng, &
                    data%GXEQX( 1 ), data%lgxeqx, data%INTREP( 1 ), &
-                   data%lintre, data%ITYPEE( 1 ), data%lintre, RANGE, NE, &
-                   IRNHI, LIRNHI, IPRNHI, HI, LHI, IPRHI, &
-                   BYROWS, 1, IOUT, INFORM )
+                   data%lintre, data%ITYPEE( 1 ), data%lintre, RANGE, ne, &
+                   IRNHI, lirnhi, IPRNHI, HI, lhi, IPRHI, &
+                   BYROWS, 1, iout, inform )
 
 !  Check that there is room for the elements.
 
-      IF ( INFORM > 0 ) THEN
-         IF ( IOUT > 0 ) WRITE( IOUT, 2020 )
+      IF ( inform > 0 ) THEN
+         IF ( iout > 0 ) WRITE( iout, 2020 )
          STOP
       END IF
 

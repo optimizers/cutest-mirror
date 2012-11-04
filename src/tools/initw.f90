@@ -3,26 +3,26 @@
 !  ** FOR THE CRAY 2, LINES STARTING 'CDIR$ IVDEP' TELL THE COMPILER TO
 !     IGNORE POTENTIAL VECTOR DEPENDENCIES AS THEY ARE KNOWN TO BE O.K.
 
-      SUBROUTINE DINITW( N, NG, NEL, IELING, LELING, ISTADG, LSTADG, &
-                         IELVAR, LELVAR, ISTAEV, LSTAEV, INTVAR, LNTVAR, &
-                         ISTADH, LSTADH, ICNA, LICNA, ISTADA, LSTADA, &
-                         ITYPEE, LITYPE, &
-                         GXEQX, LGXEQX, INTREP, LINTRE, LFUVAL, ALTRIV, &
-                         DIRECT, FDGRAD, LFXI, LGXI, LHXI, LGGFX, &
-                         LDX, LGRJAC, LQGRAD, LBREAK, LP, LXCP, &
-                         LX0, LGX0, LDELTX, LBND, LWKSTR, LSPTRS, &
-                         LSELTS, LINDEX, LSWKSP, LSTAGV, LSTAJC, LIUSED, &
-                         LFREEC, LNNONZ, LNONZ2, LSYMMD, LSYMMH, LSLGRP, &
-                         LSVGRP, LGCOLJ, LVALJR, LSEND, LNPTRS, LNELTS, &
-                         LNNDEX, LNWKSP, LNSTGV, LNSTJC, LNIUSE, LNFREC, &
-                         LNNNON, LNNNO2, LNSYMD, LNSYMH, LNLGRP, LNVGRP, &
-                         LNGCLJ, LNVLJR, LNQGRD, LNBRAK, LNP, LNBND, &
-                         LNFXI, LNGXI, LNGUVL, LNHXI, LNHUVL, LNGGFX, &
-                         LNDX, LNGRJC, LIWK2, LWK2, MAXSIN, NINVAR, &
-                         NTYPE, NSETS, MAXSEL, LSTYPE, LSSWTR, LSSIWT, &
-                         LSIWTR, LSWTRA, LNTYPE, LNSWTR, LNSIWT, LNIWTR, &
-                         LNWTRA, LSISET, LSSVSE, LNISET, LNSVSE, RANGE, &
-                         IWK, LIWK, WK,  LWK, IPRINT, IOUT, INFORM)
+      SUBROUTINE INITW( n, ng, nel, ieling, leling, istadg, lstadg, &
+                         ielvar, lelvar, istaev, lstaev, intvar, lntvar, &
+                         istadh, lstadh, icna, licna, istada, lstada, &
+                         itypee, litype, &
+                         gxeqx, lgxeqx, intrep, lintre, lfuval, ALTRIV, &
+                         DIRECT, FDGRAD, lfxi, lgxi, lhxi, lggfx, &
+                         ldx, lgrjac, lqgrad, lbreak, lp, lxcp, &
+                         lx0, lgx0, ldeltx, lbnd, lwkstr, lsptrs, &
+                         lselts, lindex, lswksp, lstagv, lstajc, liused, &
+                         lfreec, lnnonz, lnonz2, lsymmd, lsymmh, lslgrp, &
+                         lsvgrp, lgcolj, lvaljr, lsend, lnptrs, lnelts, &
+                         lnndex, lnwksp, lnstgv, lnstjc, lniuse, lnfrec, &
+                         lnnnon, lnnno2, lnsymd, lnsymh, lnlgrp, lnvgrp, &
+                         lngclj, lnvljr, lnqgrd, lnbrak, lnp, lnbnd, &
+                         lnfxi, lngxi, lnguvl, lnhxi, lnhuvl, lnggfx, &
+                         lndx, lngrjc, liwk2, lwk2, maxsin, ninvar, &
+                         ntype, nsets, maxsel, lstype, lsswtr, lssiwt, &
+                         lsiwtr, lswtra, lntype, lnswtr, lnsiwt, lniwtr, &
+                         lnwtra, lsiset, lssvse, lniset, lnsvse, RANGE, &
+                         IWK, liwk, WK,  lwk, iprint, iout, INFORM)
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
 ! --------------------------------------------------------------------
@@ -37,48 +37,48 @@
 
 ! --------------------------------------------------------------------
 
-      INTEGER :: N, NG, NEL, INFORM, LITYPE, LWK, LIWK
-      INTEGER :: LFUVAL, LELVAR, LSTAEV, LSTADH, LELING, LNTVAR
-      INTEGER :: LGXEQX, LSTADG, LICNA, LSTADA, IOUT, IPRINT
-      INTEGER :: LFXI, LGXI, LHXI, LGGFX, LDX, LGRJAC
-      INTEGER :: LQGRAD, LBREAK, LP, LXCP, LBND, LWKSTR
-      INTEGER :: LGX0, LDELTX, LSPTRS, LSELTS, LINDEX, LX0
-      INTEGER :: LSWKSP, LSTAGV, LSTAJC, LIUSED, LFREEC, LINTRE
-      INTEGER :: LNNONZ, LNONZ2, LSYMMD, LSYMMH, LSISET, LSSVSE
-      INTEGER :: LSLGRP, LSVGRP, LGCOLJ, LVALJR, LSEND
-      INTEGER :: LNPTRS, LNELTS, LNNDEX, LNWKSP, LNSTGV, LNSTJC
-      INTEGER :: LNIUSE, LNNNON, LNNNO2, LNSYMD, LNSYMH, LNLGRP
-      INTEGER :: LNVGRP, LNGCLJ, LNVLJR, LNFREC, LNISET, LNSVSE
-      INTEGER :: LNQGRD, LNBRAK, LNP, LNBND,  LNFXI, LNGXI
-      INTEGER :: LNGUVL, LNHXI, LNHUVL, LNGGFX, LNDX, LNGRJC
-      INTEGER :: LIWK2, LWK2, NINVAR, MAXSEL, MAXSIN, NTYPE
-      INTEGER :: LSTYPE, LSSWTR, LSSIWT, LSIWTR, LSWTRA, NSETS
-      INTEGER :: LNTYPE, LNSWTR, LNSIWT, LNIWTR, LNWTRA
+      INTEGER :: n, ng, nel, inform, litype, lwk, liwk
+      INTEGER :: lfuval, lelvar, lstaev, lstadh, leling, lntvar
+      INTEGER :: lgxeqx, lstadg, licna, lstada, iout, iprint
+      INTEGER :: lfxi, lgxi, lhxi, lggfx, ldx, lgrjac
+      INTEGER :: lqgrad, lbreak, lp, lxcp, lbnd, lwkstr
+      INTEGER :: lgx0, ldeltx, lsptrs, lselts, lindex, lx0
+      INTEGER :: lswksp, lstagv, lstajc, liused, lfreec, lintre
+      INTEGER :: lnnonz, lnonz2, lsymmd, lsymmh, lsiset, lssvse
+      INTEGER :: lslgrp, lsvgrp, lgcolj, lvaljr, lsend
+      INTEGER :: lnptrs, lnelts, lnndex, lnwksp, lnstgv, lnstjc
+      INTEGER :: lniuse, lnnnon, lnnno2, lnsymd, lnsymh, lnlgrp
+      INTEGER :: lnvgrp, lngclj, lnvljr, lnfrec, lniset, lnsvse
+      INTEGER :: lnqgrd, lnbrak, lnp, lnbnd,  lnfxi, lngxi
+      INTEGER :: lnguvl, lnhxi, lnhuvl, lnggfx, lndx, lngrjc
+      INTEGER :: liwk2, lwk2, ninvar, maxsel, maxsin, ntype
+      INTEGER :: lstype, lsswtr, lssiwt, lsiwtr, lswtra, nsets
+      INTEGER :: lntype, lnswtr, lnsiwt, lniwtr, lnwtra
       EXTERNAL :: RANGE 
       LOGICAL :: DIRECT, ALTRIV, FDGRAD
-      INTEGER :: IELVAR( LELVAR ), ISTAEV( LSTAEV )
-      INTEGER :: ISTADH( LSTADH ), IWK ( LIWK )
-      INTEGER :: INTVAR( LNTVAR ), ISTADG( LSTADG )
-      INTEGER :: ICNA ( LICNA ), ISTADA( LSTADA )
-      INTEGER :: IELING( LELING ), ITYPEE( LITYPE )
-      REAL ( KIND = wp ) :: WK ( LWK )
-      LOGICAL :: GXEQX ( LGXEQX ), INTREP( LINTRE )
+      INTEGER :: IELVAR( lelvar ), ISTAEV( lstaev )
+      INTEGER :: ISTADH( lstadh ), IWK ( liwk )
+      INTEGER :: INTVAR( lntvar ), ISTADG( lstadg )
+      INTEGER :: icna ( licna ), ISTADA( lstada )
+      INTEGER :: IELING( leling ), ITYPEE( litype )
+      REAL ( KIND = wp ) :: WK ( lwk )
+      LOGICAL :: gxeqx ( lgxeqx ), INTREP( lintre )
 
 !  LOCAL VARIABLES.
 
-      INTEGER :: I, J, K, L, NVARGP, IIELTS, IENTRY, IG, IS
-      INTEGER :: LEND, NSIZEH, NEL1, NGEL, NG1, IEL
-      INTEGER :: LWFREE, LIWFRE, NELVR, LW1, LIWFRO, LWFREO
-      INTEGER :: IELL, ITYPE, ISOFAR, ISTARJ, IVARP1, IVAR
-      INTEGER :: JSET, INEXT, NEWVAR, NEWSET, IPT, ISTRT
-      INTEGER :: NINVR, II, JJ, KK, LL
+      INTEGER :: i, j, k, l, nvargp, iielts, ientry, ig, is
+      INTEGER :: lend, nsizeh, nel1, ngel, ng1, iel
+      INTEGER :: lwfree, liwfre, nelvr, lw1, liwfro, lwfreo
+      INTEGER :: iell, itype, isofar, istarj, ivarp1, ivar
+      INTEGER :: jset, inext, newvar, newset, ipt, istrt
+      INTEGER :: ninvr, ii, jj, kk, ll
       LOGICAL :: NONTRV, ALLLIN, VRUSED
-      REAL ( KIND = wp ) :: ZERO, ONE
-      PARAMETER ( ZERO = 0.0_wp, ONE = 1.0_wp )
+      REAL ( KIND = wp ) :: zero, one
+      PARAMETER ( zero = 0.0_wp, one = 1.0_wp )
 
 !  EXTERNAL SUBROUTINES AND FUNCTIONS USED.
 
-!D    EXTERNAL         DSYMMH
+!D    EXTERNAL         SYMMH
 
 !  INTRINSIC FUNCTIONS.
 
@@ -86,95 +86,95 @@
 
 !  SET CONSTANTS.
 
-      NEL1 = NEL + 1
-      NG1 = NG + 1
-      NGEL = ISTADG( NG1 ) - 1
-      ALLLIN = NEL == 0
+      nel1 = nel + 1
+      ng1 = ng + 1
+      ngel = ISTADG( ng1 ) - 1
+      ALLLIN = nel == 0
 
-!  SET UP INTVAR, THE STARTING ADDRESSES FOR THE ELEMENT GRADIENTS
-!  WITH RESPECT TO THEIR INTERNAL VARIABLES. ALSO COMPUTE MAXSIN,
+!  SET UP intvar, THE STARTING ADDRESSES FOR THE ELEMENT GRADIENTS
+!  WITH RESPECT TO THEIR INTERNAL VARIABLES. ALSO COMPUTE maxsin,
 !  THE MAXIMUM NUMBER OF INTERNAL VARIABLES IN AN ELEMENT.
 
       IF ( .NOT. ALLLIN ) THEN
-         K = INTVAR( 1 )
-         MAXSIN = K
-         INTVAR( 1 ) = NEL1
-         DO 10 IEL = 2, NEL
-            L = INTVAR( IEL )
-            INTVAR( IEL ) = INTVAR( IEL - 1 ) + K
-            K = L
-            MAXSIN = MAX( MAXSIN, K )
+         k = INTVAR( 1 )
+         maxsin = k
+         INTVAR( 1 ) = nel1
+         DO 10 iel = 2, nel
+            l = INTVAR( iel )
+            INTVAR( iel ) = INTVAR( iel - 1 ) + k
+            k = l
+            maxsin = MAX( maxsin, k )
    10    CONTINUE
-         INTVAR( NEL1 ) = INTVAR( NEL ) + K
+         INTVAR( nel1 ) = INTVAR( nel ) + k
       ELSE
          INTVAR( 1 ) = 1
-         MAXSIN = 0
+         maxsin = 0
       END IF
 
 !  COMPUTE THE TOTAL NUMBER OF INTERNAL VARIABLES.
 
-      NINVAR = INTVAR( NEL1 ) - INTVAR( 1 )
+      ninvar = INTVAR( nel1 ) - INTVAR( 1 )
 
-!  CALCULATE THE LENGTH, IIELTS, OF WORKSPACE REQUIRED TO
+!  CALCULATE THE LENGTH, iielts, OF WORKSPACE REQUIRED TO
 !  DETERMINE WHICH ELEMENTS USE EACH OF THE VARIABLES.
 !  ALSO FIND THE MAXIMUM NUMBER OF VARIABLES IN AN ELEMENT, MAXSEL.
-!  THIS IS A DUMMY RUN FOR LOOP 130 MERELY TO CALCULATE THE
+!  THIS is A DUMMY RUN FOR LOOP 130 MERELY TO CALCULATE THE
 !  SPACE REQUIRED.
 
-      IF ( LIWK < N ) THEN
-         WRITE( IOUT, 2030 ) N - LIWK
-         INFORM = 4
+      IF ( liwk < n ) THEN
+         WRITE( iout, 2030 ) n - liwk
+         inform = 4
          RETURN
       END IF
 
-!  IWK( I ) WILL BE USED AS A LIST OF LINKS CHAINING THE ELEMENTS USING
-!  VARIABLE I. IF IWK( I ) IS NEGATIVE, THE LIST IS EMPTY.
+!  IWK( i ) WILL BE USED AS A LIST OF LINKS CHAINING THE ELEMENTS USING
+!  VARIABLE I. IF IWK( i ) is NEGATIVE, THE LIST is EMPTY.
 
 !DIR$ IVDEP
-      DO 20 I = 1, N
-         IWK( I ) = - 1
+      DO 20 i = 1, n
+         IWK( i ) = - 1
    20 CONTINUE
-      IIELTS = N
-      MAXSEL = 0
+      iielts = n
+      maxsel = 0
       IF ( .NOT. ALLLIN ) THEN
 
 !  LOOP OVER THE GROUP, CONSIDERING EACH NONLINEAR ELEMENT IN TURN.
 
-         DO 50 I = 1, NGEL
-            IEL = IELING( I )
-            MAXSEL = MAX( MAXSEL, ISTAEV( IEL + 1 ) - ISTAEV( IEL ) )
+         DO 50 i = 1, ngel
+            iel = IELING( i )
+            maxsel = MAX( maxsel, ISTAEV( iel + 1 ) - ISTAEV( iel ) )
 
 !  LOOP ON THE VARIABLES FROM THE I-TH ELEMENT.
 
-            DO 40 K = ISTAEV( IEL ), ISTAEV( IEL + 1 ) - 1
-               IENTRY = IELVAR( K )
-               IF ( IWK( IENTRY ) >= 0 ) THEN
+            DO 40 k = ISTAEV( iel ), ISTAEV( iel + 1 ) - 1
+               ientry = IELVAR( k )
+               IF ( IWK( ientry ) >= 0 ) THEN
 
 !  IF WE HAVE REACHED THE END OF THE LIST OF THE ELEMENTS USING
-!  THE VARIABLE IELVAR( K ), ADD THE IEL-TH ELEMENT TO IT.
-!  OTHERWISE, FIND THE NEXT ENTRY IN THE LIST.
+!  THE VARIABLE IELVAR( k ), ADD THE IEL-TH ELEMENT TO IT.
+!  OTHERWISE, FIND THE next ENTRY IN THE LIST.
 
    30             CONTINUE
-                  IF ( IWK( IENTRY ) > 0 ) THEN
-                     IENTRY = IWK( IENTRY )
+                  IF ( IWK( ientry ) > 0 ) THEN
+                     ientry = IWK( ientry )
                      GO TO 30
                   ELSE
-                     IIELTS = IIELTS + 1
-                     IF ( IIELTS > LIWK ) THEN
-                        WRITE( IOUT, 2030 ) IIELTS - LIWK
-                        INFORM = 4
+                     iielts = iielts + 1
+                     IF ( iielts > liwk ) THEN
+                        WRITE( iout, 2030 ) iielts - liwk
+                        inform = 4
                         RETURN
                      END IF
-                     IWK( IENTRY ) = IIELTS
-                     IWK( IIELTS ) = 0
+                     IWK( ientry ) = iielts
+                     IWK( iielts ) = 0
                   END IF
                ELSE
 
-!  THE LIST OF ELEMENTS INVOLVING THE VARIABLE IELVAR( K ) WAS
+!  THE LIST OF ELEMENTS INVOLVING THE VARIABLE IELVAR( k ) WAS
 !  PREVIOUSLY EMPTY. INDICATE THAT THE LIST HAS NOW BEEN STARTED AND
 !  THAT ITS END HAS BEEN REACHED.
 
-                  IWK( IENTRY ) = 0
+                  IWK( ientry ) = 0
                END IF
    40       CONTINUE
    50    CONTINUE
@@ -182,158 +182,158 @@
 
 ! -- CALCULATE THE STARTING ADDRESSES FOR THE INTEGER WORKSPACE. --
 
-!  IWK( LSPTRS + J ), J = 1, ..., IIELTS,  WILL CONTAIN THE LINKS FOR
+!  IWK( lsptrs + j ), j = 1, ..., iielts,  WILL CONTAIN THE LINKS FOR
 !  THE LISTS OF NONLINEAR ELEMENTS WHICH USE EACH VARIABLE.
 
-      LSPTRS = 0
+      lsptrs = 0
 
-!  IWK( LSELTS + J ), J = 1, ..., IIELTS, WILL CONTAIN THE LISTS OF
+!  IWK( lselts + j ), j = 1, ..., iielts, WILL CONTAIN THE LISTS OF
 !  NONLINEAR ELEMENTS CORRESPONDING TO THE PREVIOUSLY MENTIONED LINKS.
 
-      LSELTS = LSPTRS + IIELTS
+      lselts = lsptrs + iielts
 
-!  IWK( LINDEX + J ), J = 1, ..., N, WILL CONTAIN THE STATUS OF THE
+!  IWK( lindex + j ), j = 1, ..., n, WILL CONTAIN THE STATUS OF THE
 !  J-TH VARIABLE AS THE CURRENT ITERATION PROGRESSES. POSSIBLE VALUES
 !  ARE 0 IF THE VARIABLE LIES AWAY FROM ITS BOUNDS, 1 AND 2 IF IT LIES
 !  ON ITS LOWER OR UPPER BOUNDS (RESPECTIVELY) - THESE MAY BE PROBLEM
-!  BOUNDS OR TRUST REGION BOUNDS, AND 3 IF THE VARIABLE IS FIXED.
+!  BOUNDS OR TRUST REGION BOUNDS, AND 3 IF THE VARIABLE is FIXED.
 
-      LINDEX = LSELTS + IIELTS
+      lindex = lselts + iielts
 
-!  IWK( LSWKSP + J ), J = 1, ..., MAX( NGEL, NEL, N + N ), IS USED FOR
+!  IWK( lswksp + j ), j = 1, ..., MAX( ngel, nel, n + n ), is USED FOR
 !  WORKSPACE BY THE MATRIX-VECTOR PRODUCT SUBROUTINE HESPRD.
 
-      LSWKSP = LINDEX + N
+      lswksp = lindex + n
 
-!  IWK( LIUSED + J ), J = 1, ..., MAX( N, NG ) WILL BE USED AS
+!  IWK( liused + j ), j = 1, ..., MAX( n, ng ) WILL BE USED AS
 !  WORKSPACE BY THE MATRIX-VECTOR PRODUCT SUBROUTINE HESPRD.
 
       IF ( DIRECT ) THEN
-         LIUSED = LSWKSP + MAX( NGEL, NEL, N + N )
+         liused = lswksp + MAX( ngel, nel, n + n )
       ELSE
-         LIUSED = LSWKSP + MAX( NGEL, NEL, N )
+         liused = lswksp + MAX( ngel, nel, n )
       END IF
 
-!  IWK( LFREED + J ), J = 1, ..., NFREEC WILL GIVE THE INDICES OF THE
+!  IWK( LFREED + j ), j = 1, ..., NFREEC WILL GIVE THE INDICES OF THE
 !  VARIABLES WHICH ARE CONSIDERED TO BE FREE FROM THEIR BOUNDS AT THE
 !  CURRENT GENERALIZED CAUCHY POINT.
 
-      LFREEC = LIUSED + MAX( N, NG )
+      lfreec = liused + MAX( n, ng )
 
-!  IWK( LNNONZ + J ), J = 1, ..., NNNONZ WILL GIVE THE INDICES OF THE
+!  IWK( lnnonz + j ), j = 1, ..., NNNONZ WILL GIVE THE INDICES OF THE
 !  NONZEROS IN THE VECTOR OBTAINED AS A RESULT OF THE MATRIX-VECTOR
 !  PRODUCT FROM SUBROUTINE HESPRD.
 
-      LNNONZ = LFREEC + N
+      lnnonz = lfreec + n
 
-!  IWK( LNONZ2 + J ), J = 1, ..., NG, WILL BE USED AS FURTHER
+!  IWK( lnonz2 + j ), j = 1, ..., ng, WILL BE USED AS FURTHER
 !  WORKSPACE BY THE MATRIX-VECTOR PRODUCT SUBROUTINE HESPRD.
 
-      LNONZ2 = LNNONZ + N
+      lnonz2 = lnnonz + n
 
-!  IWK( LSYMMD + J ), J = 1, ..., MAXSIN, WILL GIVE THE LOCATION OF
-!  THE J-TH DIAGONAL OF A MAXSIN BY MAXSIN SYMMETRIC MATRIX IN AN
+!  IWK( lsymmd + j ), j = 1, ..., maxsin, WILL GIVE THE LOCATION OF
+!  THE J-TH DIAGONAL OF A maxsin BY maxsin SYMMETRIC MATRIX IN AN
 !  UPPER TRIANGULAR STORAGE SCHEME.
 
-      LSYMMD = LNONZ2 + NG
+      lsymmd = lnonz2 + ng
 
-!  IWK( LSYMMH + ( I - 1 ) * MAXSIN + J ), I, J = 1, ..., MAXSIN,
-!  WILL GIVE THE LOCATION OF THE (I,J)-TH ENTRY OF A MAXSIN BY
-!  MAXSIN SYMMETRIC MATRIX IN AN UPPER TRIANGULAR STORAGE SCHEME.
+!  IWK( lsymmh + ( i - 1 ) * maxsin + j ), i, j = 1, ..., maxsin,
+!  WILL GIVE THE LOCATION OF THE (I,J)-TH ENTRY OF A maxsin BY
+!  maxsin SYMMETRIC MATRIX IN AN UPPER TRIANGULAR STORAGE SCHEME.
 
-      LSYMMH = LSYMMD + MAXSIN
+      lsymmh = lsymmd + maxsin
 
-!  IWK( LSLGRP + J ), J = 1, ..., NGEL, WILL CONTAIN THE NUMBER OF
+!  IWK( lslgrp + j ), j = 1, ..., ngel, WILL CONTAIN THE NUMBER OF
 !  THE GROUP WHICH USES NONLINEAR ELEMENT J.
 
-      LSLGRP = LSYMMH + MAXSIN * MAXSIN
+      lslgrp = lsymmh + maxsin * maxsin
 
-!  IWK( LSTAJC + J ), J = 1, ..., N, WILL CONTAIN THE STARTING
+!  IWK( lstajc + j ), j = 1, ..., n, WILL CONTAIN THE STARTING
 !  ADDRESSES FOR THE LIST OF NONTRIVIAL GROUP  WHICH USE THE
-!  J-TH VARIABLE. IWK( LSTAJC + N + 1 ) WILL POINT TO THE FIRST FREE
+!  J-TH VARIABLE. IWK( lstajc + n + 1 ) WILL POINT TO THE FIRST FREE
 !  LOCATION IN IWK AFTER THE LIST OF NONTRIVIAL GROUP  FOR THE
 !  N-TH VARIABLE.
 
-      LSTAJC = LSLGRP + NGEL
+      lstajc = lslgrp + ngel
 
-!  IWK( LSTAGV + J ), J = 1, ..., NG, WILL CONTAIN THE STARTING
+!  IWK( lstagv + j ), j = 1, ..., ng, WILL CONTAIN THE STARTING
 !  ADDRESSES FOR THE LIST OF VARIABLES WHICH OCCUR IN THE J-TH GROUP.
-!  IWK( LSTAGV + NG + 1 ) WILL POINT TO THE FIRST FREE LOCATION
+!  IWK( lstagv + ng + 1 ) WILL POINT TO THE FIRST FREE LOCATION
 !  IN IWK AFTER THE LIST OF VARIABLES FOR THE NG-TH GROUP.
 
-      LSTAGV = LSTAJC + N + 1
+      lstagv = lstajc + n + 1
 
-!  IWK( LSVGRP + J ), J = 1, ..., NVARGP, WILL CONTAIN THE INDICES OF
-!  THE VARIABLES WHICH ARE USED BY EACH GROUP IN TURN. THOSE FOR GROUP I
-!  OCCUR IN LOCATIONS IWK( LSTAGV + I ) TO IWK( LSTAGV + I + 1 ) - 1.
+!  IWK( lsvgrp + j ), j = 1, ..., nvargp, WILL CONTAIN THE INDICES OF
+!  THE VARIABLES WHICH ARE USED BY EACH GROUP IN TURN. THOSE FOR GROUP i
+!  OCCUR IN LOCATIONS IWK( lstagv + i ) TO IWK( lstagv + i + 1 ) - 1.
 
-      LSVGRP = LSTAGV + NG + 1
+      lsvgrp = lstagv + ng + 1
 
-!  CHECK THAT THERE IS SUFFICIENT WORKSPACE.
+!  CHECK THAT THERE is SUFFICIENT WORKSPACE.
 
-      IF ( LSVGRP > LIWK ) THEN
-         WRITE( IOUT, 2030 ) LSVGRP - LIWK
-         INFORM = 4
+      IF ( lsvgrp > liwk ) THEN
+         WRITE( iout, 2030 ) lsvgrp - liwk
+         inform = 4
          RETURN
       END IF
 
-!  IWK( LGCOLJ + J ), J = 1, ..., NVARGP, WILL CONTAIN THE INDICES OF
+!  IWK( lgcolj + j ), j = 1, ..., nvargp, WILL CONTAIN THE INDICES OF
 !  THE NONTRIVIAL GROUP  WHICH USE EACH VARIABLE IN TURN. THOSE FOR
-!  VARIABLE I OCCUR IN LOCATIONS IWK( LSTAJC + I ) TO
-!  IWK( LSTAJC + I + 1 ) - 1.
+!  VARIABLE i OCCUR IN LOCATIONS IWK( lstajc + i ) TO
+!  IWK( lstajc + i + 1 ) - 1.
 
-      LGCOLJ = LSVGRP + 1
+      lgcolj = lsvgrp + 1
 
 !  DETERMINE WHICH ELEMENTS USE EACH VARIABLE. INITIALIZATION.
 
       IF ( .NOT. ALLLIN ) THEN
 
-!  IWK( I ) WILL BE USED AS A LIST OF LINKS CHAINING THE ELEMENTS USING
-!  VARIABLE I. IF IWK( I ) IS NEGATIVE, THE LIST IS EMPTY.
+!  IWK( i ) WILL BE USED AS A LIST OF LINKS CHAINING THE ELEMENTS USING
+!  VARIABLE I. IF IWK( i ) is NEGATIVE, THE LIST is EMPTY.
 
 !DIR$ IVDEP
-         DO 100 I = 1, N
-            IWK( I ) = - 1
+         DO 100 i = 1, n
+            IWK( i ) = - 1
   100    CONTINUE
-         IIELTS = N
+         iielts = n
 
 !  LOOP OVER THE GROUP, CONSIDERING EACH NONLINEAR ELEMENT IN TURN.
 
-         DO 130 I = 1, NGEL
-            IEL = IELING( I )
+         DO 130 i = 1, ngel
+            iel = IELING( i )
 
 !  LOOP ON THE VARIABLES OF THE I-TH ELEMENT.
 
-            DO 120 K = ISTAEV( IEL ), ISTAEV( IEL + 1 ) - 1
-               IENTRY = IELVAR( K )
-               IF ( IWK( IENTRY ) >= 0 ) THEN
+            DO 120 k = ISTAEV( iel ), ISTAEV( iel + 1 ) - 1
+               ientry = IELVAR( k )
+               IF ( IWK( ientry ) >= 0 ) THEN
 
 !  IF WE HAVE REACHED THE END OF THE LIST OF THE ELEMENTS USING
-!  THE VARIABLE IELVAR( K ), ADD THE I-TH ELEMENT TO IT AND
+!  THE VARIABLE IELVAR( k ), ADD THE I-TH ELEMENT TO IT AND
 !  RECORD THAT THE END OF THE LIST HAS OCCURED.
-!  OTHERWISE, FIND THE NEXT ENTRY IN THE LIST.
+!  OTHERWISE, FIND THE next ENTRY IN THE LIST.
 
   110             CONTINUE
-                  IF ( IWK( IENTRY ) > 0 ) THEN
-                     IENTRY = IWK( IENTRY )
+                  IF ( IWK( ientry ) > 0 ) THEN
+                     ientry = IWK( ientry )
                      GO TO 110
                   ELSE
-                     IIELTS = IIELTS + 1
-                     IWK( IENTRY ) = IIELTS
-                     IWK( LSELTS + IIELTS ) = I
-!                    IWK( LSELTS + IIELTS ) = IEL
-                     IWK( IIELTS ) = 0
+                     iielts = iielts + 1
+                     IWK( ientry ) = iielts
+                     IWK( lselts + iielts ) = i
+!                    IWK( lselts + iielts ) = iel
+                     IWK( iielts ) = 0
                   END IF
                ELSE
 
-!  THE LIST OF ELEMENTS INVOLVING THE VARIABLE IELVAR( K ) WAS
+!  THE LIST OF ELEMENTS INVOLVING THE VARIABLE IELVAR( k ) WAS
 !  PREVIOUSLY EMPTY. INDICATE THAT THE LIST HAS NOW BEEN STARTED,
 !  RECORD THE ELEMENT WHICH CONTAINS THE VARIABLE AND INDICATE
 !  THAT THE END OF THE LIST HAS BEEN REACHED.
 
-                  IWK( LSELTS + IENTRY ) = I
-!                 IWK( LSELTS + IENTRY ) = IEL
-                  IWK( IENTRY ) = 0
+                  IWK( lselts + ientry ) = i
+!                 IWK( lselts + ientry ) = iel
+                  IWK( ientry ) = 0
                END IF
   120       CONTINUE
   130    CONTINUE
@@ -342,102 +342,102 @@
 !  SET UP SYMMETRIC ADDRESSES FOR THE UPPER TRIANGULAR STORAGE
 !  SCHEMES FOR THE ELEMENT HESSIANS.
 
-      IF ( MAXSIN > 0 ) CALL DSYMMH ( MAXSIN, IWK( LSYMMH + 1 ), &
-                                        IWK( LSYMMD + 1 ) )
+      IF ( maxsin > 0 ) CALL SYMMH ( maxsin, IWK( lsymmh + 1 ), &
+                                        IWK( lsymmd + 1 ) )
 
 !  SET UP THE STARTING ADDRESSES FOR THE ELEMENT HESSIANS
 !  WITH RESPECT TO THEIR INTERNAL VARIABLES AND A POINTER BEYOND
 !  THE END OF THE SPACE REQUIRED FOR THE HESSIANS.
 
-      LGGFX = INTVAR( NEL1 )
+      lggfx = INTVAR( nel1 )
       IF ( .NOT. ALLLIN ) THEN
-         DO 140 I = 1, NEL
-            ISTADH( I ) = LGGFX
-            NSIZEH = INTVAR( I + 1 ) - INTVAR( I )
-            LGGFX = LGGFX + NSIZEH * ( NSIZEH + 1 ) / 2
+         DO 140 i = 1, nel
+            ISTADH( i ) = lggfx
+            nsizeh = INTVAR( i + 1 ) - INTVAR( i )
+            lggfx = lggfx + nsizeh * ( nsizeh + 1 ) / 2
   140    CONTINUE
       END IF
-      ISTADH( NEL1 ) = LGGFX
+      ISTADH( nel1 ) = lggfx
 
 ! -- CALCULATE THE STARTING ADDRESSES FOR THE REAL WORKSPACE. --
 
-!  WK( LQGRAD + J ), J = 1, ..., N, WILL CONTAIN THE GRADIENT OF
+!  WK( lqgrad + j ), j = 1, ..., n, WILL CONTAIN THE GRADIENT OF
 !  THE QUADRATIC MODEL AT THE CURRENT ESTIMATE OF THE MINIMIZER.
 
-      LQGRAD = MAX( MAX( NG, MAXSEL ) + 2 * MAXSIN, &
-                    N + NINVAR + MAX( MAXSEL, NINVAR ) )
+      lqgrad = MAX( MAX( ng, maxsel ) + 2 * maxsin, &
+                    n + ninvar + MAX( maxsel, ninvar ) )
 
-!  WK( LBREAK + J ), J = 1, ..., N, WILL CONTAIN THE BREAKPOINTS
+!  WK( lbreak + j ), j = 1, ..., n, WILL CONTAIN THE BREAKPOINTS
 !  ALONG THE CAUCHY ARC FROM THE CURRENT ESTIMATE OF THE MINIMIZER.
 
-      LBREAK = LQGRAD + N
+      lbreak = lqgrad + n
 
-!  WK( LP + J ), J = 1, ..., N, WILL CONTAIN THE VECTOR REQUIRED
+!  WK( lp + j ), j = 1, ..., n, WILL CONTAIN THE VECTOR REQUIRED
 !  BY THE MATRIX-VECTOR PRODUCT SUBROUTINE HESPRD.
 
-      LP = LBREAK + N
+      lp = lbreak + n
 
-!  WK( LXCP + J ), J = 1, ..., N, WILL CONTAIN THE CURRENT
+!  WK( lxcp + j ), j = 1, ..., n, WILL CONTAIN THE CURRENT
 ! (APPROXIMATE) CAUCHY POINT.
 
-      LXCP = LP + N
+      lxcp = lp + n
 
-!  WK( LX0 + J ), J = 1, ..., N, WILL CONTAIN THE CURRENT
-!  START OF THE CAUCHY SEARCH. THIS FEATURE IS ONLY USED IF
-!  MORE THAN ONE CYCLE IS USED TO SOLVE THE BQP ACCURATELY.
+!  WK( lx0 + j ), j = 1, ..., n, WILL CONTAIN THE CURRENT
+!  START OF THE CAUCHY SEARCH. THIS FEATURE is ONLY USED IF
+!  MORE THAN one CYCLE is USED TO SOLVE THE BQP ACCURATELY.
 
-      LX0 = LXCP + N
+      lx0 = lxcp + n
 
-!  WK( LGX0 + J ), J = 1, ..., N, WILL CONTAIN THE GRADIENT AT THE
-!  CURRENT START OF THE CAUCHY SEARCH. THIS FEATURE IS ONLY USED IF
-!  MORE THAN ONE CYCLE IS USED TO SOLVE THE BQP ACCURATELY.
+!  WK( lgx0 + j ), j = 1, ..., n, WILL CONTAIN THE GRADIENT AT THE
+!  CURRENT START OF THE CAUCHY SEARCH. THIS FEATURE is ONLY USED IF
+!  MORE THAN one CYCLE is USED TO SOLVE THE BQP ACCURATELY.
 
-      LGX0 = LX0 + N
+      lgx0 = lx0 + n
 
-!  WK( LDELTX + J ), J = 1, ..., N, WILL CONTAIN THE STEP TAKEN
-!  DURING A SINGLE CYCLE, IF MORE THAN ONE CYCLE IS USED TO SOLVE
+!  WK( ldeltx + j ), j = 1, ..., n, WILL CONTAIN THE STEP TAKEN
+!  DURING A SINGLE CYCLE, IF MORE THAN one CYCLE is USED TO SOLVE
 !  THE BQP ACCURATELY.
 
-      LDELTX = LGX0 + N
+      ldeltx = lgx0 + n
 
-!  WK( LBND + 2 * ( J - 1 ) + I ), J = 1, ..., N, I = 1, 2, WILL
+!  WK( lbnd + 2 * ( j - 1 ) + i ), j = 1, ..., n, i = 1, 2, WILL
 !  CONTAIN THE CURRENT LOWER (I=1) AND UPPER (I=2) BOUNDS ON THE
 !  VARIABLES DEFINED BY THE INTERSECTION OF THE TRUST REGION WITH
 !  THE FEASIBLE BOX.
 
-      LBND = LDELTX + N
+      lbnd = ldeltx + n
 
-!  WK( LWKSTR + J ), J = 1, ..., LWK2, IS THE REMAINING REAL
-!  WORKSPACE WHICH IS FREE FOR OTHER PURPOSES, SUCH AS FOR FORMING
+!  WK( lwkstr + j ), j = 1, ..., lwk2, is THE REMAINING REAL
+!  WORKSPACE WHICH is FREE FOR OTHER PURPOSES, SUCH AS FOR FORMING
 !  THE FACTORIZATION OF THE MODEL HESSIAN, IF REQUIRED.
 
-      LWKSTR = LBND + N + N
-      LWK2 = LWK - LWKSTR
+      lwkstr = lbnd + n + n
+      lwk2 = lwk - lwkstr
 
-!  CHECK THAT THERE IS SUFFICIENT REAL WORKSPACE.
+!  CHECK THAT THERE is SUFFICIENT REAL WORKSPACE.
 
-      IF ( LWKSTR > LWK ) THEN
-         INFORM = 5
-         WRITE( IOUT, 2040 ) LWKSTR - LWK
+      IF ( lwkstr > lwk ) THEN
+         inform = 5
+         WRITE( iout, 2040 ) lwkstr - lwk
          RETURN
       END IF
 
 !  SET THE LENGTH OF EACH PARTITION OF THE REAL WORKSPACE ARRAY
 !  FUVALS FOR ARRAY BOUND CHECKING IN CALLS TO OTHER SUBPROGRAMS.
 
-      LNQGRD = LBREAK - LQGRAD
-      LNBRAK = LP - LBREAK
-      LNP = LXCP - LP
-      LNBND = LWKSTR - LBND
+      lnqgrd = lbreak - lqgrad
+      lnbrak = lp - lbreak
+      lnp = lxcp - lp
+      lnbnd = lwkstr - lbnd
 
 !  STORE THE INDICES OF VARIABLES WHICH APPEARS IN EACH GROUP
 !  AND HOW MANY GROUP  USE EACH VARIABLE. START BY INITIALIZING
 !  COUNTING ARRAYS TO ZERO.
 
 !DIR$ IVDEP
-      DO 150 J = 1, N
-         IWK( LSWKSP + J ) = 0
-         IWK( LSTAJC + J + 1 ) = 0
+      DO 150 j = 1, n
+         IWK( lswksp + j ) = 0
+         IWK( lstajc + j + 1 ) = 0
   150 CONTINUE
 
 !  ALTRIV SPECIFIES WHETHER ALL THE GROUP  ARE TRIVIAL.
@@ -446,13 +446,13 @@
 
 !  COUNT THE TOTAL NUMBER OF VARIABLES IN ALL THE GROUP, NVARGP.
 
-      NVARGP = 0
-      IWK( LSTAGV + 1 ) = 1
+      nvargp = 0
+      IWK( lstagv + 1 ) = 1
 
-!  LOOP OVER THE GROUP . SEE IF THE IG-TH GROUP IS TRIVIAL.
+!  LOOP OVER THE GROUP . SEE IF THE IG-TH GROUP is TRIVIAL.
 
-      DO 200 IG = 1, NG
-         NONTRV = .NOT. GXEQX( IG )
+      DO 200 ig = 1, ng
+         NONTRV = .NOT. GXEQX( ig )
 
 !  CHECK TO SEE IF ALL OF THE GROUP  ARE TRIVIAL.
 
@@ -460,146 +460,146 @@
 
 !  LOOP OVER THE NONLINEAR ELEMENTS FROM THE IG-TH GROUP.
 
-         DO 170 K = ISTADG( IG ), ISTADG( IG + 1 ) - 1
-            IEL = IELING( K )
+         DO 170 k = ISTADG( ig ), ISTADG( ig + 1 ) - 1
+            iel = IELING( k )
 
 !  RUN THROUGH ALL THE ELEMENTAL VARIABLES CHANGING THE I-TH ENTRY OF
-!  IWK( LSWKSP ) FROM ZERO TO ONE IF VARIABLE I APPEARS IN AN ELEMENT.
+!  IWK( lswksp ) FROM zero TO one IF VARIABLE i APPEARS IN AN ELEMENT.
 
-            DO 160 J = ISTAEV( IEL ), ISTAEV( IEL + 1 ) - 1
-               I = IELVAR( J )
-               IF ( IWK( LSWKSP + I ) == 0 ) THEN
-                  IWK( LSWKSP + I ) = 1
+            DO 160 j = ISTAEV( iel ), ISTAEV( iel + 1 ) - 1
+               i = IELVAR( j )
+               IF ( IWK( lswksp + i ) == 0 ) THEN
+                  IWK( lswksp + i ) = 1
 
-!  IF THERE IS SUFFICIENT ROOM, RECORD THE NONLINEAR VARIABLES FROM
+!  IF THERE is SUFFICIENT ROOM, RECORD THE NONLINEAR VARIABLES FROM
 !  THE IG-TH GROUP.
 
-                  IF ( LGCOLJ > LIWK ) THEN
-                     WRITE( IOUT, 2030 ) LGCOLJ - LIWK
-                     INFORM = 4
+                  IF ( lgcolj > liwk ) THEN
+                     WRITE( iout, 2030 ) lgcolj - liwk
+                     inform = 4
                      RETURN
                   END IF
-                  IWK( LGCOLJ ) = I
-                  LGCOLJ = LGCOLJ + 1
-                  NVARGP = NVARGP + 1
+                  IWK( lgcolj ) = i
+                  lgcolj = lgcolj + 1
+                  nvargp = nvargp + 1
                END IF
   160       CONTINUE
 
-!  RECORD THAT NONLINEAR ELEMENT K OCCURS IN GROUP IELGRP(IEL).
+!  RECORD THAT NONLINEAR ELEMENT k OCCURS IN GROUP IELGRP(IEL).
 
-            IWK( LSLGRP + K ) = IG
+            IWK( lslgrp + k ) = ig
   170    CONTINUE
 
 !  CONSIDER VARIABLES WHICH ARISE FROM THE LINEAR ELEMENT.
 
-         DO 180 J = ISTADA( IG ), ISTADA( IG + 1 ) - 1
-            I = ICNA( J )
-            IF ( IWK( LSWKSP + I ) == 0 ) THEN
-               IWK( LSWKSP + I ) = 1
+         DO 180 j = ISTADA( ig ), ISTADA( ig + 1 ) - 1
+            i = ICNA( j )
+            IF ( IWK( lswksp + i ) == 0 ) THEN
+               IWK( lswksp + i ) = 1
 
-!  IF THERE IS SUFFICIENT ROOM, RECORD THE LINEAR VARIABLES FROM
+!  IF THERE is SUFFICIENT ROOM, RECORD THE LINEAR VARIABLES FROM
 !  THE IG-TH GROUP.
 
-               IF ( LGCOLJ > LIWK ) THEN
-                  WRITE( IOUT, 2030 ) LGCOLJ - LIWK
-                  INFORM = 4
+               IF ( lgcolj > liwk ) THEN
+                  WRITE( iout, 2030 ) lgcolj - liwk
+                  inform = 4
                   RETURN
                END IF
-               IWK( LGCOLJ ) = I
-               LGCOLJ = LGCOLJ + 1
-               NVARGP = NVARGP + 1
+               IWK( lgcolj ) = i
+               lgcolj = lgcolj + 1
+               nvargp = nvargp + 1
             END IF
   180    CONTINUE
 
-!  RESET THE STATUS ARRAY IWK( LSWKSP ) TO ZERO.
+!  RESET THE STATUS ARRAY IWK( lswksp ) TO ZERO.
 
-         DO 190 J = IWK( LSTAGV + IG ), NVARGP
-            L = IWK( LSVGRP + J )
-            IWK( LSWKSP + L ) = 0
+         DO 190 j = IWK( lstagv + ig ), nvargp
+            l = IWK( lsvgrp + j )
+            IWK( lswksp + l ) = 0
 
-!  RECORD THAT ONE FURTHER NONTRIVIAL GROUP USES VARIABLE L.
+!  RECORD THAT one FURTHER NONTRIVIAL GROUP USES VARIABLE L.
 
-            IF ( NONTRV ) IWK( LSTAJC + L + 1 ) = &
-                          IWK( LSTAJC + L + 1 ) + 1
+            IF ( NONTRV ) IWK( lstajc + l + 1 ) = &
+                          IWK( lstajc + l + 1 ) + 1
   190    CONTINUE
 
-!  RECORD THE STARTING ADDRESS OF THE VARIABLES IN THE NEXT GROUP.
+!  RECORD THE STARTING ADDRESS OF THE VARIABLES IN THE next GROUP.
 
-         IWK( LSTAGV + IG + 1 ) = NVARGP + 1
+         IWK( lstagv + ig + 1 ) = nvargp + 1
   200 CONTINUE
 
 ! -- CONTINUE SETTING STARTING ADDRESSES FOR PARTITIONS OF IWK. --
 
-!  IWK( LVALJR + J ), J = 1, ..., NVARGP, WILL CONTAIN THE POSITIONS IN
+!  IWK( lvaljr + j ), j = 1, ..., nvargp, WILL CONTAIN THE POSITIONS IN
 !  FUVALS (RELATIVE TO THE STARTING ADDRESS LGRJAC) OF THE NONZEROS OF
 !  THE JACOBIAN OF THE GROUP  CORRESPONDING TO THE VARIABLES AS ORDERED
-!  IN IWK( LSVGRP + J ).
+!  IN IWK( lsvgrp + j ).
 
-      LVALJR = LGCOLJ + NVARGP
+      lvaljr = lgcolj + nvargp
 
-!  LSEND GIVES THE TOTAL FIXED AMOUNT OF INTEGER WORKSPACE USED. LIWK2
-!  GIVES THE AMOUNT OF WORKSPACE WHICH IS FREE FOR OTHER PURPOSES, SUCH
+!  lsend GIVES THE TOTAL FIXED AMOUNT OF INTEGER WORKSPACE USED. liwk2
+!  GIVES THE AMOUNT OF WORKSPACE WHICH is FREE FOR OTHER PURPOSES, SUCH
 !  AS FOR FORMING THE FACTORIZATION OF THE MODEL HESSIAN, IF REQUIRED.
 
-      LSEND = LVALJR + NVARGP
+      lsend = lvaljr + nvargp
 
-!  CHECK THAT THERE IS SUFFICIENT INTEGER WORKSPACE.
+!  CHECK THAT THERE is SUFFICIENT INTEGER WORKSPACE.
 
-      IF ( LSEND > LIWK ) THEN
-         WRITE( IOUT, 2030 ) LSEND - LIWK
-         INFORM = 4
+      IF ( lsend > liwk ) THEN
+         WRITE( iout, 2030 ) lsend - liwk
+         inform = 4
          RETURN
       END IF
 
 !  SET THE LENGTH OF EACH PARTITION OF THE INTEGER WORKSPACE FOR
 !  ARRAY BOUND CHECKING IN CALLS TO OTHER SUBPROGRAMS.
 
-      LNPTRS = MAX( 1, LSELTS - LSPTRS )
-      LNELTS = MAX( 1, LINDEX - LSELTS )
-      LNNDEX = MAX( 1, LSWKSP - LINDEX )
-      LNWKSP = MAX( 1, LIUSED - LSWKSP )
-      LNIUSE = MAX( 1, LFREEC - LIUSED )
-      LNFREC = MAX( 1, LNNONZ - LFREEC )
-      LNNNON = MAX( 1, LNONZ2 - LNNONZ )
-      LNNNO2 = MAX( 1, LSYMMD - LNONZ2 )
-      LNSYMD = MAX( 1, LSYMMH - LSYMMD )
-      LNSYMH = MAX( 1, LSLGRP - LSYMMH )
-      LNLGRP = MAX( 1, LSTAJC - LSLGRP )
-      LNSTJC = MAX( 1, LSTAGV - LSTAJC )
-      LNSTGV = MAX( 1, LSVGRP - LSTAGV )
-      LNVGRP = MAX( 1, LGCOLJ - LSVGRP )
-      LNGCLJ = MAX( 1, LVALJR - LGCOLJ )
-      LNVLJR = MAX( 1, LSEND - LVALJR )
+      lnptrs = MAX( 1, lselts - lsptrs )
+      lnelts = MAX( 1, lindex - lselts )
+      lnndex = MAX( 1, lswksp - lindex )
+      lnwksp = MAX( 1, liused - lswksp )
+      lniuse = MAX( 1, lfreec - liused )
+      lnfrec = MAX( 1, lnnonz - lfreec )
+      lnnnon = MAX( 1, lnonz2 - lnnonz )
+      lnnno2 = MAX( 1, lsymmd - lnonz2 )
+      lnsymd = MAX( 1, lsymmh - lsymmd )
+      lnsymh = MAX( 1, lslgrp - lsymmh )
+      lnlgrp = MAX( 1, lstajc - lslgrp )
+      lnstjc = MAX( 1, lstagv - lstajc )
+      lnstgv = MAX( 1, lsvgrp - lstagv )
+      lnvgrp = MAX( 1, lgcolj - lsvgrp )
+      lngclj = MAX( 1, lvaljr - lgcolj )
+      lnvljr = MAX( 1, lsend - lvaljr )
 
 !  SET THE STARTING ADDRESSES FOR THE LISTS OF NONTRIVIAL GROUP 
 !  WHICH USE EACH VARIABLE IN TURN.
 
-      K = LSTAJC + 1
-      IWK( K ) = 1
-      DO 210 I = 2, N + 1
-         K = K + 1
-         IWK( K ) = IWK( K ) + IWK( K - 1 )
+      k = lstajc + 1
+      IWK( k ) = 1
+      DO 210 i = 2, n + 1
+         k = k + 1
+         IWK( k ) = IWK( k ) + IWK( k - 1 )
   210 CONTINUE
 
 !  CONSIDER THE IG-TH GROUP IN ORDER TO ASSOCIATE VARIABLES WITH GROUP .
 
-      DO 230 IG = 1, NG
-         IF ( .NOT. GXEQX( IG ) ) THEN
-            DO 220 I = IWK( LSTAGV + IG ), IWK( LSTAGV + IG + 1 ) - 1
-                L = LSTAJC + IWK( LSVGRP + I )
+      DO 230 ig = 1, ng
+         IF ( .NOT. GXEQX( ig ) ) THEN
+            DO 220 i = IWK( lstagv + ig ), IWK( lstagv + ig + 1 ) - 1
+                l = lstajc + IWK( lsvgrp + i )
 
-!  RECORD THAT GROUP IG USES VARIABLE IWK( LSVGRP + I ).
+!  RECORD THAT GROUP ig USES VARIABLE IWK( lsvgrp + i ).
 
-               J = IWK( L )
-               IWK( LGCOLJ + J ) = IG
+               j = IWK( l )
+               IWK( lgcolj + j ) = ig
 
 !  STORE THE LOCATIONS IN THE JACOBIAN OF THE GROUP  OF THE NONZEROS
 !  CORRESPONDING TO EACH VARIABLE IN THE IG-TH GROUP. INCREMENT THE
-!  STARTING ADDRESS FOR THE POINTER TO THE NEXT GROUP USING VARIABLE
-!  IWK( LSVGRP + I ).
+!  STARTING ADDRESS FOR THE POINTER TO THE next GROUP USING VARIABLE
+!  IWK( lsvgrp + i ).
 
-               IWK( LVALJR + I ) = J
-               IWK( L ) = J + 1
+               IWK( lvaljr + i ) = j
+               IWK( l ) = j + 1
   220      CONTINUE
          END IF
   230 CONTINUE
@@ -607,17 +607,17 @@
 !  RESET THE STARTING ADDRESSES FOR THE LISTS OF GROUP  USING
 !  EACH VARIABLE.
 
-      DO 240 I = N, 2, - 1
-         L = LSTAJC + I
-         IWK( L ) = IWK( L - 1 )
+      DO 240 i = n, 2, - 1
+         l = lstajc + i
+         IWK( l ) = IWK( l - 1 )
   240 CONTINUE
-      IWK( LSTAJC + 1 ) = 1
+      IWK( lstajc + 1 ) = 1
 
 !  INITIALIZE WORKSPACE VALUES FOR SUBROUTINE HESPRD.
 
 !DIR$ IVDEP
-      DO 250 J = 1, MAX( N, NG )
-         IWK( LIUSED + J ) = 0
+      DO 250 j = 1, MAX( n, ng )
+         IWK( liused + j ) = 0
   250 CONTINUE
 
 !  DEFINE FURTHER PARTITIONS OF THE WORKSPACE WHENEVER FINITE-
@@ -627,44 +627,44 @@
 
 ! -- CONTINUE SETTING STARTING ADDRESSES FOR PARTITIONS OF IWK. --
 
-!  THE RANGE TRANSFORMATION FOR EACH NONLINEAR ELEMENT IS OF A GIVEN
-!  TYPE. SUPPOSE THERE ARE NTYPE NON-TRIVIAL TYPES. IWK( LSTYPE + I )
-!  GIVES THE TYPE OF NONLINEAR ELEMENT I FOR I = 1, ...., NEL.
+!  THE RANGE TRANSFORMATION FOR EACH NONLINEAR ELEMENT is OF A GIVEN
+!  TYPE. SUPPOSE THERE ARE ntype NON-TRIVIAL TYPES. IWK( lstype + i )
+!  GIVES THE TYPE OF NONLINEAR ELEMENT i FOR i = 1, ...., NEL.
 
-         LSTYPE = LSEND
+         lstype = lsend
 
-!  THE RANGE TRANSFORMATION FROM ELEMENTAL TO INTERNAL VARIABLES IS
+!  THE RANGE TRANSFORMATION FROM ELEMENTAL TO INTERNAL VARIABLES is
 !  DEFINED BY A MATRIX W. FOR EACH NON-TRIVIAL TRANSFORMATION, THE
-!  MATRIX W IS RECORDED. THE INFORMATION FOR THE I-TH TYPE STARTS IN
-!  LOCATION LSWTRA + IWK( LSSWTR + I ), I = 1, ...., NTYPE.
+!  MATRIX W is RECORDED. THE INFORMATION FOR THE I-TH TYPE STARTS IN
+!  LOCATION lswtra + IWK( lsswtr + i ), i = 1, ...., NTYPE.
 
-         LSSWTR = LSTYPE + NEL
+         lsswtr = lstype + nel
 
 !  FOR EACH TYPE OF NONLINEAR ELEMENT USING A NONTRIVIAL RANGE
 !  TRANSFORMATION, INTEGER INFORMATION ISD ALSO RECORDED.
 !  THE INFORMATION FOR THE I-TH TYPE STARTS IN LOCATION
-!  LSIWTR + IWK( LSSIWT + I ), I = 1, ...., NTYPE.
+!  lsiwtr + IWK( lssiwt + i ), i = 1, ...., NTYPE.
 
-         LSSIWT = LSSWTR + NEL
+         lssiwt = lsswtr + nel
 
 !  THE FOLLOWING PIECES OF INTEGER INFORMATION ARE RECORDED ABOUT
 !  THE I-TH TYPE OF NONLINEAR ELEMENT:
 
-!    IWK( LSIWTR + IWK( LSSIWT + I ) + 1 ):
+!    IWK( lsiwtr + IWK( lssiwt + i ) + 1 ):
 !            THE NUMBER OF INTERNAL VARIABLES, NINVR.
-!    IWK( LSIWTR + IWK( LSSIWT + I ) + 2 ):
+!    IWK( lsiwtr + IWK( lssiwt + i ) + 2 ):
 !            THE NUMBER OF ELEMENTAL VARIABLES, NELVR.
-!    IWK( LSIWTR + IWK( LSSIWT + I ) + 2 + I ),
-!         I = 1, ..., NELVR + NINVR:
-!            PIVOT SEQUENCES FOR THE LU FACTORS OF W.
+!    IWK( lsiwtr + IWK( lssiwt + i ) + 2 + i ),
+!         i = 1, ..., nelvr + NINVR:
+!            PIVOT SEQUENCES FOR THE lu FACTORS OF W.
 
-!  AFTER THE FACTORIZATION AND COMPRESSION, ONLY NINVR LINEARLY
+!  AFTER THE FACTORIZATION AND COMPRESSION, ONLY ninvr LINEARLY
 !  INDEPENDENT COLUMNS OF W ARE STORED.
 
-         LSIWTR = LSSIWT + NEL
-         IF ( LIWK < LSIWTR ) THEN
-            WRITE( IOUT, 2030 ) LSIWTR - LIWK
-            INFORM = 4
+         lsiwtr = lssiwt + nel
+         IF ( liwk < lsiwtr ) THEN
+            WRITE( iout, 2030 ) lsiwtr - liwk
+            inform = 4
             RETURN
          END IF
 
@@ -673,216 +673,216 @@
 !  THE FOLLOWING PIECES OF INTEGER INFORMATION ARE RECORDED ABOUT
 !  THE I-TH TYPE OF NONLINEAR ELEMENT:
 
-!    IWK( LSWTRA + IWK( LSSWTR + I ) + I ),
-!         I = 1, ..., NELVR * NINVR:  THE MATRIX W STORED BY COLUMNS.
+!    IWK( lswtra + IWK( lsswtr + i ) + i ),
+!         i = 1, ..., nelvr * NINVR:  THE MATRIX W STORED BY COLUMNS.
 
-!  AFTER THE FACTORIZATION AND COMPRESSION, ONLY NINVR LINEARLY
+!  AFTER THE FACTORIZATION AND COMPRESSION, ONLY ninvr LINEARLY
 !  INDEPENDENT COLUMNS OF W ARE STORED.
 
-         LSWTRA = LWKSTR
+         lswtra = lwkstr
 
 ! ---------------------------------------------------------------------
 !  CONSIDER ONLY ELEMENTS WHICH USE INTERNAL VARIABLES.
 ! ---------------------------------------------------------------------
 
-         NTYPE = 0
-         LWFREE = 1
-         LIWFRE = 1
+         ntype = 0
+         lwfree = 1
+         liwfre = 1
 
 !  LOOP OVER ALL NONLINEAR ELEMENTS.
 
-         DO 350 IEL = 1, NEL
-            IF ( INTREP( IEL ) ) THEN
+         DO 350 iel = 1, nel
+            IF ( INTREP( iel ) ) THEN
 
 !  CALCULATE THE RANGE TRANSFORMATION MATRIX W.
 
-               IS = ISTAEV( IEL )
-               NINVR = INTVAR( IEL + 1 ) - INTVAR( IEL )
-               NELVR = ISTAEV( IEL + 1 ) - IS
-               LW1 = LWFREE + NINVR * NELVR - 1
-               L = LSWTRA + LW1
+               is = ISTAEV( iel )
+               ninvr = INTVAR( iel + 1 ) - INTVAR( iel )
+               nelvr = ISTAEV( iel + 1 ) - is
+               lw1 = lwfree + ninvr * nelvr - 1
+               l = lswtra + lw1
 !DIR$ IVDEP
-               DO 280 I = 1, NELVR
-                  WK( L + I ) = ZERO
+               DO 280 i = 1, nelvr
+                  WK( l + i ) = zero
   280          CONTINUE
-               K = LSWTRA + LWFREE
-               IS = IS - 1
-               DO 320 I = 1, NELVR
-                  WK( L + I ) = ONE
-                  CALL RANGE ( IEL, .FALSE., WK( L + 1 ), &
-                               WK( K ), NELVR, NINVR,  &
-                               ITYPEE( IEL ), NELVR, NINVR )
-                  WK( L + I ) = ZERO
-                  K = K + NINVR
+               k = lswtra + lwfree
+               is = is - 1
+               DO 320 i = 1, nelvr
+                  WK( l + i ) = one
+                  CALL RANGE ( iel, .FALSE., WK( l + 1 ), &
+                               WK( k ), nelvr, ninvr,  &
+                               ITYPEE( iel ), nelvr, ninvr )
+                  WK( l + i ) = zero
+                  k = k + ninvr
 
 !  CHECK TO SEE IF ANY OF THE COLUMNS BELONG TO DUPLICATED VARIABLES.
 
-                  II = IELVAR( IS + I )
-                  DO 290 J = 1, I - 1
-                     IF ( IELVAR( IS + J ) == II ) GO TO 300
+                  ii = IELVAR( is + i )
+                  DO 290 j = 1, i - 1
+                     IF ( IELVAR( is + j ) == ii ) GO TO 300
   290             CONTINUE
                   GO TO 320
 
 !  AMALGAMATE COLUMNS FROM DUPLICATE VARIABLES.
 
   300             CONTINUE
-                  KK = LSWTRA + LWFREE + ( J - 1 ) * NINVR - 1
-                  LL = K - NINVR - 1
-                  DO 310 JJ = 1, NINVR
-                     WK( KK + JJ ) = WK( KK + JJ ) + WK( LL + JJ )
-                     WK( LL + JJ ) = ZERO
+                  kk = lswtra + lwfree + ( j - 1 ) * ninvr - 1
+                  ll = k - ninvr - 1
+                  DO 310 jj = 1, ninvr
+                     WK( kk + jj ) = WK( kk + jj ) + WK( ll + jj )
+                     WK( ll + jj ) = zero
   310             CONTINUE
   320          CONTINUE
 
 !  COMPARE THIS TRANSFORMATION MATRIX WITH PREVIOUS ONES.
 
-               DO 340 I = 1, NTYPE
-                  IF ( IWK( LSIWTR + IWK( LSSIWT + I ) ) /= NINVR &
-                       .OR. IWK( LSIWTR + IWK( LSSIWT + I ) + 1 ) &
-                       /= NELVR ) GO TO 340
-                  DO 330 J = 0, NINVR * NELVR - 1
-                     IF ( WK( LSWTRA + LWFREE + J ) /= WK( &
-                          LSWTRA + IWK( LSSWTR + I ) + J ) ) GO TO 340
+               DO 340 i = 1, ntype
+                  IF ( IWK( lsiwtr + IWK( lssiwt + i ) ) /= ninvr &
+                       .OR. IWK( lsiwtr + IWK( lssiwt + i ) + 1 ) &
+                       /= nelvr ) GO TO 340
+                  DO 330 j = 0, ninvr * nelvr - 1
+                     IF ( WK( lswtra + lwfree + j ) /= WK( &
+                          lswtra + IWK( lsswtr + i ) + j ) ) GO TO 340
   330             CONTINUE
 
-!  THE TRANSFORMATION IS AN EXISTING ONE. RECORD WHICH ONE.
+!  THE TRANSFORMATION is AN EXISTING ONE. RECORD WHICH ONE.
 
-                  IWK( LSTYPE + IEL ) = I
+                  IWK( lstype + iel ) = i
                   GO TO 350
   340          CONTINUE
 
-!  ENSURE THAT THERE IS SUFFICIENT ROOM.
+!  ENSURE THAT THERE is SUFFICIENT ROOM.
 
-               IF ( LIWFRE + 2 + NINVR + NELVR > LIWK ) THEN
-                  INFORM = 4
-                  WRITE( IOUT, 2030 ) LIWFRE + 2 + NINVR + NELVR - LIWK
+               IF ( liwfre + 2 + ninvr + nelvr > liwk ) THEN
+                  inform = 4
+                  WRITE( iout, 2030 ) liwfre + 2 + ninvr + nelvr - liwk
                   RETURN
                END IF
-               IF ( LWFREE + NINVR * NELVR > LWK ) THEN
-                  INFORM = 5
-                  WRITE( IOUT, 2040 ) LWFREE + NINVR * NELVR - LWK
+               IF ( lwfree + ninvr * nelvr > lwk ) THEN
+                  inform = 5
+                  WRITE( iout, 2040 ) lwfree + ninvr * nelvr - lwk
                   RETURN
                END IF
 
 !  THE TRANSFORMATION DEFINES A NEW TYPE. RECORD ITS DETAILS.
 
-               NTYPE = NTYPE + 1
-               IWK( LSTYPE + IEL ) = NTYPE
-               IWK( LSSIWT + NTYPE ) = LIWFRE
-               IWK( LSIWTR + LIWFRE ) = NINVR
-               IWK( LSIWTR + LIWFRE + 1 ) = NELVR
-               IWK( LSSWTR + NTYPE ) = LWFREE
-               LIWFRE = LIWFRE + 2 + NINVR + NELVR
-               LWFREE = LWFREE + NINVR * NELVR
+               ntype = ntype + 1
+               IWK( lstype + iel ) = ntype
+               IWK( lssiwt + ntype ) = liwfre
+               IWK( lsiwtr + liwfre ) = ninvr
+               IWK( lsiwtr + liwfre + 1 ) = nelvr
+               IWK( lsswtr + ntype ) = lwfree
+               liwfre = liwfre + 2 + ninvr + nelvr
+               lwfree = lwfree + ninvr * nelvr
             ELSE
-              IWK( LSTYPE + IEL ) = 0
+              IWK( lstype + iel ) = 0
             END IF
   350    CONTINUE
 
 !  FOR EACH TYPE OF ELEMENT WITH INTERNAL VARIABLES:
 
-         DO 360 I = 1, NTYPE
-            LIWFRE = IWK( LSSIWT + I )
-            LWFREE = IWK( LSSWTR + I )
-            NINVR = IWK( LSIWTR + LIWFRE )
+         DO 360 i = 1, ntype
+            liwfre = IWK( lssiwt + i )
+            lwfree = IWK( lsswtr + i )
+            ninvr = IWK( lsiwtr + liwfre )
 
 !  FACTORIZE W. USE GAUSSIAN ELIMINATION WITH COMPLETE PIVOTING.
 !  DETERMINE THE "MOST INDEPENDENT" SET OF COLUMNS OF W.
 
-      CALL DGELIM( NINVR, IWK( LSIWTR + LIWFRE + 1 ), &
-                         IWK( LSIWTR + LIWFRE + 2 ), &
-                         IWK( LSIWTR + LIWFRE + NINVR + 2 ), &
-                         WK ( LSWTRA + LWFREE ) )
+      CALL GELIM( ninvr, IWK( lsiwtr + liwfre + 1 ), &
+                         IWK( lsiwtr + liwfre + 2 ), &
+                         IWK( lsiwtr + liwfre + ninvr + 2 ), &
+                         WK ( lswtra + lwfree ) )
   360    CONTINUE
 
 !  COMPRESS THE DATA STRUCTURES TO REMOVE REDUNDANT INFORMATION.
 
-         IF ( NTYPE < NEL ) THEN
-            K = LSSWTR + NTYPE
+         IF ( ntype < nel ) THEN
+            k = lsswtr + ntype
 
 !  COMPRESS INTEGER DATA.
 
-            DO 370 I = 1, NTYPE
-               IWK( K + I ) = IWK( LSSIWT + I )
+            DO 370 i = 1, ntype
+               IWK( k + i ) = IWK( lssiwt + i )
   370       CONTINUE
-            LSSIWT = K
+            lssiwt = k
          END IF
-         K = LSSIWT + NTYPE
-         LNIWTR = 0
-         LNWTRA = 0
-         DO 400 I = 1, NTYPE
-            LIWFRO = IWK( LSSIWT + I ) - 1
-            NINVR = IWK( LSIWTR + LIWFRO + 1 )
-            DO 380 J = 1, 2 * NINVR + 2
-               IWK( K + LNIWTR + J ) = IWK( LSIWTR + LIWFRO + J )
+         k = lssiwt + ntype
+         lniwtr = 0
+         lnwtra = 0
+         DO 400 i = 1, ntype
+            liwfro = IWK( lssiwt + i ) - 1
+            ninvr = IWK( lsiwtr + liwfro + 1 )
+            DO 380 j = 1, 2 * ninvr + 2
+               IWK( k + lniwtr + j ) = IWK( lsiwtr + liwfro + j )
   380       CONTINUE
-            IWK( LSSIWT + I ) = LNIWTR + 1
-            LNIWTR = LNIWTR + 2 + 2 * NINVR
+            IWK( lssiwt + i ) = lniwtr + 1
+            lniwtr = lniwtr + 2 + 2 * ninvr
 
 !  COMPRESS REAL DATA.
 
-            LWFREO = IWK( LSSWTR + I ) - 1
-            DO 390 J = 1, NINVR * NINVR
-               WK( LSWTRA + LNWTRA + J ) = WK( LSWTRA + LWFREO + J )
+            lwfreo = IWK( lsswtr + i ) - 1
+            DO 390 j = 1, ninvr * ninvr
+               WK( lswtra + lnwtra + j ) = WK( lswtra + lwfreo + j )
   390       CONTINUE
-            IWK( LSSWTR + I ) = LNWTRA + 1
-            LNWTRA = LNWTRA + NINVR * NINVR
+            IWK( lsswtr + i ) = lnwtra + 1
+            lnwtra = lnwtra + ninvr * ninvr
   400    CONTINUE
 
 !  RECORD THE LENGTHS OF THE PARTITIONS OF THE WORKSPACE USED.
 
-         LSIWTR = K
-         LWKSTR = LSWTRA + LNWTRA
+         lsiwtr = k
+         lwkstr = lswtra + lnwtra
 
 ! ---------------------------------------------------------------------
-!  THE LIST OF VARIABLES IS ALLOCATED TO NSETS DISJOINTS SETS.
-!  VARIABLE I OCCURS IN SET IWK( LSISET + I ).
+!  THE LIST OF VARIABLES is ALLOCATED TO nsets DISJOINTS SETS.
+!  VARIABLE i OCCURS IN SET IWK( lsiset + i ).
 ! ---------------------------------------------------------------------
 
-         LSISET = LSIWTR + LNIWTR
-         LSSVSE = LSISET + N
-         LSEND = LSSVSE + N + 1
-         IF ( LIWK < LSEND + N ) THEN
-            WRITE( IOUT, 2030 ) LSEND + N - LIWK
-            INFORM = 4
+         lsiset = lsiwtr + lniwtr
+         lssvse = lsiset + n
+         lsend = lssvse + n + 1
+         IF ( liwk < lsend + n ) THEN
+            WRITE( iout, 2030 ) lsend + n - liwk
+            inform = 4
             RETURN
          END IF
 
 !  ASSIGN INITIAL SET NUMBERS TO EACH VARIABLE.
 
-         NSETS = 0
+         nsets = 0
 !DIR$    IVDEP
-         DO 410 I = 1, N
-            IWK( LSISET + I ) = N
+         DO 410 i = 1, n
+            IWK( lsiset + i ) = n
   410    CONTINUE
 
 !  USE THE CURTIS-POWELL-REID ALGORITHM TO DETERMINE WHICH SET EACH
 !  VARIABLE BELONGS TO. LOOP OVER THE VARIABLES.
 
-         DO 500 I = 1, N
+         DO 500 i = 1, n
 
 !  LOOP OVER THE ELEMENTS WHICH USE VARIABLE I.
 !  THE ELEMENTS ARE OBTAINED FROM A LINKED-LIST.
 
             VRUSED = .FALSE.
-            IPT = IWK( LSPTRS + I )
-            IF ( IPT >= 0 ) THEN
-               IELL = IWK( LSELTS + I )
+            ipt = IWK( lsptrs + i )
+            IF ( ipt >= 0 ) THEN
+               iell = IWK( lselts + i )
   420          CONTINUE
-               IEL = IELING( IELL )
-               ITYPE = IWK( LSTYPE + IEL )
-!              WRITE( 6, * ) ' ELEMENT ', IEL
+               iel = IELING( iell )
+               itype = IWK( lstype + iel )
+!              WRITE( 6, * ) ' ELEMENT ', iel
 
 !  CHECK THAT THE VARIABLE BELONGS TO THE "INDEPENDENCE" SET OF
 !  ELEMENTS WITH INTERNAL VARIABLES.
 
-               IF ( ITYPE > 0 ) THEN
-                  LIWFRE = IWK( LSSIWT + ITYPE )
-                  NINVR = IWK( LSIWTR + LIWFRE )
-                  DO 430 J = 1, NINVR
-                     K = J - 1
-                     L = IWK( LSIWTR + LIWFRE + NINVR + 1 + J ) - 1
-                     IF ( I == IELVAR( ISTAEV( IEL ) + L ) ) &
+               IF ( itype > 0 ) THEN
+                  liwfre = IWK( lssiwt + itype )
+                  ninvr = IWK( lsiwtr + liwfre )
+                  DO 430 j = 1, ninvr
+                     k = j - 1
+                     l = IWK( lsiwtr + liwfre + ninvr + 1 + j ) - 1
+                     IF ( i == IELVAR( ISTAEV( iel ) + l ) ) &
                         GO TO 440
   430             CONTINUE
                   GO TO 450
@@ -894,301 +894,301 @@
 !  LOOP OVER THE COMPLETE LIST OF VARIABLES USED BY ELEMENT IEL.
 
 !DIR$ IVDEP
-               DO 460 J = ISTAEV( IEL ), ISTAEV( IEL + 1 ) - 1
+               DO 460 j = ISTAEV( iel ), ISTAEV( iel + 1 ) - 1
 
-!  IF VARIABLE IV IS USED, FLAG THE SET THAT CONTAINS IT.
+!  IF VARIABLE IV is USED, FLAG THE SET THAT CONTAINS IT.
 
-                  IWK( LSEND + IWK( LSISET + IELVAR( J ) ) ) = 1
+                  IWK( lsend + IWK( lsiset + IELVAR( j ) ) ) = 1
   460          CONTINUE
 
 !  CHECK THE LINK-LIST TO SEE IF FURTHER ELEMENTS USE THE VARIABLE.
 
-               IF ( IPT > 0 ) THEN
-                  IELL = IWK( LSELTS + IPT )
-                  IPT = IWK( LSPTRS + IPT )
+               IF ( ipt > 0 ) THEN
+                  iell = IWK( lselts + ipt )
+                  ipt = IWK( lsptrs + ipt )
                   GO TO 420
                END IF
             END IF
 
-!  SEE IF THE VARIABLE MAY BE PLACED IN THE FIRST NSETS SETS.
+!  SEE IF THE VARIABLE MAY BE PLACED IN THE FIRST nsets SETS.
 
             IF ( VRUSED ) THEN
-               DO 470 J = 1, NSETS
-                  IF ( IWK( LSEND + J ) == 0 ) GO TO 480
-                  IWK( LSEND + J ) = 0
+               DO 470 j = 1, nsets
+                  IF ( IWK( lsend + j ) == 0 ) GO TO 480
+                  IWK( lsend + j ) = 0
   470          CONTINUE
 
 !  THE VARIABLE NEEDS A NEW SET.
 
-               NSETS = NSETS + 1
-               J = NSETS
+               nsets = nsets + 1
+               j = nsets
 
 !  THE VARIABLE WILL BE PLACED IN SET J.
 
   480          CONTINUE
-               IWK( LSISET + I ) = J
+               IWK( lsiset + i ) = j
 
 !  RESET THE FLAGS TO ZERO.
 
 !DIR$ IVDEP
-               DO 490 K = J, NSETS
-                  IWK( LSEND + K ) = 0
+               DO 490 k = j, nsets
+                  IWK( lsend + k ) = 0
   490          CONTINUE
             ELSE
 
-!  THE VARIABLE IS NOT TO BE USED.
+!  THE VARIABLE is NOT TO BE USED.
 
-               IWK( LSISET + I ) =  N
+               IWK( lsiset + i ) =  n
             END IF
   500    CONTINUE
 
-!  CHECK THAT THERE IS AT LEAST ONE SET.
+!  CHECK THAT THERE is AT LEAST one SET.
 
-         IF ( NSETS /= 0 ) THEN
+         IF ( nsets /= 0 ) THEN
 
 !  PRINT OUTPUT.
 
 !DIR$ IVDEP
-            DO 510 I = 1, N
-               IWK( LSISET + I ) = MIN( IWK( LSISET + I ), NSETS + 1 )
-!              WRITE( 6, * ) ' VARIABLE ', I, ' SET ',
-!    *                       IWK( LSISET + I )
+            DO 510 i = 1, n
+               IWK( lsiset + i ) = MIN( IWK( lsiset + i ), nsets + 1 )
+!              WRITE( 6, * ) ' VARIABLE ', i, ' SET ',
+!    *                       IWK( lsiset + i )
   510       CONTINUE
 
 ! ---------------------------------------------------------------------
 !  OBTAIN A LIST, IWK(LSEND), OF THE VARIABLES CORRESPONDING TO EACH SET.
 ! ---------------------------------------------------------------------
 
-!  CLEAR IWK( LSSVSE ).
+!  CLEAR IWK( lssvse ).
 
 !DIR$ IVDEP
-            DO 520 J = 2, NSETS + 2
-              IWK( LSSVSE + J ) = 0
+            DO 520 j = 2, nsets + 2
+              IWK( lssvse + j ) = 0
   520       CONTINUE
 
-!  COUNT THE NUMBER OF ELEMENTS IN EACH SET AND STORE IN IWK( LSSVSE ).
-!  NEGATE THE SET NUMBERS IN IWK( LSISET ), SO THAT THEY ARE FLAGGED
-!  AS IWK( LSISET ) IS GRADUALLY OVERWRITTEN BY VARIABLE INDICES.
+!  COUNT THE NUMBER OF ELEMENTS IN EACH SET AND STORE IN IWK( lssvse ).
+!  NEGATE THE SET NUMBERS IN IWK( lsiset ), SO THAT THEY ARE FLAGGED
+!  AS IWK( lsiset ) is GRADUALLY OVERWRITTEN BY VARIABLE INDICES.
 
-            DO 530 K = 1, N
-               J = IWK( LSISET + K )
-               IWK( LSISET + K ) = - J
-               IWK( LSSVSE + J + 1 ) = IWK( LSSVSE + J + 1 ) + 1
+            DO 530 k = 1, n
+               j = IWK( lsiset + k )
+               IWK( lsiset + k ) = - j
+               IWK( lssvse + j + 1 ) = IWK( lssvse + j + 1 ) + 1
   530       CONTINUE
 
-!  COMPUTE THE STARTING ADDRESSES FOR EACH SET WITHIN IWK( LSISET ).
+!  COMPUTE THE STARTING ADDRESSES FOR EACH SET WITHIN IWK( lsiset ).
 
-            IWK( LSSVSE + 1 ) = 1
-            DO 540 J = 2, NSETS + 2
-               IWK( LSSVSE + J ) = IWK( LSSVSE + J ) + &
-                                   IWK( LSSVSE + J - 1 )
+            IWK( lssvse + 1 ) = 1
+            DO 540 j = 2, nsets + 2
+               IWK( lssvse + j ) = IWK( lssvse + j ) + &
+                                   IWK( lssvse + j - 1 )
   540       CONTINUE
 
-!  STORE IN IWK( LSEND ) THE VARIABLE WHOSE SET NUMBER
-!  IS THE IWK( LSSVSE + J )-TH ENTRY OF IWK( LSEND ).
+!  STORE IN IWK( lsend ) THE VARIABLE WHOSE SET NUMBER
+!  is THE IWK( lssvse + j )-TH ENTRY OF IWK( lsend ).
 
-            ISOFAR = 0
-            DO 570 J = 1, NSETS + 1
-               ISTARJ = IWK( LSSVSE + J )
-               DO 550 IVARP1 = ISOFAR + 1, N
-                  IF ( ISTARJ < IVARP1 ) GO TO 560
+            isofar = 0
+            DO 570 j = 1, nsets + 1
+               istarj = IWK( lssvse + j )
+               DO 550 ivarp1 = isofar + 1, n
+                  IF ( istarj < ivarp1 ) GO TO 560
   550          CONTINUE
-               IVARP1 = N + 1
+               ivarp1 = n + 1
   560          CONTINUE
-               ISOFAR = IVARP1 - 1
-               IWK( LSEND + J ) = ISOFAR
+               isofar = ivarp1 - 1
+               IWK( lsend + j ) = isofar
   570       CONTINUE
 
 !  REORDER THE ELEMENTS INTO SET ORDER.
-!  FILL IN EACH SET FROM THE FRONT. AS A NEW ENTRY IS PLACED
-!  IN SET K INCREASE THE POINTER IWK( LSSVSE + K ) BY ONE AND FIND
-!  THE NEW VARIABLE, IWK( LSEND + K ), THAT CORRESPONDS TO THE SET NOW
-!  POINTED TO BY IWK( LSSVSE + K ).
+!  FILL IN EACH SET FROM THE FRONT. AS A NEW ENTRY is PLACED
+!  IN SET k INCREASE THE POINTER IWK( lssvse + k ) BY one AND FIND
+!  THE NEW VARIABLE, IWK( lsend + k ), THAT CORRESPONDS TO THE SET NOW
+!  POINTED TO BY IWK( lssvse + k ).
 
-            DO 660 J = 1, NSETS + 1
+            DO 660 j = 1, nsets + 1
 
-!  DETERMINE THE NEXT UNPLACED ENTRY, IWK( LSSVSE ), IN IWK( LSISET ).
+!  DETERMINE THE next UNPLACED ENTRY, IWK( lssvse ), IN IWK( lsiset ).
 
   610          CONTINUE
-               ISTRT = IWK( LSSVSE + J )
+               istrt = IWK( lssvse + j )
 
-!  SEE IF ALL THE ELEMENTS IN SET J HAVE BEEN ASSIGNED.
+!  SEE IF ALL THE ELEMENTS IN SET j HAVE BEEN ASSIGNED.
 
-               IF ( ISTRT == IWK( LSSVSE + J + 1 ) ) GO TO 660
-               IF ( IWK( LSISET + ISTRT ) > 0 ) GO TO 660
+               IF ( istrt == IWK( lssvse + j + 1 ) ) GO TO 660
+               IF ( IWK( lsiset + istrt ) > 0 ) GO TO 660
 
 !  EXTRACT THE VARIABLE AND SET NUMBERS OF THE STARTING ELEMENT.
 
-               IVAR = IWK( LSEND + J )
-               JSET = - IWK( LSISET + ISTRT )
+               ivar = IWK( lsend + j )
+               jset = - IWK( lsiset + istrt )
 
 !  MOVE ELEMENTS IN A CYCLE, ENDING BACK AT SET J.
 
-               DO 640 K = ISTRT, N
+               DO 640 k = istrt, n
 
-!  FIND THE FIRST EMPTY LOCATION IN SET JSET IN IWK( LSEND )
+!  FIND THE FIRST EMPTY LOCATION IN SET jset IN IWK( lsend )
 
-                  INEXT = IWK( LSSVSE + JSET )
+                  inext = IWK( lssvse + jset )
 
-!  EXTRACT THE VARIABLE INDEX OF THE NEXT ELEMENT.
+!  EXTRACT THE VARIABLE INDEX OF THE next ELEMENT.
 
-                  NEWVAR = IWK( LSEND + JSET )
+                  newvar = IWK( lsend + jset )
 
-!  UPDATE IWK( LSSVSE + JSET ), FIND THE NEW VARIABLE INDEX AND STORE
-!  IT IN IWK( LSEND + JSET ).
+!  UPDATE IWK( lssvse + jset ), FIND THE NEW VARIABLE INDEX AND STORE
+!  IT IN IWK( lsend + jset ).
 
-                  ISTARJ = INEXT + 1
-                  IWK( LSSVSE + JSET ) = ISTARJ
-                  DO 620 IVARP1 = NEWVAR + 1, N
-                     IF ( ISTARJ < IVARP1 ) GO TO 630
+                  istarj = inext + 1
+                  IWK( lssvse + jset ) = istarj
+                  DO 620 ivarp1 = newvar + 1, n
+                     IF ( istarj < ivarp1 ) GO TO 630
   620             CONTINUE
-                  IVARP1 = N + 1
+                  ivarp1 = n + 1
   630             CONTINUE
-                  IWK( LSEND + JSET ) = IVARP1 - 1
+                  IWK( lsend + jset ) = ivarp1 - 1
 
-!  IF THE ENTRY BELONGS IN THE J-TH SET, THE CYCLE IS COMPLETE.
+!  IF THE ENTRY BELONGS IN THE J-TH SET, THE CYCLE is COMPLETE.
 
-                  IF ( JSET == J ) GO TO 650
+                  IF ( jset == j ) GO TO 650
 
-!  EXTRACT THE NUMBER OF THE SET OF THE NEXT ELEMENT.
+!  EXTRACT THE NUMBER OF THE SET OF THE next ELEMENT.
 
-                  NEWSET = - IWK( LSISET + INEXT )
+                  newset = - IWK( lsiset + inext )
 
 !  STORE THE VARIABLE INDEX OF THE CURRENT ELEMENT.
 
-                  IWK( LSISET + INEXT ) = IVAR
+                  IWK( lsiset + inext ) = ivar
 
-!  MAKE THE NEXT ELEMENT INTO THE CURRENT ONE.
+!  MAKE THE next ELEMENT INTO THE CURRENT ONE.
 
-                  IVAR = NEWVAR
-                  JSET = NEWSET
+                  ivar = newvar
+                  jset = newset
   640          CONTINUE
 
-!  THE CYCLE IS COMPLETE.
+!  THE CYCLE is COMPLETE.
 
   650          CONTINUE
 
 !  STORE THE VARIABLE INDEX OF THE STARTING ELEMENT.
 
-               IWK( LSISET + ISTRT ) = IVAR
+               IWK( lsiset + istrt ) = ivar
                GO TO 610
   660       CONTINUE
 
-!  REVISE IWK( LSSVSE ) TO POINT TO THE START OF EACH SET.
+!  REVISE IWK( lssvse ) TO POINT TO THE START OF EACH SET.
 
-            DO 670 J = NSETS + 1, 2, - 1
-               IWK( LSSVSE + J ) = IWK( LSSVSE + J - 1 )
+            DO 670 j = nsets + 1, 2, - 1
+               IWK( lssvse + j ) = IWK( lssvse + j - 1 )
   670       CONTINUE
-            IWK( LSSVSE + 1 ) = 1
+            IWK( lssvse + 1 ) = 1
          END IF
-!        DO 671 I = 1, NSETS
-!           WRITE( 6, * ) ' SET ', I, ' VARIABLES ',
-!    * ( IWK( LSISET + J ), J = IWK( LSSVSE + I ),
-!    *         IWK( LSSVSE + I + 1 ) - 1 )
+!        DO 671 i = 1, nsets
+!           WRITE( 6, * ) ' SET ', i, ' VARIABLES ',
+!    * ( IWK( lsiset + j ), j = IWK( lssvse + i ),
+!    *         IWK( lssvse + i + 1 ) - 1 )
 ! 671    CONTINUE
       ELSE
 
 !  EXACT GRADIENTS ARE USED. NO FURTHER PARTITIONING OF THE WORKSPACE
-!  IS NEEDED.
+!  is NEEDED.
 
-         LSTYPE = LSEND
-         LSSWTR = LSTYPE
-         LSSIWT = LSSWTR
-         LSIWTR = LSSIWT
-         LSISET = LSIWTR
-         LSSVSE = LSISET
-         LSWTRA = LWKSTR
+         lstype = lsend
+         lsswtr = lstype
+         lssiwt = lsswtr
+         lsiwtr = lssiwt
+         lsiset = lsiwtr
+         lssvse = lsiset
+         lswtra = lwkstr
       END IF
 
 !  SET THE LENGTH OF THE REMAINING PARTITIONS OF THE WORKSPACE FOR
 !  ARRAY BOUND CHECKING IN CALLS TO OTHER SUBPROGRAMS.
 
-      LNTYPE = MAX( 1, LSSWTR - LSTYPE )
-      LNSWTR = MAX( 1, LSSIWT - LSSWTR )
-      LNSIWT = MAX( 1, LSIWTR - LSSIWT )
-      LNIWTR = MAX( 1, LSISET - LSIWTR )
-      LNISET = MAX( 1, LSSVSE - LSISET )
-      LNSVSE = MAX( 1, LSEND - LSSVSE )
-      LNWTRA = MAX( 1, LWKSTR - LSWTRA )
+      lntype = MAX( 1, lsswtr - lstype )
+      lnswtr = MAX( 1, lssiwt - lsswtr )
+      lnsiwt = MAX( 1, lsiwtr - lssiwt )
+      lniwtr = MAX( 1, lsiset - lsiwtr )
+      lniset = MAX( 1, lssvse - lsiset )
+      lnsvse = MAX( 1, lsend - lssvse )
+      lnwtra = MAX( 1, lwkstr - lswtra )
 
 !  RECORD THE LENGTHS OF THE REMAINING INTEGER AND REAL WORKSPACE.
 
-      LIWK2 = LIWK - LSEND
-      LWK2 = LWK - LWKSTR
+      liwk2 = liwk - lsend
+      lwk2 = lwk - lwkstr
 
 ! -- SET THE STARTING ADDRESSES FOR THE PARTITIONS WITHIN FUVALS. --
 
-!  A FULL DESCRIPTION OF THE PARTITIONS OF FUVALS IS GIVEN IN THE
+!  A FULL DESCRIPTION OF THE PARTITIONS OF FUVALS is GIVEN IN THE
 !  THE INTRODUCTORY COMMENTS TO SUBROUTINE SBMIN.
 
-      LFXI = 0
-      LGXI = LFXI + NEL
-      LHXI = INTVAR( NEL1 ) - 1
-      LGGFX = LGGFX - 1
-      LDX = LGGFX + N
-      LGRJAC = LDX + N
-      LEND = LGRJAC + NVARGP
+      lfxi = 0
+      lgxi = lfxi + nel
+      lhxi = INTVAR( nel1 ) - 1
+      lggfx = lggfx - 1
+      ldx = lggfx + n
+      lgrjac = ldx + n
+      lend = lgrjac + nvargp
 
 !  PRINT ALL OF THE STARTING ADDRESSES FOR THE WORKSPACE ARRAY
 !  PARTITIONS.
 
-      IF ( IPRINT >= 3 ) THEN
-         WRITE( IOUT, 2000 ) &
-           LFXI, LGXI, LHXI, LGGFX, LDX, LGRJAC, LEND, LFUVAL
-         WRITE( IOUT, 2010 ) LSPTRS, LSELTS, LINDEX, &
-                             LSWKSP, LIUSED, LFREEC, LNNONZ, LNONZ2, &
-                             LSYMMD, LSYMMH, LSLGRP, LSTAJC, &
-                             LSTAGV, LSVGRP, LGCOLJ, LVALJR, &
-                             LSTYPE, LSSWTR, LSSIWT, LSIWTR, LSISET, &
-                             LSSVSE, LSEND, LIWK
-         WRITE( IOUT, 2020 ) LQGRAD, LBREAK, LP,     LXCP, LX0, LGX0, &
-                             LDELTX, LBND, LSWTRA, LWKSTR, LWK
+      IF ( iprint >= 3 ) THEN
+         WRITE( iout, 2000 ) &
+           lfxi, lgxi, lhxi, lggfx, ldx, lgrjac, lend, lfuval
+         WRITE( iout, 2010 ) lsptrs, lselts, lindex, &
+                             lswksp, liused, lfreec, lnnonz, lnonz2, &
+                             lsymmd, lsymmh, lslgrp, lstajc, &
+                             lstagv, lsvgrp, lgcolj, lvaljr, &
+                             lstype, lsswtr, lssiwt, lsiwtr, lsiset, &
+                             lssvse, lsend, liwk
+         WRITE( iout, 2020 ) lqgrad, lbreak, lp,     lxcp, lx0, lgx0, &
+                             ldeltx, lbnd, lswtra, lwkstr, lwk
       END IF
 
 !  CHECK THAT THE ARRAY FUVALS HAS SUFFICIENT ROOM FOR THE CALCULATION.
 
-      IF ( LEND > LFUVAL ) THEN
-         WRITE( IOUT, 2050 ) LEND - LFUVAL
-         INFORM = 5
+      IF ( lend > lfuval ) THEN
+         WRITE( iout, 2050 ) lend - lfuval
+         inform = 5
          RETURN
       END IF
 
 !  SET THE LENGTH OF EACH PARTITION OF THE REAL WORKSPACE ARRAY
 !  FUVALS FOR ARRAY BOUND CHECKING IN CALLS TO OTHER SUBPROGRAMS.
 
-      LNFXI = MAX( 1, LGXI - LFXI )
-      LNGXI = MAX( 1, LHXI - LGXI )
-      LNGUVL = MAX( 1, LHXI - LFXI )
-      LNHXI = MAX( 1, LGGFX - LHXI )
-      LNHUVL = MAX( 1, LGGFX - LFXI )
-      LNGGFX = MAX( 1, LDX - LGGFX )
-      LNDX = MAX( 1, LGRJAC - LDX )
-      LNGRJC = MAX( 1, LEND - LGRJAC )
-      MAXSIN = MAX( 1, MAXSIN )
-      MAXSEL = MAX( 1, MAXSEL )
-      INFORM = 0
+      lnfxi = MAX( 1, lgxi - lfxi )
+      lngxi = MAX( 1, lhxi - lgxi )
+      lnguvl = MAX( 1, lhxi - lfxi )
+      lnhxi = MAX( 1, lggfx - lhxi )
+      lnhuvl = MAX( 1, lggfx - lfxi )
+      lnggfx = MAX( 1, ldx - lggfx )
+      lndx = MAX( 1, lgrjac - ldx )
+      lngrjc = MAX( 1, lend - lgrjac )
+      maxsin = MAX( 1, maxsin )
+      maxsel = MAX( 1, maxsel )
+      inform = 0
 
 !  NON-EXECUTABLE STATEMENTS.
 
  2000 FORMAT( /, ' Starting addresses for the partitions of FUVALS ', &
               /, ' ----------------------------------------------- ', &
-             //, '   LFXI   LGXI   LHXI  LGGFX ', &
-                 '   LDX LGRJAC   LEND   LFUVAL ', /, 7I7, I9 )
+             //, '   lfxi   lgxi   lhxi  lggfx ', &
+                 '   ldx lgrjac   lend   lfuval ', /, 7I7, I9 )
  2010 FORMAT( /, ' Starting addresses for partitions of IWK ', &
               /, ' ---------------------------------------- ', //, &
-        ' LSPTRS LSELTS LINDEX LSWKSP LIUSED LFREEC LNNONZ LNONZ2  ...', &
+        ' lsptrs lselts lindex lswksp liused lfreec lnnonz lnonz2  ...', &
          /, 8I7, //, &
-         ' ...... LSYMMD LSYMMH LSLGRP LSTAJC LSTAGV LSVGRP LGCOLJ ...', &
+         ' ...... lsymmd lsymmh lslgrp lstajc lstagv lsvgrp lgcolj ...', &
          /, 7X, 7I7, //, &
-        ' ...... LVALJR LSTYPE LSSWTR LSSIWT LSIWTR LSISET LSSVSE ... ', &
+        ' ...... lvaljr lstype lsswtr lssiwt lsiwtr lsiset lssvse ... ', &
          /, 7X, 7I7, //, &
-         ' ......  LSEND     LIWK ', &
+         ' ......  lsend     liwk ', &
          /, 7X, I7, I9 )
  2020 FORMAT( /, ' Starting addresses for partitions of WK ', &
               /, ' --------------------------------------- ', //, &
-         '   LQGRAD   LBREAK       LP     LXCP      LX0     LGX0 ... ', &
+         '   lqgrad   lbreak       lp     lxcp      lx0     lgx0 ... ', &
          /, 6I9, //, &
-         '   ......   LDELTX     LBND   LSWTRA   LWKSTR      LWK ', &
+         '   ......   ldeltx     lbnd   lswtra   lwkstr      lwk ', &
          /, 9X, 5I9 )
  2030 FORMAT( /, ' INITW: The size of array IWK must be increased', &
                  ' by at least ', I12 )

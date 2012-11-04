@@ -1,78 +1,76 @@
 ! ( Last modified on 23 Dec 2000 at 22:01:38 )
 
-
-
-      SUBROUTINE DGELIM( M, N, IPVT, JCOL, A )
+      SUBROUTINE GELIM( m, n, IPVT, jcol, A )
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: M, N
-      INTEGER :: IPVT ( M ), JCOL ( N )
-      REAL ( KIND = wp ) :: A ( M, N )
+      INTEGER :: m, n
+      INTEGER :: IPVT ( m ), jcol ( n )
+      REAL ( KIND = wp ) :: A ( m, n )
 
-!  Perform the first M steps of Gaussian Elimination with
-!  complete pivoting on the M by N ( M <= N) matrix A.
+!  Perform the first m steps of Gaussian Elimination with
+!  complete pivoting on the m by n ( m <= N) matrix A.
 
 !  Nick Gould, 23rd September 1991.
 !  For CGT productions.
 
-      INTEGER :: I, J, K, IPIVOT, JPIVOT
-      REAL ( KIND = wp ) :: APIVOT, ONE, ATEMP
-      PARAMETER ( ONE = 1.0_wp )
+      INTEGER :: i, j, k, ipivot, jpivot
+      REAL ( KIND = wp ) :: apivot, one, atemp
+      PARAMETER ( one = 1.0_wp )
 
 !  Initialize the column indices.
 
-      DO 10 J = 1, N
-         JCOL( J ) = J
+      DO 10 j = 1, n
+         JCOL( j ) = j
    10 CONTINUE
 
 !  Main loop.
 
-      DO 100 K = 1, M
+      DO 100 k = 1, m
 
 !  Compute the K-th pivot.
 
-         APIVOT = - ONE
-         DO 30 J = K, N
-            DO 20 I = K, M
-               IF ( ABS( A( I, J ) ) > APIVOT ) THEN
-                  APIVOT = ABS( A( I, J ) )
-                  IPIVOT = I
-                  JPIVOT = J
+         apivot = - one
+         DO 30 j = k, n
+            DO 20 i = k, m
+               IF ( ABS( A( i, j ) ) > apivot ) THEN
+                  apivot = ABS( A( i, j ) )
+                  ipivot = i
+                  jpivot = j
                END IF
    20       CONTINUE
    30    CONTINUE
 
-!  Interchange rows I and IPIVOT.
+!  Interchange rows i and IPIVOT.
 
-         IPVT( K ) = IPIVOT
-         IF ( IPIVOT > K ) THEN
-            DO 40 J = K, N
-               ATEMP = A( IPIVOT, J )
-               A( IPIVOT, J ) = A( K, J )
-               A( K, J ) = ATEMP
+         IPVT( k ) = ipivot
+         IF ( ipivot > k ) THEN
+            DO 40 j = k, n
+               atemp = A( ipivot, j )
+               A( ipivot, j ) = A( k, j )
+               A( k, j ) = atemp
    40       CONTINUE
          END IF
 
-!  Interchange columns J and JPIVOT.
+!  Interchange columns j and JPIVOT.
 
-         IF ( JPIVOT > K ) THEN
-            J = JCOL( JPIVOT )
-            JCOL( JPIVOT ) = JCOL( K )
-            JCOL( K ) = J
-            DO 50 I = 1, M
-               ATEMP = A( I, JPIVOT )
-               A( I, JPIVOT ) = A( I, K )
-               A( I, K ) = ATEMP
+         IF ( jpivot > k ) THEN
+            j = JCOL( jpivot )
+            JCOL( jpivot ) = JCOL( k )
+            JCOL( k ) = j
+            DO 50 i = 1, m
+               atemp = A( i, jpivot )
+               A( i, jpivot ) = A( i, k )
+               A( i, k ) = atemp
    50       CONTINUE
          END IF
 
 !  Perform the elimination.
 
-         APIVOT = A( K, K )
-         DO 70 I = K + 1, M
-            ATEMP = A( I, K ) / APIVOT
-            A( I, K ) = ATEMP
-            DO 60 J = K + 1, N
-               A( I, J ) = A( I, J ) - ATEMP * A( K, J )
+         apivot = A( k, k )
+         DO 70 i = k + 1, m
+            atemp = A( i, k ) / apivot
+            A( i, k ) = atemp
+            DO 60 j = k + 1, n
+               A( i, j ) = A( i, j ) - atemp * A( k, j )
    60       CONTINUE
    70    CONTINUE
   100 CONTINUE
@@ -80,150 +78,148 @@
 
 !  End of subroutine GELIM.
 
-      END
+      END SUBROUTINE GELIM
 
-
-
-      SUBROUTINE DGESLV( M, IPVT, A, X )
+      SUBROUTINE GESLV( m, IPVT, A, X )
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: M
-      INTEGER :: IPVT ( M )
-      REAL ( KIND = wp ) :: A ( M, M ), X ( M )
+      INTEGER :: m
+      INTEGER :: IPVT ( m )
+      REAL ( KIND = wp ) :: A ( m, m ), X ( m )
 
 !  Solve the equations A(T)x = b. The vector b is input in X.
-!  The LU factors of P A are input in A; The permutation P is stored
+!  The lu factors of P A are input in A; The permutation P is stored
 !  in IPVT. The solution x is output in X.
 
 !  Nick Gould, 23rd September 1991.
 !  For CGT productions.
 
-      INTEGER :: I, K
-      REAL ( KIND = wp ) :: XTEMP, ZERO
-      PARAMETER ( ZERO = 0.0_wp )
+      INTEGER :: i, k
+      REAL ( KIND = wp ) :: xtemp, zero
+      PARAMETER ( zero = 0.0_wp )
 
 !  Solve U(T)y = b. The vector b is input in X; y is output in X.
 
-      DO 20 K = 1, M
-         XTEMP = ZERO
-         DO 10 I = 1, K - 1
-            XTEMP = XTEMP + A( I, K ) * X( I )
+      DO 20 k = 1, m
+         xtemp = zero
+         DO 10 i = 1, k - 1
+            xtemp = xtemp + A( i, k ) * X( i )
    10    CONTINUE
-         X( K ) = ( X( K ) - XTEMP ) / A( K, K )
+         X( k ) = ( X( k ) - xtemp ) / A( k, k )
    20 CONTINUE
 
 !  Solve L(T) x = y. The vector y is input in X; x is output in X.
 
-      DO 40 K = M - 1, 1, - 1
-         XTEMP = ZERO
-         DO 30 I = K + 1, M
-            XTEMP = XTEMP + A( I, K ) * X( I )
+      DO 40 k = m - 1, 1, - 1
+         xtemp = zero
+         DO 30 i = k + 1, m
+            xtemp = xtemp + A( i, k ) * X( i )
    30    CONTINUE
-         X( K ) = X( K ) - XTEMP
-         I = IPVT( K )
-         IF ( I /= K ) THEN
-            XTEMP = X( I )
-            X( I ) = X( K )
-            X( K ) = XTEMP
+         X( k ) = X( k ) - xtemp
+         i = IPVT( k )
+         IF ( i /= k ) THEN
+            xtemp = X( i )
+            X( i ) = X( k )
+            X( k ) = xtemp
          END IF
    40 CONTINUE
       RETURN
 
 !  End of subroutine GESLV.
 
-      END
+      END SUBROUTINE GESLV
 
 
 !  ** FOR THE CRAY 2, LINES STARTING 'CDIR$ IVDEP' TELL THE COMPILER TO
 !     IGNORE POTENTIAL VECTOR DEPENDENCIES AS THEY ARE KNOWN TO BE O.K.
 
-      SUBROUTINE DSYMMH( MAXSZH, ISYMMH, ISYMMD )
+      SUBROUTINE SYMMH( maxszh, ISYMMH, ISYMMD )
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: MAXSZH
-      INTEGER :: ISYMMH( MAXSZH, MAXSZH ), ISYMMD( MAXSZH )
+      INTEGER :: maxszh
+      INTEGER :: ISYMMH( maxszh, maxszh ), ISYMMD( maxszh )
 
 !  GIVEN A COLUMNWISE STORAGE SCHEME OF THE UPPER TRIANGLE OF A
-!  SYMMETRIC MATRIX OF ORDER MAXSZH, COMPUTE THE POSITION OF THE
-!  I,J-TH ENTRY OF THE SYMMETRIC MATRIX IN THIS SCHEME.
+!  SYMMETRIC MATRIX OF ORDER maxszh, COMPUTE THE POSITION OF THE
+!  i,J-TH ENTRY OF THE SYMMETRIC MATRIX IN THIS SCHEME.
 
-!  THE VALUE ISYMMH( I, J ) + 1 GIVES THE POSITION OF THE I,J-TH
+!  THE VALUE ISYMMH( i, j ) + 1 GIVES THE POSITION OF THE i,J-TH
 !  ENTRY OF THE MATRIX IN THE UPPER TRIANGULAR SCHEME.
 
 !  NICK GOULD, 10TH OF MAY 1989.
 !  FOR CGT PRODUCTIONS.
 
-      INTEGER :: I, J, K
-      K = 0
-      DO 20 J = 1, MAXSZH
+      INTEGER :: i, j, k
+      k = 0
+      DO 20 j = 1, maxszh
 !DIR$ IVDEP
-         DO 10 I = 1, J - 1
-            ISYMMH( I, J ) = K
-            ISYMMH( J, I ) = K
-            K = K + 1
+         DO 10 i = 1, j - 1
+            ISYMMH( i, j ) = k
+            ISYMMH( j, i ) = k
+            k = k + 1
    10    CONTINUE
-         ISYMMD( J ) = K
-         ISYMMH( J, J ) = K
-         K = K + 1
+         ISYMMD( j ) = k
+         ISYMMH( j, j ) = k
+         k = k + 1
    20 CONTINUE
       RETURN
 
 !  END OF SYMMH.
 
-      END
+      END SUBROUTINE SYMMH
 
 
 
-      SUBROUTINE DSETVL( N, X, INCX, VL )
+      SUBROUTINE SETVL( n, X, incx, VL )
 
 !     ******************************************************************
 
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: INCX, N
+      INTEGER :: incx, n
       REAL ( KIND = wp ) :: VL, X( * )
-      INTEGER :: IX, M, I, J
-      IF ( N <= 0 ) RETURN
-      IF ( INCX /= 1 ) THEN
-         IF( INCX < 0 ) THEN
-             IX = ( - N + 1 ) * INCX + 1
+      INTEGER :: ix, m, i, j
+      IF ( n <= 0 ) RETURN
+      IF ( incx /= 1 ) THEN
+         IF( incx < 0 ) THEN
+             ix = ( - n + 1 ) * incx + 1
          ELSE
-             IX = 1
+             ix = 1
          END IF
-         J = IX + ( N - 1 ) * INCX
-         DO 100 I = IX, J, INCX
-            X( I ) = VL
+         j = ix + ( n - 1 ) * incx
+         DO 100 i = ix, j, incx
+            X( i ) = VL
   100    CONTINUE
       ELSE
-         M = MOD( N, 5 )
-         IF ( M /= 0 ) THEN
-            DO 200 I = 1, M
-               X( I ) = VL
+         m = MOD( n, 5 )
+         IF ( m /= 0 ) THEN
+            DO 200 i = 1, m
+               X( i ) = VL
   200       CONTINUE
          END IF
-         IF ( N >= 5 ) THEN
-            IX = M + 1
-            DO 300 I = IX, N, 5
-               X( I ) = VL
-               X( I + 1 ) = VL
-               X( I + 2 ) = VL
-               X( I + 3 ) = VL
-               X( I + 4 ) = VL
+         IF ( n >= 5 ) THEN
+            ix = m + 1
+            DO 300 i = ix, n, 5
+               X( i ) = VL
+               X( i + 1 ) = VL
+               X( i + 2 ) = VL
+               X( i + 3 ) = VL
+               X( i + 4 ) = VL
   300       CONTINUE
          END IF
       END IF
       RETURN
-      END
+      END SUBROUTINE SETVL
 
 
 
-      SUBROUTINE DSETVI( NVAR, X, IVAR, VL )
+      SUBROUTINE SETVI( nvar, X, ivar, VL )
 
 !     ******************************************************************
 
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: NVAR, IVAR( * ), I
+      INTEGER :: nvar, IVAR( * ), i
       REAL ( KIND = wp ) :: VL, X( * )
-      IF ( NVAR <= 0 ) RETURN
-      DO 10 I = 1, NVAR
-         X( IVAR( I ) ) = VL
+      IF ( nvar <= 0 ) RETURN
+      DO 10 i = 1, nvar
+         X( IVAR( i ) ) = VL
    10 CONTINUE
       RETURN
-      END
+      END SUBROUTINE SETVI

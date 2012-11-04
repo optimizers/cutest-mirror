@@ -1,12 +1,12 @@
 ! ( Last modified on 10 Sepc 2004 at 16:55:38 )
 !  Correction: 10/Sep/2004: undeclared integers variables declared
-      SUBROUTINE CJPROD( data, N, M, GOTJ, JTRANS, X, V, LV, R, LR )
+      SUBROUTINE CJPROD( data, n, m, GOTJ, JTRANS, X, V, lv, R, lr )
       USE CUTEST
       TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: N, M, LV, LR
+      INTEGER :: n, m, lv, lr
       LOGICAL :: GOTJ, JTRANS
-      REAL ( KIND = wp ) :: X( N ), V( LV ), R( LR )
+      REAL ( KIND = wp ) :: X( n ), V( lv ), R( lr )
 
 !  Compute the matrix-vector product between the Jacobian matrix
 !  of the constraints (JTRANS = .FALSE.), or its transpose 
@@ -43,32 +43,32 @@
 
 !  Local variables
 
-      INTEGER :: I, IG, J, ICON, K, IG1, II
-      INTEGER :: L, IEL, NVAREL, NIN
-      INTEGER :: IFSTAT, IGSTAT
-      REAL ( KIND = wp ) :: ZERO, ONE, FTT, PROD, SCALEE
-      PARAMETER ( ZERO = 0.0_wp, ONE = 1.0_wp )
+      INTEGER :: i, ig, j, icon, k, ig1, ii
+      INTEGER :: l, iel, nvarel, nin
+      INTEGER :: ifstat, igstat
+      REAL ( KIND = wp ) :: zero, one, ftt, prod, scalee
+      PARAMETER ( zero = 0.0_wp, one = 1.0_wp )
       EXTERNAL :: RANGE 
       IF ( data%numcon == 0 ) RETURN
 
 !  Check input data.
 
-      IF ( ( JTRANS .AND. LV < M ) .OR.  &
- ( .NOT. JTRANS .AND. LV < N ) ) THEN
-         IF ( IOUT > 0 ) WRITE( IOUT, 2010 )
+      IF ( ( JTRANS .AND. lv < m ) .OR.  &
+ ( .NOT. JTRANS .AND. lv < n ) ) THEN
+         IF ( iout > 0 ) WRITE( iout, 2010 )
          STOP
       END IF
-      IF ( ( JTRANS .AND. LR < N ) .OR.  &
- ( .NOT. JTRANS .AND. LR < M ) ) THEN
-         IF ( IOUT > 0 ) WRITE( IOUT, 2020 )
+      IF ( ( JTRANS .AND. lr < n ) .OR.  &
+ ( .NOT. JTRANS .AND. lr < m ) ) THEN
+         IF ( iout > 0 ) WRITE( iout, 2020 )
          STOP
       END IF
 
 !  There are non-trivial group functions.
 
       IF ( .NOT. GOTJ ) THEN
-         DO 10 I = 1, MAX( data%nelnum, data%ng )
-           data%ICALCF( I ) = I
+         DO 10 i = 1, MAX( data%nelnum, data%ng )
+           data%ICALCF( i ) = i
    10    CONTINUE
 
 !  Evaluate the element function values.
@@ -79,8 +79,8 @@
                       data%ISTADH( 1 ), data%ISTEP( 1 ), &
                       data%ICALCF( 1 ),  &
                       data%lintre, data%lstaev, data%lelvar, data%lntvar, data%lstadh,  &
-                      data%lntvar, data%lintre, LFUVAL, data%lvscal, data%lepvlu,  &
-                      1, IFSTAT )
+                      data%lntvar, data%lintre, lfuval, data%lvscal, data%lepvlu,  &
+                      1, ifstat )
 
 !  Evaluate the element function values.
 
@@ -90,31 +90,31 @@
                       data%ISTADH( 1 ), data%ISTEP( 1 ), &
                       data%ICALCF( 1 ),  &
                       data%lintre, data%lstaev, data%lelvar, data%lntvar, data%lstadh,  &
-                      data%lntvar, data%lintre, LFUVAL, data%lvscal, data%lepvlu,  &
-                      3, IFSTAT )
+                      data%lntvar, data%lintre, lfuval, data%lvscal, data%lepvlu,  &
+                      3, ifstat )
 
 !  Compute the group argument values ft.
 
-         DO 70 IG = 1, data%ng
-            FTT = - data%B( IG )
+         DO 70 ig = 1, data%ng
+            ftt = - data%B( ig )
 
 !  Include the contribution from the linear element.
 
-            DO 30 J = data%ISTADA( IG ), data%ISTADA( IG + 1 ) - 1
-               FTT = FTT + data%A( J ) * X( data%ICNA( J ) )
+            DO 30 j = data%ISTADA( ig ), data%ISTADA( ig + 1 ) - 1
+               ftt = ftt + data%A( j ) * X( data%ICNA( j ) )
    30       CONTINUE
 
 !  Include the contributions from the nonlinear elements.
 
-            DO 60 J = data%ISTADG( IG ), data%ISTADG( IG + 1 ) - 1
-               FTT = FTT + data%ESCALE( J ) * data%FUVALS( data%IELING( J))
+            DO 60 j = data%ISTADG( ig ), data%ISTADG( ig + 1 ) - 1
+               ftt = ftt + data%ESCALE( j ) * data%FUVALS( data%IELING( J))
    60       CONTINUE
-            data%FT( IG ) = FTT
+            data%FT( ig ) = ftt
 
 !  Record the derivatives of trivial groups.
 
-            IF ( data%GXEQX( IG ) ) THEN
-               data%GVALS( data%ng + IG ) = ONE
+            IF ( data%GXEQX( ig ) ) THEN
+               data%GVALS( data%ng + ig ) = one
             END IF
    70    CONTINUE
 
@@ -125,13 +125,13 @@
                data%ITYPEG( 1 ), data%ISTGP( 1 ), &
                data%ICALCF( 1 ), &
                data%lcalcg, data%ng1, data%lcalcg, data%lcalcg, data%lgpvlu, &
-               .TRUE., IGSTAT )
+               .TRUE., igstat )
       END IF
 
 !  Ensure that there is sufficient space.
 
-      IF ( data%lwk2 < N ) THEN
-         IF ( IOUT > 0 ) WRITE( IOUT, 2000 )
+      IF ( data%lwk2 < n ) THEN
+         IF ( iout > 0 ) WRITE( iout, 2000 )
          STOP
       END IF
 
@@ -141,60 +141,60 @@
 
 !  Initialize R
 
-         DO 110 I = 1, N
-            R( I ) = ZERO
+         DO 110 i = 1, n
+            R( i ) = zero
   110    CONTINUE
 
 !  Consider the IG-th group.
 
-         DO 190 IG = 1, data%ng
-            ICON = data%KNDOFC( IG )
-            IF ( ICON > 0 ) THEN
-               IG1 = IG + 1
+         DO 190 ig = 1, data%ng
+            icon = data%KNDOFC( ig )
+            IF ( icon > 0 ) THEN
+               ig1 = ig + 1
 
 
 !  Compute the product of v(i) with the (scaled) group derivative
 
-               IF ( data%GXEQX( IG ) ) THEN
-                  PROD = V( ICON ) * data%GSCALE( IG )
+               IF ( data%GXEQX( ig ) ) THEN
+                  prod = V( icon ) * data%GSCALE( ig )
                ELSE
-                  PROD = V( ICON ) * data%GSCALE( IG ) * data%GVALS( data%ng + IG )
+                  prod = V( icon ) * data%GSCALE( ig ) * data%GVALS( data%ng + ig )
                END IF
 
 !  Loop over the group's nonlinear elements.
 
-               DO 150 II = data%ISTADG( IG ),  &
-                           data%ISTADG( IG1 ) - 1
-                  IEL = data%IELING( II )
-                  K = data%INTVAR( IEL )
-                  L = data%ISTAEV( IEL )
-                  NVAREL = data%ISTAEV( IEL + 1 ) - L
-                  SCALEE = data%ESCALE( II ) * PROD
-                  IF ( data%INTREP( IEL ) ) THEN
+               DO 150 ii = data%ISTADG( ig ),  &
+                           data%ISTADG( ig1 ) - 1
+                  iel = data%IELING( ii )
+                  k = data%INTVAR( iel )
+                  l = data%ISTAEV( iel )
+                  nvarel = data%ISTAEV( iel + 1 ) - l
+                  scalee = data%ESCALE( ii ) * prod
+                  IF ( data%INTREP( iel ) ) THEN
 
 !  The IEL-th element has an internal representation.
 
-                     NIN = data%INTVAR( IEL + 1 ) - K
-                     CALL RANGE ( IEL, .TRUE., data%FUVALS( K ), &
-                                  data%WRK( 1 ), NVAREL, NIN, &
-                                  data%ITYPEE( IEL ), &
-                                  NIN, NVAREL )
+                     nin = data%INTVAR( iel + 1 ) - k
+                     CALL RANGE ( iel, .TRUE., data%FUVALS( k ), &
+                                  data%WRK( 1 ), nvarel, nin, &
+                                  data%ITYPEE( iel ), &
+                                  nin, nvarel )
 !DIR$ IVDEP
-                     DO 130 I = 1, NVAREL
-                        J = data%IELVAR( L )
-                        R( J ) = R( J ) + SCALEE * data%WRK( I )
-                        L = L + 1
+                     DO 130 i = 1, nvarel
+                        j = data%IELVAR( l )
+                        R( j ) = R( j ) + scalee * data%WRK( i )
+                        l = l + 1
   130                CONTINUE
                   ELSE
 
 !  The IEL-th element has no internal representation.
 
 !DIR$ IVDEP
-                     DO 140 I = 1, NVAREL
-                        J = data%IELVAR( L )
-                        R( J ) = R( J ) + SCALEE * data%FUVALS( K )
-                        K = K + 1
-                        L = L + 1
+                     DO 140 i = 1, nvarel
+                        j = data%IELVAR( l )
+                        R( j ) = R( j ) + scalee * data%FUVALS( k )
+                        k = k + 1
+                        l = l + 1
   140                CONTINUE
                   END IF
   150          CONTINUE
@@ -202,62 +202,62 @@
 !  Include the contribution from the linear element.
 
 !DIR$ IVDEP
-               DO 160 K = data%ISTADA( IG ), &
-                          data%ISTADA( IG1 ) - 1
-                  J = data%ICNA( K )
-                  R( J ) = R( J ) + data%A( K ) * PROD
+               DO 160 k = data%ISTADA( ig ), &
+                          data%ISTADA( ig1 ) - 1
+                  j = data%ICNA( k )
+                  R( j ) = R( j ) + data%A( k ) * prod
   160          CONTINUE
             END IF
   190    CONTINUE
 
-!  Form the product r = J v
+!  Form the product r = j v
 
       ELSE
 
 !  Consider the IG-th group.
 
-         DO 290 IG = 1, data%ng
-            ICON = data%KNDOFC( IG )
-            IF ( ICON > 0 ) THEN
-               IG1 = IG + 1
-               PROD = ZERO
+         DO 290 ig = 1, data%ng
+            icon = data%KNDOFC( ig )
+            IF ( icon > 0 ) THEN
+               ig1 = ig + 1
+               prod = zero
 
 !  Compute the first derivative of the group.
 
 !  Loop over the group's nonlinear elements.
 
-               DO 250 II = data%ISTADG( IG ),  &
-                           data%ISTADG( IG1 ) - 1
-                  IEL = data%IELING( II )
-                  K = data%INTVAR( IEL )
-                  L = data%ISTAEV( IEL )
-                  NVAREL = data%ISTAEV( IEL + 1 ) - L
-                  SCALEE = data%ESCALE( II )
-                  IF ( data%INTREP( IEL ) ) THEN
+               DO 250 ii = data%ISTADG( ig ),  &
+                           data%ISTADG( ig1 ) - 1
+                  iel = data%IELING( ii )
+                  k = data%INTVAR( iel )
+                  l = data%ISTAEV( iel )
+                  nvarel = data%ISTAEV( iel + 1 ) - l
+                  scalee = data%ESCALE( ii )
+                  IF ( data%INTREP( iel ) ) THEN
 
 !  The IEL-th element has an internal representation.
 
-                     NIN = data%INTVAR( IEL + 1 ) - K
-                     CALL RANGE ( IEL, .TRUE., data%FUVALS( K ), &
-                                  data%WRK( 1 ), NVAREL, NIN, &
-                                  data%ITYPEE( IEL ), &
-                                  NIN, NVAREL )
+                     nin = data%INTVAR( iel + 1 ) - k
+                     CALL RANGE ( iel, .TRUE., data%FUVALS( k ), &
+                                  data%WRK( 1 ), nvarel, nin, &
+                                  data%ITYPEE( iel ), &
+                                  nin, nvarel )
 !DIR$ IVDEP
-                     DO 230 I = 1, NVAREL
-                        PROD = PROD + V( data%IELVAR( L ) ) * &
-                                       SCALEE * data%WRK( I )
-                        L = L + 1
+                     DO 230 i = 1, nvarel
+                        prod = prod + V( data%IELVAR( l ) ) * &
+                                       scalee * data%WRK( i )
+                        l = l + 1
   230                CONTINUE
                   ELSE
 
 !  The IEL-th element has no internal representation.
 
 !DIR$ IVDEP
-                     DO 240 I = 1, NVAREL
-                        PROD = PROD + V( data%IELVAR( L ) ) * &
-                                   SCALEE * data%FUVALS( K )
-                        K = K + 1
-                        L = L + 1
+                     DO 240 i = 1, nvarel
+                        prod = prod + V( data%IELVAR( l ) ) * &
+                                   scalee * data%FUVALS( k )
+                        k = k + 1
+                        l = l + 1
   240                CONTINUE
                   END IF
   250          CONTINUE
@@ -265,17 +265,17 @@
 !  Include the contribution from the linear element.
 
 !DIR$ IVDEP
-               DO 260 K = data%ISTADA( IG ), &
-                          data%ISTADA( IG1 ) - 1
-                  PROD = PROD + V( data%ICNA( K ) ) * data%A( K )
+               DO 260 k = data%ISTADA( ig ), &
+                          data%ISTADA( ig1 ) - 1
+                  prod = prod + V( data%ICNA( k ) ) * data%A( k )
   260          CONTINUE
 
 !  Multiply the product by the (scaled) group derivative
 
-               IF ( data%GXEQX( IG ) ) THEN
-                  R( ICON ) = PROD * data%GSCALE( IG )
+               IF ( data%GXEQX( ig ) ) THEN
+                  R( icon ) = prod * data%GSCALE( ig )
                ELSE
-                  R( ICON ) = PROD * data%GSCALE( IG ) * data%GVALS( data%ng + IG )
+                  R( icon ) = prod * data%GSCALE( ig ) * data%GVALS( data%ng + ig )
                END IF
             END IF
   290    CONTINUE

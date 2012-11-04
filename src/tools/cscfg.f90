@@ -1,13 +1,13 @@
 ! ( Last modified on Mon Feb 25 15:03:37 CST 2002 )
-      SUBROUTINE CSCFG ( data, N, M, X, LC, C, NNZJ, LCJAC, CJAC, &
+      SUBROUTINE CSCFG ( data, n, m, X, lc, C, nnzj, lcjac, CJAC, &
                          INDVAR, INDFUN, GRAD )
       USE CUTEST
       TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: N, M, LC, NNZJ, LCJAC
+      INTEGER :: n, m, lc, nnzj, lcjac
       LOGICAL :: GRAD
-      INTEGER :: INDVAR( LCJAC ), INDFUN( LCJAC )
-      REAL ( KIND = wp ) :: X( N ), C( LC ), CJAC ( LCJAC )
+      INTEGER :: INDVAR( lcjac ), INDFUN( lcjac )
+      REAL ( KIND = wp ) :: X( n ), C( lc ), CJAC ( lcjac )
 
 !  *********************************************************************
 !  *                                                                   *
@@ -16,8 +16,8 @@
 !  *********************************************************************
 
 
-      WRITE( IOUT, 1000 )
-      CALL CCFSG ( N, M, X, LC, C, NNZJ, LCJAC, CJAC, &
+      WRITE( iout, 1000 )
+      CALL CCFSG ( n, m, X, lc, C, nnzj, lcjac, CJAC, &
                    INDVAR, INDFUN, GRAD )
       RETURN
 

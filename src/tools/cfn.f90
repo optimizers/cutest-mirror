@@ -1,11 +1,11 @@
 ! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE CFN ( data, N, M, X, F, LC, C )
+      SUBROUTINE CFN ( data, n, m, X, f, lc, C )
       USE CUTEST
       TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: N, M, LC
-      REAL ( KIND = wp ) :: F
-      REAL ( KIND = wp ) :: X ( N ), C ( LC )
+      INTEGER :: n, m, lc
+      REAL ( KIND = wp ) :: f
+      REAL ( KIND = wp ) :: X ( n ), C ( lc )
 
 !  Compute the values of the objective function and general constraints
 !  of a function initially written in Standard Input Format (SIF).
@@ -41,14 +41,14 @@
 
 !  local variables.
 
-      INTEGER :: I, J, IG, IFSTAT, IGSTAT
-      REAL ( KIND = wp ) :: FTT, ONE, ZERO
-      PARAMETER ( ZERO = 0.0_wp, ONE = 1.0_wp )
+      INTEGER :: i, j, ig, ifstat, igstat
+      REAL ( KIND = wp ) :: ftt, one, zero
+      PARAMETER ( zero = 0.0_wp, one = 1.0_wp )
 
 !  there are non-trivial group functions.
 
-      DO 10 I = 1, MAX( data%nelnum, data%ng )
-        data%ICALCF( I ) = I
+      DO 10 i = 1, MAX( data%nelnum, data%ng )
+        data%ICALCF( i ) = i
    10 CONTINUE
 
 !  evaluate the element function values.
@@ -59,26 +59,26 @@
                    data%ISTADH( 1 ), data%ISTEP( 1 ), &
                    data%ICALCF( 1 ),  &
                    data%lintre, data%lstaev, data%lelvar, data%lntvar, data%lstadh,  &
-                   data%lntvar, data%lintre, LFUVAL, data%lvscal, data%lepvlu,  &
-                   1, IFSTAT )
+                   data%lntvar, data%lintre, lfuval, data%lvscal, data%lepvlu,  &
+                   1, ifstat )
 
 !  compute the group argument values ft.
 
-      DO 100 IG = 1, data%ng
-         FTT = - data%B( IG )
+      DO 100 ig = 1, data%ng
+         ftt = - data%B( ig )
 
 !  include the contribution from the linear element.
 
-         DO 30 J = data%ISTADA( IG ), data%ISTADA( IG + 1 ) - 1
-            FTT = FTT + data%A( J ) * X( data%ICNA( J ) )
+         DO 30 j = data%ISTADA( ig ), data%ISTADA( ig + 1 ) - 1
+            ftt = ftt + data%A( j ) * X( data%ICNA( j ) )
    30    CONTINUE
 
 !  include the contributions from the nonlinear elements.
 
-         DO 60 J = data%ISTADG( IG ), data%ISTADG( IG + 1 ) - 1
-            FTT = FTT + data%ESCALE( J ) * data%FUVALS( data%IELING( J ) )
+         DO 60 j = data%ISTADG( ig ), data%ISTADG( ig + 1 ) - 1
+            ftt = ftt + data%ESCALE( j ) * data%FUVALS( data%IELING( j ) )
    60    CONTINUE
-         data%FT( IG ) = FTT
+         data%FT( ig ) = ftt
   100 CONTINUE
 
 !  compute the group function values.
@@ -87,7 +87,7 @@
 
       IF ( data%altriv ) THEN
       CALL DCOPY( data%ng, data%FT( 1 ), 1, data%GVALS( 1 ), 1 )
-      CALL DSETVL( data%ng, data%GVALS( data%ng + 1 ), 1, ONE )
+      CALL SETVL( data%ng, data%GVALS( data%ng + 1 ), 1, one )
       ELSE
 
 !  evaluate the group function values.
@@ -97,40 +97,40 @@
                       data%ITYPEG( 1 ), data%ISTGP( 1 ), &
                       data%ICALCF( 1 ), &
                       data%lcalcg, data%ng1, data%lcalcg, data%lcalcg, data%lgpvlu, &
-                      .FALSE., IGSTAT )
+                      .FALSE., igstat )
       END IF
 
 !  Compute the objective and constraint function values.
 
 !                            block if there are no constraints. 
-      F = ZERO
+      f = zero
       IF ( data%numcon > 0 ) THEN
-         DO 210 IG = 1, data%ng
-            IF ( data%KNDOFC( IG ) == 0 ) THEN
-               IF ( data%GXEQX( IG ) ) THEN
-                  F = F + data%GSCALE( IG ) * data%FT( IG )
+         DO 210 ig = 1, data%ng
+            IF ( data%KNDOFC( ig ) == 0 ) THEN
+               IF ( data%GXEQX( ig ) ) THEN
+                  f = f + data%GSCALE( ig ) * data%FT( ig )
                ELSE
-                  F = F + data%GSCALE( IG ) * data%GVALS( IG )
+                  f = f + data%GSCALE( ig ) * data%GVALS( ig )
                END IF
             ELSE
-               IF ( data%GXEQX( IG ) ) THEN
-                  C( data%KNDOFC( IG ) ) = &
-                      data%GSCALE( IG ) * data%FT( IG )
+               IF ( data%GXEQX( ig ) ) THEN
+                  C( data%KNDOFC( ig ) ) = &
+                      data%GSCALE( ig ) * data%FT( ig )
                ELSE
-                  C( data%KNDOFC( IG ) ) = &
-                      data%GSCALE( IG ) * data%GVALS( IG )
+                  C( data%KNDOFC( ig ) ) = &
+                      data%GSCALE( ig ) * data%GVALS( ig )
                   END IF
                END IF
   210    CONTINUE
       ELSE
 
-!  There are no constraints, so we need not check data%KNDOFC( IG ).
+!  There are no constraints, so we need not check data%KNDOFC( ig ).
 
-         DO 220 IG = 1, data%ng
-            IF ( data%GXEQX( IG ) ) THEN
-               F = F + data%GSCALE( IG ) * data%FT( IG )
+         DO 220 ig = 1, data%ng
+            IF ( data%GXEQX( ig ) ) THEN
+               f = f + data%GSCALE( ig ) * data%FT( ig )
             ELSE
-               F = F + data%GSCALE( IG ) * data%GVALS( IG )
+               f = f + data%GSCALE( ig ) * data%GVALS( ig )
             END IF
   220    CONTINUE
       END IF

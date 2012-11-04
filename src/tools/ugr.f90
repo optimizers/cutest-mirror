@@ -1,10 +1,10 @@
 ! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE UGR ( data, N, X, G )
+      SUBROUTINE UGR ( data, n, X, G )
       USE CUTEST
       TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: N
-      REAL ( KIND = wp ) :: X( N ), G( N )
+      INTEGER :: n
+      REAL ( KIND = wp ) :: X( n ), G( n )
 
 !  Compute the gradient of a group partially separable function.
 
@@ -40,15 +40,15 @@
 
 !  local variables.
 
-      INTEGER :: I, J, IG, IFSTAT, IGSTAT
-      REAL ( KIND = wp ) :: FTT, ONE
-      PARAMETER ( ONE = 1.0_wp )
+      INTEGER :: i, j, ig, ifstat, igstat
+      REAL ( KIND = wp ) :: ftt, one
+      PARAMETER ( one = 1.0_wp )
       EXTERNAL :: RANGE 
 
 !  there are non-trivial group functions.
 
-      DO 10 I = 1, MAX( data%nelnum, data%ng )
-        data%ICALCF( I ) = I
+      DO 10 i = 1, MAX( data%nelnum, data%ng )
+        data%ICALCF( i ) = i
    10 CONTINUE
 
 !  evaluate the element function values.
@@ -59,8 +59,8 @@
                    data%ISTADH( 1 ), data%ISTEP( 1 ), &
                    data%ICALCF( 1 ),  &
                    data%lintre, data%lstaev, data%lelvar, data%lntvar, data%lstadh,  &
-                   data%lntvar, data%lintre, LFUVAL, data%lvscal, data%lepvlu,  &
-                   1, IFSTAT )
+                   data%lntvar, data%lintre, lfuval, data%lvscal, data%lepvlu,  &
+                   1, ifstat )
 
 !  evaluate the element function values.
 
@@ -70,30 +70,30 @@
                    data%ISTADH( 1 ), data%ISTEP( 1 ), &
                    data%ICALCF( 1 ),  &
                    data%lintre, data%lstaev, data%lelvar, data%lntvar, data%lstadh,  &
-                   data%lntvar, data%lintre, LFUVAL, data%lvscal, data%lepvlu,  &
-                   2, IFSTAT )
+                   data%lntvar, data%lintre, lfuval, data%lvscal, data%lepvlu,  &
+                   2, ifstat )
 
 !  compute the group argument values ft.
 
-      DO 100 IG = 1, data%ng
-         FTT = - data%B( IG )
+      DO 100 ig = 1, data%ng
+         ftt = - data%B( ig )
 
 !  include the contribution from the linear element.
 
-         DO 30 J = data%ISTADA( IG ), data%ISTADA( IG + 1 ) - 1
-            FTT = FTT + data%A( J ) * X( data%ICNA( J ) )
+         DO 30 j = data%ISTADA( ig ), data%ISTADA( ig + 1 ) - 1
+            ftt = ftt + data%A( j ) * X( data%ICNA( j ) )
    30    CONTINUE
 
 !  include the contributions from the nonlinear elements.
 
-         DO 60 J = data%ISTADG( IG ), data%ISTADG( IG + 1 ) - 1
-            FTT = FTT + data%ESCALE( J ) * data%FUVALS( data%IELING( J ) )
+         DO 60 j = data%ISTADG( ig ), data%ISTADG( ig + 1 ) - 1
+            ftt = ftt + data%ESCALE( j ) * data%FUVALS( data%IELING( j ) )
    60    CONTINUE
-         data%FT( IG ) = FTT
+         data%FT( ig ) = ftt
 
 !  Record the derivatives of trivial groups.
 
-         IF ( data%GXEQX( IG ) ) data%GVALS( data%ng + IG ) = ONE
+         IF ( data%GXEQX( ig ) ) data%GVALS( data%ng + ig ) = one
   100 CONTINUE
 
 !  evaluate the group derivative values.
@@ -103,11 +103,11 @@
             data%ITYPEG( 1 ), data%ISTGP( 1 ), &
             data%ICALCF( 1 ), &
             data%lcalcg, data%ng1, data%lcalcg, data%lcalcg, data%lgpvlu, &
-            .TRUE., IGSTAT )
+            .TRUE., igstat )
 
 !  Compute the gradient value.
 
-      CALL DELGRD( N, data%ng, data%firstg, data%ICNA( 1 ), data%licna, &
+      CALL ELGRD( n, data%ng, data%firstg, data%ICNA( 1 ), data%licna, &
                    data%ISTADA( 1 ), data%lstada, data%IELING( 1 ), &
                    data%leling, data%ISTADG( 1 ), data%lstadg, &
                    data%ITYPEE( 1 ), data%lintre, &
@@ -119,15 +119,15 @@
                    data%FUVALS, data%lnguvl, data%FUVALS( data%lggfx + 1 ), &
                    data%GSCALE( 1 ), data%lgscal, &
                    data%ESCALE( 1 ), data%lescal, data%FUVALS( data%lgrjac + 1 ), &
-                   data%lngrjc, data%WRK( 1 ), data%WRK( N + 1 ), data%maxsel, &
+                   data%lngrjc, data%WRK( 1 ), data%WRK( n + 1 ), data%maxsel, &
                    data%GXEQX( 1 ), data%lgxeqx, &
                    data%INTREP( 1 ), data%lintre, RANGE )
       data%firstg = .FALSE.
 
 !  Store the gradient value.
 
-      DO 300 I = 1, N
-         G( I ) = data%FUVALS( data%lggfx + I )
+      DO 300 i = 1, n
+         G( i ) = data%FUVALS( data%lggfx + i )
   300 CONTINUE
 
 !  Update the counters for the report tool.
