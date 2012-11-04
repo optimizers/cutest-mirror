@@ -1,10 +1,10 @@
 ! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE CONNAMES( data, M, GNAME )
+      SUBROUTINE CONNAMES( data, m, GNAME )
       USE CUTEST
       TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: M
-      CHARACTER ( LEN = 10 ) :: GNAME( M )
+      INTEGER :: m
+      CHARACTER ( LEN = 10 ) :: GNAME( m )
 
 !  Obtain the names of the general constraints.
 
@@ -35,15 +35,15 @@
 
 !  local variables.
 
-      INTEGER :: I, IG
+      INTEGER :: i, ig
 
 !  Set the names of the general constraints.
 
 !                            only if there are constraints.
       IF ( data%numcon > 0 ) THEN
-         DO 20 IG = 1, data%ng
-            IF ( data%KNDOFC( IG ) /= 0 ) &
-                 GNAME( data%KNDOFC( IG ) ) = data%GNAMES( IG )
+         DO 20 ig = 1, data%ng
+            IF ( data%KNDOFC( ig ) /= 0 ) &
+                 GNAME( data%KNDOFC( ig ) ) = data%GNAMES( ig )
    20    CONTINUE
       END IF
       RETURN

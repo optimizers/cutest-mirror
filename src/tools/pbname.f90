@@ -1,7 +1,7 @@
 ! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE PBNAME( N, PNAME )
+      SUBROUTINE PBNAME( n, PNAME )
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: N
+      INTEGER :: n
       CHARACTER ( LEN = 10 ) :: PNAME
 
 !  Obtain the name of the problem
@@ -10,7 +10,7 @@
 !  Nick Gould, for CGT productions.
 !  September 1992.
 
-      INTEGER :: LIWK, LWK, LFUVAL, LLOGIC, LCHARA
+      INTEGER :: liwk, lwk, lfuval, llogic, lchara
 
 ! ---------------------------------------------------------------------
 
@@ -27,11 +27,11 @@
 
       INCLUDE 'tools.siz'
 
-      INTEGER :: IWK( LIWK )
-      LOGICAL :: LOGI ( LLOGIC )
-      CHARACTER ( LEN = 10 ) :: CHA ( LCHARA )
-      REAL ( KIND = wp ) :: WK ( LWK )
-      REAL ( KIND = wp ) :: FUVALS ( LFUVAL )
+      INTEGER :: IWK( liwk )
+      LOGICAL :: LOGI ( llogic )
+      CHARACTER ( LEN = 10 ) :: CHA ( lchara )
+      REAL ( KIND = wp ) :: WK ( lwk )
+      REAL ( KIND = wp ) :: FUVALS ( lfuval )
 
 ! ---------------------------------------------------------------------
 
@@ -41,80 +41,80 @@
 
 !  integer variables from the GLOBAL common block.
 
-      INTEGER :: NG, NELNUM, NGEL, NVARS, NNZA, NGPVLU
-      INTEGER :: NEPVLU, NG1, NEL1, ISTADG, ISTGP, ISTADA
-      INTEGER :: ISTAEV, ISTEP, ITYPEG, KNDOFC, ITYPEE
-      INTEGER :: IELING, IELVAR, ICNA, ISTADH, INTVAR, IVAR
-      INTEGER :: ICALCF, ITYPEV, IWRK, A, B
+      INTEGER :: ng, nelnum, ngel, nvars, nnza, ngpvlu
+      INTEGER :: nepvlu, ng1, nel1, istadg, istgp, istada
+      INTEGER :: istaev, istep, itypeg, kndofc, itypee
+      INTEGER :: ieling, ielvar, icna, istadh, intvar, ivar
+      INTEGER :: icalcf, itypev, IWRK, A, B
       INTEGER :: U, GPVALU, EPVALU
-      INTEGER :: ESCALE, GSCALE, VSCALE, GVALS, XT, DGRAD
-      INTEGER :: Q, WRK, INTREP, GXEQX, GNAMES, VNAMES
-      INTEGER :: LO, CH, LIWORK, LWORK, NGNG, FT
-      INTEGER :: LA, LB, NOBJGR, LU, LELVAR
-      INTEGER :: LSTAEV, LSTADH, LNTVAR, LCALCF
-      INTEGER :: LELING, LINTRE, LFT, LGXEQX, LSTADG, LGVALS
-      INTEGER :: LICNA, LSTADA, LKNDOF, LGPVLU, LEPVLU
-      INTEGER :: LGSCAL, LESCAL, LVSCAL, LCALCG
+      INTEGER :: ESCALE, GSCALE, VSCALE, gvals, XT, DGRAD
+      INTEGER :: Q, WRK, intrep, gxeqx, GNAMES, VNAMES
+      INTEGER :: lo, ch, liwork, lwork, ngng, FT
+      INTEGER :: la, lb, nobjgr, lu, lelvar
+      INTEGER :: lstaev, lstadh, lntvar, lcalcf
+      INTEGER :: leling, lintre, lft, lgxeqx, lstadg, lgvals
+      INTEGER :: licna, lstada, lkndof, lgpvlu, lepvlu
+      INTEGER :: lgscal, lescal, lvscal, lcalcg
 
 !  integer variables from the LOCAL common block.
 
-      INTEGER :: LFXI, LGXI, LHXI, LGGFX, LDX, LGRJAC
-      INTEGER :: LQGRAD, LBREAK, LP, LXCP, LX0, LGX0
-      INTEGER :: LDELTX, LBND, LWKSTR, LSPTRS, LSELTS, LINDEX
-      INTEGER :: LSWKSP, LSTAGV, LSTAJC, LIUSED, LFREEC
-      INTEGER :: LNNONZ, LNONZ2, LSYMMD, LSYMMH
-      INTEGER :: LSLGRP, LSVGRP, LGCOLJ, LVALJR, LSEND
-      INTEGER :: LNPTRS, LNELTS, LNNDEX, LNWKSP, LNSTGV
-      INTEGER :: LNSTJC, LNIUSE, LNFREC, LNNNON, LNNNO2, LNSYMD
-      INTEGER :: LNSYMH, LNLGRP, LNVGRP, LNGCLJ, LNVLJR, LNQGRD
-      INTEGER :: LNBRAK, LNP, LNBND, LNFXI, LNGXI, LNGUVL
-      INTEGER :: LNHXI, LNHUVL, LNGGFX, LNDX, LNGRJC, LIWK2
-      INTEGER :: LWK2, MAXSIN, NINVAR, MAXSEL
-      INTEGER :: NTYPE, NSETS, LSTYPE, LSSWTR, LSSIWT, LSIWTR
-      INTEGER :: LSWTRA, LNTYPE, LNSWTR, LNSIWT, LNIWTR
-      INTEGER :: LNWTRA, LSISET, LSSVSE, LNISET, LNSVSE
+      INTEGER :: lfxi, lgxi, lhxi, lggfx, ldx, lgrjac
+      INTEGER :: lqgrad, lbreak, lp, lxcp, lx0, lgx0
+      INTEGER :: ldeltx, lbnd, lwkstr, lsptrs, lselts, lindex
+      INTEGER :: lswksp, lstagv, lstajc, liused, lfreec
+      INTEGER :: lnnonz, lnonz2, lsymmd, lsymmh
+      INTEGER :: lslgrp, lsvgrp, lgcolj, lvaljr, lsend
+      INTEGER :: lnptrs, lnelts, lnndex, lnwksp, lnstgv
+      INTEGER :: lnstjc, lniuse, lnfrec, lnnnon, lnnno2, lnsymd
+      INTEGER :: lnsymh, lnlgrp, lnvgrp, lngclj, lnvljr, lnqgrd
+      INTEGER :: lnbrak, lnp, lnbnd, lnfxi, lngxi, lnguvl
+      INTEGER :: lnhxi, lnhuvl, lnggfx, lndx, lngrjc, liwk2
+      INTEGER :: lwk2, maxsin, ninvar, maxsel
+      INTEGER :: ntype, nsets, lstype, lsswtr, lssiwt, lsiwtr
+      INTEGER :: lswtra, lntype, lnswtr, lnsiwt, lniwtr
+      INTEGER :: lnwtra, lsiset, lssvse, lniset, lnsvse
       LOGICAL :: ALTRIV, FIRSTG
       COMMON / GLOBAL /  IWK, WK, FUVALS, LOGI, &
-                         NG, NELNUM, NGEL, NVARS, NNZA, NGPVLU, &
-                         NEPVLU, NG1, NEL1, ISTADG, ISTGP, ISTADA, &
-                         ISTAEV, ISTEP, ITYPEG, KNDOFC, ITYPEE, &
-                         IELING, IELVAR, ICNA, ISTADH, INTVAR, IVAR, &
-                         ICALCF, ITYPEV, IWRK, A, B, &
+                         ng, nelnum, ngel, nvars, nnza, ngpvlu, &
+                         nepvlu, ng1, nel1, istadg, istgp, istada, &
+                         istaev, istep, itypeg, kndofc, itypee, &
+                         ieling, ielvar, icna, istadh, intvar, ivar, &
+                         icalcf, itypev, IWRK, A, B, &
                          U, GPVALU, EPVALU, &
-                         ESCALE, GSCALE, VSCALE, GVALS, XT, DGRAD, &
-                         Q, WRK, INTREP, GXEQX, GNAMES, VNAMES, &
-                         LO, CH, LIWORK, LWORK, NGNG, FT, &
+                         ESCALE, GSCALE, VSCALE, gvals, XT, DGRAD, &
+                         Q, WRK, intrep, gxeqx, GNAMES, VNAMES, &
+                         lo, ch, liwork, lwork, ngng, FT, &
                          ALTRIV, FIRSTG, &
-                         LA, LB, NOBJGR, LU, LELVAR, &
-                         LSTAEV, LSTADH, LNTVAR, LCALCF, &
-                         LELING, LINTRE, LFT, LGXEQX, LSTADG, LGVALS, &
-                         LICNA, LSTADA, LKNDOF, LGPVLU, LEPVLU, &
-                         LGSCAL, LESCAL, LVSCAL, LCALCG
+                         la, lb, nobjgr, lu, lelvar, &
+                         lstaev, lstadh, lntvar, lcalcf, &
+                         leling, lintre, lft, lgxeqx, lstadg, lgvals, &
+                         licna, lstada, lkndof, lgpvlu, lepvlu, &
+                         lgscal, lescal, lvscal, lcalcg
       COMMON / CHARA /   CHA
-      COMMON / LOCAL /   LFXI, LGXI, LHXI, LGGFX, LDX, LGRJAC, &
-                         LQGRAD, LBREAK, LP, LXCP, LX0, LGX0, &
-                         LDELTX, LBND, LWKSTR, LSPTRS, LSELTS, LINDEX, &
-                         LSWKSP, LSTAGV, LSTAJC, LIUSED, LFREEC, &
-                         LNNONZ, LNONZ2, LSYMMD, LSYMMH, &
-                         LSLGRP, LSVGRP, LGCOLJ, LVALJR, LSEND, &
-                         LNPTRS, LNELTS, LNNDEX, LNWKSP, LNSTGV, &
-                         LNSTJC, LNIUSE, LNFREC, LNNNON, LNNNO2, LNSYMD, &
-                         LNSYMH, LNLGRP, LNVGRP, LNGCLJ, LNVLJR, LNQGRD, &
-                         LNBRAK, LNP, LNBND, LNFXI, LNGXI, LNGUVL, &
-                         LNHXI, LNHUVL, LNGGFX, LNDX, LNGRJC, LIWK2, &
-                         LWK2, MAXSIN, NINVAR, MAXSEL, NTYPE, &
-                         NSETS, LSTYPE, LSSWTR, LSSIWT, LSIWTR, &
-                         LSWTRA, LNTYPE, LNSWTR, LNSIWT, LNIWTR, &
-                         LNWTRA, LSISET, LSSVSE, LNISET, LNSVSE
+      COMMON / LOCAL /   lfxi, lgxi, lhxi, lggfx, ldx, lgrjac, &
+                         lqgrad, lbreak, lp, lxcp, lx0, lgx0, &
+                         ldeltx, lbnd, lwkstr, lsptrs, lselts, lindex, &
+                         lswksp, lstagv, lstajc, liused, lfreec, &
+                         lnnonz, lnonz2, lsymmd, lsymmh, &
+                         lslgrp, lsvgrp, lgcolj, lvaljr, lsend, &
+                         lnptrs, lnelts, lnndex, lnwksp, lnstgv, &
+                         lnstjc, lniuse, lnfrec, lnnnon, lnnno2, lnsymd, &
+                         lnsymh, lnlgrp, lnvgrp, lngclj, lnvljr, lnqgrd, &
+                         lnbrak, lnp, lnbnd, lnfxi, lngxi, lnguvl, &
+                         lnhxi, lnhuvl, lnggfx, lndx, lngrjc, liwk2, &
+                         lwk2, maxsin, ninvar, maxsel, ntype, &
+                         nsets, lstype, lsswtr, lssiwt, lsiwtr, &
+                         lswtra, lntype, lnswtr, lnsiwt, lniwtr, &
+                         lnwtra, lsiset, lssvse, lniset, lnsvse
       SAVE             / GLOBAL /, / LOCAL /, / CHARA /
 
 !  local variables.
 
-      INTEGER :: I
+      INTEGER :: i
 
 !  Set the problem name.
 
-      PNAME = CHA( VNAMES + N + 1 )
+      PNAME = CHA( VNAMES + n + 1 )
       RETURN
 
 !  end of PBNAME.

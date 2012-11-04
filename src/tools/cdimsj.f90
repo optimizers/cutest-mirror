@@ -1,9 +1,9 @@
 ! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE CDIMSJ( data, NNZJ )
+      SUBROUTINE CDIMSJ( data, nnzj )
       USE CUTEST
       TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: NNZJ
+      INTEGER :: nnzj
 
 !  Compute the space required to store the Jacobian matrix of the 
 !  constraints/objective function of a problem initially written in 
@@ -41,22 +41,22 @@
 
 !  local variables.
 
-      INTEGER :: IG
+      INTEGER :: ig
 
-!  The total space is stored in NNZJ
+!  The total space is stored in nnzj
 
-      NNZJ = 0
+      nnzj = 0
 
 !  Allow space for constraint groups
 
-      DO 10 IG = 1, data%ng
-         IF ( data%KNDOFC( IG ) /= 0 ) NNZJ = NNZJ + &
-              data%IWORK( data%lstagv + IG + 1 ) - data%IWORK( data%lstagv + IG )
+      DO 10 ig = 1, data%ng
+         IF ( data%KNDOFC( ig ) /= 0 ) nnzj = nnzj + &
+              data%IWORK( data%lstagv + ig + 1 ) - data%IWORK( data%lstagv + ig )
    10 CONTINUE
 
 !  Add space for the (dense) gradient of the objective function.
 
-      NNZJ = NNZJ + data%numvar
+      nnzj = nnzj + data%numvar
       RETURN
 
 !  end of CDIMSJ.

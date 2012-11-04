@@ -3,187 +3,187 @@
 !  ** FOR THE CRAY 2, LINES STARTING 'CDIR$ IVDEP' TELL THE COMPILER TO
 !     IGNORE POTENTIAL VECTOR DEPENDENCIES AS THEY ARE KNOWN TO BE O.K.
 
-      SUBROUTINE DHSPRD( N, NN, NG, NGEL, NFREE, NVAR1, NVAR2,  &
-                         NBPROD, ALLLIN, IVAR, ISTAEV, LSTAEV, ISTADH,  &
-                         LSTADH, INTVAR, LNTVAR, IELING, LELING, IELVAR,  &
-                         LELVAR, ISTAJC, LNSTJC, ISELTS, LNELTS, ISPTRS,  &
-                         LNPTRS, IGCOLJ, LNGCLJ, ISLGRP, LNLGRP, ISWKSP,  &
-                         LNWKSP, ISVGRP, LNVGRP, ISTAGV, LNSTGV, IVALJR,  &
-                         LNVLJR, ITYPEE, LITYPE, NNONNZ, INONNZ, LNNNON, &
-                         IUSED, LNIUSE, INONZ2, LNNNO2, ISYMMH, MAXSZH, &
-                         P, Q, GVALS2, GVALS3, GRJAC, LGRJAC, &
-                         GSCALE, ESCALE, LESCAL, HUVALS, LHUVAL, &
-                         WK, LNWK, WKB, LNWKB, WKC, LNWKC,  &
-                         GXEQX, LGXEQX, INTREP, LINTRE, DENSEP, RANGE )
+      SUBROUTINE DHSPRD( n, nn, ng, ngel, nfree, nvar1, nvar2,  &
+                         nbprod, ALLLIN, ivar, istaev, lstaev, istadh,  &
+                         lstadh, intvar, lntvar, ieling, leling, ielvar,  &
+                         lelvar, ISTAJC, lnstjc, ISELTS, lnelts, ISPTRS,  &
+                         lnptrs, IGCOLJ, lngclj, ISLGRP, lnlgrp, ISWKSP,  &
+                         lnwksp, ISVGRP, lnvgrp, ISTAGV, lnstgv, IVALJR,  &
+                         lnvljr, itypee, litype, nnonnz, INONNZ, lnnnon, &
+                         IUSED, lniuse, INONZ2, lnnno2, ISYMMH, maxszh, &
+                         P, Q, GVALS2, GVALS3, GRJAC, lgrjac, &
+                         GSCALE, ESCALE, lescal, HUVALS, lhuval, &
+                         WK, lnwk, WKB, lnwkb, WKC, lnwkc,  &
+                         gxeqx, lgxeqx, intrep, lintre, DENSEP, RANGE )
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
 !  EVALUATE Q, THE PRODUCT OF THE HESSIAN OF A GROUP  PARTIALLY
 !  SEPARABLE FUNCTION WITH THE VECTOR P.
 
-!  THE NONZERO COMPONENTS OF P HAVE INDICES IVAR( I ), I = NVAR1, NVAR2.
-!  THE NONZERO COMPONENTS OF THE PRODUCT HAVE INDICES INNONZ( I ),
-!  I = 1, NNONNZ.
+!  THE NONZERO COMPONENTS OF P HAVE INDICES IVAR( i ), i = nvar1, NVAR2.
+!  THE NONZERO COMPONENTS OF THE PRODUCT HAVE INDICES INNONZ( i ),
+!  i = 1, NNONNZ.
 
-!  THE ELEMENTS OF THE ARRAY IUSED MUST BE SET TO ZERO ON ENTRY.
-!  THE WORKSPACE ARRAY WK MUST HAVE LENGTH AT LEAST MAX( NG, N + 2 *
+!  THE ELEMENTS OF THE ARRAY IUSED MUST BE SET TO zero ON ENTRY.
+!  THE WORKSPACE ARRAY WK MUST HAVE LENGTH AT LEAST MAX( ng, n + 2 *
 !  MAXIMUM NUMBER OF INTERNAL VARIABLES )
 
 !  NICK GOULD, 10TH MAY 1989.
 !  FOR CGT PRODUCTIONS.
 
-      INTEGER :: N, NN, NG, NGEL, NFREE, NVAR1, NVAR2, NBPROD
-      INTEGER :: NNONNZ, MAXSZH, LGXEQX, LINTRE, LITYPE
-      INTEGER :: LSTAEV, LSTADH, LNTVAR, LELING, LELVAR
-      INTEGER :: LNSTJC, LNELTS, LNPTRS, LNGCLJ, LNLGRP, LNWKSP
-      INTEGER :: LNVGRP, LNSTGV, LNVLJR, LNNNON, LNIUSE, LNNNO2
-      INTEGER :: LGRJAC, LESCAL, LHUVAL, LNWK, LNWKB, LNWKC
+      INTEGER :: n, nn, ng, ngel, nfree, nvar1, nvar2, nbprod
+      INTEGER :: nnonnz, maxszh, lgxeqx, lintre, litype
+      INTEGER :: lstaev, lstadh, lntvar, leling, lelvar
+      INTEGER :: lnstjc, lnelts, lnptrs, lngclj, lnlgrp, lnwksp
+      INTEGER :: lnvgrp, lnstgv, lnvljr, lnnnon, lniuse, lnnno2
+      INTEGER :: lgrjac, lescal, lhuval, lnwk, lnwkb, lnwkc
       LOGICAL :: ALLLIN, DENSEP
-      INTEGER :: IVAR( N ), ISTAEV( LSTAEV ), ISTADH( LSTADH )
-      INTEGER :: ISTAJC( LNSTJC ), ISELTS( LNELTS )
-      INTEGER :: IGCOLJ( LNGCLJ ), ISLGRP( LNLGRP )
-      INTEGER :: ISWKSP( LNWKSP ), ISPTRS( LNPTRS )
-      INTEGER :: INTVAR( LNTVAR ), IELING( LELING )
-      INTEGER :: IELVAR( LELVAR ), ISVGRP( LNVGRP )
-      INTEGER :: ISTAGV( LNSTGV ), IVALJR( LNVLJR )
-      INTEGER :: INONNZ( LNNNON ), IUSED( LNIUSE )
-      INTEGER :: ITYPEE( LITYPE )
-      INTEGER :: INONZ2( LNNNO2 ), ISYMMH( MAXSZH, MAXSZH )
-      REAL ( KIND = wp ) :: P( N ), GVALS2( NG ), GVALS3( NG ), &
-                       GSCALE( NG ), ESCALE( LESCAL ), &
-                       WK( LNWK ), WKB( LNWKB ), WKC( LNWKC ), &
-                       Q( N ), GRJAC( LGRJAC ), HUVALS( LHUVAL )
-      LOGICAL :: GXEQX( LGXEQX ), INTREP( LINTRE )
+      INTEGER :: IVAR( n ), ISTAEV( lstaev ), ISTADH( lstadh )
+      INTEGER :: ISTAJC( lnstjc ), ISELTS( lnelts )
+      INTEGER :: IGCOLJ( lngclj ), ISLGRP( lnlgrp )
+      INTEGER :: ISWKSP( lnwksp ), ISPTRS( lnptrs )
+      INTEGER :: INTVAR( lntvar ), IELING( leling )
+      INTEGER :: IELVAR( lelvar ), ISVGRP( lnvgrp )
+      INTEGER :: ISTAGV( lnstgv ), IVALJR( lnvljr )
+      INTEGER :: INONNZ( lnnnon ), IUSED( lniuse )
+      INTEGER :: ITYPEE( litype )
+      INTEGER :: INONZ2( lnnno2 ), ISYMMH( maxszh, maxszh )
+      REAL ( KIND = wp ) :: P( n ), GVALS2( ng ), GVALS3( ng ), &
+                       GSCALE( ng ), ESCALE( lescal ), &
+                       WK( lnwk ), WKB( lnwkb ), WKC( lnwkc ), &
+                       Q( n ), GRJAC( lgrjac ), HUVALS( lhuval )
+      LOGICAL :: GXEQX( lgxeqx ), INTREP( lintre )
       EXTERNAL :: RANGE 
 
 !  LOCAL VARIABLES.
 
-      INTEGER :: I, IEL, IG, IPT, J, IROW, JCOL, IJHESS, LTHVAR
-      INTEGER :: IELL, II, K, L, LL, NIN, NVAREL, IELHST, NNONZ2
-      REAL ( KIND = wp ) :: ZERO, PI, GI
+      INTEGER :: i, iel, ig, ipt, j, irow, jcol, ijhess, lthvar
+      INTEGER :: iell, ii, k, l, ll, nin, nvarel, ielhst, nnonz2
+      REAL ( KIND = wp ) :: zero, pi, gi
       LOGICAL :: NULLWK
-!D    EXTERNAL         DSETVL
+!D    EXTERNAL         SETVL
       INTRINSIC        ABS
 
 !  COMMON VARIABLES.
 
-      REAL ( KIND = wp ) :: EPSMCH, EPSNEG, TINY, BIG
-!D    COMMON / DMACHN / EPSMCH, EPSNEG, TINY, BIG
+      REAL ( KIND = wp ) :: epsmch, epsneg, tiny, big
+!D    COMMON / DMACHN / epsmch, epsneg, tiny, big
 !D    SAVE   / DMACHN /
 
 !  SET CONSTANT REAL PARAMETERS.
 
-      PARAMETER ( ZERO = 0.0_wp )
+      PARAMETER ( zero = 0.0_wp )
 
 ! ======================= RANK-ONE TERMS ==========================
 
-!  IF THE IG-TH GROUP IS NON-TRIVIAL, FORM THE PRODUCT OF P WITH THE
-!  SUM OF RANK-ONE FIRST ORDER TERMS, A(TRANS) * GVALS3 * A. A IS
+!  IF THE IG-TH GROUP is NON-TRIVIAL, FORM THE PRODUCT OF P WITH THE
+!  SUM OF RANK-ONE FIRST ORDER TERMS, A(TRANS) * GVALS3 * A. A is
 !  STORED BY BOTH ROWS AND COLUMNS. FOR MAXIMUM EFFICIENCY,
-!  THE PRODUCT IS FORMED IN DIFFERENT WAYS IF P IS SPARSE OR DENSE.
+!  THE PRODUCT is FORMED IN DIFFERENT WAYS IF P is SPARSE OR DENSE.
 
-! -----------------  CASE 1. P IS NOT SPARSE -----------------------
+! -----------------  CASE 1. P is NOT SPARSE -----------------------
 
       IF ( DENSEP ) THEN
 
 !  INITIALIZE WK AND Q AS ZERO.
 
-      CALL DSETVL( NG, WK, 1, ZERO )
-      CALL DSETVL( N,  Q,  1, ZERO )
+      CALL SETVL( ng, WK, 1, zero )
+      CALL SETVL( n,  Q,  1, zero )
 
 !  FORM THE MATRIX-VECTOR PRODUCT WK = A * P, USING THE COLUMN-WISE
 !  STORAGE OF A.
 
-         DO 20 J = NVAR1, NVAR2
-            I = IVAR( J )
-            PI = P( I )
+         DO 20 j = nvar1, nvar2
+            i = IVAR( j )
+            pi = P( i )
 !DIR$ IVDEP
-            DO 10 K = ISTAJC( I ), ISTAJC( I + 1 ) - 1
-               L = IGCOLJ( K )
-               WK( L ) = WK( L ) + PI * GRJAC( K )
+            DO 10 k = ISTAJC( i ), ISTAJC( i + 1 ) - 1
+               l = IGCOLJ( k )
+               WK( l ) = WK( l ) + pi * GRJAC( k )
    10       CONTINUE
    20    CONTINUE
 
 !  MULTIPLY WK BY THE DIAGONAL MATRIX GVALS3.
 
-         DO 30 IG = 1, NG
-            IF ( GXEQX( IG ) ) THEN
-               WK( IG ) = GSCALE( IG ) * WK( IG )
+         DO 30 ig = 1, ng
+            IF ( GXEQX( ig ) ) THEN
+               WK( ig ) = GSCALE( ig ) * WK( ig )
             ELSE
-               WK( IG ) = GSCALE( IG ) * WK( IG ) * GVALS3( IG )
+               WK( ig ) = GSCALE( ig ) * WK( ig ) * GVALS3( ig )
             END IF
    30    CONTINUE
 
 !  FORM THE MATRIX-VECTOR PRODUCT Q = A(TRANS) * WK, ONCE
 !  AGAIN USING THE COLUMN-WISE STORAGE OF A.
 
-         NNONNZ = 0
-         DO 50 J = 1, NFREE
-            I = IVAR( J )
-            PI = ZERO
+         nnonnz = 0
+         DO 50 j = 1, nfree
+            i = IVAR( j )
+            pi = zero
 !DIR$ IVDEP
-            DO  40 K = ISTAJC( I ), ISTAJC( I + 1 ) - 1
-               PI = PI + WK( IGCOLJ( K ) ) * GRJAC( K )
+            DO  40 k = ISTAJC( i ), ISTAJC( i + 1 ) - 1
+               pi = pi + WK( IGCOLJ( k ) ) * GRJAC( k )
    40       CONTINUE
-            Q( I ) = PI
+            Q( i ) = pi
    50    CONTINUE
       ELSE
 
-! ------------------- CASE 2. P IS SPARSE --------------------------
+! ------------------- CASE 2. P is SPARSE --------------------------
 
-         NNONZ2 = 0
+         nnonz2 = 0
 
 !  FORM THE MATRIX-VECTOR PRODUCT WK = A * P, USING THE COLUMN-WISE
 !  STORAGE OF A. KEEP TRACK OF THE NONZERO COMPONENTS OF WK IN INONZ2.
 !  ONLY STORE COMPONENTS CORRESPONDING TO NON TRIVIAL GROUP .
 
-         DO 120 J = NVAR1, NVAR2
-            I = IVAR( J )
-            PI = P( I )
+         DO 120 j = nvar1, nvar2
+            i = IVAR( j )
+            pi = P( i )
 !DIR$ IVDEP
-            DO 110 K = ISTAJC( I ), ISTAJC( I + 1 ) - 1
-               IG = IGCOLJ( K )
-               IF ( IUSED( IG ) == 0 ) THEN
-                  WK( IG ) = PI * GRJAC( K )
-                  IUSED( IG ) = 1
-                  NNONZ2 = NNONZ2 + 1
-                  INONZ2( NNONZ2 ) = IG
+            DO 110 k = ISTAJC( i ), ISTAJC( i + 1 ) - 1
+               ig = IGCOLJ( k )
+               IF ( IUSED( ig ) == 0 ) THEN
+                  WK( ig ) = pi * GRJAC( k )
+                  IUSED( ig ) = 1
+                  nnonz2 = nnonz2 + 1
+                  INONZ2( nnonz2 ) = ig
                ELSE
-                  WK( IG ) = WK( IG ) + PI * GRJAC( K )
+                  WK( ig ) = WK( ig ) + pi * GRJAC( k )
                END IF
   110       CONTINUE
   120    CONTINUE
 
 !  RESET IUSED TO ZERO.
 
-         DO 130 I = 1, NNONZ2
-            IUSED( INONZ2( I ) ) = 0
+         DO 130 i = 1, nnonz2
+            IUSED( INONZ2( i ) ) = 0
   130    CONTINUE
 
 !  FORM THE MATRIX-VECTOR PRODUCT Q = A(TRANS) * WK, USING THE
 !  ROW-WISE STORAGE OF A.
 
-         NNONNZ = 0
-         DO 160 J = 1, NNONZ2
-            IG = INONZ2( J )
-            IF ( .NOT. GXEQX( IG ) ) THEN
+         nnonnz = 0
+         DO 160 j = 1, nnonz2
+            ig = INONZ2( j )
+            IF ( .NOT. GXEQX( ig ) ) THEN
 
-!  IF GROUP IG IS NON TRIVIAL, THERE ARE CONTRIBUTIONS FROM ITS
+!  IF GROUP ig is NON TRIVIAL, THERE ARE CONTRIBUTIONS FROM ITS
 !  RANK-ONE TERM.
 
-               PI = GSCALE( IG ) * GVALS3( IG ) * WK( IG )
+               pi = GSCALE( ig ) * GVALS3( ig ) * WK( ig )
 !DIR$ IVDEP
-               DO 150 K = ISTAGV( IG ), ISTAGV( IG + 1 ) - 1
-                  L = ISVGRP( K )
+               DO 150 k = ISTAGV( ig ), ISTAGV( ig + 1 ) - 1
+                  l = ISVGRP( k )
 
-!  IF Q HAS A NONZERO IN POSITION L, STORE ITS INDEX IN INONNZ.
+!  IF Q HAS A NONZERO IN POSITION l, STORE ITS INDEX IN INONNZ.
 
-                  IF ( IUSED( L ) == 0 ) THEN
-                     Q( L ) = PI * GRJAC( IVALJR( K ) )
-                     IUSED( L ) = 1
-                     NNONNZ = NNONNZ + 1
-                     INONNZ( NNONNZ ) = L
+                  IF ( IUSED( l ) == 0 ) THEN
+                     Q( l ) = pi * GRJAC( IVALJR( k ) )
+                     IUSED( l ) = 1
+                     nnonnz = nnonnz + 1
+                     INONNZ( nnonnz ) = l
                   ELSE
-                     Q( L ) = Q( L ) + PI * GRJAC( IVALJR( K ) )
+                     Q( l ) = Q( l ) + pi * GRJAC( IVALJR( k ) )
                   END IF
   150          CONTINUE
             END IF
@@ -195,99 +195,99 @@
 
 !  NOW CONSIDER THE PRODUCT OF P WITH THE SECOND ORDER TERMS (THAT IS.
 ! (2ND DERIVATIVES OF THE ELEMENTS). AGAIN, FOR MAXIMUM EFFICIENCY,
-!  THE PRODUCT IS FORMED IN DIFFERENT WAYS IF P IS SPARSE OR DENSE.
+!  THE PRODUCT is FORMED IN DIFFERENT WAYS IF P is SPARSE OR DENSE.
 
-! --------------------- CASE 1. P IS NOT SPARSE ---------------------
+! --------------------- CASE 1. P is NOT SPARSE ---------------------
 
          IF ( DENSEP ) THEN
-            DO 280 IELL = 1, NGEL
-               IEL = IELING( IELL )
-               IG = ISLGRP( IELL )
-               NVAREL = ISTAEV( IEL + 1 ) - ISTAEV( IEL )
-               IF ( GXEQX( IG ) ) THEN
-                  GI = GSCALE( IG ) * ESCALE( IELL )
+            DO 280 iell = 1, ngel
+               iel = IELING( iell )
+               ig = ISLGRP( iell )
+               nvarel = ISTAEV( iel + 1 ) - ISTAEV( iel )
+               IF ( GXEQX( ig ) ) THEN
+                  gi = GSCALE( ig ) * ESCALE( iell )
                ELSE
-                  GI = GSCALE( IG ) * ESCALE( IELL ) * GVALS2( IG ) 
+                  gi = GSCALE( ig ) * ESCALE( iell ) * GVALS2( ig ) 
                END IF
-               ISWKSP( IEL ) = NBPROD
-               IF ( INTREP( IEL ) ) THEN
+               ISWKSP( iel ) = nbprod
+               IF ( INTREP( iel ) ) THEN
 
 !  THE IEL-TH ELEMENT HESSIAN HAS AN INTERNAL REPRESENTATION.
 !  COPY THE ELEMENTAL VARIABLES INTO WK.
 
                   NULLWK = .TRUE.
-                  LL = ISTAEV( IEL )
+                  ll = ISTAEV( iel )
 !DIR$ IVDEP
-                  DO 210 II = 1, NVAREL
-                     PI = P( IELVAR( LL ) )
-                     WK( II ) = PI
-                     IF ( PI /= ZERO ) NULLWK = .FALSE.
-                     LL = LL + 1
+                  DO 210 ii = 1, nvarel
+                     pi = P( IELVAR( ll ) )
+                     WK( ii ) = pi
+                     IF ( pi /= zero ) NULLWK = .FALSE.
+                     ll = ll + 1
   210             CONTINUE
 
-!  SKIP THE ELEMENT IF WK IS NULL.
+!  SKIP THE ELEMENT IF WK is NULL.
 
                   IF ( NULLWK ) GO TO 280
 
 !  FIND THE INTERNAL VARIABLES, WKB.
 
-                  NIN = INTVAR( IEL + 1 ) - INTVAR( IEL )
-                  CALL RANGE ( IEL, .FALSE., WK, WKB, NVAREL, NIN,  &
-                               ITYPEE( IEL ), NVAREL, NIN )
+                  nin = INTVAR( iel + 1 ) - INTVAR( iel )
+                  CALL RANGE ( iel, .FALSE., WK, WKB, nvarel, nin,  &
+                               ITYPEE( iel ), nvarel, nin )
 
 !  MULTIPLY THE INTERNAL VARIABLES BY THE ELEMENT HESSIAN AND PUT THE
 !  PRODUCT IN WKC. CONSIDER THE FIRST COLUMN OF THE ELEMENT HESSIAN.
 
-                  IELHST = ISTADH( IEL )
-                  PI = GI * WKB( 1 )
+                  ielhst = ISTADH( iel )
+                  pi = gi * WKB( 1 )
 !DIR$ IVDEP
-                  DO 220 IROW = 1, NIN
-                     IJHESS = ISYMMH( 1, IROW ) + IELHST
-                     WKC( IROW ) = PI * HUVALS( IJHESS )
+                  DO 220 irow = 1, nin
+                     ijhess = ISYMMH( 1, irow ) + ielhst
+                     WKC( irow ) = pi * HUVALS( ijhess )
   220             CONTINUE
 
 !  NOW CONSIDER THE REMAINING COLUMNS OF THE ELEMENT HESSIAN.
 
-                  DO 240 JCOL = 2, NIN
-                     PI = GI * WKB( JCOL )
-                     IF ( PI /= ZERO ) THEN
+                  DO 240 jcol = 2, nin
+                     pi = gi * WKB( jcol )
+                     IF ( pi /= zero ) THEN
 !DIR$ IVDEP
-                        DO 230 IROW = 1, NIN
-                           IJHESS = ISYMMH( JCOL, IROW ) + IELHST
-                           WKC( IROW ) = WKC( IROW ) + PI * &
-                                         HUVALS( IJHESS )
+                        DO 230 irow = 1, nin
+                           ijhess = ISYMMH( jcol, irow ) + ielhst
+                           WKC( irow ) = WKC( irow ) + pi * &
+                                         HUVALS( ijhess )
   230                   CONTINUE
                      END IF
   240             CONTINUE
 
 !  SCATTER THE PRODUCT BACK ONTO THE ELEMENTAL VARIABLES, WK.
 
-                  CALL RANGE ( IEL, .TRUE., WKC, WK, NVAREL, NIN,  &
-                               ITYPEE( IEL ), NIN, NVAREL )
+                  CALL RANGE ( iel, .TRUE., WKC, WK, nvarel, nin,  &
+                               ITYPEE( iel ), nin, nvarel )
 
 !  ADD THE SCATTERED PRODUCT TO Q.
 
-                  LL = ISTAEV( IEL )
+                  ll = ISTAEV( iel )
 !DIR$ IVDEP
-                  DO 250 II = 1, NVAREL
-                     L = IELVAR( LL )
-                     Q( L ) = Q( L ) + WK( II )
-                     LL = LL + 1
+                  DO 250 ii = 1, nvarel
+                     l = IELVAR( ll )
+                     Q( l ) = Q( l ) + WK( ii )
+                     ll = ll + 1
   250             CONTINUE
                ELSE
 
 !  THE IEL-TH ELEMENT HESSIAN HAS NO INTERNAL REPRESENTATION.
 
-                  LTHVAR = ISTAEV( IEL ) - 1
-                  IELHST = ISTADH( IEL )
-                  DO 270 JCOL = 1, NVAREL
-                     PI = GI * P( IELVAR( LTHVAR + JCOL ) )
-                     IF ( PI /= ZERO ) THEN
+                  lthvar = ISTAEV( iel ) - 1
+                  ielhst = ISTADH( iel )
+                  DO 270 jcol = 1, nvarel
+                     pi = gi * P( IELVAR( lthvar + jcol ) )
+                     IF ( pi /= zero ) THEN
 !DIR$ IVDEP
-                        DO 260 IROW = 1, NVAREL
-                           IJHESS = ISYMMH( JCOL, IROW ) + IELHST
-                           L = IELVAR( LTHVAR + IROW )
-                           Q( L ) = Q( L ) + PI * HUVALS( IJHESS )
+                        DO 260 irow = 1, nvarel
+                           ijhess = ISYMMH( jcol, irow ) + ielhst
+                           l = IELVAR( lthvar + irow )
+                           Q( l ) = Q( l ) + pi * HUVALS( ijhess )
   260                   CONTINUE
                      END IF
   270             CONTINUE
@@ -295,128 +295,128 @@
   280       CONTINUE
          ELSE
 
-! -------------------- CASE 2. P IS SPARSE ------------------------
+! -------------------- CASE 2. P is SPARSE ------------------------
 
-            DO 380 J = NVAR1, NVAR2
+            DO 380 j = nvar1, nvar2
 
 !  CONSIDER EACH NONZERO COMPONENT OF P SEPARATELY.
 
-               I = IVAR( J )
-               IPT = ISPTRS( I )
-               IF ( IPT >= 0 ) THEN
+               i = IVAR( j )
+               ipt = ISPTRS( i )
+               IF ( ipt >= 0 ) THEN
 
 !  THE INDEX OF THE I-TH COMPONENT LIES IN THE IEL-TH NONLINEAR ELEMENT.
 
-                  IELL = ISELTS( I )
+                  iell = ISELTS( i )
   300             CONTINUE
 
 !  CHECK TO ENSURE THAT THE IEL-TH ELEMENT HAS NOT ALREADY BEEN USED.
 
-                  IF ( ISWKSP( IELL ) < NBPROD ) THEN
-                     ISWKSP( IELL ) = NBPROD
-                     IEL = IELING( IELL )
-                     NVAREL = ISTAEV( IEL + 1 ) - ISTAEV( IEL )
-                     IG = ISLGRP( IELL )
-                     IF ( GXEQX( IG ) ) THEN
-                        GI = GSCALE( IG ) * ESCALE( IELL )
+                  IF ( ISWKSP( iell ) < nbprod ) THEN
+                     ISWKSP( iell ) = nbprod
+                     iel = IELING( iell )
+                     nvarel = ISTAEV( iel + 1 ) - ISTAEV( iel )
+                     ig = ISLGRP( iell )
+                     IF ( GXEQX( ig ) ) THEN
+                        gi = GSCALE( ig ) * ESCALE( iell )
                      ELSE
-                        GI = GSCALE( IG ) * ESCALE( IELL ) * GVALS2( IG) 
+                        gi = GSCALE( ig ) * ESCALE( iell ) * GVALS2( IG) 
                      END IF
-                     IF ( INTREP( IEL ) ) THEN
+                     IF ( INTREP( iel ) ) THEN
 
 !  THE IEL-TH ELEMENT HESSIAN HAS AN INTERNAL REPRESENTATION.
 !  COPY THE ELEMENTAL VARIABLES INTO WK.
 
-                        LL = ISTAEV( IEL )
+                        ll = ISTAEV( iel )
 !DIR$ IVDEP
-                        DO 310 II = 1, NVAREL
-                           WK( II ) = P( IELVAR( LL ) )
-                           LL = LL + 1
+                        DO 310 ii = 1, nvarel
+                           WK( ii ) = P( IELVAR( ll ) )
+                           ll = ll + 1
   310                   CONTINUE
 
 !  FIND THE INTERNAL VARIABLES.
 
-                        NIN = INTVAR( IEL + 1 ) - INTVAR( IEL )
-                        CALL RANGE ( IEL, .FALSE., WK, WKB, NVAREL, NIN, &
-                                    ITYPEE( IEL ), NVAREL, NIN )
+                        nin = INTVAR( iel + 1 ) - INTVAR( iel )
+                        CALL RANGE ( iel, .FALSE., WK, WKB, nvarel, nin, &
+                                    ITYPEE( iel ), nvarel, nin )
 
 !  MULTIPLY THE INTERNAL VARIABLES BY THE ELEMENT HESSIAN AND PUT THE 
 !  PRODUCT IN WKB. CONSIDER THE FIRST COLUMN OF THE ELEMENT HESSIAN.
 
-                        IELHST = ISTADH( IEL )
-                        PI = GI * WKB( 1 )
+                        ielhst = ISTADH( iel )
+                        pi = gi * WKB( 1 )
 !DIR$ IVDEP
-                        DO 320 IROW = 1, NIN
-                           IJHESS = ISYMMH( 1, IROW ) + IELHST
-                           WKC( IROW ) = PI * HUVALS( IJHESS )
+                        DO 320 irow = 1, nin
+                           ijhess = ISYMMH( 1, irow ) + ielhst
+                           WKC( irow ) = pi * HUVALS( ijhess )
   320                   CONTINUE
 
 !  NOW CONSIDER THE REMAINING COLUMNS OF THE ELEMENT HESSIAN.
 
-                        DO 340 JCOL = 2, NIN
-                           PI = GI * WKB( JCOL )
-                           IF ( PI /= ZERO ) THEN
+                        DO 340 jcol = 2, nin
+                           pi = gi * WKB( jcol )
+                           IF ( pi /= zero ) THEN
 !DIR$ IVDEP
-                              DO 330 IROW = 1, NIN
-                                 IJHESS = ISYMMH( JCOL, IROW ) + IELHST
-                                 WKC( IROW ) = WKC( IROW ) + PI * &
-                                             HUVALS( IJHESS )
+                              DO 330 irow = 1, nin
+                                 ijhess = ISYMMH( jcol, irow ) + ielhst
+                                 WKC( irow ) = WKC( irow ) + pi * &
+                                             HUVALS( ijhess )
   330                         CONTINUE
                            END IF
   340                   CONTINUE
 
 !  SCATTER THE PRODUCT BACK ONTO THE ELEMENTAL VARIABLES, WK.
 
-                        CALL RANGE ( IEL, .TRUE., WKC, WK, NVAREL, NIN, &
-                                     ITYPEE( IEL ), NIN, NVAREL )
+                        CALL RANGE ( iel, .TRUE., WKC, WK, nvarel, nin, &
+                                     ITYPEE( iel ), nin, nvarel )
 
 !  ADD THE SCATTERED PRODUCT TO Q.
 
-                        LL = ISTAEV( IEL )
+                        ll = ISTAEV( iel )
 !DIR$ IVDEP
-                        DO 350 II = 1, NVAREL
-                           L = IELVAR( LL )
+                        DO 350 ii = 1, nvarel
+                           l = IELVAR( ll )
 
-!  IF Q HAS A NONZERO IN POSITION L, STORE ITS INDEX IN INONNZ.
+!  IF Q HAS A NONZERO IN POSITION l, STORE ITS INDEX IN INONNZ.
 
-                           IF ( ABS( WK( II ) ) > TINY ) THEN
-                              IF ( IUSED( L ) == 0 ) THEN
-                                 Q( L ) = WK( II )
-                                 IUSED( L ) = 1
-                                 NNONNZ = NNONNZ + 1
-                                 INONNZ( NNONNZ ) = L
+                           IF ( ABS( WK( ii ) ) > tiny ) THEN
+                              IF ( IUSED( l ) == 0 ) THEN
+                                 Q( l ) = WK( ii )
+                                 IUSED( l ) = 1
+                                 nnonnz = nnonnz + 1
+                                 INONNZ( nnonnz ) = l
                               ELSE
-                                 Q( L ) = Q( L ) + WK( II )
+                                 Q( l ) = Q( l ) + WK( ii )
                               END IF
                            END IF
-                           LL = LL + 1
+                           ll = ll + 1
   350                   CONTINUE
                      ELSE
 
 !  THE IEL-TH ELEMENT HESSIAN HAS NO INTERNAL REPRESENTATION.
 
-                        LTHVAR = ISTAEV( IEL ) - 1
-                        IELHST = ISTADH( IEL )
-                        DO 370 JCOL = 1, NVAREL
-                           PI = GI * P( IELVAR( LTHVAR + JCOL ) )
-                           IF ( PI /= ZERO ) THEN
+                        lthvar = ISTAEV( iel ) - 1
+                        ielhst = ISTADH( iel )
+                        DO 370 jcol = 1, nvarel
+                           pi = gi * P( IELVAR( lthvar + jcol ) )
+                           IF ( pi /= zero ) THEN
 !DIR$ IVDEP
-                              DO 360 IROW = 1, NVAREL
-                                 IJHESS = ISYMMH( JCOL, IROW ) + IELHST
+                              DO 360 irow = 1, nvarel
+                                 ijhess = ISYMMH( jcol, irow ) + ielhst
 
-!  IF Q HAS A NONZERO IN POSITION L, STORE ITS INDEX IN INONNZ.
+!  IF Q HAS A NONZERO IN POSITION l, STORE ITS INDEX IN INONNZ.
 
-                                 IF ( ABS( HUVALS( IJHESS ) ) &
-                                    > TINY ) THEN
-                                    L = IELVAR( LTHVAR + IROW )
-                                    IF ( IUSED( L ) == 0 ) THEN
-                                       Q( L ) = PI * HUVALS( IJHESS )
-                                       IUSED( L ) = 1
-                                       NNONNZ = NNONNZ + 1
-                                       INONNZ( NNONNZ ) = L
+                                 IF ( ABS( HUVALS( ijhess ) ) &
+                                    > tiny ) THEN
+                                    l = IELVAR( lthvar + irow )
+                                    IF ( IUSED( l ) == 0 ) THEN
+                                       Q( l ) = pi * HUVALS( ijhess )
+                                       IUSED( l ) = 1
+                                       nnonnz = nnonnz + 1
+                                       INONNZ( nnonnz ) = l
                                     ELSE
-                                       Q( L ) = Q( L ) + PI * &
-                                                HUVALS( IJHESS )
+                                       Q( l ) = Q( l ) + pi * &
+                                                HUVALS( ijhess )
                                     END IF
                                  END IF
   360                         CONTINUE
@@ -428,9 +428,9 @@
 !  CHECK TO SEE IF THERE ARE ANY FURTHER ELEMENTS WHOSE VARIABLES
 !  INCLUDE THE I-TH VARIABLE.
 
-                  IF ( IPT > 0 ) THEN
-                     IELL = ISELTS( IPT )
-                     IPT = ISPTRS( IPT )
+                  IF ( ipt > 0 ) THEN
+                     iell = ISELTS( ipt )
+                     ipt = ISPTRS( ipt )
                      GO TO 300
                   END IF
                END IF
@@ -438,13 +438,13 @@
          END IF
       END IF
 
-! ==================== THE PRODUCT IS COMPLETE =======================
+! ==================== THE PRODUCT is COMPLETE =======================
 
 !  RESET IUSED TO ZERO.
 
       IF ( .NOT. DENSEP ) THEN
-         DO 390 I = 1, NNONNZ
-            IUSED( INONNZ( I ) ) = 0
+         DO 390 i = 1, nnonnz
+            IUSED( INONNZ( i ) ) = 0
   390    CONTINUE
       END IF
       RETURN

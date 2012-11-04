@@ -1,10 +1,10 @@
 ! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE UNAMES( data, N, PNAME, VNAME )
+      SUBROUTINE UNAMES( data, n, PNAME, VNAME )
       USE CUTEST
       TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: N
-      CHARACTER ( LEN = 10 ) :: PNAME, VNAME( N )
+      INTEGER :: n
+      CHARACTER ( LEN = 10 ) :: PNAME, VNAME( n )
 
 !  Obtain the names of the problem and its variables.
 
@@ -34,16 +34,16 @@
 
 !  local variables.
 
-      INTEGER :: I
+      INTEGER :: i
 
 !  Set the problem name.
 
-      PNAME = data%VNAMES( N + 1 )
+      PNAME = data%VNAMES( n + 1 )
 
 !  Set the names of the variables.
 
-      DO 10 I = 1, N
-        VNAME( I ) = data%VNAMES( I )
+      DO 10 i = 1, n
+        VNAME( i ) = data%VNAMES( i )
    10 CONTINUE
       RETURN
 

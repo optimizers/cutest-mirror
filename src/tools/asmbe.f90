@@ -1,13 +1,13 @@
 ! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE DASMBE( N, NG, MAXSEL, ISTADH, LSTADH, ICNA, LICNA, &
-                         ISTADA, LSTADA, INTVAR, LNTVAR, IELVAR, LELVAR, &
-                         IELING, LELING, ISTADG, LSTADG, ISTAEV, LSTAEV, &
-                         ISTAGV, LNSTGV, ISVGRP, LNVGRP, IWK, LIWK,  &
-                         A, LA, GUVALS, LNGUVL, HUVALS, LNHUVL, GVALS2,  &
-                         GVALS3, GSCALE, ESCALE, LESCAL, WK, LWK,  &
-                         GXEQX, LGXEQX, INTREP, LINTRE, ITYPEE, LITYPE, &
-                         RANGE, NE, IRNHI, LIRNHI, IPRNHI, HI,  &
-                         LHI, IPRHI, BYROWS, IPRINT, IOUT, INFORM)
+      SUBROUTINE ASMBE( n, ng, maxsel, istadh, lstadh, icna, licna, &
+                         istada, lstada, intvar, lntvar, ielvar, lelvar, &
+                         ieling, leling, istadg, lstadg, istaev, lstaev, &
+                         ISTAGV, lnstgv, ISVGRP, lnvgrp, IWK, liwk,  &
+                         A, la, GUVALS, lnguvl, HUVALS, lnhuvl, GVALS2,  &
+                         GVALS3, GSCALE, ESCALE, lescal, WK, lwk,  &
+                         gxeqx, lgxeqx, intrep, lintre, itypee, litype, &
+                         RANGE, ne, IRNHI, lirnhi, IPRNHI, HI,  &
+                         lhi, IPRHI, BYROWS, iprint, iout, INFORM)
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
 !  ********************************************************************
@@ -19,297 +19,297 @@
 
 !  ********************************************************************
 
-      INTEGER :: N, NG, MAXSEL, LIRNHI, LHI, NE
-      INTEGER :: LA, LITYPE, IOUT, INFORM, IPRINT
-      INTEGER :: LSTADH, LICNA, LSTADA, LNTVAR, LELVAR, LELING
-      INTEGER :: LSTADG, LSTAEV, LNSTGV, LNVGRP, LIWK
-      INTEGER :: LNGUVL, LNHUVL, LESCAL, LWK, LGXEQX, LINTRE
+      INTEGER :: n, ng, maxsel, lirnhi, lhi, ne
+      INTEGER :: la, litype, iout, inform, iprint
+      INTEGER :: lstadh, licna, lstada, lntvar, lelvar, leling
+      INTEGER :: lstadg, lstaev, lnstgv, lnvgrp, liwk
+      INTEGER :: lnguvl, lnhuvl, lescal, lwk, lgxeqx, lintre
       LOGICAL :: BYROWS
-      INTEGER :: ISTADH( LSTADH ), ICNA ( LICNA )
-      INTEGER :: ISTADA( LSTADA ), INTVAR( LNTVAR )
-      INTEGER :: IELVAR( LELVAR ), IELING( LELING )
-      INTEGER :: ISTADG( LSTADG ), ISTAEV( LSTAEV )
-      INTEGER :: ISTAGV( LNSTGV ), ISVGRP( LNVGRP )
-      INTEGER :: IRNHI ( LIRNHI ), IWK ( LIWK )
-      INTEGER :: IPRNHI( NG + 1 ), IPRHI ( NG + 1 )
-      INTEGER :: ITYPEE( LITYPE )
-      LOGICAL :: GXEQX( LGXEQX ),  INTREP( LINTRE )
-      REAL ( KIND = wp ) :: A(     LA ),      GVALS2( NG ),     GVALS3( NG ), &
-                       GUVALS( LNGUVL ), HUVALS( LNHUVL ), GSCALE( NG ), &
-                       ESCALE( LESCAL ), HI ( LHI ), WK(     LWK )
+      INTEGER :: ISTADH( lstadh ), icna ( licna )
+      INTEGER :: ISTADA( lstada ), INTVAR( lntvar )
+      INTEGER :: IELVAR( lelvar ), IELING( leling )
+      INTEGER :: ISTADG( lstadg ), ISTAEV( lstaev )
+      INTEGER :: ISTAGV( lnstgv ), ISVGRP( lnvgrp )
+      INTEGER :: IRNHI ( lirnhi ), IWK ( liwk )
+      INTEGER :: IPRNHI( ng + 1 ), IPRHI ( ng + 1 )
+      INTEGER :: ITYPEE( litype )
+      LOGICAL :: GXEQX( lgxeqx ),  INTREP( lintre )
+      REAL ( KIND = wp ) :: A(     la ),      GVALS2( ng ),     GVALS3( ng ), &
+                       GUVALS( lnguvl ), HUVALS( lnhuvl ), GSCALE( ng ), &
+                       ESCALE( lescal ), HI ( lhi ), WK(     lwk )
       EXTERNAL :: RANGE 
 
 !  Local variables.
 
-      INTEGER :: I, II, J, IHI, JJ, K, L, NN, IG, NNN
-      INTEGER :: NIN,    IELL,   IEL, IHNEXT, NVARG, NSIZEE
-      INTEGER :: NVAREL, IG1,    LISTVS, LISTVE, IELH
-      INTEGER :: IJHESS, IROW,   JCOL,   JCOLST
-      REAL ( KIND = wp ) :: ONE,    ZERO,   WKI,    HESNEW, GDASH,  G2DASH, &
-                       SCALEE
-!D    EXTERNAL         DSETVL, DSETVI
+      INTEGER :: i, ii, j, ihi, jj, k, l, nn, ig, nnn
+      INTEGER :: nin,    iell,   iel, ihnext, nvarg, nsizee
+      INTEGER :: nvarel, ig1,    listvs, listve, ielh
+      INTEGER :: ijhess, irow,   jcol,   jcolst
+      REAL ( KIND = wp ) :: one,    zero,   wki,    hesnew, gdash,  g2dash, &
+                       scalee
+!D    EXTERNAL         SETVL, SETVI
 
 !  Set constant real parameters.
 
-      PARAMETER ( ZERO = 0.0_wp, ONE = 1.0_wp )
+      PARAMETER ( zero = 0.0_wp, one = 1.0_wp )
 
 ! ------------------------------------------------------
 !  Form the rank-one second order term for the i-th group.
 ! ------------------------------------------------------
 
-      NE = 0
+      ne = 0
       IPRNHI( 1 ) = 1
       IPRHI ( 1 ) = 1
-      DO 200 IG = 1, NG
-         IF ( IPRINT >= 100 ) WRITE( IOUT, 2070 ) IG
-         IG1 = IG + 1
-         IF ( GXEQX( IG ) ) THEN
-            G2DASH = ZERO
+      DO 200 ig = 1, ng
+         IF ( iprint >= 100 ) WRITE( iout, 2070 ) ig
+         ig1 = ig + 1
+         IF ( GXEQX( ig ) ) THEN
+            g2dash = zero
          ELSE
-            G2DASH = GSCALE( IG ) * GVALS3( IG )
-            IF ( IPRINT >= 100 )WRITE(6,*) ' GVALS3(IG) ', GVALS3(IG)
+            g2dash = GSCALE( ig ) * GVALS3( ig )
+            IF ( iprint >= 100 )WRITE(6,*) ' GVALS3(IG) ', GVALS3(IG)
          END IF
 
 !  Ignore linear groups
 
-         IF ( ISTADG( IG ) >= ISTADG( IG1 ) .AND. GXEQX( IG ) )  &
+         IF ( ISTADG( ig ) >= ISTADG( ig1 ) .AND. GXEQX( ig ) )  &
             GO TO 200
 
 !  The group is nonlinear
 
-         NE = NE + 1
-         LISTVS = ISTAGV( IG )
-         LISTVE = ISTAGV( IG1 ) - 1
-         NVARG = LISTVE - LISTVS + 1
+         ne = ne + 1
+         listvs = ISTAGV( ig )
+         listve = ISTAGV( ig1 ) - 1
+         nvarg = listve - listvs + 1
 
 !  Set the starting addresses for the integer and real arrays for
-!  group IG + 1
+!  group ig + 1
 
-         IPRNHI( NE + 1 ) = IPRNHI( NE ) + NVARG
-         IF ( IPRNHI( NE + 1 ) > LIRNHI ) THEN
-            WRITE( IOUT, 2030 ) LIRNHI
+         IPRNHI( ne + 1 ) = IPRNHI( ne ) + nvarg
+         IF ( IPRNHI( ne + 1 ) > lirnhi ) THEN
+            WRITE( iout, 2030 ) lirnhi
             GO TO 610
          END IF
-         NSIZEE = ( NVARG * ( NVARG + 1 ) ) / 2
-         IPRHI( NE + 1 ) = IPRHI( NE ) + NSIZEE
-         IF ( IPRHI( NE + 1 ) >= LHI ) THEN
-            WRITE( IOUT, 2040 ) LHI, IPRHI( NE + 1 )
+         nsizee = ( nvarg * ( nvarg + 1 ) ) / 2
+         IPRHI( ne + 1 ) = IPRHI( ne ) + nsizee
+         IF ( IPRHI( ne + 1 ) >= lhi ) THEN
+            WRITE( iout, 2040 ) lhi, IPRHI( ne + 1 )
             GO TO 610
          END IF
 
-!  Record the row indices involved in super-element NE
+!  Record the row indices involved in super-element ne
 
-         IF ( GXEQX( IG ) .OR. G2DASH == ZERO ) THEN 
-      CALL DSETVL( NSIZEE, HI( IPRHI( NE ) ), 1, ZERO )
+         IF ( GXEQX( ig ) .OR. g2dash == zero ) THEN 
+      CALL SETVL( nsizee, HI( IPRHI( ne ) ), 1, zero )
             GO TO 200
          END IF
-         K = IPRNHI( NE )
-         DO 110 L = LISTVS, LISTVE
-            IRNHI( K ) = ISVGRP( L )
-            K = K + 1
+         k = IPRNHI( ne )
+         DO 110 l = listvs, listve
+            IRNHI( k ) = ISVGRP( l )
+            k = k + 1
   110    CONTINUE   
 
 !  Form the gradient of the ig-th group.
 
-      CALL DSETVI( NVARG, WK, ISVGRP( LISTVS ), ZERO )
+      CALL SETVI( nvarg, WK, ISVGRP( listvs ), zero )
 
 !  Consider any nonlinear elements for the group.
 
-         DO 160 IELL = ISTADG( IG ), ISTADG( IG1 ) - 1
-            IEL = IELING( IELL )
-            K = INTVAR( IEL )
-            L = ISTAEV( IEL )
-            NVAREL = ISTAEV( IEL + 1 ) - L
-            SCALEE = ESCALE( IELL )
-            IF ( INTREP( IEL ) ) THEN
+         DO 160 iell = ISTADG( ig ), ISTADG( ig1 ) - 1
+            iel = IELING( iell )
+            k = INTVAR( iel )
+            l = ISTAEV( iel )
+            nvarel = ISTAEV( iel + 1 ) - l
+            scalee = ESCALE( iell )
+            IF ( INTREP( iel ) ) THEN
 
 !  The IEL-th element has an internal representation.
 
-               NIN = INTVAR( IEL + 1 ) - K
-               CALL RANGE ( IEL, .TRUE., GUVALS( K ), &
-                            WK( N + 1 ), NVAREL, NIN, &
-                            ITYPEE( IEL ), NIN, NVAREL )
-               DO 140 I = 1, NVAREL
-                  J = IELVAR( L )
-                  WK( J ) = WK( J ) + SCALEE * WK( N + I )
-                  L = L + 1
+               nin = INTVAR( iel + 1 ) - k
+               CALL RANGE ( iel, .TRUE., GUVALS( k ), &
+                            WK( n + 1 ), nvarel, nin, &
+                            ITYPEE( iel ), nin, nvarel )
+               DO 140 i = 1, nvarel
+                  j = IELVAR( l )
+                  WK( j ) = WK( j ) + scalee * WK( n + i )
+                  l = l + 1
   140          CONTINUE
             ELSE
 
 !  The IEL-th element has no internal representation.
 
-               DO 150 I = 1, NVAREL
-                  J = IELVAR( L )
-                  WK( J ) = WK( J ) + SCALEE * GUVALS( K )
-                  K = K + 1
-                  L = L + 1
+               DO 150 i = 1, nvarel
+                  j = IELVAR( l )
+                  WK( j ) = WK( j ) + scalee * GUVALS( k )
+                  k = k + 1
+                  l = l + 1
   150          CONTINUE
             END IF
   160    CONTINUE
 
 !  Include the contribution from the linear element.
 
-         DO 170 K = ISTADA( IG ), ISTADA( IG1 ) - 1
-            J = ICNA( K )
-            WK( J ) = WK( J ) + A( K )
+         DO 170 k = ISTADA( ig ), ISTADA( ig1 ) - 1
+            j = ICNA( k )
+            WK( j ) = WK( j ) + A( k )
   170    CONTINUE
 
 !  The gradient is complete. Form the J-th column of the rank-one matrix
 
-         DO 190 L = LISTVS, LISTVE
-            JJ = ISVGRP( L )
-            J = L - LISTVS + 1
+         DO 190 l = listvs, listve
+            jj = ISVGRP( l )
+            j = l - listvs + 1
 
-!  Find the entry in row I of this column.
+!  Find the entry in row i of this column.
 
-            DO 180 K = LISTVS, L
-               II = ISVGRP( K )
-               I = K - LISTVS + 1
+            DO 180 k = listvs, l
+               ii = ISVGRP( k )
+               i = k - listvs + 1
                IF ( BYROWS ) THEN
-                  IHI = IPRHI( NE ) - 1 + NVARG * ( I - 1 ) -  &
- ( ( I - 1 ) * I ) / 2 + J
+                  ihi = IPRHI( ne ) - 1 + nvarg * ( i - 1 ) -  &
+ ( ( i - 1 ) * i ) / 2 + j
                ELSE
-                  IHI = IPRHI( NE ) - 1 + I + ( J * ( J - 1 ) ) / 2
+                  ihi = IPRHI( ne ) - 1 + i + ( j * ( j - 1 ) ) / 2
                END IF
-               HI( IHI ) = WK( II ) * WK( JJ ) * G2DASH
-               IF ( IPRINT >= 100 )  &
-                  WRITE( IOUT, 2090 ) II, JJ, HI( IHI )
+               HI( ihi ) = WK( ii ) * WK( jj ) * g2dash
+               IF ( iprint >= 100 )  &
+                  WRITE( iout, 2090 ) ii, jj, HI( ihi )
   180       CONTINUE
   190    CONTINUE
   200 CONTINUE
 
 !  Reset the workspace array to zero.
 
-      CALL DSETVL( MAXSEL, WK, 1, ZERO )
+      CALL SETVL( maxsel, WK, 1, zero )
 
 ! --------------------------------------------------------
 !  Add on the low rank first order terms for the I-th group.
 ! --------------------------------------------------------
 
-      NE = 0
-      DO 300 IG = 1, NG
-         IG1 = IG + 1
+      ne = 0
+      DO 300 ig = 1, ng
+         ig1 = ig + 1
 
 !  Once again, ignore linear groups
 
-         IF ( ISTADG( IG ) >= ISTADG( IG1 ) .AND. GXEQX( IG ) )  &
+         IF ( ISTADG( ig ) >= ISTADG( ig1 ) .AND. GXEQX( ig ) )  &
             GO TO 300
 
 !  The group is nonlinear
 
-         NE = NE + 1
-         IF ( IPRINT >= 100 ) WRITE( IOUT, 2100 ) IG
-         IF ( GXEQX( IG ) ) THEN
-            GDASH = GSCALE( IG )
+         ne = ne + 1
+         IF ( iprint >= 100 ) WRITE( iout, 2100 ) ig
+         IF ( GXEQX( ig ) ) THEN
+            gdash = GSCALE( ig )
          ELSE
-            GDASH = GSCALE( IG ) * GVALS2( IG )
-            IF ( IPRINT >= 100 )WRITE(6,*) ' GVALS2(IG) ', GVALS2(IG)
+            gdash = GSCALE( ig ) * GVALS2( ig )
+            IF ( iprint >= 100 )WRITE(6,*) ' GVALS2(IG) ', GVALS2(IG)
          END IF
-         IF ( GDASH == ZERO ) GO TO 300
+         IF ( gdash == zero ) GO TO 300
 
 !  Map the problem variables to the elemental variables.
 
-         NVARG = IPRNHI( NE + 1 ) - IPRNHI( NE )
-         DO 210 I = IPRNHI( NE ), IPRNHI( NE + 1 ) - 1
-            IWK( IRNHI( I ) ) = I + 1 - IPRNHI( NE )
+         nvarg = IPRNHI( ne + 1 ) - IPRNHI( ne )
+         DO 210 i = IPRNHI( ne ), IPRNHI( ne + 1 ) - 1
+            IWK( IRNHI( i ) ) = i + 1 - IPRNHI( ne )
   210    CONTINUE   
 
 !  See if the group has any nonlinear elements.
 
-         DO 290 IELL = ISTADG( IG ), ISTADG( IG1 ) - 1
-            IEL = IELING( IELL )
-            LISTVS = ISTAEV( IEL )
-            LISTVE = ISTAEV( IEL + 1 ) - 1
-            NVAREL = LISTVE - LISTVS + 1
-            IELH = ISTADH( IEL )
-            IHNEXT = IELH
-            SCALEE = ESCALE( IELL )
-            DO 250 L = LISTVS, LISTVE
-               J = IWK( IELVAR( L ) )
+         DO 290 iell = ISTADG( ig ), ISTADG( ig1 ) - 1
+            iel = IELING( iell )
+            listvs = ISTAEV( iel )
+            listve = ISTAEV( iel + 1 ) - 1
+            nvarel = listve - listvs + 1
+            ielh = ISTADH( iel )
+            ihnext = ielh
+            scalee = ESCALE( iell )
+            DO 250 l = listvs, listve
+               j = IWK( IELVAR( l ) )
 
 !  The IEL-th element has an internal representation.
 !  Compute the J-th column of the element Hessian matrix.
 
-               IF ( INTREP( IEL ) ) THEN
+               IF ( INTREP( iel ) ) THEN
 
 !  Compute the J-th column of the Hessian.
 
-                  WK( L - LISTVS + 1 ) = ONE
+                  WK( l - listvs + 1 ) = one
 
 !  Find the internal variables.
 
-                  NIN = INTVAR( IEL + 1 ) - INTVAR( IEL )
-                  CALL RANGE ( IEL, .FALSE., WK( 1 ), &
-                           WK( MAXSEL + 1 ), NVAREL, NIN, &
-                           ITYPEE( IEL ), NVAREL, NIN )
+                  nin = INTVAR( iel + 1 ) - INTVAR( iel )
+                  CALL RANGE ( iel, .FALSE., WK( 1 ), &
+                           WK( maxsel + 1 ), nvarel, nin, &
+                           ITYPEE( iel ), nvarel, nin )
 
 !  Multiply the internal variables by the element Hessian.
 
-                  NN = MAXSEL + NIN
-      CALL DSETVL( NIN, WK( NN + 1 ), 1, ZERO )
+                  nn = maxsel + nin
+      CALL SETVL( nin, WK( nn + 1 ), 1, zero )
 
 !  Only the upper triangle of the element Hessian is stored.
 
-                  JCOLST = IELH - 1
-                  DO 230 JCOL = 1, NIN
-                     IJHESS = JCOLST
-                     JCOLST = JCOLST + JCOL
-                     WKI = WK( MAXSEL + JCOL ) * GDASH
-                     DO 220 IROW = 1, NIN
-                        IF ( IROW <= JCOL ) THEN
-                           IJHESS = IJHESS + 1
+                  jcolst = ielh - 1
+                  DO 230 jcol = 1, nin
+                     ijhess = jcolst
+                     jcolst = jcolst + jcol
+                     wki = WK( maxsel + jcol ) * gdash
+                     DO 220 irow = 1, nin
+                        IF ( irow <= jcol ) THEN
+                           ijhess = ijhess + 1
                         ELSE
-                           IJHESS = IJHESS + IROW - 1
+                           ijhess = ijhess + irow - 1
                         END IF
-                        WK( NN + IROW ) = WK( NN + IROW ) + &
-                                          WKI * HUVALS( IJHESS )
+                        WK( nn + irow ) = WK( nn + irow ) + &
+                                          wki * HUVALS( ijhess )
   220                CONTINUE
   230             CONTINUE
 
 !  Scatter the product back onto the elemental variables.
 
-                  NNN = NN + NIN
-                  CALL RANGE ( IEL, .TRUE., WK( NN + 1 ), &
-                               WK( NNN + 1 ), NVAREL, NIN, &
-                               ITYPEE( IEL ), NIN, NVAREL )
-                  WK( L - LISTVS + 1 ) = ZERO
+                  nnn = nn + nin
+                  CALL RANGE ( iel, .TRUE., WK( nn + 1 ), &
+                               WK( nnn + 1 ), nvarel, nin, &
+                               ITYPEE( iel ), nin, nvarel )
+                  WK( l - listvs + 1 ) = zero
 
-!  Find the entry in row I of this column.
+!  Find the entry in row i of this column.
 
                END IF
-               DO 240 K = LISTVS, L
-                  I = IWK( IELVAR( K ) )
+               DO 240 k = listvs, l
+                  i = IWK( IELVAR( k ) )
 
 !  Only the upper triangle of the matrix is stored.
 
-                  IF ( I <= J ) THEN
-                     II = I
-                     JJ = J
+                  IF ( i <= j ) THEN
+                     ii = i
+                     jj = j
                   ELSE
-                     II = J
-                     JJ = I
+                     ii = j
+                     jj = i
                   END IF
 
 !  Obtain the appropriate storage location in H for the new entry.
 
-                  IF ( INTREP( IEL ) ) THEN
-                     HESNEW = SCALEE * WK( NNN + K - LISTVS + 1 )
+                  IF ( INTREP( iel ) ) THEN
+                     hesnew = scalee * WK( nnn + k - listvs + 1 )
                   ELSE
-                     HESNEW = SCALEE * HUVALS( IHNEXT ) * GDASH
+                     hesnew = scalee * HUVALS( ihnext ) * gdash
                   END IF
-                  IF ( IPRINT >= 100 ) &
-                     WRITE( 6, 2080 ) II, JJ, IEL, HESNEW
+                  IF ( iprint >= 100 ) &
+                     WRITE( 6, 2080 ) ii, jj, iel, hesnew
                   IF ( BYROWS ) THEN
-                     IHI = IPRHI( NE ) - 1 + NVARG * ( II - 1 ) -  &
- ( ( II - 1 ) * II ) / 2 + JJ
+                     ihi = IPRHI( ne ) - 1 + nvarg * ( ii - 1 ) -  &
+ ( ( ii - 1 ) * ii ) / 2 + jj
                   ELSE
-                     IHI = IPRHI( NE ) - 1 + II + &
- ( JJ * ( JJ - 1 ) ) / 2
+                     ihi = IPRHI( ne ) - 1 + ii + &
+ ( jj * ( jj - 1 ) ) / 2
                   END IF
-                  HI( IHI ) = HI( IHI ) + HESNEW
-                  IF ( K /= L .AND. II == JJ ) &
-                       HI( IHI ) = HI( IHI ) + HESNEW
-                  IHNEXT = IHNEXT + 1
+                  HI( ihi ) = HI( ihi ) + hesnew
+                  IF ( k /= l .AND. ii == jj ) &
+                       HI( ihi ) = HI( ihi ) + hesnew
+                  ihnext = ihnext + 1
   240          CONTINUE
   250       CONTINUE
   290    CONTINUE
@@ -319,22 +319,22 @@
 !  For debugging, print the nonzero values.
 ! ----------------------------------------
 
-      IF ( IPRINT >= 10 ) THEN
-         DO 410 IG = 1, NE
-            WRITE( IOUT, 2000 ) IG
-            WRITE( IOUT, 2010 ) &
- ( IRNHI( I ), I = IPRNHI( IG ), IPRNHI( IG + 1 ) - 1 )
-            WRITE( IOUT, 2020 ) &
- ( HI( I ), I = IPRHI( IG ), IPRHI( IG + 1 ) - 1 )
+      IF ( iprint >= 10 ) THEN
+         DO 410 ig = 1, ne
+            WRITE( iout, 2000 ) ig
+            WRITE( iout, 2010 ) &
+ ( IRNHI( i ), i = IPRNHI( ig ), IPRNHI( ig + 1 ) - 1 )
+            WRITE( iout, 2020 ) &
+ ( HI( i ), i = IPRHI( ig ), IPRHI( ig + 1 ) - 1 )
   410    CONTINUE   
       END IF
-      INFORM = 0
+      inform = 0
       RETURN
 
 !  Unsuccessful returns.
 
   610 CONTINUE
-      INFORM = 1
+      inform = 1
       RETURN
 
 !  Non-executable statements
@@ -342,8 +342,8 @@
  2000 FORMAT( ' Super-element ', I10 )   
  2010 FORMAT( ' Super-element variables     ', 8I7, /, ( 11I7 ) )
  2020 FORMAT( ' Nonzeros   ', 1P, 6D12.4, /, ( 7D12.4 ) )
- 2030 FORMAT( ' ** Array dimension LIRNHI = ',I8,' too small in ASMBE.')
- 2040 FORMAT( ' ** Array dimension LHI = ', I8,' too small in ASMBE.  &
+ 2030 FORMAT( ' ** Array dimension lirnhi = ',I8,' too small in ASMBE.')
+ 2040 FORMAT( ' ** Array dimension lhi = ', I8,' too small in ASMBE.  &
            Increase to at least ', I8 )
  2070 FORMAT( ' Group ', I5, ' rank-one terms ' )
  2080 FORMAT( ' Row ', I6, ' Column ', I6, ' used from element ', I6, &

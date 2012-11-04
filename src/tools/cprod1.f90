@@ -1,11 +1,11 @@
 ! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE CPROD1( data, N, M, GOTH, X, LV, V, P, RESULT )
+      SUBROUTINE CPROD1( data, n, m, GOTH, X, lv, V, P, RESULT )
       USE CUTEST
       TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: N, M, LV
+      INTEGER :: n, m, lv
       LOGICAL :: GOTH
-      REAL ( KIND = wp ) :: X( N ), V ( LV ), P( N ), RESULT( N )
+      REAL ( KIND = wp ) :: X( n ), V ( lv ), P( n ), RESULT( n )
 
 !  Compute the matrix-vector product between the Hessian matrix
 !  of the constraint part of the Lagrangian function for the problem and
@@ -45,18 +45,18 @@
 
 !  Local variables
 
-      INTEGER :: I, IG, J, NN, NBPROD, NNONNZ
-      INTEGER :: LNWK, LNWKB, LNWKC, LWKB, LWKC
-      INTEGER :: IFSTAT, IGSTAT
-      REAL ( KIND = wp ) :: ZERO, ONE, FTT
-      PARAMETER ( ZERO = 0.0_wp, ONE = 1.0_wp )
+      INTEGER :: i, ig, j, nn, nbprod, nnonnz
+      INTEGER :: lnwk, lnwkb, lnwkc, lwkb, lwkc
+      INTEGER :: ifstat, igstat
+      REAL ( KIND = wp ) :: zero, one, ftt
+      PARAMETER ( zero = 0.0_wp, one = 1.0_wp )
       EXTERNAL :: RANGE 
 
 !  There are non-trivial group functions.
 
       IF ( .NOT. GOTH ) THEN
-         DO 10 I = 1, MAX( data%nelnum, data%ng )
-           data%ICALCF( I ) = I
+         DO 10 i = 1, MAX( data%nelnum, data%ng )
+           data%ICALCF( i ) = i
    10    CONTINUE
 
 !  Evaluate the element function values.
@@ -67,8 +67,8 @@
                       data%ISTADH( 1 ), data%ISTEP( 1 ), &
                       data%ICALCF( 1 ),  &
                       data%lintre, data%lstaev, data%lelvar, data%lntvar, data%lstadh,  &
-                      data%lntvar, data%lintre, LFUVAL, data%lvscal, data%lepvlu,  &
-                      1, IFSTAT )
+                      data%lntvar, data%lintre, lfuval, data%lvscal, data%lepvlu,  &
+                      1, ifstat )
 
 !  Evaluate the element function values.
 
@@ -78,32 +78,32 @@
                       data%ISTADH( 1 ), data%ISTEP( 1 ), &
                       data%ICALCF( 1 ),  &
                       data%lintre, data%lstaev, data%lelvar, data%lntvar, data%lstadh,  &
-                      data%lntvar, data%lintre, LFUVAL, data%lvscal, data%lepvlu,  &
-                      3, IFSTAT )
+                      data%lntvar, data%lintre, lfuval, data%lvscal, data%lepvlu,  &
+                      3, ifstat )
 
 !  Compute the group argument values ft.
 
-         DO 70 IG = 1, data%ng
-            FTT = - data%B( IG )
+         DO 70 ig = 1, data%ng
+            ftt = - data%B( ig )
 
 !  Include the contribution from the linear element.
 
-            DO 30 J = data%ISTADA( IG ), data%ISTADA( IG + 1 ) - 1
-               FTT = FTT + data%A( J ) * X( data%ICNA( J ) )
+            DO 30 j = data%ISTADA( ig ), data%ISTADA( ig + 1 ) - 1
+               ftt = ftt + data%A( j ) * X( data%ICNA( j ) )
    30       CONTINUE
 
 !  Include the contributions from the nonlinear elements.
 
-            DO 60 J = data%ISTADG( IG ), data%ISTADG( IG + 1 ) - 1
-               FTT = FTT + data%ESCALE( J ) * data%FUVALS( data%IELING( J))
+            DO 60 j = data%ISTADG( ig ), data%ISTADG( ig + 1 ) - 1
+               ftt = ftt + data%ESCALE( j ) * data%FUVALS( data%IELING( J))
    60       CONTINUE
-            data%FT( IG ) = FTT
+            data%FT( ig ) = ftt
 
 !  Record the derivatives of trivial groups.
 
-            IF ( data%GXEQX( IG ) ) THEN
-               data%GVALS( data%ng + IG ) = ONE
-               data%GVALS( 2 * data%ng + IG ) = ZERO
+            IF ( data%GXEQX( ig ) ) THEN
+               data%GVALS( data%ng + ig ) = one
+               data%GVALS( 2 * data%ng + ig ) = zero
             END IF
    70    CONTINUE
 
@@ -114,13 +114,13 @@
                data%ITYPEG( 1 ), data%ISTGP( 1 ), &
                data%ICALCF( 1 ), &
                data%lcalcg, data%ng1, data%lcalcg, data%lcalcg, data%lgpvlu, &
-               .TRUE., IGSTAT )
+               .TRUE., igstat )
 
 !  Define the real work space needed for ELGRD.
 !  Ensure that there is sufficient space.
 
          IF ( data%lwk2 < data%ng ) THEN
-            IF ( IOUT > 0 ) WRITE( IOUT, 2000 )
+            IF ( iout > 0 ) WRITE( iout, 2000 )
             STOP
          END IF
 !                            for unconstrained problems.
@@ -129,18 +129,18 @@
 !  Change the group weightings to include the contributions from
 !  the Lagrange multipliers.
 
-            DO 80 IG = 1, data%ng
-               I = data%KNDOFC( IG )
-               IF ( I == 0 ) THEN
-                  data%WRK( IG ) = ZERO
+            DO 80 ig = 1, data%ng
+               i = data%KNDOFC( ig )
+               IF ( i == 0 ) THEN
+                  data%WRK( ig ) = zero
                ELSE
-                  data%WRK( IG ) = data%GSCALE( IG ) * V( I )
+                  data%WRK( ig ) = data%GSCALE( ig ) * V( i )
                END IF
    80       CONTINUE
 
 !  Compute the gradient value.
 
-      CALL DELGRD( N, data%ng, data%firstg, data%ICNA( 1 ), data%licna, &
+      CALL ELGRD( n, data%ng, data%firstg, data%ICNA( 1 ), data%licna, &
                          data%ISTADA( 1 ), data%lstada, data%IELING( 1 ), &
                          data%leling, data%ISTADG( 1 ), data%lstadg, &
                          data%ITYPEE( 1 ), data%lintre, &
@@ -152,14 +152,14 @@
                          data%FUVALS, data%lnguvl, data%FUVALS( data%lggfx + 1 ), &
                          data%WRK( 1 ), data%ng, &
                          data%ESCALE( 1 ), data%lescal, data%FUVALS( data%lgrjac + 1 ), &
-                         data%lngrjc, data%WRK( 1 ), data%WRK( N + 1 ), &
+                         data%lngrjc, data%WRK( 1 ), data%WRK( n + 1 ), &
                          data%maxsel, data%GXEQX( 1 ), data%lgxeqx, &
                          data%INTREP( 1 ), data%lintre, RANGE )
          ELSE
 
 !  Compute the gradient value.
 
-      CALL DELGRD( N, data%ng, data%firstg, data%ICNA( 1 ), data%licna, &
+      CALL ELGRD( n, data%ng, data%firstg, data%ICNA( 1 ), data%licna, &
                          data%ISTADA( 1 ), data%lstada, data%IELING( 1 ), &
                          data%leling, data%ISTADG( 1 ), data%lstadg, &
                          data%ITYPEE( 1 ), data%lintre, &
@@ -171,7 +171,7 @@
                          data%FUVALS, data%lnguvl, data%FUVALS( data%lggfx + 1 ), &
                          data%GSCALE( 1 ), data%lgscal, &
                          data%ESCALE( 1 ), data%lescal, data%FUVALS( data%lgrjac + 1 ), &
-                         data%lngrjc, data%WRK( 1 ), data%WRK( N + 1 ), &
+                         data%lngrjc, data%WRK( 1 ), data%WRK( n + 1 ), &
                          data%maxsel, data%GXEQX( 1 ), data%lgxeqx, &
                          data%INTREP( 1 ), data%lintre, RANGE )
          END IF
@@ -180,29 +180,29 @@
 
 !  Ensure that the product involves all components of P.
 
-      DO 100 I = 1, N
-         data%IVAR( I ) = I
-         data%IWORK( data%lnnonz + I ) = I
+      DO 100 i = 1, n
+         data%IVAR( i ) = i
+         data%IWORK( data%lnnonz + i ) = i
   100 CONTINUE
 
 !  Initialize RESULT as the zero vector.
 
-      CALL DSETVL( N, RESULT, 1, ZERO )
+      CALL SETVL( n, RESULT, 1, zero )
 
 !  Define the real work space needed for HSPRD.
 !  Ensure that there is sufficient space.
 
-      NN = data%ninvar + N
-      LNWK = MAX( data%ng, data%maxsel )
-      LNWKB = data%maxsin
-      LNWKC = data%maxsin
-      LWKB = LNWK
-      LWKC = LWKB + LNWKB
+      nn = data%ninvar + n
+      lnwk = MAX( data%ng, data%maxsel )
+      lnwkb = data%maxsin
+      lnwkc = data%maxsin
+      lwkb = lnwk
+      lwkc = lwkb + lnwkb
 
 !  Evaluate the product.
 
       IF ( data%numcon > 0 ) THEN
-      CALL DHSPRD( N, NN, data%ng, data%ngel, N, 1, N, NBPROD, data%nelnum == 0, &
+      CALL DHSPRD( n, nn, data%ng, data%ngel, n, 1, n, nbprod, data%nelnum == 0, &
                    data%IVAR( 1 ), data%ISTAEV( 1 ), data%lstaev, &
                    data%ISTADH( 1 ), data%lstadh, data%INTVAR( 1 ), &
                    data%lntvar, data%IELING( 1 ), data%leling, data%IELVAR( 1 ), &
@@ -211,18 +211,18 @@
                    data%lngclj, data%IWORK( data%lslgrp + 1 ), data%lnlgrp, data%IWORK( data%lswksp + 1 ),  &
                    data%lnwksp, data%IWORK( data%lsvgrp + 1 ), data%lnvgrp, data%IWORK( data%lstagv + 1 ), &
                    data%lnstgv, data%IWORK( data%lvaljr + 1 ), data%lnvljr, data%ITYPEE( 1 ),  &
-                   data%lintre, NNONNZ, data%IWORK( data%lnnonz + 1 ), data%lnnnon, &
+                   data%lintre, nnonnz, data%IWORK( data%lnnonz + 1 ), data%lnnnon, &
                    data%IWORK( data%liused + 1 ), data%lniuse, data%IWORK( data%lnonz2 + 1 ), &
                    data%lnnno2, data%IWORK( data%lsymmh + 1 ), data%maxsin, P, RESULT, &
                    data%GVALS( data%ng + 1 ), data%GVALS( 2 * data%ng + 1 ), &
                    data%FUVALS( data%lgrjac + 1 ), data%lngrjc, data%WRK( 1 ), &
                    data%ESCALE( 1 ), data%lescal, data%FUVALS, data%lnhuvl, &
-                   data%WRK( 1 ), LNWK, data%WRK( LWKB + 1 ), &
-                   LNWKB, data%WRK( LWKC + 1 ), LNWKC, &
+                   data%WRK( 1 ), lnwk, data%WRK( lwkb + 1 ), &
+                   lnwkb, data%WRK( lwkc + 1 ), lnwkc, &
                    data%GXEQX( 1 ), data%lgxeqx, data%INTREP( 1 ), &
                    data%lintre, .TRUE., RANGE )
       ELSE
-      CALL DHSPRD( N, NN, data%ng, data%ngel, N, 1, N, NBPROD, data%nelnum == 0, &
+      CALL DHSPRD( n, nn, data%ng, data%ngel, n, 1, n, nbprod, data%nelnum == 0, &
                    data%IVAR( 1 ), data%ISTAEV( 1 ), data%lstaev, &
                    data%ISTADH( 1 ), data%lstadh, data%INTVAR( 1 ), &
                    data%lntvar, data%IELING( 1 ), data%leling, data%IELVAR( 1 ), &
@@ -231,14 +231,14 @@
                    data%lngclj, data%IWORK( data%lslgrp + 1 ), data%lnlgrp, data%IWORK( data%lswksp + 1 ),  &
                    data%lnwksp, data%IWORK( data%lsvgrp + 1 ), data%lnvgrp, data%IWORK( data%lstagv + 1 ), &
                    data%lnstgv, data%IWORK( data%lvaljr + 1 ), data%lnvljr, data%ITYPEE( 1 ),  &
-                   data%lintre, NNONNZ, data%IWORK( data%lnnonz + 1 ), data%lnnnon, &
+                   data%lintre, nnonnz, data%IWORK( data%lnnonz + 1 ), data%lnnnon, &
                    data%IWORK( data%liused + 1 ), data%lniuse, data%IWORK( data%lnonz2 + 1 ), &
                    data%lnnno2, data%IWORK( data%lsymmh + 1 ), data%maxsin, P, RESULT, &
                    data%GVALS( data%ng + 1 ), data%GVALS( 2 * data%ng + 1 ), &
                    data%FUVALS( data%lgrjac + 1 ), data%lngrjc, data%GSCALE( 1 ), &
                    data%ESCALE( 1 ), data%lescal, data%FUVALS, data%lnhuvl, &
-                   data%WRK( 1 ), LNWK, data%WRK( LWKB + 1 ), &
-                   LNWKB, data%WRK( LWKC + 1 ), LNWKC, &
+                   data%WRK( 1 ), lnwk, data%WRK( lwkb + 1 ), &
+                   lnwkb, data%WRK( lwkc + 1 ), lnwkc, &
                    data%GXEQX( 1 ), data%lgxeqx, data%INTREP( 1 ), &
                    data%lintre, .TRUE., RANGE )
       END IF

@@ -1,111 +1,120 @@
-      SUBROUTINE CSETUP( data, INPUT, IOUT, N, M, X, BL, BU, NMAX, EQUATN,     &
-                         LINEAR, V, CL, CU, MMAX, EFIRST, LFIRST, NVFRST )
+! THIS VERSION: CUTEST 1.0 - 04/11/2012 AT 12:00 GMT.
+
+!-*-*-*-*-*-*-  C U T E S T    C S E T U P    S U B R O U T I N E  -*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould with modifications by Ingrid Bongartz
+
+!  History -
+!   fortran 77 version originally released in CUTE, 30th October, 1991
+!   fortran 2003 version released in CUTEst, 4th November 2012
+
+      SUBROUTINE CSETUP( data, input, out, n, m, X, BL, BU, nmax, EQUATN,      &
+                         LINEAR, V, CL, CU, mmax, efirst, lfirst, nvfrst )
       USE CUTEST
       TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: INPUT, IOUT, N, M, NMAX, MMAX
-      LOGICAL :: EFIRST, LFIRST, NVFRST
-      REAL ( KIND = wp ) :: X ( NMAX ), BL ( NMAX ), BU ( NMAX )
-      REAL ( KIND = wp ) :: V ( MMAX ), CL ( MMAX ), CU ( MMAX )
-      LOGICAL :: EQUATN( MMAX ), LINEAR( MMAX )
 
-!  Set up the input data for the constrained optimization tools.
+!  Dummy arguments
 
-!  Nick Gould, for CGT productions,
-!  30th October, 1991.
-!  Ingrid Bongartz added option to reorder variables, so that
-!  nonlinear variables come first.  Within the nonlinear variables,
-!  the smaller set of either the nonlinear objective or nonlinear
-!  Jacobian variables appears first.
-!  5th November, 1992.
+      INTEGER :: input, out, n, m, nmax, mmax
+      LOGICAL :: efirst, lfirst, nvfrst
+      REAL ( KIND = wp ) :: X( nmax ), BL( nmax ), BU( nmax )
+      REAL ( KIND = wp ) :: V( mmax ), CL( mmax ), CU( mmax )
+      LOGICAL :: EQUATN( mmax ), LINEAR( mmax )
 
-!  Local variables.
+!  ------------------------------------------------------------
+!  set up the input data for the constrained optimization tools
+!  ------------------------------------------------------------
 
-      INTEGER :: IALGOR, IPRINT, INFORM, I, IG, J, JG, MEND
-      INTEGER :: MEQ, MLIN, NSLACK, NELTYP, NGRTYP
-      INTEGER :: II, K, IEL, JWRK, KNDV, NNLIN, NEND
-      INTEGER :: ITEMP
-      LOGICAL :: FDGRAD, DEBUG, LTEMP
-      REAL :: DUM,    CPUTIM
-      CHARACTER ( LEN = 8 ) :: PNAME
-      CHARACTER ( LEN = 10 ) :: CTEMP
-      CHARACTER ( LEN = 10 ) :: CHTEMP
-      REAL ( KIND = wp ) :: ATEMP, ZERO
-      PARAMETER ( ZERO = 0.0_wp )
-      REAL ( KIND = wp ) :: OBFBND( 2 )
-      EXTERNAL :: RANGE, CPUTIM
-      data%sutime = CPUTIM( DUM )
-      data%iout2 = IOUT
-      DEBUG = .FALSE.
-      DEBUG = DEBUG .AND. IOUT > 0
-      IPRINT = 0
-      IF ( DEBUG ) IPRINT = 3
+!  local variables
 
-!  Input the problem dimensions.
+      INTEGER :: ialgor, iprint, inform, i, ig, j, jg, mend, meq, mlin, nslack
+      INTEGER :: ii, k, iel, jwrk, kndv, nnlin, nend, neltyp, ngrtyp, itemp
+      LOGICAL :: fdgrad, debug, ltemp
+      CHARACTER ( LEN = 8 ) :: pname
+      CHARACTER ( LEN = 10 ) :: ctemp
+      CHARACTER ( LEN = 10 ) :: chtemp
+      REAL ( KIND = wp ) :: atemp
+      REAL ( KIND = wp ), PARAMETER :: zero = 0.0_wp
+      REAL ( KIND = wp ), DIMENSION( 2 ) :: OBFBND
+      EXTERNAL :: RANGE
 
-      READ( INPUT, 1001 ) N, data%ng, data%nelnum, data%ngel, data%nvars,      &
-         data%nnza, data%ngpvlu, data%nepvlu, NELTYP, NGRTYP
-      IF ( N <= 0 ) THEN
-         CLOSE( INPUT )
-         IF ( IOUT > 0 ) WRITE( IOUT, 2020 )
-         STOP
+      CALL CPU_TIME( data%sutime )
+      data%iout2 = out
+      debug = .FALSE.
+      debug = debug .AND. out > 0
+      iprint = 0
+      IF ( debug ) iprint = 3
+
+!  input the problem dimensions
+
+      READ( input, 1001 ) n, data%ng, data%nelnum, data%ngel, data%nvars,      &
+         data%nnza, data%ngpvlu, data%nepvlu, neltyp, ngrtyp
+      IF ( n <= 0 ) THEN
+        CLOSE( input )
+        IF ( out > 0 ) WRITE( out,                                             &
+          "( /, ' ** SUBROUTINE CSETUP: the problem uses no variables.',       &
+          &     ' Execution terminating ' )" )
+        STOP
       END IF
       IF ( data%ng <= 0 ) THEN
-         CLOSE( INPUT )
-         IF ( IOUT > 0 ) WRITE( IOUT, 2030 )
-         STOP
+        CLOSE( input )
+        IF ( out > 0 ) WRITE( out,                                             &
+          "( /, ' ** SUBROUTINE CSETUP: the problem is vacuous.',              &
+          &     ' Execution terminating ' )" )
+        STOP
       END IF
-      IF ( N > NMAX ) THEN
-         CLOSE( INPUT )
-         IF ( IOUT > 0 ) THEN
-            WRITE( IOUT, 2000 ) 'X   ', 'NMAX  ', N - NMAX
-            WRITE( IOUT, 2000 ) 'BL  ', 'NMAX  ', N - NMAX
-            WRITE( IOUT, 2000 ) 'BU  ', 'NMAX  ', N - NMAX
-         END IF
-         STOP
+      IF ( n > nmax ) THEN
+        CLOSE( input )
+        IF ( out > 0 ) THEN
+          WRITE( out, 2000 ) 'X', 'nmax', n - nmax
+          WRITE( out, 2000 ) 'BL', 'nmax', n - nmax
+          WRITE( out, 2000 ) 'BU', 'nmax', n - nmax
+        END IF
+        STOP
       END IF
 
-!  Input the problem type.
+!  input the problem type
 
-      READ( INPUT, 1000 ) IALGOR, PNAME
+      READ( input, 1000 ) ialgor, pname
 
-!  Set useful integer values.
+!  set useful integer values
 
       data%ng1 = data%ng + 1
       data%ngng = data%ng + data%ng
       data%nel1 = data%nelnum + 1
 
-!  Partition the integer workspace.
+!  partition the integer workspace
 
-      ISTADG = 0
-      ISTGP = ISTADG + data%ng1
-      ISTADA = ISTGP + data%ng1
-      ISTAEV = ISTADA + data%ng1
-      ISTEP = ISTAEV + data%nel1
-      ITYPEG = ISTEP + data%nel1
-      KNDOFC = ITYPEG + data%ng
-      ITYPEE = KNDOFC + data%ng
-      IELING = ITYPEE + data%nelnum
-      IELVAR = IELING + data%ngel
-      ICNA = IELVAR + data%nvars
-      ISTADH = ICNA + data%nnza
-      INTVAR = ISTADH + data%nel1
-      IVAR = INTVAR + data%nel1
-      ICALCF = IVAR + N
-      ITYPEV = ICALCF + MAX( data%nelnum, data%ng )
-      IWRK = ITYPEV + N
-      data%liwork = LIWK - IWRK
+      istadg = 0
+      istgp = istadg + data%ng1
+      istada = istgp + data%ng1
+      istaev = istada + data%ng1
+      istep = istaev + data%nel1
+      itypeg = istep + data%nel1
+      kndofc = itypeg + data%ng
+      itypee = kndofc + data%ng
+      ieling = itypee + data%nelnum
+      ielvar = ieling + data%ngel
+      icna = ielvar + data%nvars
+      istadh = icna + data%nnza
+      intvar = istadh + data%nel1
+      ivar = intvar + data%nel1
+      icalcf = ivar + n
+      itypev = icalcf + MAX( data%nelnum, data%ng )
+      IWRK = itypev + n
+      data%liwork = liwk - IWRK
 
-!  Ensure there is sufficient room.
+!  ensure there is sufficient room
 
       IF ( data%liwork < 0 ) THEN
-         CLOSE( INPUT )
-         IF ( IOUT > 0 ) WRITE( IOUT, 2000 ) &
-             'IWK   ', 'LIWK  ', - data%liwork
-         STOP
+        CLOSE( input )
+        IF ( out > 0 ) WRITE( out, 2000 ) 'IWK', 'LIWK', - data%liwork
+        STOP
       END IF
 
-!  Partition the real workspace.
+!  partition the real workspace
 
       A = 0
       B = A + data%nnza
@@ -115,54 +124,51 @@
       ESCALE = EPVALU + data%nepvlu
       GSCALE = ESCALE + data%ngel
       VSCALE = GSCALE + data%ng
-      GVALS = VSCALE + N
-      XT = GVALS + 3 * data%ng
-      DGRAD = XT + N
-      Q = DGRAD + N
-      FT = Q + N
+      gvals = VSCALE + n
+      XT = gvals + 3 * data%ng
+      DGRAD = XT + n
+      Q = DGRAD + n
+      FT = Q + n
       WRK = FT + data%ng
-      data%lwork = LWK - WRK
+      data%lwork = lwk - WRK
 
-!  Ensure there is sufficient room.
+!  ensure there is sufficient room
 
       IF ( data%lwork < 0 ) THEN
-         CLOSE( INPUT )
-         IF ( IOUT > 0 ) WRITE( IOUT, 2000 ) &
-             'WK   ', 'LWK   ', - data%lwork
-         STOP
+        CLOSE( input )
+        IF ( out > 0 ) WRITE( out, 2000 ) 'WK', 'LWK', - data%lwork
+        STOP
       END IF
 
-!  Partition the logical workspace.
+!  partition the logical workspace
 
-      INTREP = 0
-      GXEQX = INTREP + data%nelnum
-      data%lo = GXEQX + data%ngng
+      intrep = 0
+      gxeqx = intrep + data%nelnum
+      data%lo = gxeqx + data%ngng
 
-!  Ensure there is sufficient room.
+!  ensure there is sufficient room
 
-      IF ( LLOGIC < data%lo ) THEN
-         CLOSE( INPUT )
-         IF ( IOUT > 0 ) WRITE( IOUT, 2000 ) &
-             'LOGI  ', 'LLOGIC', data%lo - LLOGIC
-         STOP
+      IF ( llogic < data%lo ) THEN
+        CLOSE( input )
+        IF ( out > 0 ) WRITE( out, 2000 ) 'LOGI', 'LLOGIC', data%lo - llogic
+        STOP
       END IF
 
-!  Partition the character workspace.
+!  partition the character workspace.
 
       GNAMES = 0
       VNAMES = GNAMES + data%ng
-      data%ch = VNAMES + N
+      data%ch = VNAMES + n
 
-!  Ensure there is sufficient room.
+!  ensure there is sufficient room
 
-      IF ( LCHARA < data%ch + 1 ) THEN
-         CLOSE( INPUT )
-         IF ( IOUT > 0 ) WRITE( IOUT, 2000 ) &
-             'CHA   ', 'LCHARA', data%ch + 1 - LCHARA
-         STOP
+      IF ( lchara < data%ch + 1 ) THEN
+        CLOSE( input )
+        IF ( out > 0 ) WRITE( out, 2000 ) 'CHA', 'LCHARA', data%ch + 1 - lchara
+        STOP
       END IF
 
-!  Record the lengths of arrays.
+!  record the lengths of arrays
 
       data%lstadg = MAX( 1, data%ng1 )
       data%lstada = MAX( 1, data%ng1 )
@@ -180,7 +186,7 @@
       data%lu = MAX( 1, data%ng )
       data%lescal = MAX( 1, data%ngel )
       data%lgscal = MAX( 1, data%ng )
-      data%lvscal = MAX( 1, N )
+      data%lvscal = MAX( 1, n )
       data%lft = MAX( 1, data%ng )
       data%lgvals = MAX( 1, data%ng )
       data%lintre = MAX( 1, data%nelnum )
@@ -191,523 +197,512 @@
 !     LSTEP = MAX( 1, data%nel1 )
 !     LTYPEG = MAX( 1, data%ng )
 !     LTYPEE = MAX( 1, data%nelnum )
-!     LIVAR = MAX( 1, N )
-!     LBL = MAX( 1, N )
-!     LBU = MAX( 1, N )
-!     LX = MAX( 1, N )
-!     LXT = MAX( 1, N )
-!     LDGRAD = MAX( 1, N )
-!     LQ = MAX( 1, N )
+!     LIVAR = MAX( 1, n )
+!     LBL = MAX( 1, n )
+!     LBU = MAX( 1, n )
+!     LX = MAX( 1, n )
+!     LXT = MAX( 1, n )
+!     LDGRAD = MAX( 1, n )
+!     LQ = MAX( 1, n )
 
+!  print out problem data. input the number of variables, groups, elements and 
+!  the identity of the objective function group
 
-!  Print out problem data. input the number of variables, groups,
-!  elements and the identity of the objective function group.
-
-      IF ( IALGOR == 2 ) THEN
-         READ( INPUT, 1002 ) NSLACK, data%nobjgr
+      IF ( ialgor == 2 ) THEN
+        READ( input, 1002 ) nslack, data%nobjgr
       ELSE
-         NSLACK = 0
+        nslack = 0
       END IF
-      IF ( DEBUG ) WRITE( IOUT, 1100 ) PNAME, N, data%ng, data%nelnum
-      data%pname = PNAME // '  '
+      IF ( debug ) WRITE( out, 1100 ) pname, n, data%ng, data%nelnum
+      data%pname = pname // '  '
 
-!  Input the starting addresses of the elements in each group,
-!  of the parameters used for each group and
-!  of the nonzeros of the linear element in each group.
+!  input the starting addresses of the elements in each group, of the parameters
+!  used for each group and of the nonzeros of the linear element in each group
 
-      READ( INPUT, 1010 ) ( data%ISTADG( I ), I = 1, data%ng1 )
-      IF ( DEBUG ) WRITE( IOUT, 1110 ) 'ISTADG', &
-        ( data%ISTADG( I ), I = 1, data%ng1 )
-      READ( INPUT, 1010 ) ( data%ISTGP( I ), I = 1, data%ng1 )
-      IF ( DEBUG ) WRITE( IOUT, 1110 ) 'ISTGP ', &
-        ( data%ISTGP( I ), I = 1, data%ng1 )
-      READ( INPUT, 1010 ) ( data%ISTADA( I ), I = 1, data%ng1 )
-      IF ( DEBUG ) WRITE( IOUT, 1110 ) 'ISTADA', &
-        ( data%ISTADA( I ), I = 1, data%ng1 )
+      READ( input, 1010 ) ( data%ISTADG( i ), i = 1, data%ng1 )
+      IF ( debug ) WRITE( out, 1110 ) 'ISTADG',                                &
+        ( data%ISTADG( i ), i = 1, data%ng1 )
+      READ( input, 1010 ) ( data%ISTGP( i ), i = 1, data%ng1 )
+      IF ( debug ) WRITE( out, 1110 ) 'ISTGP ',                                &
+        ( data%ISTGP( i ), i = 1, data%ng1 )
+      READ( input, 1010 ) ( data%ISTADA( i ), i = 1, data%ng1 )
+      IF ( debug ) WRITE( out, 1110 ) 'ISTADA',                                &
+        ( data%ISTADA( i ), i = 1, data%ng1 )
 
-!  Input the starting addresses of the variables and parameters
-!  in each element.
+!  input the starting addresses of the variables and parameters in each element
 
-      READ( INPUT, 1010 ) ( data%ISTAEV( I ), I = 1, data%nel1 )
-      IF ( DEBUG ) WRITE( IOUT, 1110 ) 'ISTAEV', &
-        ( data%ISTAEV( I ), I = 1, data%nel1 )
-      READ( INPUT, 1010 ) ( data%ISTEP( I ), I = 1, data%nel1 )
-      IF ( DEBUG ) WRITE( IOUT, 1110 ) 'ISTEP ', &
-        ( data%ISTEP( I ), I = 1, data%nel1 )
+      READ( input, 1010 ) ( data%ISTAEV( i ), i = 1, data%nel1 )
+      IF ( debug ) WRITE( out, 1110 ) 'ISTAEV',                                &
+        ( data%ISTAEV( i ), i = 1, data%nel1 )
+      READ( input, 1010 ) ( data%ISTEP( i ), i = 1, data%nel1 )
+      IF ( debug ) WRITE( out, 1110 ) 'ISTEP ',                                &
+        ( data%ISTEP( i ), i = 1, data%nel1 )
 
-!  Input the group type of each group
+!  input the group type of each group
 
-      READ( INPUT, 1010 ) ( data%ITYPEG( I ), I = 1, data%ng )
-      IF ( DEBUG ) WRITE( IOUT, 1110 ) 'ITYPEG', &
-        ( data%ITYPEG( I ), I = 1, data%ng )
-      IF ( IALGOR >= 2 ) THEN
-         READ( INPUT, 1010 ) ( data%KNDOFC( I ), I = 1, data%ng )
-         IF ( DEBUG ) WRITE( IOUT, 1110 ) 'KNDOFC', &
-        ( data%KNDOFC( I ), I = 1, data%ng )
+      READ( input, 1010 ) ( data%ITYPEG( i ), i = 1, data%ng )
+      IF ( debug ) WRITE( out, 1110 ) 'ITYPEG',                                &
+        ( data%ITYPEG( i ), i = 1, data%ng )
+      IF ( ialgor >= 2 ) THEN
+         READ( input, 1010 ) ( data%KNDOFC( i ), i = 1, data%ng )
+         IF ( debug ) WRITE( out, 1110 ) 'KNDOFC',                             &
+        ( data%KNDOFC( i ), i = 1, data%ng )
       END IF
 
-!  Input the element type of each element
+!  input the element type of each element
 
-      READ( INPUT, 1010 ) ( data%ITYPEE( I ), I = 1, data%nelnum )
-      IF ( DEBUG ) WRITE( IOUT, 1110 ) 'ITYPEE', &
-        ( data%ITYPEE( I ), I = 1, data%nelnum )
+      READ( input, 1010 ) ( data%ITYPEE( i ), i = 1, data%nelnum )
+      IF ( debug ) WRITE( out, 1110 ) 'ITYPEE',                                &
+        ( data%ITYPEE( i ), i = 1, data%nelnum )
 
-!  Input the number of internal variables for each element.
+!  input the number of internal variables for each element
 
-      READ( INPUT, 1010 ) ( data%INTVAR( I ), I = 1, data%nelnum )
-      IF ( DEBUG ) WRITE( IOUT, 1110 ) 'INTVAR', &
-        ( data%INTVAR( I ), I = 1, data%nelnum )
+      READ( input, 1010 ) ( data%INTVAR( i ), i = 1, data%nelnum )
+      IF ( debug ) WRITE( out, 1110 ) 'INTVAR',                                &
+        ( data%INTVAR( i ), i = 1, data%nelnum )
 
-!  Input the identity of each individual element.
+!  input the identity of each individual element
 
-      READ( INPUT, 1010 ) ( data%IELING( I ), I = 1, data%ngel )
-      IF ( DEBUG ) WRITE( IOUT, 1110 ) 'IELING', &
-        ( data%IELING( I ), I = 1, data%ngel )
+      READ( input, 1010 ) ( data%IELING( i ), i = 1, data%ngel )
+      IF ( debug ) WRITE( out, 1110 ) 'IELING',                                &
+        ( data%IELING( i ), i = 1, data%ngel )
 
-!  Input the variables in each group's elements.
+!  input the variables in each group's elements
 
       data%nvars = data%ISTAEV( data%nel1 ) - 1
-      READ( INPUT, 1010 ) ( data%IELVAR( I ), I = 1, data%nvars )
-      IF ( DEBUG ) WRITE( IOUT, 1110 ) 'IELVAR', &
-        ( data%IELVAR( I ), I = 1, data%nvars )
+      READ( input, 1010 ) ( data%IELVAR( i ), i = 1, data%nvars )
+      IF ( debug ) WRITE( out, 1110 ) 'IELVAR',                                &
+        ( data%IELVAR( i ), i = 1, data%nvars )
 
-!  Input the column addresses of the nonzeros in each linear element.
+!  input the column addresses of the nonzeros in each linear element
 
-      READ( INPUT, 1010 ) ( data%ICNA( I ), I = 1, data%nnza )
-      IF ( DEBUG ) WRITE( IOUT, 1110 ) 'ICNA  ', &
-        ( data%ICNA( I ), I = 1, data%nnza )
+      READ( input, 1010 ) ( data%ICNA( i ), i = 1, data%nnza )
+      IF ( debug ) WRITE( out, 1110 ) 'ICNA  ',                                &
+        ( data%ICNA( i ), i = 1, data%nnza )
 
-!  Input the values of the nonzeros in each linear element, the
-!  constant term in each group, the lower and upper bounds on
-!  the variables.
+!  input the values of the nonzeros in each linear element, the constant term 
+!  in each group, the lower and upper bounds on the variables.
 
-      READ( INPUT, 1020 ) ( data%A( I ), I = 1, data%nnza )
-      IF ( DEBUG ) WRITE( IOUT, 1120 ) 'A     ', &
-        ( data%A( I ), I = 1, data%nnza )
-      READ( INPUT, 1020 ) ( data%B( I ), I = 1, data%ng )
-      IF ( DEBUG ) WRITE( IOUT, 1120 ) 'B     ', &
-        ( data%B( I ), I = 1, data%ng )
-      IF ( IALGOR <= 2 ) THEN
-         READ( INPUT, 1020 ) ( BL( I ), I = 1, N )
-         IF ( DEBUG ) WRITE( IOUT, 1120 ) 'BL    ', ( BL( I ), I = 1, N )
-         READ( INPUT, 1020 ) ( BU( I ), I = 1, N )
-         IF ( DEBUG ) WRITE( IOUT, 1120 ) 'BU    ', ( BU( I ), I = 1, N )
+      READ( input, 1020 ) ( data%A( i ), i = 1, data%nnza )
+      IF ( debug ) WRITE( out, 1120 ) 'A     ', ( data%A( i ), i = 1, data%nnza)
+      READ( input, 1020 ) ( data%B( i ), i = 1, data%ng )
+      IF ( debug ) WRITE( out, 1120 ) 'B     ', ( data%B( i ), i = 1, data%ng )
+      IF ( ialgor <= 2 ) THEN
+         READ( input, 1020 ) ( BL( i ), i = 1, n )
+         IF ( debug ) WRITE( out, 1120 ) 'BL    ', ( BL( i ), i = 1, n )
+         READ( input, 1020 ) ( BU( i ), i = 1, n )
+         IF ( debug ) WRITE( out, 1120 ) 'BU    ', ( BU( i ), i = 1, n )
       ELSE
 
-!  Use GVALS and FT as temporary storage for the constraint bounds.
+!  use gvals and FT as temporary storage for the constraint bounds.
 
-         READ( INPUT, 1020 ) ( BL( I ), I = 1, N ), &
-           ( data%GVALS( I ), I = 1, data%ng )
-         IF ( DEBUG ) WRITE( IOUT, 1120 ) 'BL    ', &
-           ( BL( I ), I = 1, N ), ( data%GVALS( I ), I = 1, data%ng )
-         READ( INPUT, 1020 ) ( BU( I ), I = 1, N ), &
-           ( data%FT( I ), I = 1, data%ng )
-         IF ( DEBUG ) WRITE( IOUT, 1120 ) 'BU    ', &
-           ( BU( I ), I = 1, N ), ( data%FT( I ), I = 1, data%ng )
+         READ( input, 1020 ) ( BL( i ), i = 1, n ),                            &
+           ( data%GVALS( i ), i = 1, data%ng )
+         IF ( debug ) WRITE( out, 1120 ) 'BL    ',                             &
+           ( BL( i ), i = 1, n ), ( data%GVALS( i ), i = 1, data%ng )
+         READ( input, 1020 ) ( BU( i ), i = 1, n ),                            &
+           ( data%FT( i ), i = 1, data%ng )
+         IF ( debug ) WRITE( out, 1120 ) 'BU    ',                             &
+           ( BU( i ), i = 1, n ), ( data%FT( i ), i = 1, data%ng )
       END IF
 
-!   Input the starting point for the minimization.
+!   input the starting point for the minimization.
 
-      READ( INPUT, 1020 ) ( X( I ), I = 1, N )
-      IF ( DEBUG ) WRITE( IOUT, 1120 ) 'X     ', ( X( I ), I = 1, N )
-      IF ( IALGOR >= 2 ) THEN
-         READ( INPUT, 1020 )( data%U( I ), I = 1, data%ng )
-         IF ( DEBUG ) WRITE( IOUT, 1120 ) 'U     ', &
-            ( data%U( I ), I = 1, data%ng )
+      READ( input, 1020 ) ( X( i ), i = 1, n )
+      IF ( debug ) WRITE( out, 1120 ) 'X     ', ( X( i ), i = 1, n )
+      IF ( ialgor >= 2 ) THEN
+         READ( input, 1020 )( data%U( i ), i = 1, data%ng )
+         IF ( debug ) WRITE( out, 1120 ) 'U     ',                             &
+            ( data%U( i ), i = 1, data%ng )
       END IF
 
-!  Input the parameters in each group.
+!  input the parameters in each group.
 
-      READ( INPUT, 1020 ) ( data%GPVALU( I ), I = 1, data%ngpvlu )
-      IF ( DEBUG ) WRITE( IOUT, 1120 ) 'GPVALU', &
-        ( data%GPVALU( I ), I = 1, data%ngpvlu )
+      READ( input, 1020 ) ( data%GPVALU( i ), i = 1, data%ngpvlu )
+      IF ( debug ) WRITE( out, 1120 ) 'GPVALU',                                &
+        ( data%GPVALU( i ), i = 1, data%ngpvlu )
 
-!  Input the parameters in each individual element.
+!  input the parameters in each individual element.
 
-      READ( INPUT, 1020 ) ( data%EPVALU( I ), I = 1, data%nepvlu )
-      IF ( DEBUG ) WRITE( IOUT, 1120 ) 'EPVALU', &
-        ( data%EPVALU( I ), I = 1, data%nepvlu )
+      READ( input, 1020 ) ( data%EPVALU( i ), i = 1, data%nepvlu )
+      IF ( debug ) WRITE( out, 1120 ) 'EPVALU',                                &
+        ( data%EPVALU( i ), i = 1, data%nepvlu )
 
-!  Input the scale factors for the nonlinear elements.
+!  input the scale factors for the nonlinear elements.
 
-      READ( INPUT, 1020 ) ( data%ESCALE( I ), I = 1, data%ngel )
-      IF ( DEBUG ) WRITE( IOUT, 1120 ) 'ESCALE', &
-        ( data%ESCALE( I ), I = 1, data%ngel )
+      READ( input, 1020 ) ( data%ESCALE( i ), i = 1, data%ngel )
+      IF ( debug ) WRITE( out, 1120 ) 'ESCALE',                                &
+        ( data%ESCALE( i ), i = 1, data%ngel )
 
-!  Input the scale factors for the groups.
+!  input the scale factors for the groups.
 
-      READ( INPUT, 1020 ) ( data%GSCALE( I ), I = 1, data%ng )
-      IF ( DEBUG ) WRITE( IOUT, 1120 ) 'GSCALE', &
-        ( data%GSCALE( I ), I = 1, data%ng )
+      READ( input, 1020 ) ( data%GSCALE( i ), i = 1, data%ng )
+      IF ( debug ) WRITE( out, 1120 ) 'GSCALE',                                &
+        ( data%GSCALE( i ), i = 1, data%ng )
 
-!  Input the scale factors for the variables.
+!  input the scale factors for the variables.
 
-      READ( INPUT, 1020 ) ( data%VSCALE( I ), I = 1, N )
-      IF ( DEBUG ) WRITE( IOUT, 1120 ) 'VSCALE', &
-        ( data%VSCALE( I ), I = 1, N )
+      READ( input, 1020 ) ( data%VSCALE( i ), i = 1, n )
+      IF ( debug ) WRITE( out, 1120 ) 'VSCALE',                                &
+        ( data%VSCALE( i ), i = 1, n )
 
-!  Input the lower and upper bounds on the objective function.
+!  input the lower and upper bounds on the objective function.
 
-      READ( INPUT, 1080 ) OBFBND( 1 ), OBFBND( 2 )
-      IF ( DEBUG ) WRITE( IOUT, 1180 ) 'OBFBND', &
-          OBFBND( 1 ), OBFBND( 2 )
+      READ( input, 1080 ) OBFBND( 1 ), OBFBND( 2 )
+      IF ( debug ) WRITE( out, 1180 ) 'OBFBND', OBFBND( 1 ), OBFBND( 2 )
 
-!  Input a logical array which says whether an element has internal
+!  input a logical array which says whether an element has internal
 !  variables.
 
-      READ( INPUT, 1030 ) ( data%INTREP( I ), I = 1, data%nelnum )
-      IF ( DEBUG ) WRITE( IOUT, 1130 ) 'INTREP', &
-        ( data%INTREP( I ), I = 1, data%nelnum )
+      READ( input, 1030 ) ( data%INTREP( i ), i = 1, data%nelnum )
+      IF ( debug ) WRITE( out, 1130 ) 'INTREP',                                &
+        ( data%INTREP( i ), i = 1, data%nelnum )
 
-!  Input a logical array which says whether a group is trivial.
+!  input a logical array which says whether a group is trivial.
 
-      READ( INPUT, 1030 ) ( data%GXEQX( I ), I = 1, data%ng )
-      IF ( DEBUG ) WRITE( IOUT, 1130 ) 'GXEQX ', &
-        ( data%GXEQX( I ), I = 1, data%ng )
+      READ( input, 1030 ) ( data%GXEQX( i ), i = 1, data%ng )
+      IF ( debug ) WRITE( out, 1130 ) 'GXEQX ',                                &
+        ( data%GXEQX( i ), i = 1, data%ng )
 
-!  Input the names given to the groups and to the variables.
+!  input the names given to the groups and to the variables.
 
-      READ( INPUT, 1040 ) ( data%GNAMES( I ), I = 1, data%ng )
-      IF ( DEBUG ) WRITE( IOUT, 1140 ) 'GNAMES', &
-        ( data%GNAMES( I ), I = 1, data%ng )
-      READ( INPUT, 1040 ) ( data%VNAMES( I ), I = 1, N )
-      IF ( DEBUG ) WRITE( IOUT, 1140 ) 'VNAMES', &
-        ( data%VNAMES( I ), I = 1, N )
+      READ( input, 1040 ) ( data%GNAMES( i ), i = 1, data%ng )
+      IF ( debug ) WRITE( out, 1140 ) 'GNAMES',                                &
+        ( data%GNAMES( i ), i = 1, data%ng )
+      READ( input, 1040 ) ( data%VNAMES( i ), i = 1, n )
+      IF ( debug ) WRITE( out, 1140 ) 'VNAMES',                                &
+        ( data%VNAMES( i ), i = 1, n )
 
-!  Dummy input for the names given to the element and group types.
+!  dummy input for the names given to the element and group types.
 
-      READ( INPUT, 1040 ) ( CHTEMP, I = 1, NELTYP )
-      READ( INPUT, 1040 ) ( CHTEMP, I = 1, NGRTYP )
+      READ( input, 1040 ) ( CHTEMP, i = 1, neltyp )
+      READ( input, 1040 ) ( CHTEMP, i = 1, ngrtyp )
 
-!  Input the type of each variable.
+!  input the type of each variable.
 
-      READ( INPUT, 1010 ) ( data%ITYPEV( I ), I = 1, N )
+      READ( input, 1010 ) ( data%ITYPEV( i ), i = 1, n )
 
-!  Consider which groups are constraints. Of these, decide which are
+!  consider which groups are constraints. Of these, decide which are
 !  equations, which are linear, allocate starting values for the
-!  Lagrange multipliers and set lower and upper bounds on any
-!  inequality constraints. Reset KNDOFC to point to the list of
-!  constraint groups.
+!  Lagrange multipliers and set lower and upper bounds on any inequality 
+!  constraints. Reset kndofc to point to the list of constraint groups.
 
-      M = 0
-      DO 10 I = 1, data%ng
-         IF ( data%KNDOFC( I ) == 1 ) THEN
-            data%KNDOFC( I ) = 0
-         ELSE
-            M = M + 1
-            IF ( M <= MMAX ) THEN
-               V ( M ) = data%U( I )
-               LINEAR( M ) = data%GXEQX( I ) .AND. data%ISTADG( I ) &
-                             >= data%ISTADG( I + 1 )
-               IF ( data%KNDOFC( I ) == 2 ) THEN
-                  EQUATN( M ) = .TRUE.
-                  CL ( M ) = ZERO
-                  CU ( M ) = ZERO
-               ELSE
-                  EQUATN( M ) = .FALSE.
-                  CL ( M ) = data%GVALS( I )
-                  CU ( M ) = data%FT( I )
-               END IF
+      m = 0
+      DO i = 1, data%ng
+        IF ( data%KNDOFC( i ) == 1 ) THEN
+          data%KNDOFC( i ) = 0
+        ELSE
+          m = m + 1
+          IF ( m <= mmax ) THEN
+            V ( m ) = data%U( i )
+            LINEAR( m ) =                                                      &
+              data%GXEQX( i ) .AND. data%ISTADG( i ) >= data%ISTADG( i + 1 )
+            IF ( data%KNDOFC( i ) == 2 ) THEN
+              EQUATN( m ) = .TRUE.
+              CL ( m ) = zero
+              CU ( m ) = zero
+            ELSE
+              EQUATN( m ) = .FALSE.
+              CL ( m ) = data%GVALS( i )
+              CU ( m ) = data%FT( i )
             END IF
-            data%KNDOFC( I ) = M
-         END IF
-   10 CONTINUE
-      IF ( M == 0 .AND. IOUT > 0 ) WRITE( IOUT, 2010 )
-      IF ( M > MMAX ) THEN
-         CLOSE( INPUT )
-         IF ( IOUT > 0 ) THEN
-            WRITE( IOUT, 2000 ) 'V     ', 'MMAX  ', M - MMAX
-            WRITE( IOUT, 2000 ) 'CL    ', 'MMAX  ', M - MMAX
-            WRITE( IOUT, 2000 ) 'CU    ', 'MMAX  ', M - MMAX
-            WRITE( IOUT, 2000 ) 'EQUATN', 'MMAX  ', M - MMAX
-            WRITE( IOUT, 2000 ) 'LINEAR', 'MMAX  ', M - MMAX
-         END IF
-         STOP
+          END IF
+          data%KNDOFC( i ) = m
+        END IF
+      END DO
+      IF ( m == 0 .AND. out > 0 ) WRITE( out,                                  &
+        "( /, ' ** SUBROUTINE CSETUP: ** Warning. The problem has',            &
+       &      ' no general constraints. ', /,                                  &
+       &      ' Other tools may be preferable' )" )
+      IF ( m > mmax ) THEN
+        CLOSE( input )
+        IF ( out > 0 ) THEN
+          WRITE( out, 2000 ) 'V', 'mmax', m - mmax
+          WRITE( out, 2000 ) 'CL', 'mmax', m - mmax
+          WRITE( out, 2000 ) 'CU', 'mmax', m - mmax
+          WRITE( out, 2000 ) 'EQUATN', 'mmax', m - mmax
+          WRITE( out, 2000 ) 'LINEAR', 'mmax', m - mmax
+        END IF
+        STOP
       END IF
-!                            the number of variables and constraints, resp.
-      data%numvar = N
-      data%numcon = M
-      IF ( NVFRST ) THEN
+      data%numvar = n
+      data%numcon = m
 
-!  Ensure there is sufficient room in IWK to reorder variables.
+      IF ( nvfrst ) THEN
 
-         IF ( data%liwork < 2*N ) THEN
-            CLOSE( INPUT )
-            IF ( IOUT > 0 ) WRITE( IOUT, 2000 ) &
-                'IWK   ', 'LIWK  ', data%liwork - 2*N
-            STOP
-         END IF
-         KNDV = IWRK + 1 
-         JWRK = KNDV + N
+!  ensure there is sufficient room in IWK to reorder variables.
 
-!  Initialize JWRK and KNDV.
+        IF ( data%liwork < 2 * n ) THEN
+          CLOSE( input )
+          IF ( out > 0 ) WRITE( out, 2000 ) 'IWK', 'LIWK', data%liwork - 2 * n
+          STOP
+        END IF
+        kndv = iwrk + 1 
+        jwrk = kndv + n
 
-         DO 20 J = 1, N
-            data%IWORK( KNDV + J ) = 0
-            data%IWORK( JWRK + J ) = J
-   20    CONTINUE
+!  initialize jwrk and kndv
 
-!  Now identify and count nonlinear variables.
-!  Keep separate counts for nonlinear objective and Jacobian variables.
-!  data%IWORK( KNDV + J ) = 0 ==> J linear everywhere
-!  data%IWORK( KNDV + J ) = 1 ==> J linear in objective, nonlinear in constraints
-!  data%IWORK( KNDV + J ) = 2 ==> J linear in constraints, nonlinear in objective
-!  data%IWORK( KNDV + J ) = 3 ==> J nonlinear everywhere
+        DO j = 1, n
+          data%IWORK( kndv + j ) = 0
+          data%IWORK( jwrk + j ) = j
+        END DO
 
-         NNLIN = 0
-         data%nnov = 0
-         data%nnjv = 0
-         DO 60 IG = 1, data%ng
-            I = data%KNDOFC( IG )
-            DO 40 II = data%ISTADG( IG ), data%ISTADG( IG + 1 ) - 1
-               IEL = data%IELING( II )
-               DO 30 K = data%ISTAEV( IEL ), data%ISTAEV( IEL + 1) - 1
-                  J = data%IELVAR( K )
-                  IF ( I > 0 ) THEN
-                     IF ( data%IWORK( KNDV + J ) == 0 ) THEN
-                        data%IWORK( KNDV + J ) = 1
-                        data%nnjv = data%nnjv + 1
-                        NNLIN = NNLIN + 1
-                     ELSE IF ( data%IWORK( KNDV + J ) == 2 ) THEN
-                        data%IWORK( KNDV + J ) = 3
-                        data%nnjv = data%nnjv + 1
-                     END IF
-                  ELSE
-                     IF ( data%IWORK( KNDV + J ) == 0 ) THEN
-                        data%IWORK( KNDV + J ) = 2
-                        data%nnov = data%nnov + 1
-                        NNLIN = NNLIN + 1
-                     ELSE IF ( data%IWORK( KNDV + J ) == 1 ) THEN
-                        data%IWORK( KNDV + J ) = 3
-                        data%nnov = data%nnov + 1
-                     END IF
-                  END IF
-   30          CONTINUE
-   40       CONTINUE
-            IF ( .NOT. data%GXEQX( IG ) ) THEN
-               DO 50 II = data%ISTADA( IG ), data%ISTADA( IG + 1 ) - 1
-                  J = data%ICNA( II )
-                  IF ( I > 0 ) THEN
-                     IF ( data%IWORK( KNDV + J ) == 0 ) THEN
-                        data%IWORK( KNDV + J ) = 1
-                        data%nnjv = data%nnjv + 1
-                        NNLIN = NNLIN + 1
-                     ELSE IF ( data%IWORK( KNDV + J ) == 2 ) THEN
-                        data%IWORK( KNDV + J ) = 3
-                        data%nnjv = data%nnjv + 1
-                     END IF
-                  ELSE
-                     IF ( data%IWORK( KNDV + J ) == 0 ) THEN
-                        data%IWORK( KNDV + J ) = 2
-                        data%nnov = data%nnov + 1
-                        NNLIN = NNLIN + 1
-                     ELSE IF ( data%IWORK( KNDV + J ) == 1 ) THEN
-                        data%IWORK( KNDV + J ) = 3
-                        data%nnov = data%nnov + 1
-                     END IF
-                  END IF
-   50          CONTINUE
+!  now identify and count nonlinear variables; keep separate counts for 
+!  nonlinear objective and Jacobian variables.
+!  data%IWORK(kndv + j) = 0 ==> j linear everywhere
+!  data%IWORK(kndv + j) = 1 ==> j linear in objective, nonlinear in constraints
+!  data%IWORK(kndv + j) = 2 ==> j linear in constraints, nonlinear in objective
+!  data%IWORK(kndv + j) = 3 ==> j nonlinear everywhere
+
+        nnlin = 0
+        data%nnov = 0
+        data%nnjv = 0
+        DO ig = 1, data%ng
+          i = data%KNDOFC( ig )
+          DO  ii = data%ISTADG( ig ), data%ISTADG( ig + 1 ) - 1
+            iel = data%IELING( ii )
+            DO k = data%ISTAEV( iel ), data%ISTAEV( iel + 1 ) - 1
+              j = data%IELVAR( k )
+              IF ( i > 0 ) THEN
+                IF ( data%IWORK( kndv + j ) == 0 ) THEN
+                  data%IWORK( kndv + j ) = 1
+                  data%nnjv = data%nnjv + 1
+                  nnlin = nnlin + 1
+                ELSE IF ( data%IWORK( kndv + j ) == 2 ) THEN
+                  data%IWORK( kndv + j ) = 3
+                  data%nnjv = data%nnjv + 1
+                END IF
+              ELSE
+                IF ( data%IWORK( kndv + j ) == 0 ) THEN
+                  data%IWORK( kndv + j ) = 2
+                  data%nnov = data%nnov + 1
+                  nnlin = nnlin + 1
+                ELSE IF ( data%IWORK( kndv + j ) == 1 ) THEN
+                  data%IWORK( kndv + j ) = 3
+                  data%nnov = data%nnov + 1
+                END IF
+              END IF
+            END DO
+          END DO
+          IF ( .NOT. data%GXEQX( ig ) ) THEN
+            DO ii = data%ISTADA( ig ), data%ISTADA( ig + 1 ) - 1
+              j = data%ICNA( ii )
+              IF ( i > 0 ) THEN
+                IF ( data%IWORK( kndv + j ) == 0 ) THEN
+                  data%IWORK( kndv + j ) = 1
+                  data%nnjv = data%nnjv + 1
+                  nnlin = nnlin + 1
+                ELSE IF ( data%IWORK( kndv + j ) == 2 ) THEN
+                  data%IWORK( kndv + j ) = 3
+                  data%nnjv = data%nnjv + 1
+                END IF
+              ELSE
+                IF ( data%IWORK( kndv + j ) == 0 ) THEN
+                  data%IWORK( kndv + j ) = 2
+                  data%nnov = data%nnov + 1
+                  nnlin = nnlin + 1
+                ELSE IF ( data%IWORK( kndv + j ) == 1 ) THEN
+                  data%IWORK( kndv + j ) = 3
+                  data%nnov = data%nnov + 1
+                END IF
+              END IF
+            END DO
+          END IF
+        END DO
+        IF ( nnlin == 0 .OR. ( data%nnov == n .AND. data%nnjv == n ) ) GO TO 600
+        IF ( nnlin == n ) GO TO 500
+
+!  reorder the variables so that all nonlinear variables occur before the
+!  linear ones
+
+        nend = n
+
+!  run forward through the variables until a linear variable is encountered
+
+        DO 420 i = 1, n
+          IF ( i > nend ) GO TO 430
+          IF ( data%IWORK( kndv + i ) == 0 ) THEN
+
+!  variable i is linear. Now, run backwards through the variables until a 
+!  nonlinear one is encountered
+
+            DO j = nend, i, - 1
+              IF ( data%IWORK( kndv + j ) > 0 ) THEN 
+                nend = j - 1
+
+!  interchange the data for variables i and j
+
+                itemp = data%IWORK( jwrk + i )
+                data%IWORK( jwrk + i ) = data%IWORK( jwrk + j )
+                data%IWORK( jwrk + j ) = itemp
+                itemp = data%IWORK( kndv + i )
+                data%IWORK( kndv + i ) = data%IWORK( kndv + j )
+                data%IWORK( kndv + j ) = itemp
+                atemp = BL ( i )
+                BL ( i ) = BL ( j )
+                BL ( j ) = atemp
+                atemp = BU ( i )
+                BU ( i ) = BU ( j )
+                BU ( j ) = atemp
+                atemp = X ( i )
+                X ( i ) = X ( j )
+                X ( j ) = atemp
+                atemp = data%VSCALE( i )
+                data%VSCALE( i ) = data%VSCALE( j )
+                data%VSCALE( j ) = atemp
+                ctemp = data%VNAMES( i )
+                data%VNAMES( i ) = data%VNAMES( j )
+                data%VNAMES( j ) = ctemp
+                GO TO 420
+              END IF
+            END DO
+            GO TO 430
+          END IF
+  420   CONTINUE
+  430   CONTINUE 
+
+!  change entries in IELVAR and ICNA to reflect reordering of variables
+
+        DO i = 1, data%nvars
+          j = data%IELVAR( i )
+          data%IELVAR( i ) = data%IWORK( jwrk + j ) 
+        END DO
+        DO i = 1, data%nnza
+          j = data%ICNA( i )
+          data%ICNA( i ) = data%IWORK( jwrk + j )
+        END DO
+        DO j = 1, n
+           data%IWORK( jwrk + j ) = j
+        END DO
+  500   CONTINUE
+        IF ( ( data%nnov == nnlin .AND. data%nnjv == nnlin )                   &
+           .OR. ( data%nnov == 0 ) .OR. ( data%nnjv == 0 ) ) GO TO 600
+
+!  reorder the nonlinear variables so that the smaller set (nonlinear objective 
+!  or nonlinear Jacobian) occurs at the beginning of the larger set
+
+        nend = nnlin
+        IF ( data%nnjv <= data%nnov ) THEN
+
+!  put the nonlinear Jacobian variables first. Reset data%nnov to indicate all 
+!  nonlinear variables are treated as  nonlinear objective variables.
+
+          data%nnov = nnlin
+          DO 520 i = 1, nnlin 
+            IF ( i > nend ) GO TO 530
+            IF ( data%IWORK( kndv + i ) == 2 ) THEN
+
+!  variable i is linear in the Jacobian. Now, run backwards through the 
+!  variables until a nonlinear Jacobian variable is encountered
+
+              DO j = nend, i, - 1
+                IF ( data%IWORK( kndv + j ) == 1 .OR.                          &
+                     data%IWORK( kndv + j ) == 3 ) THEN 
+                  nend = j - 1
+
+!  Interchange the data for variables i and j
+
+                  itemp = data%IWORK( jwrk + i )
+                  data%IWORK( jwrk + i ) = data%IWORK( jwrk + j )
+                  data%IWORK( jwrk + j ) = itemp
+                  itemp = data%IWORK( kndv + i )
+                  data%IWORK( kndv + i ) = data%IWORK( kndv + j )
+                  data%IWORK( kndv + j ) = itemp
+                  atemp = BL ( i )
+                  BL ( i ) = BL ( j )
+                  BL ( j ) = atemp
+                  atemp = BU ( i )
+                  BU ( i ) = BU ( j )
+                  BU ( j ) = atemp
+                  atemp = X ( i )
+                  X ( i ) = X ( j )
+                  X ( j ) = atemp
+                  atemp = data%VSCALE( i )
+                  data%VSCALE( i ) = data%VSCALE( j )
+                  data%VSCALE( j ) = atemp
+                  ctemp = data%VNAMES( i )
+                  data%VNAMES( i ) = data%VNAMES( j )
+                  data%VNAMES( j ) = ctemp
+                  GO TO 520
+                END IF
+  510         END DO
+              GO TO 530
             END IF
-   60    CONTINUE
-         IF ( NNLIN == 0 .OR. ( data%nnov == N .AND. data%nnjv == N ) ) &
-            GO TO 600
-         IF ( NNLIN == N ) GO TO 500
+  520     CONTINUE
+  530     CONTINUE
+        ELSE
 
-!  Reorder the variables so that all nonlinear variables occur before
-!  the linear ones.
+!  put the nonlinear objective variables first. Reset data%nnjv to indicate all
+!  nonlinear variables are treated as nonlinear Jacobian variables.
 
-         NEND = N
+          data%nnjv = nnlin
+          DO 550 i = 1, nnlin 
+            IF ( i > nend ) GO TO 560
+            IF ( data%IWORK( kndv + i ) == 1 ) THEN
 
-!  Run forward through the variables until a linear variable
-!  is encountered.
+!  variable i is linear in the objective. Now, run backwards through the 
+!  variables until a nonlinear objective variable is encountered
 
-         DO 420 I = 1, N
-            IF ( I > NEND ) GO TO 430
-            IF ( data%IWORK( KNDV + I ) == 0 ) THEN
+              DO 540 j = nend, i, - 1
+                 IF ( data%IWORK( kndv + j ) > 1 ) THEN 
+                   nend = j - 1
 
-!  Variable I is linear. Now, run backwards through the
-!  variables until a nonlinear one is encountered.
+!  interchange the data for variables i and j
 
-               DO 410 J = NEND, I, - 1
-                  IF ( data%IWORK( KNDV + J ) > 0 ) THEN 
-                     NEND = J - 1
-
-!  Interchange the data for variables I and J.
-
-                     ITEMP = data%IWORK( JWRK + I )
-                     data%IWORK( JWRK + I ) = data%IWORK( JWRK + J )
-                     data%IWORK( JWRK + J ) = ITEMP
-                     ITEMP = data%IWORK( KNDV + I )
-                     data%IWORK( KNDV + I ) = data%IWORK( KNDV + J )
-                     data%IWORK( KNDV + J ) = ITEMP
-                     ATEMP = BL ( I )
-                     BL ( I ) = BL ( J )
-                     BL ( J ) = ATEMP
-                     ATEMP = BU ( I )
-                     BU ( I ) = BU ( J )
-                     BU ( J ) = ATEMP
-                     ATEMP = X ( I )
-                     X ( I ) = X ( J )
-                     X ( J ) = ATEMP
-                     ATEMP = data%VSCALE( I )
-                     data%VSCALE( I ) = data%VSCALE( J )
-                     data%VSCALE( J ) = ATEMP
-                     CTEMP = data%VNAMES( I )
-                     data%VNAMES( I ) = data%VNAMES( J )
-                     data%VNAMES( J ) = CTEMP
-                     GO TO 420
-                  END IF
-  410          CONTINUE
-               GO TO 430
+                   itemp = data%IWORK( jwrk + i )
+                   data%IWORK( jwrk + i ) = data%IWORK( jwrk + j )
+                   data%IWORK( jwrk + j ) = itemp
+                   itemp = data%IWORK( kndv + i )
+                   data%IWORK( kndv + i ) = data%IWORK( kndv + j )
+                   data%IWORK( kndv + j ) = itemp
+                   atemp = BL( i )
+                   BL ( i ) = BL( j )
+                   BL ( j ) = atemp
+                   atemp = BU ( i )
+                   BU ( i ) = BU( j )
+                   BU ( j ) = atemp
+                   atemp = X( i )
+                   X ( i ) = X( j )
+                   X ( j ) = atemp
+                   atemp = data%VSCALE( i )
+                   data%VSCALE( i ) = data%VSCALE( j )
+                   data%VSCALE( j ) = atemp
+                   ctemp = data%VNAMES( i )
+                   data%VNAMES( i ) = data%VNAMES( j )
+                   data%VNAMES( j ) = ctemp
+                   GO TO 550
+                 END IF
+  540         CONTINUE
+              GO TO 560
             END IF
-  420    CONTINUE
-  430    CONTINUE 
+  550     CONTINUE
+  560     CONTINUE
+        END IF
 
-!  Change entries in IELVAR and ICNA to reflect reordering of variables.
+!  change entries in ielvar and icna to reflect reordering of variables
 
-         DO 440 I = 1, data%nvars
-            J = data%IELVAR( I )
-            data%IELVAR( I ) = data%IWORK( JWRK + J ) 
-  440    CONTINUE
-         DO 450 I = 1, data%nnza
-            J = data%ICNA( I )
-            data%ICNA( I ) = data%IWORK( JWRK + J )
-  450    CONTINUE
-         DO 460 J = 1, N
-            data%IWORK( JWRK + J ) = J
-  460    CONTINUE
-  500    CONTINUE
-         IF ( ( data%nnov == NNLIN .AND. data%nnjv == NNLIN )  &
-            .OR. ( data%nnov == 0 ) .OR. ( data%nnjv == 0 ) ) GO TO 600
-
-!  Reorder the nonlinear variables so that the smaller set (nonlinear
-!  objective or nonlinear Jacobian) occurs at the beginning of the 
-!  larger set.
-
-         NEND = NNLIN
-         IF ( data%nnjv <= data%nnov ) THEN
-
-!  Put the nonlinear Jacobian variables first.
-!  Reset data%nnov to indicate all nonlinear variables are treated as
-!  nonlinear objective variables.
-
-            data%nnov = NNLIN
-            DO 520 I = 1, NNLIN 
-               IF ( I > NEND ) GO TO 530
-               IF ( data%IWORK( KNDV + I ) == 2 ) THEN
-
-!  Variable I is linear in the Jacobian. Now, run backwards through the 
-!  variables until a nonlinear Jacobian variable is encountered.
-
-                  DO 510 J = NEND, I, - 1
-                     IF ( data%IWORK( KNDV + J ) == 1  &
-                        .OR. data%IWORK( KNDV + J ) == 3 ) THEN 
-                        NEND = J - 1
-
-!  Interchange the data for variables I and J.
-
-                        ITEMP = data%IWORK( JWRK + I )
-                        data%IWORK( JWRK + I ) = data%IWORK( JWRK + J )
-                        data%IWORK( JWRK + J ) = ITEMP
-                        ITEMP = data%IWORK( KNDV + I )
-                        data%IWORK( KNDV + I ) = data%IWORK( KNDV + J )
-                        data%IWORK( KNDV + J ) = ITEMP
-                        ATEMP = BL ( I )
-                        BL ( I ) = BL ( J )
-                        BL ( J ) = ATEMP
-                        ATEMP = BU ( I )
-                        BU ( I ) = BU ( J )
-                        BU ( J ) = ATEMP
-                        ATEMP = X ( I )
-                        X ( I ) = X ( J )
-                        X ( J ) = ATEMP
-                        ATEMP = data%VSCALE( I )
-                        data%VSCALE( I ) = data%VSCALE( J )
-                        data%VSCALE( J ) = ATEMP
-                        CTEMP = data%VNAMES( I )
-                        data%VNAMES( I ) = data%VNAMES( J )
-                        data%VNAMES( J ) = CTEMP
-                        GO TO 520
-                     END IF
-  510             CONTINUE
-                  GO TO 530
-               END IF
-  520       CONTINUE
-  530       CONTINUE
-         ELSE
-
-!  Put the nonlinear objective variables first.
-!  Reset data%nnjv to indicate all nonlinear variables are treated as
-!  nonlinear Jacobian variables.
-
-            data%nnjv = NNLIN
-            DO 550 I = 1, NNLIN 
-               IF ( I > NEND ) GO TO 560
-               IF ( data%IWORK( KNDV + I ) == 1 ) THEN
-
-!  Variable I is linear in the objective. Now, run backwards through the 
-!  variables until a nonlinear objective variable is encountered.
-
-                  DO 540 J = NEND, I, - 1
-                     IF ( data%IWORK( KNDV + J ) > 1 ) THEN 
-                        NEND = J - 1
-
-!  Interchange the data for variables I and J.
-
-                        ITEMP = data%IWORK( JWRK + I )
-                        data%IWORK( JWRK + I ) = data%IWORK( JWRK + J )
-                        data%IWORK( JWRK + J ) = ITEMP
-                        ITEMP = data%IWORK( KNDV + I )
-                        data%IWORK( KNDV + I ) = data%IWORK( KNDV + J )
-                        data%IWORK( KNDV + J ) = ITEMP
-                        ATEMP = BL ( I )
-                        BL ( I ) = BL ( J )
-                        BL ( J ) = ATEMP
-                        ATEMP = BU ( I )
-                        BU ( I ) = BU ( J )
-                        BU ( J ) = ATEMP
-                        ATEMP = X ( I )
-                        X ( I ) = X ( J )
-                        X ( J ) = ATEMP
-                        ATEMP = data%VSCALE( I )
-                        data%VSCALE( I ) = data%VSCALE( J )
-                        data%VSCALE( J ) = ATEMP
-                        CTEMP = data%VNAMES( I )
-                        data%VNAMES( I ) = data%VNAMES( J )
-                        data%VNAMES( J ) = CTEMP
-                        GO TO 550
-                     END IF
-  540             CONTINUE
-                  GO TO 560
-               END IF
-  550       CONTINUE
-  560       CONTINUE
-         END IF
-
-!  Change entries in IELVAR and ICNA to reflect reordering of variables.
-
-         DO 580 I = 1, data%nvars
-            J = data%IELVAR( I )
-            data%IELVAR( I ) = data%IWORK( JWRK + J ) 
-  580    CONTINUE
-         DO 590 I = 1, data%nnza
-            J = data%ICNA( I )
-            data%ICNA( I ) = data%IWORK( JWRK + J )
-  590    CONTINUE
-  600    CONTINUE
+        DO i = 1, data%nvars
+          j = data%IELVAR( i )
+          data%IELVAR( i ) = data%IWORK( jwrk + j ) 
+        END DO
+        DO i = 1, data%nnza
+          j = data%ICNA( i )
+          data%ICNA( i ) = data%IWORK( jwrk + j )
+        END DO
+  600   CONTINUE
       END IF
 
-!  Partition the workspace arrays data%FUVALS, IWK and WK. Initialize
-!  certain portions of IWK.
+!  Partition the workspace arrays data%FUVALS, IWK and WK. Initialize certain 
+!  portions of IWK
 
       data%firstg = .TRUE.
       FDGRAD = .FALSE.
-      CALL DINITW( N, data%ng, data%nelnum, data%IELING, data%leling,          &
+      CALL INITW( n, data%ng, data%nelnum, data%IELING, data%leling,          &
           data%ISTADG, data%lstadg, data%IELVAR, data%lelvar, data%ISTAEV,     &
           data%lstaev, data%INTVAR, data%lntvar, data%ISTADH, data%lstadh,     &
           data%ICNA, data%licna, data%ISTADA, data%lstada, data%ITYPEE,        &
           data%lintre, data%GXEQX, data%lgxeqx, data%INTREP, data%lintre,      &
-          LFUVAL, data%altriv, .TRUE., FDGRAD, data%lfxi,LGXI,LHXI,LGGFX,      &
+          lfuval, data%altriv, .TRUE., FDGRAD, data%lfxi,LGXI,LHXI,LGGFX,      &
           data%ldx, data%lgrjac, data%lqgrad, data%lbreak, data%lp, data%lxcp, &
           data%lx0, data%lgx0, data%ldeltx, data%lbnd, data%lwkstr,            &
           data%lsptrs, data%lselts, data%lindex, data%lswksp, data%lstagv,     &
@@ -723,11 +718,11 @@
           data%nsets, data%maxsel, data%lstype, data%lsswtr, data%lssiwt,      &
           data%lsiwtr, data%lswtra, data%lntype, data%lnswtr, data%lnsiwt,     &
           data%lniwtr, data%lnwtra, data%lsiset, data%lssvse, data%lniset,     &
-          data%lnsvse, RANGE, data%IWORK(IWRK + 1), LIWORK, data%WRK, LWORK,   &
-          IPRINT, IOUT, INFORM )
-      IF ( INFORM /= 0 ) STOP
+          data%lnsvse, RANGE, data%IWORK(IWRK + 1), liwork, data%WRK, lwork,   &
+          iprint, out, inform )
+      IF ( inform /= 0 ) STOP
 
-!  Shift the starting addresses for the real workspace relative to WRK.
+!  shift the starting addresses for the real workspace relative to WRK
 
       data%lqgrad = data%lqgrad + WRK
       data%lbreak = data%lbreak + WRK
@@ -740,8 +735,7 @@
       data%lswtra = data%lswtra + WRK
       data%lwkstr = data%lwkstr + WRK
 
-!  Shift the starting addresses for the integer workspace relative
-!  to IWRK.
+!  shift the starting addresses for the integer workspace relative to IWRK
 
       data%lsptrs = data%lsptrs + IWRK
       data%lselts = data%lselts + IWRK
@@ -766,248 +760,237 @@
       data%lsiset = data%lsiset + IWRK
       data%lssvse = data%lssvse + IWRK
       data%lsend = data%lsend + IWRK
-      IF ( .NOT. ( EFIRST .OR. LFIRST ) ) GOTO 340
-!                            to RETURN if there are no constraints.
-      IF ( M == 0 ) GOTO 340
+      IF ( .NOT. ( efirst .OR. lfirst ) .OR. m == 0 ) GO TO 340
 
-!  Record which group is associated with each constraint.
+!  record which group is associated with each constraint
 
-      IF ( M > data%liwk2 ) THEN
-         WRITE( IOUT, 2040 )
-         STOP
+      IF ( m > data%liwk2 ) THEN
+        WRITE( out, "( ' ** SUBROUTINE CSETUP: Increase the size of IWK ' )" )
+        STOP
       END IF
-      MEQ = 0
-      MLIN = 0
-      DO 100 IG = 1, data%ng
-         I = data%KNDOFC( IG )
-         IF ( I > 0 ) THEN
-            data%IWORK( data%lsend + I ) = IG
-            IF ( EQUATN( I ) ) MEQ = MEQ + 1
-            IF ( LINEAR( I ) ) MLIN = MLIN + 1
-         END IF
-  100 CONTINUE
-      IF ( LFIRST ) THEN
-         IF ( MLIN == 0 .OR. MLIN == M ) GO TO 130
+      meq = 0
+      mlin = 0
+      DO ig = 1, data%ng
+        i = data%KNDOFC( ig )
+        IF ( i > 0 ) THEN
+          data%IWORK( data%lsend + i ) = ig
+          IF ( EQUATN( i ) ) meq = meq + 1
+          IF ( LINEAR( i ) ) mlin = mlin + 1
+        END IF
+      END DO
+      IF ( lfirst ) THEN
+        IF ( mlin == 0 .OR. mlin == m ) GO TO 130
 
-!  Reorder the constraints so that the linear constraints occur before the
-!  nonlinear ones.
+!  reorder the constraints so that the linear constraints occur before the
+!  nonlinear ones
 
-         MEND = M
+        mend = m
 
-!  Run forward through the constraints until a nonlinear constraint
-!  is encountered.
+!  run forward through the constraints until a nonlinear constraint is found
 
-         DO 120 I = 1, M
-            IF ( I > MEND ) GO TO 130
-            IG = data%IWORK( data%lsend + I )
-!              write(6,*) ' group ', IG, ' type ', I, ' equal? ',
-!     *                     EQUATN( I )
-            IF ( .NOT. LINEAR( I ) ) THEN
+        DO 120 i = 1, m
+          IF ( i > mend ) GO TO 130
+          ig = data%IWORK( data%lsend + i )
+!         WRITE(6,*) ' group ', ig, ' type ', i, ' equal? ', EQUATN( i )
+          IF ( .NOT. LINEAR( i ) ) THEN
 
-!  Constraint I is nonlinear. Now, run backwards through the
-!  constraints until a linear one is encountered.
+!  constraint i is nonlinear. Now, run backwards through the constraints until 
+!  a linear one is encountered
 
-               DO 110 J = MEND, I, - 1
-                  JG = data%IWORK( data%lsend + J )
-!                 write(6,*) ' group ', JG, ' type ', J,
-!     *                      ' linear? ', LINEAR( J )
-                  IF ( LINEAR( J ) ) THEN
-!                    write(6,*) ' swaping constraints ', I,
-!     *                         ' and ', J
-                     MEND = J - 1
+            DO j = mend, i, - 1
+              jg = data%IWORK( data%lsend + j )
+!             write(6,*) ' group ', jg, ' type ', j, ' linear? ', LINEAR( j )
+              IF ( LINEAR( j ) ) THEN
+!               write(6,*) ' swaping constraints ', i, ' and ', j
+                 mend = j - 1
 
-!  Interchange the data for constraints I and J.
+!  interchange the data for constraints i and j
 
-                     data%IWORK( data%lsend + I ) = JG
-                     data%IWORK( data%lsend + J ) = IG
-                     data%KNDOFC( IG ) = J
-                     data%KNDOFC( JG ) = I
-                     LTEMP = LINEAR( I )
-                     LINEAR( I ) = LINEAR( J )
-                     LINEAR( J ) = LTEMP
-                     LTEMP = EQUATN( I )
-                     EQUATN( I ) = EQUATN( J )
-                     EQUATN( J ) = LTEMP
-                     ATEMP = V ( I )
-                     V ( I ) = V ( J )
-                     V ( J ) = ATEMP
-                     ATEMP = CL ( I )
-                     CL ( I ) = CL ( J )
-                     CL ( J ) = ATEMP
-                     ATEMP = CU ( I )
-                     CU ( I ) = CU ( J )
-                     CU ( J ) = ATEMP
-                     GO TO 120
-                  END IF
-  110          CONTINUE
-               GO TO 130
+                 data%IWORK( data%lsend + i ) = jg
+                 data%IWORK( data%lsend + j ) = ig
+                 data%KNDOFC( ig ) = j
+                 data%KNDOFC( jg ) = i
+                 ltemp = LINEAR( i )
+                 LINEAR( i ) = LINEAR( j )
+                 LINEAR( j ) = ltemp
+                 ltemp = EQUATN( i )
+                 EQUATN( i ) = EQUATN( j )
+                 EQUATN( j ) = ltemp
+                 atemp = V ( i )
+                 V ( i ) = V ( j )
+                 V ( j ) = atemp
+                 atemp = CL ( i )
+                 CL ( i ) = CL ( j )
+                 CL ( j ) = atemp
+                 atemp = CU ( i )
+                 CU ( i ) = CU ( j )
+                 CU ( j ) = atemp
+                 GO TO 120
+               END IF
+            END DO
+            GO TO 130
+          END IF
+  120   CONTINUE
+  130   CONTINUE
+        IF ( efirst ) THEN
+          IF ( meq == 0 .OR. meq == m ) GO TO 260
+
+!  reorder the linear constraints so that the equations occur before the 
+!  inequalities
+
+          mend = mlin
+          DO 220 i = 1, mlin
+            IF ( i > mend ) GO TO 230
+            ig = data%IWORK( data%lsend + i )
+!              write(6,*) ' group ', ig, ' type ', i, ' equation? ',           &
+!                           EQUATN( i )
+            IF ( .NOT. EQUATN( i ) ) THEN
+
+!  constraint i is an inequality. Now, run backwards through the constraints 
+!  until an equation is encountered
+
+              DO j = mend, i, - 1
+                jg = data%IWORK( data%lsend + j )
+!               write(6,*) ' group ', jg, ' type ', j, ' equation? ', EQUATN( j)
+                IF ( EQUATN( j ) ) THEN
+!                 write(6,*) ' swaping constraints ', i,                       &
+!                            ' and ', j
+                  mend = j - 1
+
+!  interchange the data for constraints i and j
+
+                  data%IWORK( data%lsend + i ) = jg
+                  data%IWORK( data%lsend + j ) = ig
+                  data%KNDOFC( ig ) = j
+                  data%KNDOFC( jg ) = i
+                  ltemp = LINEAR( i )
+                  LINEAR( i ) = LINEAR( j )
+                  LINEAR( j ) = ltemp
+                  ltemp = EQUATN( i )
+                  EQUATN( i ) = EQUATN( j )
+                  EQUATN( j ) = ltemp
+                  atemp = V ( i )
+                  V ( i ) = V ( j )
+                  V ( j ) = atemp
+                  atemp = CL ( i )
+                  CL ( i ) = CL ( j )
+                  CL ( j ) = atemp
+                  atemp = CU ( i )
+                  CU ( i ) = CU ( j )
+                  CU ( j ) = atemp
+                  GO TO 220
+                END IF
+              END DO
+              GO TO 230
             END IF
-  120    CONTINUE
-  130    CONTINUE
-         IF ( EFIRST ) THEN
-            IF ( MEQ == 0 .OR. MEQ == M ) GO TO 260
+  220     CONTINUE
+  230     CONTINUE
 
-!  Reorder the linear constraints so that the equations occur before
-!  the inequalities.
+!  reorder the nonlinear constraints so that the equations occur  before the 
+!  inequalities
 
-            MEND = MLIN
-            DO 220 I = 1, MLIN
-               IF ( I > MEND ) GO TO 230
-               IG = data%IWORK( data%lsend + I )
-!                 write(6,*) ' group ', IG, ' type ', I, ' equation? ',
-!     *                        EQUATN( I )
-               IF ( .NOT. EQUATN( I ) ) THEN
+          mend = m
+          DO 250 i = mlin + 1, m
+            IF ( i > mend ) GO TO 260
+            ig = data%IWORK( data%lsend + i )
+!           WRITE( 6, * ) ' group ', ig, ' type ', i, ' equation? ', EQUATN( i )
+            IF ( .NOT. EQUATN( i ) ) THEN
 
-!  Constraint I is an inequality. Now, run backwards through the
-!  constraints until an equation is encountered.
+!  constraint i is an inequality. Now, run backwards through the constraints 
+!  until an equation is encountered
 
-                  DO 210 J = MEND, I, - 1
-                     JG = data%IWORK( data%lsend + J )
-!                    write(6,*) ' group ', JG, ' type ', J,
-!     *                         ' equation? ', EQUATN( J )
-                     IF ( EQUATN( J ) ) THEN
-!                       write(6,*) ' swaping constraints ', I,
-!     *                            ' and ', J
-                        MEND = J - 1
+              DO j = mend, i, - 1
+                jg = data%IWORK( data%lsend + j )
+!               write(6,*) ' group ', jg, ' type ', j, ' equation? ', EQUATN( j)
+                IF ( EQUATN( j ) ) THEN
+!                 write(6,*) ' swaping constraints ', i, ' and ', j
+                  mend = j - 1
 
-!  Interchange the data for constraints I and J.
+!  interchange the data for constraints i and j
 
-                        data%IWORK( data%lsend + I ) = JG
-                        data%IWORK( data%lsend + J ) = IG
-                        data%KNDOFC( IG ) = J
-                        data%KNDOFC( JG ) = I
-                        LTEMP = LINEAR( I )
-                        LINEAR( I ) = LINEAR( J )
-                        LINEAR( J ) = LTEMP
-                        LTEMP = EQUATN( I )
-                        EQUATN( I ) = EQUATN( J )
-                        EQUATN( J ) = LTEMP
-                        ATEMP = V ( I )
-                        V ( I ) = V ( J )
-                        V ( J ) = ATEMP
-                        ATEMP = CL ( I )
-                        CL ( I ) = CL ( J )
-                        CL ( J ) = ATEMP
-                        ATEMP = CU ( I )
-                        CU ( I ) = CU ( J )
-                        CU ( J ) = ATEMP
-                        GO TO 220
-                     END IF
-  210             CONTINUE
-                  GO TO 230
-               END IF
-  220       CONTINUE
-  230       CONTINUE
-
-!  Reorder the nonlinear constraints so that the equations occur
-!  before the inequalities.
-
-            MEND = M
-            DO 250 I = MLIN + 1, M
-               IF ( I > MEND ) GO TO 260
-               IG = data%IWORK( data%lsend + I )
-!                 write(6,*) ' group ', IG, ' type ', I, ' equation? ',
-!     *                        EQUATN( I )
-               IF ( .NOT. EQUATN( I ) ) THEN
-
-!  Constraint I is an inequality. Now, run backwards through the
-!  constraints until an equation is encountered.
-
-                  DO 240 J = MEND, I, - 1
-                     JG = data%IWORK( data%lsend + J )
-!                    write(6,*) ' group ', JG, ' type ', J, &
-!                             ' equation? ', EQUATN( J )
-                     IF ( EQUATN( J ) ) THEN
-!                       write(6,*) ' swaping constraints ', I, ' and ', J
-                        MEND = J - 1
-
-!  Interchange the data for constraints I and J.
-
-                        data%IWORK( data%lsend + I ) = JG
-                        data%IWORK( data%lsend + J ) = IG
-                        data%KNDOFC( IG ) = J
-                        data%KNDOFC( JG ) = I
-                        LTEMP = LINEAR( I )
-                        LINEAR( I ) = LINEAR( J )
-                        LINEAR( J ) = LTEMP
-                        LTEMP = EQUATN( I )
-                        EQUATN( I ) = EQUATN( J )
-                        EQUATN( J ) = LTEMP
-                        ATEMP = V ( I )
-                        V ( I ) = V ( J )
-                        V ( J ) = ATEMP
-                        ATEMP = CL ( I )
-                        CL ( I ) = CL ( J )
-                        CL ( J ) = ATEMP
-                        ATEMP = CU ( I )
-                        CU ( I ) = CU ( J )
-                        CU ( J ) = ATEMP
-                        GO TO 250
-                     END IF
-  240             CONTINUE
-                  GO TO 260
-               END IF
-  250       CONTINUE
-  260       CONTINUE
-         END IF
+                  data%IWORK( data%lsend + i ) = jg
+                  data%IWORK( data%lsend + j ) = ig
+                  data%KNDOFC( ig ) = j
+                  data%KNDOFC( jg ) = i
+                  ltemp = LINEAR( i )
+                  LINEAR( i ) = LINEAR( j )
+                  LINEAR( j ) = ltemp
+                  ltemp = EQUATN( i )
+                  EQUATN( i ) = EQUATN( j )
+                  EQUATN( j ) = ltemp
+                  atemp = V ( i )
+                  V ( i ) = V ( j )
+                  V ( j ) = atemp
+                  atemp = CL ( i )
+                  CL ( i ) = CL ( j )
+                  CL ( j ) = atemp
+                  atemp = CU ( i )
+                  CU ( i ) = CU ( j )
+                  CU ( j ) = atemp
+                  GO TO 250
+                END IF
+              END DO
+              GO TO 260
+            END IF
+  250     CONTINUE
+  260     CONTINUE
+        END IF
       ELSE
-         IF ( EFIRST ) THEN
-            IF ( MEQ == 0 .OR. MEQ == M ) GO TO 330
+        IF ( efirst ) THEN
+          IF ( meq == 0 .OR. meq == m ) GO TO 330
 
-!  Reorder the constraints so that the equations occur before the
-!  inequalities.
+!  reorder the constraints so that the equations occur before the inequalities
 
-            MEND = M
-            DO 320 I = 1, M
-               IF ( I > MEND ) GO TO 330
-               IG = data%IWORK( data%lsend + I )
-!                 write(6,*) ' group ', IG, ' type ', I, ' equation? ',
-!     *                        EQUATN( I )
-               IF ( .NOT. EQUATN( I ) ) THEN
+          mend = m
+          DO 320 i = 1, m
+            IF ( i > mend ) GO TO 330
+            ig = data%IWORK( data%lsend + i )
+!              WRITE(6,*) ' group ', ig, ' type ', i, ' equation? ', EQUATN( i )
+            IF ( .NOT. EQUATN( i ) ) THEN
 
-!  Constraint I is an inequality. Now, run backwards through the
-!  constraints until an equation is encountered.
+!  constraint i is an inequality. Now, run backwards through the constraints 
+!  until an equation is encountered
 
-                  DO 310 J = MEND, I, - 1
-                     JG = data%IWORK( data%lsend + J )
-!                    write(6,*) ' group ', JG, ' type ', J,                    &
-!                               ' equation? ', EQUATN( J )
-                     IF ( EQUATN( J ) ) THEN
-!                       write(6,*) ' swaping constraints ', I,' and ', J
-                        MEND = J - 1
+              DO j = mend, i, - 1
+                jg = data%IWORK( data%lsend + j )
+!               write(6,*) ' group ', jg, ' type ', j,                         &
+!                          ' equation? ', EQUATN( j )
+                IF ( EQUATN( j ) ) THEN
+!                 write(6,*) ' swaping constraints ', i,' and ', j
+                  mend = j - 1
 
-!  Interchange the data for constraints I and J.
+!  interchange the data for constraints i and j
 
-                        data%IWORK( data%lsend + I ) = JG
-                        data%IWORK( data%lsend + J ) = IG
-                        data%KNDOFC( IG ) = J
-                        data%KNDOFC( JG ) = I
-                        LTEMP = LINEAR( I )
-                        LINEAR( I ) = LINEAR( J )
-                        LINEAR( J ) = LTEMP
-                        LTEMP = EQUATN( I )
-                        EQUATN( I ) = EQUATN( J )
-                        EQUATN( J ) = LTEMP
-                        ATEMP = V ( I )
-                        V ( I ) = V ( J )
-                        V ( J ) = ATEMP
-                        ATEMP = CL ( I )
-                        CL ( I ) = CL ( J )
-                        CL ( J ) = ATEMP
-                        ATEMP = CU ( I )
-                        CU ( I ) = CU ( J )
-                        CU ( J ) = ATEMP
-                        GO TO 320
-                     END IF
-  310             CONTINUE
-                  GO TO 330
-               END IF
-  320       CONTINUE
-  330       CONTINUE
-         END IF
+                  data%IWORK( data%lsend + i ) = jg
+                  data%IWORK( data%lsend + j ) = ig
+                  data%KNDOFC( ig ) = j
+                  data%KNDOFC( jg ) = i
+                  ltemp = LINEAR( i )
+                  LINEAR( i ) = LINEAR( j )
+                  LINEAR( j ) = ltemp
+                  ltemp = EQUATN( i )
+                  EQUATN( i ) = EQUATN( j )
+                  EQUATN( j ) = ltemp
+                  atemp = V ( i )
+                  V ( i ) = V ( j )
+                  V ( j ) = atemp
+                  atemp = CL ( i )
+                  CL ( i ) = CL ( j )
+                  CL ( j ) = atemp
+                  atemp = CU ( i )
+                  CU ( i ) = CU ( j )
+                  CU ( j ) = atemp
+                  GO TO 320
+                END IF
+              END DO
+              GO TO 330
+            END IF
+  320     CONTINUE
+  330     CONTINUE
+        END IF
       END IF
 
-!  Initialize the performance counters and variables
+!  initialize the performance counters and variables
 
  340  CONTINUE
       data%nc2of = 0
@@ -1017,13 +1000,14 @@
       data%nc2cg = 0
       data%nc2ch = 0
       data%nhvpr = 0
-      data%pnc = M
-      data%sttime = CPUTIM( DUM )
+      data%pnc = m
+
+      CALL CPU_TIME( data%sttime )
       data%sutime = data%sttime - data%sutime
 
       RETURN
 
-!  Non-executable statements.
+!  non-executable statements
 
  1000 FORMAT( I2, A8 )
  1001 FORMAT( 10I8 )
@@ -1039,19 +1023,11 @@
  1130 FORMAT( 1X, A6, /, ( 1X, 72L1 ) )
  1140 FORMAT( 1X, A6, /, ( 1X, 8A10 ) )
  1180 FORMAT( 1X, A6, /, 1P, 2D16.6 )
- 2000 FORMAT( /, ' ** SUBROUTINE CSETUP: array length ', A6, &
-              ' too small.', /, ' -- Miminimization abandoned.', &
-              /, ' -- Increase the parameter ', A6, ' by at least ', I8, &
+ 2000 FORMAT( /, ' ** SUBROUTINE CSETUP: array length ', A,                    &
+              ' too small.', /, ' -- Miminimization abandoned.',               &
+              /, ' -- Increase the parameter ', A, ' by at least ', I0,        &
                  ' and restart.' )
- 2010 FORMAT( /, ' ** SUBROUTINE CSETUP: ** Warning. The problem has', &
-                 ' no general constraints. ', /, &
-                 ' Other tools may be preferable' )
- 2020 FORMAT( /, ' ** SUBROUTINE CSETUP: the problem uses no variables.' &
-, ' Execution terminating ' )
- 2030 FORMAT( /, ' ** SUBROUTINE CSETUP: the problem is vacuous.', &
-                 ' Execution terminating ' )
- 2040 FORMAT( ' ** SUBROUTINE CSETUP: Increase the size of IWK ' )
 
-!  End of CSETUP.
+!  End of subroutine CSETUP
 
-      END
+      END SUBROUTINE CSETUP

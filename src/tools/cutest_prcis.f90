@@ -1,6 +1,6 @@
 ! ( Last modified on 21 Oct 2012 at 10:16 )
 
-!-*--*-*-*-*-  CUTEst_precis M O D U L E  *-*-*-*-*-*-*-*
+!-*--*-*-*-*-  CUTEst_precis m O D U l E  *-*-*-*-*-*-*-*
 
 !  Nick Gould, for CUTEst productions
 !  Copyright reserved

@@ -1,10 +1,10 @@
 ! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE UVARTY( data, N, IVARTY )
+      SUBROUTINE UVARTY( data, n, IVARTY )
       USE CUTEST
       TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: N
-      INTEGER :: IVARTY( N )
+      INTEGER :: n
+      INTEGER :: IVARTY( n )
 
 !  Determine the type (continuous, 0-1, integer) of each variable
 
@@ -34,12 +34,12 @@
 
 !  local variables.
 
-      INTEGER :: I
+      INTEGER :: i
 
 !  Set the type of each variable.
 
-      DO 10 I = 1, N
-        IVARTY( I ) = data%ITYPEV( I )
+      DO 10 i = 1, n
+        IVARTY( i ) = data%ITYPEV( i )
    10 CONTINUE
       RETURN
 
