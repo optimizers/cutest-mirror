@@ -79,7 +79,7 @@
         INTEGER :: lstaev, lstadh, lntvar, lcalcf, leling, lintre, lft
         INTEGER :: lgxeqx, licna, lstada, lkndof, lgpvlu, lepvlu
         INTEGER :: lstadg, lgvals, lgscal, lescal, lvscal, lcalcg            
-        INTEGER :: llink, lpos, lwtran, litran, l_link_e_u_v
+        INTEGER :: llink, lpos, lwtran, litran, l_link_e_u_v, lfuval
 
         INTEGER :: lirnh = lmin
         INTEGER :: ljcnh = lmin
@@ -231,19 +231,19 @@
 !-  C U T E S T _ i n i t i a l i z e _ w o r k s p a c e  S U B R O U T I N E -
 
       SUBROUTINE CUTEST_initialize_workspace(                                  &
-                        n, ng, nel, ntotel, nvrels, nnza, numvar, nvargp,      &
-                        IELING, ISTADG, IELVAR, ISTAEV, INTVAR, ISTADH, ICNA,  &
-                        ISTADA, ITYPEE, GXEQX, INTREP, altriv, direct, fdgrad, &
-                        lfxi, lgxi, lhxi, lggfx, ldx, lnguvl, lnhuvl,  ntotin, &
-                        ntype, nsets, maxsel, RANGE, iprint, iout, buffer,     &
+                    n, ng, nel, ntotel, nvrels, nnza, numvar, nvargp,          &
+                    IELING, ISTADG, IELVAR, ISTAEV, INTVAR, ISTADH, ICNA,      &
+                    ISTADA, ITYPEE, GXEQX, INTREP, alllin, altriv, direct,     &
+                    fdgrad, lfxi, lgxi, lhxi, lggfx, ldx, lnguvl, lnhuvl,      &
+                    ntotin, ntype, nsets, maxsel, RANGE, iprint, iout, buffer, &
 ! workspace
-                        lwtran, litran, lwtran_min, litran_min, l_link_e_u_v,  &
-                        llink_min, ITRANS, LINK_elem_uses_var, WTRANS,         &
-                        ISYMMD, ISWKSP, ISTAJC, ISTAGV, ISVGRP, ISLGRP,        &
-                        IGCOLJ, IVALJR, IUSED, ITYPER, ISSWTR, ISSITR,         &
-                        ISET, ISVSET, INVSET, LIST_elements, ISYMMH,           &
-                        IW_asmbl, NZ_comp_w, W_ws, W_el, W_in, H_el, H_in,     &
-                        status, alloc_status, bad_alloc, skipg, KNDOFG )
+                    lwtran, litran, lwtran_min, litran_min, l_link_e_u_v,      &
+                    llink_min, FUVALS, lfuval, ITRANS, LINK_elem_uses_var,     &
+                    WTRANS, ISYMMD, ISWKSP, ISTAJC, ISTAGV, ISVGRP, ISLGRP,    &
+                    IGCOLJ, IVALJR, IUSED, ITYPER, ISSWTR, ISSITR,             &
+                    ISET, ISVSET, INVSET, LIST_elements, ISYMMH,               &
+                    IW_asmbl, NZ_comp_w, W_ws, W_el, W_in, H_el, H_in,         &
+                    status, alloc_status, bad_alloc, skipg, KNDOFG )
 
 !  Compute the starting addresses for the partitions of the workspace array
 !  FUVALS. Also fill relevant portions of the workspace arrays WTRANS and ITRANS
@@ -264,7 +264,7 @@
       INTEGER, INTENT( OUT ) :: lnguvl, lnhuvl, nvargp, status, alloc_status
       INTEGER, INTENT( OUT ) :: ntotin, ntype, nsets, maxsel
       LOGICAL, INTENT( IN ) :: direct, fdgrad, skipg
-      LOGICAL, INTENT( OUT ) :: altriv
+      LOGICAL, INTENT( OUT ) :: altriv, alllin
       CHARACTER ( LEN = 24 ), INTENT( OUT ) :: bad_alloc
       INTEGER, INTENT( IN ), DIMENSION( ntotel  ) :: IELING
       INTEGER, INTENT( IN ), DIMENSION( ng  + 1 ) :: ISTADA, ISTADG
@@ -284,10 +284,11 @@
 !-------------------------------------------------------------
 
       INTEGER, INTENT( INOUT ) :: lwtran, litran, lwtran_min, litran_min
-      INTEGER, INTENT( INOUT ) :: l_link_e_u_v, llink_min
+      INTEGER, INTENT( INOUT ) :: l_link_e_u_v, llink_min, lfuval
 
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: ITRANS
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: LINK_elem_uses_var
+      REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: FUVALS
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: WTRANS
   
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISYMMD
@@ -341,7 +342,7 @@
       INTEGER :: ipt, istrt, ninvr, ii, kk, ll
       INTEGER :: nwtran, mwtran, uwtran, llink, mlink, nlink, ulink
       INTEGER :: nitran, mitran, uitran, maxsin
-      LOGICAL :: alllin, vrused, reallocate
+      LOGICAL :: vrused, reallocate
 
 !     CHARACTER ( LEN = 80 ) :: array
 
@@ -650,7 +651,7 @@
       END IF
       ISTADH( nel1 ) = lggfx
 
-!  ALTRIV specifies whether all the groups are trivial
+!  altriv specifies whether all the groups are trivial
 
       altriv = .TRUE.
 
@@ -1498,6 +1499,7 @@
       lhxi = INTVAR( nel1 ) - 1
       lggfx = lggfx - 1
       ldx = lggfx + n
+      lfuval = ldx + n
 
 !  Print all of the starting addresses for the workspace array partitions
 
@@ -1507,11 +1509,25 @@
          &       '   lfxi   lgxi   lhxi  lggfx ','   ldx ', /, 5I7 )" )        &
            lfxi, lgxi, lhxi, lggfx, ldx
 
-!  Set the length of each partition of the real workspace array FUVALS for
+!  set the length of each partition of the real workspace array FUVALS for
 !  array bound checking in calls to other subprograms
 
       lnguvl = MAX( 1, lhxi - lfxi )
       lnhuvl = MAX( 1, lggfx - lfxi )
+
+!  allocate FUVALS
+
+      reallocate = .TRUE.
+      IF ( ALLOCATED( FUVALS ) ) THEN
+        IF ( SIZE( FUVALS ) < lfuval ) THEN ; DEALLOCATE( FUVALS )
+        ELSE ; reallocate = .FALSE. ; END IF
+      END IF
+      IF ( reallocate ) THEN 
+        ALLOCATE( FUVALS( lfuval ), STAT = alloc_status )
+        IF ( alloc_status /= 0 ) THEN 
+          bad_alloc = 'FUVALS' ; GO TO 600 ; END IF
+      END IF
+
       status = 0
       RETURN
 

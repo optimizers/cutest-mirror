@@ -31,7 +31,7 @@
 
 !  local variables
 
-      INTEGER :: ialgor, iprint, i, ig, j, jg, mend, meq, mlin, nslack
+      INTEGER :: ialgor, iprint, i, ig, j, jg, mend, meq, mlin
       INTEGER :: ii, k, iel, jwrk, kndv, nnlin, nend, neltyp, ngrtyp, itemp
       INTEGER :: alloc_status
       LOGICAL :: fdgrad, debug, ltemp
@@ -172,6 +172,11 @@
         bad_alloc = 'data%ITYPEV' ; GO TO 910
       END IF
 
+      ALLOCATE( data%IWORK( MAX( m, 2 * n ) ), STAT = alloc_status )
+      IF ( alloc_status /= 0 ) THEN
+        bad_alloc = 'data%IWORK' ; GO TO 910
+      END IF
+
 !  allocate real workspace
 
       ALLOCATE( data%A( data%nnza ), STAT = alloc_status )
@@ -265,29 +270,29 @@
 
 !  record the lengths of arrays
 
-      data%lstadg = MAX( 1, data%ng1 )
-      data%lstada = MAX( 1, data%ng1 )
-      data%lstaev = MAX( 1, data%nel1 )
-      data%lkndof = MAX( 1, data%ng )
-      data%leling = MAX( 1, data%ntotel )
-      data%lelvar = MAX( 1, data%nvrels )
-      data%licna = MAX( 1, data%nnza )
-      data%lstadh = MAX( 1, data%nel1 )
-      data%lntvar = MAX( 1, data%nel1 )
-      data%lcalcf = MAX( 1, data%nel, data%ng )
-      data%lcalcg = MAX( 1, data%ng )
-      data%la = MAX( 1, data%nnza )
-      data%lb = MAX( 1, data%ng )
-      data%lu = MAX( 1, data%ng )
-      data%lescal = MAX( 1, data%ntotel )
-      data%lgscal = MAX( 1, data%ng )
-      data%lvscal = MAX( 1, n )
-      data%lft = MAX( 1, data%ng )
-      data%lgvals = MAX( 1, data%ng )
-      data%lintre = MAX( 1, data%nel )
-      data%lgxeqx = MAX( 1, data%ngng )
-      data%lgpvlu = MAX( 1, data%ngpvlu )
-      data%lepvlu = MAX( 1, data%nepvlu )
+!     data%lstadg = MAX( 1, data%ng1 )
+!     data%lstada = MAX( 1, data%ng1 )
+!     data%lstaev = MAX( 1, data%nel1 )
+!     data%lkndof = MAX( 1, data%ng )
+!     data%leling = MAX( 1, data%ntotel )
+!     data%lelvar = MAX( 1, data%nvrels )
+!     data%licna = MAX( 1, data%nnza )
+!     data%lstadh = MAX( 1, data%nel1 )
+!     data%lntvar = MAX( 1, data%nel1 )
+!     data%lcalcf = MAX( 1, data%nel, data%ng )
+!     data%lcalcg = MAX( 1, data%ng )
+!     data%la = MAX( 1, data%nnza )
+!     data%lb = MAX( 1, data%ng )
+!     data%lu = MAX( 1, data%ng )
+!     data%lescal = MAX( 1, data%ntotel )
+!     data%lgscal = MAX( 1, data%ng )
+!     data%lvscal = MAX( 1, n )
+!     data%lft = MAX( 1, data%ng )
+!     data%lgvals = MAX( 1, data%ng )
+!     data%lintre = MAX( 1, data%nel )
+!     data%lgxeqx = MAX( 1, data%ngng )
+!     data%lgpvlu = MAX( 1, data%ngpvlu )
+!     data%lepvlu = MAX( 1, data%nepvlu )
 !     LSTGP = MAX( 1, data%ng1 )
 !     LSTEP = MAX( 1, data%nel1 )
 !     LTYPEG = MAX( 1, data%ng )
@@ -303,11 +308,11 @@
 !  print out problem data. input the number of variables, groups, elements and 
 !  the identity of the objective function group
 
-      IF ( ialgor == 2 ) THEN
-        READ( input, 1002 ) nslack, data%nobjgr
-      ELSE
-        nslack = 0
-      END IF
+!     IF ( ialgor == 2 ) THEN
+!       READ( input, 1002 ) nslack, data%nobjgr
+!     ELSE
+!       nslack = 0
+!     END IF
       IF ( debug ) WRITE( out, 1100 ) pname, n, data%ng, data%nel
       data%pname = pname // '  '
 
@@ -525,14 +530,9 @@
 
       IF ( nvfrst ) THEN
 
-!  ensure there is sufficient room in IWK to reorder variables.
+!  set addresses in IWORK to reorder variables
 
-        IF ( data%liwork < 2 * n ) THEN
-          CLOSE( input )
-          IF ( out > 0 ) WRITE( out, 2000 ) 'IWK', 'LIWK', data%liwork - 2 * n
-          status = 2 ; RETURN
-        END IF
-        kndv = iwrk + 1 
+        kndv = 0 
         jwrk = kndv + n
 
 !  initialize jwrk and kndv
@@ -787,8 +787,7 @@
   600   CONTINUE
       END IF
 
-!  Partition the workspace arrays data%FUVALS, IWK and WK. Initialize certain 
-!  portions of IWK
+!  allocate and initialize workspace
 
       data%firstg = .TRUE.
       FDGRAD = .FALSE.
@@ -802,14 +801,14 @@
              data%ntotel, data%nvrels, data%nnza, data%n,                      &
              data%nvargp, data%IELING, data%ISTADG, data%IELVAR, data%ISTAEV,  &
              data%INTVAR, data%ISTADH, data%ICNA, data%ISTADA, data%ITYPEE,    &
-             data%GXEQX, data%INTREP, data%altriv, .FALSE.,                    &
+             data%GXEQX, data%INTREP, data%alllin, data%altriv, .FALSE.,       &
              .FALSE., data%lfxi, data%lgxi, data%lhxi,                         &
              data%lggfx, data%ldx, data%lnguvl, data%lnhuvl,                   &
              data%ntotin, data%ntype, data%nsets, data%maxsel,                 &
              RANGE, 0, out, data%io_buffer,                                    &
 !  workspace
              data%lwtran, data%litran, data%lwtran_min, data%litran_min,       &
-             data%l_link_e_u_v, data%llink_min,                                &
+             data%l_link_e_u_v, data%llink_min, data%FUVALS, data%lfuval,      &
              data%ITRANS, data%LINK_elem_uses_var, data%WTRANS,                &
              data%ISYMMD, data%ISWKSP, data%ISTAJC, data%ISTAGV,               &
              data%ISVGRP, data%ISLGRP, data%IGCOLJ, data%IVALJR,               &
@@ -817,87 +816,81 @@
              data%ISET, data%ISVSET, data%INVSET, data%LIST_elements,          &
              data%ISYMMH, data%IW_asmbl, data%NZ_comp_w, data%W_ws,            &
              data%W_el, data%W_in, data%H_el, data%H_in,                       &
-             status, alloc_status, bad_alloc,                                  &
-             data%skipg, KNDOFG = data%KNDOFC )
+             status, alloc_status, bad_alloc, data%skipg, KNDOFG = data%KNDOFC )
 
-
-      CALL INITW( n, data%ng, data%nel, data%IELING, data%leling,              &
-          data%ISTADG, data%lstadg, data%IELVAR, data%lelvar, data%ISTAEV,     &
-          data%lstaev, data%INTVAR, data%lntvar, data%ISTADH, data%lstadh,     &
-          data%ICNA, data%licna, data%ISTADA, data%lstada, data%ITYPEE,        &
-          data%lintre, data%GXEQX, data%lgxeqx, data%INTREP, data%lintre,      &
-          lfuval, data%altriv, .TRUE., FDGRAD, data%lfxi, LGXI, LHXI, LGGFX,   &
-          data%ldx, data%lgrjac, data%lqgrad, data%lbreak, data%lp, data%lxcp, &
-          data%lx0, data%lgx0, data%ldeltx, data%lbnd, data%lwkstr,            &
-          data%lsptrs, data%lselts, data%lindex, data%lswksp, data%lstagv,     &
-          data%lstajc, data%liused, data%lfreec, data%lnnonz, data%lnonz2,     &
-          data%lsymmd, data%lsymmh, data%lslgrp, data%lsvgrp, data%lgcolj,     &
-          data%lvaljr, data%lsend,  data%lnptrs, data%lnelts, data%lnndex,     &
-          data%lnwksp, data%lnstgv, data%lnstjc, data%lniuse,  data%lnfrec,    &
-          data%lnnnon, data%lnnno2, data%lnsymd, data%lnsymh, data%lnlgrp,     &
-          data%lnvgrp, data%lngclj, data%lnvljr, data%lnqgrd, data%lnbrak,     &
-          data%lnp, data%lnbnd, data%lnfxi,  data%lngxi,  data%lnguvl,         &
-          data%lnhxi,  data%lnhuvl, data%lnggfx, data%lndx, data%lngrjc,       &
-          data%liwk2, data%lwk2, data%maxsin, data%ninvar, data%ntype,         &
-          data%nsets, data%maxsel, data%lstype, data%lsswtr, data%lssiwt,      &
-          data%lsiwtr, data%lswtra, data%lntype, data%lnswtr, data%lnsiwt,     &
-          data%lniwtr, data%lnwtra, data%lsiset, data%lssvse, data%lniset,     &
-          data%lnsvse, RANGE, data%IWORK(IWRK + 1), liwork, data%WRK, lwork,   &
-          iprint, out, status )
+!     CALL INITW( n, data%ng, data%nel, data%IELING, data%leling,              &
+!         data%ISTADG, data%lstadg, data%IELVAR, data%lelvar, data%ISTAEV,     &
+!         data%lstaev, data%INTVAR, data%lntvar, data%ISTADH, data%lstadh,     &
+!         data%ICNA, data%licna, data%ISTADA, data%lstada, data%ITYPEE,        &
+!         data%lintre, data%GXEQX, data%lgxeqx, data%INTREP, data%lintre,      &
+!         lfuval, data%altriv, .TRUE., FDGRAD, data%lfxi, LGXI, LHXI, LGGFX,   &
+!         data%ldx, data%lgrjac, data%lqgrad, data%lbreak, data%lp, data%lxcp, &
+!         data%lx0, data%lgx0, data%ldeltx, data%lbnd, data%lwkstr,            &
+!         data%lsptrs, data%lselts, data%lindex, data%lswksp, data%lstagv,     &
+!         data%lstajc, data%liused, data%lfreec, data%lnnonz, data%lnonz2,     &
+!         data%lsymmd, data%lsymmh, data%lslgrp, data%lsvgrp, data%lgcolj,     &
+!         data%lvaljr, data%lsend,  data%lnptrs, data%lnelts, data%lnndex,     &
+!         data%lnwksp, data%lnstgv, data%lnstjc, data%lniuse,  data%lnfrec,    &
+!         data%lnnnon, data%lnnno2, data%lnsymd, data%lnsymh, data%lnlgrp,     &
+!         data%lnvgrp, data%lngclj, data%lnvljr, data%lnqgrd, data%lnbrak,     &
+!         data%lnp, data%lnbnd, data%lnfxi,  data%lngxi,  data%lnguvl,         &
+!         data%lnhxi,  data%lnhuvl, data%lnggfx, data%lndx, data%lngrjc,       &
+!         data%liwk2, data%lwk2, data%maxsin, data%ninvar, data%ntype,         &
+!         data%nsets, data%maxsel, data%lstype, data%lsswtr, data%lssiwt,      &
+!         data%lsiwtr, data%lswtra, data%lntype, data%lnswtr, data%lnsiwt,     &
+!         data%lniwtr, data%lnwtra, data%lsiset, data%lssvse, data%lniset,     &
+!         data%lnsvse, RANGE, data%IWORK(IWRK + 1), liwork, data%WRK, lwork,   &
+!         iprint, out, status )
       IF ( status /= 0 ) RETURN
 
 !  shift the starting addresses for the real workspace relative to WRK
 
-      data%lqgrad = data%lqgrad + WRK
-      data%lbreak = data%lbreak + WRK
-      data%lp = data%lp + WRK
-      data%lxcp = data%lxcp + WRK
-      data%lx0 = data%lx0 + WRK
-      data%lgx0 = data%lgx0 + WRK
-      data%ldeltx = data%ldeltx + WRK
-      data%lbnd = data%lbnd + WRK
-      data%lswtra = data%lswtra + WRK
-      data%lwkstr = data%lwkstr + WRK
+!     data%lqgrad = data%lqgrad + WRK
+!     data%lbreak = data%lbreak + WRK
+!     data%lp = data%lp + WRK
+!     data%lxcp = data%lxcp + WRK
+!     data%lx0 = data%lx0 + WRK
+!     data%lgx0 = data%lgx0 + WRK
+!     data%ldeltx = data%ldeltx + WRK
+!     data%lbnd = data%lbnd + WRK
+!     data%lswtra = data%lswtra + WRK
+!     data%lwkstr = data%lwkstr + WRK
 
 !  shift the starting addresses for the integer workspace relative to IWRK
 
-      data%lsptrs = data%lsptrs + IWRK
-      data%lselts = data%lselts + IWRK
-      data%lindex = data%lindex + IWRK
-      data%lswksp = data%lswksp + IWRK
-      data%lstagv = data%lstagv + IWRK
-      data%lstajc = data%lstajc + IWRK
-      data%liused = data%liused + IWRK
-      data%lfreec = data%lfreec + IWRK
-      data%lnnonz = data%lnnonz + IWRK
-      data%lnonz2 = data%lnonz2 + IWRK
-      data%lsymmd = data%lsymmd + IWRK
-      data%lsymmh = data%lsymmh + IWRK
-      data%lslgrp = data%lslgrp + IWRK
-      data%lsvgrp = data%lsvgrp + IWRK
-      data%lgcolj = data%lgcolj + IWRK
-      data%lvaljr = data%lvaljr + IWRK
-      data%lstype = data%lstype + IWRK
-      data%lsswtr = data%lsswtr + IWRK
-      data%lssiwt = data%lssiwt + IWRK
-      data%lsiwtr = data%lsiwtr + IWRK
-      data%lsiset = data%lsiset + IWRK
-      data%lssvse = data%lssvse + IWRK
-      data%lsend = data%lsend + IWRK
+!     data%lsptrs = data%lsptrs + IWRK
+!     data%lselts = data%lselts + IWRK
+!     data%lindex = data%lindex + IWRK
+!     data%lswksp = data%lswksp + IWRK
+!     data%lstagv = data%lstagv + IWRK
+!     data%lstajc = data%lstajc + IWRK
+!     data%liused = data%liused + IWRK
+!     data%lfreec = data%lfreec + IWRK
+!     data%lnnonz = data%lnnonz + IWRK
+!     data%lnonz2 = data%lnonz2 + IWRK
+!     data%lsymmd = data%lsymmd + IWRK
+!     data%lsymmh = data%lsymmh + IWRK
+!     data%lslgrp = data%lslgrp + IWRK
+!     data%lsvgrp = data%lsvgrp + IWRK
+!     data%lgcolj = data%lgcolj + IWRK
+!     data%lvaljr = data%lvaljr + IWRK
+!     data%lstype = data%lstype + IWRK
+!     data%lsswtr = data%lsswtr + IWRK
+!     data%lssiwt = data%lssiwt + IWRK
+!     data%lsiwtr = data%lsiwtr + IWRK
+!     data%lsiset = data%lsiset + IWRK
+!     data%lssvse = data%lssvse + IWRK
+!     data%lsend = data%lsend + IWRK
       IF ( .NOT. ( efirst .OR. lfirst ) .OR. m == 0 ) GO TO 340
 
 !  record which group is associated with each constraint
 
-      IF ( m > data%liwk2 ) THEN
-        WRITE( out, "( ' ** SUBROUTINE CSETUP: Increase the size of IWK ' )" )
-        status = 2 ; RETURN
-      END IF
       meq = 0
       mlin = 0
       DO ig = 1, data%ng
         i = data%KNDOFC( ig )
         IF ( i > 0 ) THEN
-          data%IWORK( data%lsend + i ) = ig
+          data%IWORK( i ) = ig
           IF ( EQUATN( i ) ) meq = meq + 1
           IF ( LINEAR( i ) ) mlin = mlin + 1
         END IF
@@ -914,7 +907,7 @@
 
         DO 120 i = 1, m
           IF ( i > mend ) GO TO 130
-          ig = data%IWORK( data%lsend + i )
+          ig = data%IWORK( i )
 !         WRITE(6,*) ' group ', ig, ' type ', i, ' equal? ', EQUATN( i )
           IF ( .NOT. LINEAR( i ) ) THEN
 
@@ -922,7 +915,7 @@
 !  a linear one is encountered
 
             DO j = mend, i, - 1
-              jg = data%IWORK( data%lsend + j )
+              jg = data%IWORK( j )
 !             write(6,*) ' group ', jg, ' type ', j, ' linear? ', LINEAR( j )
               IF ( LINEAR( j ) ) THEN
 !               write(6,*) ' swaping constraints ', i, ' and ', j
@@ -930,8 +923,8 @@
 
 !  interchange the data for constraints i and j
 
-                 data%IWORK( data%lsend + i ) = jg
-                 data%IWORK( data%lsend + j ) = ig
+                 data%IWORK( i ) = jg
+                 data%IWORK( j ) = ig
                  data%KNDOFC( ig ) = j
                  data%KNDOFC( jg ) = i
                  ltemp = LINEAR( i )
@@ -965,7 +958,7 @@
           mend = mlin
           DO 220 i = 1, mlin
             IF ( i > mend ) GO TO 230
-            ig = data%IWORK( data%lsend + i )
+            ig = data%IWORK( i )
 !              write(6,*) ' group ', ig, ' type ', i, ' equation? ',           &
 !                           EQUATN( i )
             IF ( .NOT. EQUATN( i ) ) THEN
@@ -974,7 +967,7 @@
 !  until an equation is encountered
 
               DO j = mend, i, - 1
-                jg = data%IWORK( data%lsend + j )
+                jg = data%IWORK( j )
 !               write(6,*) ' group ', jg, ' type ', j, ' equation? ', EQUATN( j)
                 IF ( EQUATN( j ) ) THEN
 !                 write(6,*) ' swaping constraints ', i,                       &
@@ -983,8 +976,8 @@
 
 !  interchange the data for constraints i and j
 
-                  data%IWORK( data%lsend + i ) = jg
-                  data%IWORK( data%lsend + j ) = ig
+                  data%IWORK( i ) = jg
+                  data%IWORK( j ) = ig
                   data%KNDOFC( ig ) = j
                   data%KNDOFC( jg ) = i
                   ltemp = LINEAR( i )
@@ -1016,7 +1009,7 @@
           mend = m
           DO 250 i = mlin + 1, m
             IF ( i > mend ) GO TO 260
-            ig = data%IWORK( data%lsend + i )
+            ig = data%IWORK( i )
 !           WRITE( 6, * ) ' group ', ig, ' type ', i, ' equation? ', EQUATN( i )
             IF ( .NOT. EQUATN( i ) ) THEN
 
@@ -1024,7 +1017,7 @@
 !  until an equation is encountered
 
               DO j = mend, i, - 1
-                jg = data%IWORK( data%lsend + j )
+                jg = data%IWORK( j )
 !               write(6,*) ' group ', jg, ' type ', j, ' equation? ', EQUATN( j)
                 IF ( EQUATN( j ) ) THEN
 !                 write(6,*) ' swaping constraints ', i, ' and ', j
@@ -1032,8 +1025,8 @@
 
 !  interchange the data for constraints i and j
 
-                  data%IWORK( data%lsend + i ) = jg
-                  data%IWORK( data%lsend + j ) = ig
+                  data%IWORK( i ) = jg
+                  data%IWORK( j ) = ig
                   data%KNDOFC( ig ) = j
                   data%KNDOFC( jg ) = i
                   ltemp = LINEAR( i )
@@ -1068,7 +1061,7 @@
           mend = m
           DO 320 i = 1, m
             IF ( i > mend ) GO TO 330
-            ig = data%IWORK( data%lsend + i )
+            ig = data%IWORK( i )
 !              WRITE(6,*) ' group ', ig, ' type ', i, ' equation? ', EQUATN( i )
             IF ( .NOT. EQUATN( i ) ) THEN
 
@@ -1076,7 +1069,7 @@
 !  until an equation is encountered
 
               DO j = mend, i, - 1
-                jg = data%IWORK( data%lsend + j )
+                jg = data%IWORK( j )
 !               write(6,*) ' group ', jg, ' type ', j,                         &
 !                          ' equation? ', EQUATN( j )
                 IF ( EQUATN( j ) ) THEN
@@ -1085,8 +1078,8 @@
 
 !  interchange the data for constraints i and j
 
-                  data%IWORK( data%lsend + i ) = jg
-                  data%IWORK( data%lsend + j ) = ig
+                  data%IWORK( i ) = jg
+                  data%IWORK( j ) = ig
                   data%KNDOFC( ig ) = j
                   data%KNDOFC( jg ) = i
                   ltemp = LINEAR( i )
@@ -1143,7 +1136,7 @@
 
  1000 FORMAT( I2, A8 )
  1001 FORMAT( 10I8 )
- 1002 FORMAT( 2I8 )
+!1002 FORMAT( 2I8 )
  1010 FORMAT( ( 10I8 ) )
  1020 FORMAT( ( 1P, 4D16.8 ) )
  1030 FORMAT( ( 72L1 ) )

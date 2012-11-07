@@ -15,7 +15,7 @@
 !  is required with the Hessian evaluated at X and V. X and V are
 !  not used if GOTH = .TRUE.
 
-!  Based on the minimization subroutine data%laNCELOT/SBMIN
+!  Based on the minimization subroutine LANCELOT/SBMIN
 !  by Conn, Gould and Toint.
 
 !  Nick Gould, for CGT productions.
@@ -182,63 +182,100 @@
 
 !  Evaluate the product.
 
-
-!            CALL HSPRD_hessian_times_vector(                                  &
-!                n , ng, nel, S%ntotel, S%nvrels, S%nvargp,                    &
-!                inform%nvar  , nvar1 , S%nvar2 , S%nnonnz,                    &
-!                S%nbprod, S%alllin, IVAR , ISTAEV, ISTADH, INTVAR, IELING,    &
-!                IELVAR, ISWKSP( : S%ntotel ), INNONZ( : n ),                  &
-!                P , Q , GVALS( : , 2 )  , GVALS( : , 3 ),                     &
-!                GRJAC, GSCALE_used, ESCALE, FUVALS( : S%lnhuvl ), S%lnhuvl,   &
-!                GXEQX_used , INTREP, S%densep,                                &
-!                IGCOLJ, ISLGRP, ISVGRP, ISTAGV, IVALJR, ITYPEE, ISYMMH,       &
-!                ISTAJC, IUSED, LIST_elements, LINK_elem_uses_var,             &
-!                NZ_comp_w, W_ws, W_el, W_in, H_in, RANGE, S%skipg, KNDOFG )
-
-
-
-
       IF ( data%numcon > 0 ) THEN
-      CALL DHSPRD( n, nn, data%ng, data%ntotel, n, 1, n, nbprod, data%nel == 0, &
-                   data%IVAR( 1 ), data%ISTAEV( 1 ), data%lstaev, &
-                   data%ISTADH( 1 ), data%lstadh, data%INTVAR( 1 ), &
-                   data%lntvar, data%IELING( 1 ), data%leling, data%IELVAR( 1 ), &
-                   data%lelvar, data%IWORK( data%lstajc + 1 ), data%lnstjc, data%IWORK( data%lselts + 1 ), &
-                   data%lnelts, data%IWORK( data%lsptrs + 1 ), data%lnptrs, data%IWORK( data%lgcolj + 1 ),  &
-                   data%lngclj, data%IWORK( data%lslgrp + 1 ), data%lnlgrp, data%IWORK( data%lswksp + 1 ),  &
-                   data%lnwksp, data%IWORK( data%lsvgrp + 1 ), data%lnvgrp, data%IWORK( data%lstagv + 1 ), &
-                   data%lnstgv, data%IWORK( data%lvaljr + 1 ), data%lnvljr, data%ITYPEE( 1 ),  &
-                   data%lintre, nnonnz, data%IWORK( data%lnnonz + 1 ), data%lnnnon, &
-                   data%IWORK( data%liused + 1 ), data%lniuse, data%IWORK( data%lnonz2 + 1 ), &
-                   data%lnnno2, data%IWORK( data%lsymmh + 1 ), data%maxsin, P, RESULT, &
-                   data%GVALS( data%ng + 1 ), data%GVALS( 2 * data%ng + 1 ), &
-                   data%FUVALS( data%lgrjac + 1 ), data%lngrjc, data%WRK( 1 ), &
-                   data%ESCALE( 1 ), data%lescal, data%FUVALS, data%lnhuvl, &
-                   data%WRK( 1 ), lnwk, data%WRK( lwkb + 1 ), &
-                   lnwkb, data%WRK( lwkc + 1 ), lnwkc, &
-                   data%GXEQX( 1 ), data%lgxeqx, data%INTREP( 1 ), &
-                   data%lintre, .TRUE., RANGE )
+        CALL CUTEST_hessian_times_vector(                                      &
+          data%n, data%ng, data%nel, data%ntotel, data%nvrels, data%nvargp,    &
+          n, 1, n, data%nnonnz, data%nbprod, data%alllin,                      &
+          data%IVAR, data%ISTAEV, data%ISTADH, data%INTVAR, data%IELING,       &
+          data%IELVAR, data%ISWKSP( : data%ntotel ), data%INNONZ( : n ),       &
+          data%P, data%Q, data%GVALS( : , 2 ) , data%GVALS( : , 3 ),           &
+          data%GRJAC, data%WRK( : data%ng ), 
+          data%ESCALE, data%FUVALS( : data%lnhuvl ),     &
+          data%lnhuvl, data%GXEQX, data%INTREP, .TRUE., data%IGCOLJ,           &
+          data%ISLGRP, data%ISVGRP, data%ISTAGV, data%IVALJR, data%ITYPEE,     &
+          data%ISYMMH, data%ISTAJC, data%IUSED, data%LIST_elements,            &
+          data%LINK_elem_uses_var, data%NZ_comp_w, data%W_ws, data%W_el,       &
+          data%W_in, data%H_in, RANGE, data%skipg, data%KNDOFG )
       ELSE
-      CALL DHSPRD( n, nn, data%ng, data%ntotel, n, 1, n, nbprod, data%nel == 0, &
-                   data%IVAR( 1 ), data%ISTAEV( 1 ), data%lstaev, &
-                   data%ISTADH( 1 ), data%lstadh, data%INTVAR( 1 ), &
-                   data%lntvar, data%IELING( 1 ), data%leling, data%IELVAR( 1 ), &
-                   data%lelvar, data%IWORK( data%lstajc + 1 ), data%lnstjc, data%IWORK( data%lselts + 1 ), &
-                   data%lnelts, data%IWORK( data%lsptrs + 1 ), data%lnptrs, data%IWORK( data%lgcolj + 1 ),  &
-                   data%lngclj, data%IWORK( data%lslgrp + 1 ), data%lnlgrp, data%IWORK( data%lswksp + 1 ),  &
-                   data%lnwksp, data%IWORK( data%lsvgrp + 1 ), data%lnvgrp, data%IWORK( data%lstagv + 1 ), &
-                   data%lnstgv, data%IWORK( data%lvaljr + 1 ), data%lnvljr, data%ITYPEE( 1 ),  &
-                   data%lintre, nnonnz, data%IWORK( data%lnnonz + 1 ), data%lnnnon, &
-                   data%IWORK( data%liused + 1 ), data%lniuse, data%IWORK( data%lnonz2 + 1 ), &
-                   data%lnnno2, data%IWORK( data%lsymmh + 1 ), data%maxsin, P, RESULT, &
-                   data%GVALS( data%ng + 1 ), data%GVALS( 2 * data%ng + 1 ), &
-                   data%FUVALS( data%lgrjac + 1 ), data%lngrjc, data%GSCALE( 1 ), &
-                   data%ESCALE( 1 ), data%lescal, data%FUVALS, data%lnhuvl, &
-                   data%WRK( 1 ), lnwk, data%WRK( lwkb + 1 ), &
-                   lnwkb, data%WRK( lwkc + 1 ), lnwkc, &
-                   data%GXEQX( 1 ), data%lgxeqx, data%INTREP( 1 ), &
-                   data%lintre, .TRUE., RANGE )
+        CALL CUTEST_hessian_times_vector(                                      &
+          data%n, data%ng, data%nel, data%ntotel, data%nvrels, data%nvargp,    &
+          n, 1, n, data%nnonnz, data%nbprod, data%alllin,                      &
+          data%IVAR, data%ISTAEV, data%ISTADH, data%INTVAR, data%IELING,       &
+          data%IELVAR, data%ISWKSP( : data%ntotel ), data%INNONZ( : n ),       &
+          data%P, data%Q, data%GVALS( : , 2 ) , data%GVALS( : , 3 ),           &
+          data%GRJAC, data%GSCALE,                                             &
+          data%ESCALE, data%FUVALS( : data%lnhuvl ),                           &
+          data%lnhuvl, data%GXEQX, data%INTREP, .TRUE., data%IGCOLJ,           &
+          data%ISLGRP, data%ISVGRP, data%ISTAGV, data%IVALJR, data%ITYPEE,     &
+          data%ISYMMH, data%ISTAJC, data%IUSED, data%LIST_elements,            &
+          data%LINK_elem_uses_var, data%NZ_comp_w, data%W_ws, data%W_el,       &
+          data%W_in, data%H_in, RANGE, data%skipg, data%KNDOFG )
       END IF
+
+
+
+!!$      IF ( data%numcon > 0 ) THEN
+!!$        CALL DHSPRD( n, nn, data%ng, data%ntotel, n, 1, n, nbprod, 
+!!$               data%nel == 0, &
+!!$               data%IVAR( 1 ), data%ISTAEV( 1 ), data%lstaev, &
+!!$               data%ISTADH( 1 ), data%lstadh, data%INTVAR( 1 ), &
+!!$               data%lntvar, data%IELING( 1 ), data%leling, 
+!!$               data%IELVAR( 1 ), &
+!!$               data%lelvar, data%IWORK( data%lstajc + 1 ), 
+!!$               data%lnstjc, data%IWORK( data%lselts + 1 ), &
+!!$               data%lnelts, data%IWORK( data%lsptrs + 1 ), 
+!!$               data%lnptrs, data%IWORK( data%lgcolj + 1 ),  &
+!!$               data%lngclj, data%IWORK( data%lslgrp + 1 ), 
+!!$               data%lnlgrp, data%IWORK( data%lswksp + 1 ),  &
+!!$               data%lnwksp, data%IWORK( data%lsvgrp + 1 ), 
+!!$               data%lnvgrp, data%IWORK( data%lstagv + 1 ), &
+!!$               data%lnstgv, data%IWORK( data%lvaljr + 1 ), 
+!!$               data%lnvljr, data%ITYPEE( 1 ),  &
+!!$               data%lintre, nnonnz, data%IWORK( data%lnnonz + 1 ), 
+!!$               data%lnnnon, &
+!!$               data%IWORK( data%liused + 1 ), data%lniuse, 
+!!$               data%IWORK( data%lnonz2 + 1 ), &
+!!$               data%lnnno2, data%IWORK( data%lsymmh + 1 ), 
+!!$               data%maxsin, P, RESULT, &
+!!$               data%GVALS( data%ng + 1 ), data%GVALS( 2 * data%ng + 1 ), &
+!!$               data%FUVALS( data%lgrjac + 1 ), data%lngrjc, data%WRK( 1 ), &
+!!$               data%ESCALE( 1 ), data%lescal, data%FUVALS, data%lnhuvl, &
+!!$               data%WRK( 1 ), lnwk, data%WRK( lwkb + 1 ), &
+!!$               lnwkb, data%WRK( lwkc + 1 ), lnwkc, &
+!!$               data%GXEQX( 1 ), data%lgxeqx, data%INTREP( 1 ), &
+!!$               data%lintre, .TRUE., RANGE )
+!!$      ELSE
+!!$        CALL DHSPRD( n, nn, data%ng, data%ntotel, n, 1, n, nbprod, 
+!!$               data%nel == 0, &
+!!$               data%IVAR( 1 ), data%ISTAEV( 1 ), data%lstaev, &
+!!$               data%ISTADH( 1 ), data%lstadh, data%INTVAR( 1 ), &
+!!$               data%lntvar, data%IELING( 1 ), data%leling, 
+!!$               data%IELVAR( 1 ), &
+!!$               data%lelvar, data%IWORK( data%lstajc + 1 ), 
+!!$               data%lnstjc, data%IWORK( data%lselts + 1 ), &
+!!$               data%lnelts, data%IWORK( data%lsptrs + 1 ), 
+!!$               data%lnptrs, data%IWORK( data%lgcolj + 1 ),  &
+!!$               data%lngclj, data%IWORK( data%lslgrp + 1 ), 
+!!$               data%lnlgrp, data%IWORK( data%lswksp + 1 ),  &
+!!$               data%lnwksp, data%IWORK( data%lsvgrp + 1 ), 
+!!$               data%lnvgrp, data%IWORK( data%lstagv + 1 ), &
+!!$               data%lnstgv, data%IWORK( data%lvaljr + 1 ), 
+!!$               data%lnvljr, data%ITYPEE( 1 ),  &
+!!$               data%lintre, nnonnz, data%IWORK( data%lnnonz + 1 ), 
+!!$               data%lnnnon, &
+!!$               data%IWORK( data%liused + 1 ), data%lniuse, 
+!!$               data%IWORK( data%lnonz2 + 1 ), &
+!!$               data%lnnno2, data%IWORK( data%lsymmh + 1 ), 
+!!$               data%maxsin, P, RESULT, &
+!!$               data%GVALS( data%ng + 1 ), data%GVALS( 2 * data%ng + 1 ), &
+!!$               data%FUVALS( data%lgrjac + 1 ), data%lngrjc, 
+!!$               data%GSCALE( 1 ), &
+!!$               data%ESCALE( 1 ), data%lescal, data%FUVALS, data%lnhuvl, &
+!!$               data%WRK( 1 ), lnwk, data%WRK( lwkb + 1 ), &
+!!$               lnwkb, data%WRK( lwkc + 1 ), lnwkc, &
+!!$               data%GXEQX( 1 ), data%lgxeqx, data%INTREP( 1 ), &
+!!$               data%lintre, .TRUE., RANGE )
+!!$      END IF
 
 !  Update the counters for the report tool.
 
