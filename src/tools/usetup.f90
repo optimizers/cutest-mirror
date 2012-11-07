@@ -38,8 +38,9 @@
 
 !  Input the problem dimensions.
 
-      READ( input, 1001 ) n, data%ng, data%nelnum, data%ngel, data%nvars,      &
+      READ( input, 1001 ) data%n, data%ng, data%nel, data%ntotel, data%nvrels, &
                           data%nnza, data%ngpvlu, data%nepvlu, neltyp, ngrtyp
+      n = data%n
       IF ( n <= 0 ) THEN
         CLOSE( input )
         IF ( iout > 0 ) WRITE( iout,                                           &
@@ -72,27 +73,27 @@
 
       data%ng1 = data%ng + 1
       data%ngng = data%ng + data%ng
-      data%nel1 = data%nelnum + 1
+      data%nel1 = data%nel + 1
 
 !  Partition the integer workspace.
 
-      istadg = 0
-      istgp = istadg + data%ng1
-      istada = istgp + data%ng1
-      istaev = istada + data%ng1
-      istep = istaev + data%nel1
-      itypeg = istep + data%nel1
-      kndofc = itypeg + data%ng
-      itypee = kndofc + data%ng
-      ieling = itypee + data%nelnum
-      ielvar = ieling + data%ngel
-      icna = ielvar + data%nvars
-      istadh = icna + data%nnza
-      intvar = istadh + data%nel1
-      ivar = intvar + data%nel1
-      icalcf = ivar + n
-      itypev = icalcf + MAX( data%nelnum, data%ng )
-      IWRK = itypev + n
+      ISTADG = 0
+      ISTGP = ISTADG + data%ng1
+      ISTADA = ISTGP + data%ng1
+      ISTAEV = ISTADA + data%ng1
+      ISTEP = ISTAEV + data%nel1
+      ITYPEG = ISTEP + data%nel1
+      KNDOFC = ITYPEG + data%ng
+      ITYPEE = KNDOFC + data%ng
+      IELING = ITYPEE + data%nel
+      IELVAR = IELING + data%ntotel
+      ICNA = IELVAR + data%nvrels
+      ISTADH = ICNA + data%nnza
+      INTVAR = ISTADH + data%nel1
+      IVAR = INTVAR + data%nel1
+      ICALCF = IVAR + n
+      ITYPEV = ICALCF + MAX( data%nel, data%ng )
+      IWRK = ITYPEV + n
       data%liwork = liwk - IWRK
 
 !  Ensure there is sufficient room.
@@ -111,10 +112,10 @@
       GPVALU = U + data%ng
       EPVALU = GPVALU + data%ngpvlu
       ESCALE = EPVALU + data%nepvlu
-      GSCALE = ESCALE + data%ngel
+      GSCALE = ESCALE + data%ntotel
       VSCALE = GSCALE + data%ng
-      gvals = VSCALE + n
-      XT = gvals + 3 * data%ng
+      GVALS = VSCALE + n
+      XT = GVALS + 3 * data%ng
       DGRAD = XT + n
       Q = DGRAD + n
       FT = Q + n
@@ -132,7 +133,7 @@
 !  Partition the logical workspace.
 
       intrep = 0
-      gxeqx = intrep + data%nelnum
+      gxeqx = intrep + data%nel
       data%lo = gxeqx + data%ngng
 
 !  Ensure there is sufficient room.
@@ -163,29 +164,29 @@
       data%lstada = MAX( 1, data%ng1 )
       data%lstaev = MAX( 1, data%nel1 )
       data%lkndof = MAX( 1, data%ng )
-      data%leling = MAX( 1, data%ngel )
-      data%lelvar = MAX( 1, data%nvars )
+      data%leling = MAX( 1, data%ntotel )
+      data%lelvar = MAX( 1, data%nvrels )
       data%licna = MAX( 1, data%nnza )
       data%lstadh = MAX( 1, data%nel1 )
       data%lntvar = MAX( 1, data%nel1 )
-      data%lcalcf = MAX( 1, data%nelnum, data%ng )
+      data%lcalcf = MAX( 1, data%nel, data%ng )
       data%lcalcg = MAX( 1, data%ng )
       data%la = MAX( 1, data%nnza )
       data%lb = MAX( 1, data%ng )
       data%lu = MAX( 1, data%ng )
-      data%lescal = MAX( 1, data%ngel )
+      data%lescal = MAX( 1, data%ntotel )
       data%lgscal = MAX( 1, data%ng )
       data%lvscal = MAX( 1, n )
       data%lft = MAX( 1, data%ng )
       data%lgvals = MAX( 1, data%ng )
-      data%lintre = MAX( 1, data%nelnum )
+      data%lintre = MAX( 1, data%nel )
       data%lgxeqx = MAX( 1, data%ngng )
       data%lgpvlu = MAX( 1, data%ngpvlu )
       data%lepvlu = MAX( 1, data%nepvlu )
 !     LSTGP = MAX( 1, data%ng1 )
 !     LSTEP = MAX( 1, data%nel1 )
 !     LTYPEG = MAX( 1, data%ng )
-!     LTYPEE = MAX( 1, data%nelnum )
+!     LTYPEE = MAX( 1, data%nel )
 !     LIVAR = MAX( 1, n )
 !     LBL = MAX( 1, n )
 !     LBU = MAX( 1, n )
@@ -202,7 +203,7 @@
       ELSE
         nslack = 0
       END IF
-      IF ( debug ) WRITE( iout, 1100 ) pname, n, data%ng, data%nelnum
+      IF ( debug ) WRITE( iout, 1100 ) pname, n, data%ng, data%nel
       data%pname = pname // '  '
 
 !  Input the starting addresses of the elements in each group,
@@ -251,28 +252,28 @@
 
 !  Input the element type of each element
 
-      READ( input, 1010 ) ( data%ITYPEE( i ), i = 1, data%nelnum )
+      READ( input, 1010 ) ( data%ITYPEE( i ), i = 1, data%nel )
       IF ( debug ) WRITE( iout, 1110 ) 'ITYPEE',                               &
-        ( data%ITYPEE( i ), i = 1, data%nelnum )
+        ( data%ITYPEE( i ), i = 1, data%nel )
 
 !  Input the number of internal variables for each element.
 
-      READ( input, 1010 ) ( data%INTVAR( i ), i = 1, data%nelnum )
+      READ( input, 1010 ) ( data%INTVAR( i ), i = 1, data%nel )
       IF ( debug ) WRITE( iout, 1110 ) 'INTVAR',                               &
-        ( data%INTVAR( i ), i = 1, data%nelnum )
+        ( data%INTVAR( i ), i = 1, data%nel )
 
 !  Input the identity of each individual element.
 
-      READ( input, 1010 ) ( data%IELING( i ), i = 1, data%ngel )
+      READ( input, 1010 ) ( data%IELING( i ), i = 1, data%ntotel )
       IF ( debug ) WRITE( iout, 1110 ) 'IELING',                               &
-        ( data%IELING( i ), i = 1, data%ngel )
+        ( data%IELING( i ), i = 1, data%ntotel )
 
 !  Input the variables in each group's elements.
 
-      data%nvars = data%ISTAEV( data%nel1 ) - 1
-      READ( input, 1010 ) ( data%IELVAR( i ), i = 1, data%nvars )
+      data%nvrels = data%ISTAEV( data%nel1 ) - 1
+      READ( input, 1010 ) ( data%IELVAR( i ), i = 1, data%nvrels )
       IF ( debug ) WRITE( iout, 1110 ) 'IELVAR',                               &
-        ( data%IELVAR( i ), i = 1, data%nvars )
+        ( data%IELVAR( i ), i = 1, data%nvrels )
 
 !  Input the column addresses of the nonzeros in each linear element.
 
@@ -297,7 +298,7 @@
         IF ( debug ) WRITE( iout, 1120 ) 'BU    ', ( BU( i ), i = 1, n )
       ELSE
 
-!  Use gvals and FT as temporary storage for the constraint bounds.
+!  Use GVALS and FT as temporary storage for the constraint bounds.
 
         READ( input, 1020 ) ( BL( i ), i = 1, n ),                             &
           ( data%GVALS( i ), i = 1, data%ng )
@@ -330,9 +331,9 @@
 
 !  Input the scale factors for the nonlinear elements.
 
-      READ( input, 1020 ) ( data%ESCALE( i ), i = 1, data%ngel )
+      READ( input, 1020 ) ( data%ESCALE( i ), i = 1, data%ntotel )
       IF ( debug ) WRITE( iout, 1120 ) 'ESCALE',                               &
-        ( data%ESCALE( i ), i = 1, data%ngel )
+        ( data%ESCALE( i ), i = 1, data%ntotel )
 
 !  Input the scale factors for the groups.
 
@@ -354,9 +355,9 @@
 !  Input a logical array which says whether an element has internal
 !  varaiables.
 
-      READ( input, 1030 ) ( data%INTREP( i ), i = 1, data%nelnum )
+      READ( input, 1030 ) ( data%INTREP( i ), i = 1, data%nel )
       IF ( debug ) WRITE( iout, 1130 ) 'INTREP',                               &
-        ( data%INTREP( i ), i = 1, data%nelnum )
+        ( data%INTREP( i ), i = 1, data%nel )
 
 !  Input a logical array which says whether a group is trivial.
 
@@ -384,13 +385,12 @@
 
       data%numvar = n
 
-
 !  Partition the workspace arrays data%FUVALS, IWK and WK. Initialize
 !  certain portions of IWK.
 
       data%firstg = .TRUE.
       fdgrad = .FALSE.
-      CALL INITW( n, data%ng, data%nelnum, data%IELING, data%leling,          &
+      CALL INITW( n, data%ng, data%nel, data%IELING, data%leling,           &
           data%ISTADG, data%lstadg, data%IELVAR, data%lelvar, data%ISTAEV,     &
           data%lstaev, data%INTVAR, data%lntvar, data%ISTADH, data%lstadh,     &
           data%ICNA, data%licna, data%ISTADA, data%lstada, data%ITYPEE,        &

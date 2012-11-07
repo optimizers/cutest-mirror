@@ -79,7 +79,7 @@
       END IF
 
 !  Determine nonlinear elements in group IG.
-!  Record their indices in data%IWORK( icalcf ).
+!  Record their indices in data%IWORK( ICALCF ).
 
       nelow = data%ISTADG( ig )
       nelup = data%ISTADG( ig + 1 ) - 1

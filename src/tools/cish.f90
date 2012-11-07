@@ -81,7 +81,7 @@
 !  Find which elements are involved in the required problem function.
 !  Initialize the list to zero.
 
-      DO 30 i = 1, data%nelnum
+      DO 30 i = 1, data%nel
         data%ICALCF( i ) = 0
    30 CONTINUE
 
@@ -98,7 +98,7 @@
 !  Only compute the elements which are involved in the required function.
 
       ncalcf = 0
-      DO 80 i = 1, data%nelnum
+      DO 80 i = 1, data%nel
          IF ( data%ICALCF( i ) == 1 ) THEN
             ncalcf = ncalcf + 1
             data%ICALCF( ncalcf ) = i

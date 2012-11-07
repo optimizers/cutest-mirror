@@ -210,7 +210,7 @@
 
 
 
-      SUBROUTINE SETVI( nvar, X, ivar, VL )
+      SUBROUTINE SETVI( nvar, X, IVAR, VL )
 
 !     ******************************************************************
 

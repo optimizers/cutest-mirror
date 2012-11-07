@@ -8,7 +8,7 @@
 !  Nick Gould, for CGT productions,
 !  26th August, 1999.
 
-      INTEGER :: ialgor, i, j, ng, nelnum, idummy
+      INTEGER :: ialgor, i, j, ng, nel, idummy
       INTEGER :: ng1, nel1, nslack, nobjgr, iend
       INTEGER :: IARRAY( 10 )
       CHARACTER ( LEN = 8 ) :: PNAME
@@ -16,7 +16,7 @@
 !  Input the problem dimensions.
 
       REWIND input
-      READ( input, 1001 ) n, ng, nelnum
+      READ( input, 1001 ) n, ng, nel
 
 !  Input the problem type.
 
@@ -29,7 +29,7 @@
 !  Set useful integer values.
 
       ng1 = ng + 1
-      nel1 = nelnum + 1
+      nel1 = nel + 1
 
 !  Print out problem data. input the number of variables, groups,
 !  elements and the identity of the objective function group.

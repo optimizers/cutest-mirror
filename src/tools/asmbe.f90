@@ -1,11 +1,11 @@
 ! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE ASMBE( n, ng, maxsel, istadh, lstadh, icna, licna, &
-                         istada, lstada, intvar, lntvar, ielvar, lelvar, &
-                         ieling, leling, istadg, lstadg, istaev, lstaev, &
+      SUBROUTINE ASMBE( n, ng, maxsel, ISTADH, lstadh, ICNA, licna, &
+                         ISTADA, lstada, INTVAR, lntvar, IELVAR, lelvar, &
+                         IELING, leling, ISTADG, lstadg, ISTAEV, lstaev, &
                          ISTAGV, lnstgv, ISVGRP, lnvgrp, IWK, liwk,  &
                          A, la, GUVALS, lnguvl, HUVALS, lnhuvl, GVALS2,  &
                          GVALS3, GSCALE, ESCALE, lescal, WK, lwk,  &
-                         gxeqx, lgxeqx, intrep, lintre, itypee, litype, &
+                         gxeqx, lgxeqx, intrep, lintre, ITYPEE, litype, &
                          RANGE, ne, IRNHI, lirnhi, IPRNHI, HI,  &
                          lhi, IPRHI, BYROWS, iprint, iout, INFORM)
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
@@ -25,7 +25,7 @@
       INTEGER :: lstadg, lstaev, lnstgv, lnvgrp, liwk
       INTEGER :: lnguvl, lnhuvl, lescal, lwk, lgxeqx, lintre
       LOGICAL :: BYROWS
-      INTEGER :: ISTADH( lstadh ), icna ( licna )
+      INTEGER :: ISTADH( lstadh ), ICNA ( licna )
       INTEGER :: ISTADA( lstada ), INTVAR( lntvar )
       INTEGER :: IELVAR( lelvar ), IELING( leling )
       INTEGER :: ISTADG( lstadg ), ISTAEV( lstaev )
