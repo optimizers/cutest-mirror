@@ -1,13 +1,13 @@
 ! ( Last modified on 23 Dec 2000 at 22:01:38 )
       SUBROUTINE ASMBL( n, ng, maxsel, nsemib, lh, lih, nnzh, &
-                         nfree, IFREE, istadh, lstadh, icna, licna,   &
-                         istada, lstada, intvar, lntvar, ielvar, lelvar,  &
-                         ieling, leling, istadg, lstadg, istaev, lstaev,  &
+                         nfree, IFREE, ISTADH, lstadh, ICNA, licna,   &
+                         ISTADA, lstada, INTVAR, lntvar, IELVAR, lelvar,  &
+                         IELING, leling, ISTADG, lstadg, ISTAEV, lstaev,  &
                          ISTAGV, lnstgv, ISVGRP, lnvgrp, irnh, JCNH,    &
                          NXTROW, lnxtrw, IWK, liwk, A, la, GUVALS,  &
                          lnguvl, HUVALS, lnhuvl, GVALS2, GVALS3, GSCALE,  &
                          ESCALE, lescal, H, WK, lwk, gxeqx, lgxeqx,  &
-                         intrep, lintre, itypee, litype, RANGE, iprint,  &
+                         intrep, lintre, ITYPEE, litype, RANGE, iprint,  &
                          iout, BAND, maxsbw, inform, NOZERO, FIXSTR)
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 

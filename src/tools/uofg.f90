@@ -39,7 +39,7 @@
 
 !  integer variables from the GLOBAL common block.
 
-      INTEGER :: ESCALE, GSCALE, VSCALE, gvals, XT, DGRAD 
+      INTEGER :: ESCALE, GSCALE, VSCALE, GVALS, XT, DGRAD 
 
 !  integer variables from the LOCAL common block.
 
@@ -56,13 +56,13 @@
 
 !  There are non-trivial group functions.
 
-      DO 10 i = 1, MAX( data%nelnum, data%ng )
+      DO 10 i = 1, MAX( data%nel, data%ng )
         data%ICALCF( i ) = i
    10 CONTINUE
 
 !  Evaluate the element function values.
 
-      CALL ELFUN ( data%FUVALS, X, data%EPVALU( 1 ), data%nelnum, &
+      CALL ELFUN ( data%FUVALS, X, data%EPVALU( 1 ), data%nel, &
                    data%ITYPEE( 1 ), data%ISTAEV( 1 ), &
                    data%IELVAR( 1 ), data%INTVAR( 1 ), &
                    data%ISTADH( 1 ), data%ISTEP( 1 ), &
@@ -132,7 +132,7 @@
 
 !  Evaluate the element function derivatives.
 
-         CALL ELFUN ( data%FUVALS, X, data%EPVALU( 1 ), data%nelnum, &
+         CALL ELFUN ( data%FUVALS, X, data%EPVALU( 1 ), data%nel, &
                       data%ITYPEE( 1 ), data%ISTAEV( 1 ), &
                       data%IELVAR( 1 ), data%INTVAR( 1 ), &
                       data%ISTADH( 1 ), data%ISTEP( 1 ), &

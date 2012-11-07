@@ -41,13 +41,13 @@
 
 !  integer variables from the GLOBAL common block.
 
-      INTEGER :: ng, nelnum, ngel, nvars, nnza, ngpvlu
-      INTEGER :: nepvlu, ng1, nel1, istadg, istgp, istada
-      INTEGER :: istaev, istep, itypeg, kndofc, itypee
-      INTEGER :: ieling, ielvar, icna, istadh, intvar, ivar
-      INTEGER :: icalcf, itypev, IWRK, A, B
+      INTEGER :: ng, nel, ntotel, nvrels, nnza, ngpvlu
+      INTEGER :: nepvlu, ng1, nel1, ISTADG, ISTGP, ISTADA
+      INTEGER :: ISTAEV, ISTEP, ITYPEG, KNDOFC, ITYPEE
+      INTEGER :: IELING, IELVAR, ICNA, ISTADH, INTVAR, IVAR
+      INTEGER :: ICALCF, ITYPEV, IWRK, A, B
       INTEGER :: U, GPVALU, EPVALU
-      INTEGER :: ESCALE, GSCALE, VSCALE, gvals, XT, DGRAD
+      INTEGER :: ESCALE, GSCALE, VSCALE, GVALS, XT, DGRAD
       INTEGER :: Q, WRK, intrep, gxeqx, GNAMES, VNAMES
       INTEGER :: lo, ch, liwork, lwork, ngng, FT
       INTEGER :: la, lb, nobjgr, lu, lelvar
@@ -75,13 +75,13 @@
       INTEGER :: lnwtra, lsiset, lssvse, lniset, lnsvse
       LOGICAL :: ALTRIV, FIRSTG
       COMMON / GLOBAL /  IWK, WK, FUVALS, LOGI, &
-                         ng, nelnum, ngel, nvars, nnza, ngpvlu, &
-                         nepvlu, ng1, nel1, istadg, istgp, istada, &
-                         istaev, istep, itypeg, kndofc, itypee, &
-                         ieling, ielvar, icna, istadh, intvar, ivar, &
-                         icalcf, itypev, IWRK, A, B, &
+                         ng, nel, ntotel, nvrels, nnza, ngpvlu, &
+                         nepvlu, ng1, nel1, ISTADG, ISTGP, ISTADA, &
+                         ISTAEV, ISTEP, ITYPEG, KNDOFC, ITYPEE, &
+                         IELING, IELVAR, ICNA, ISTADH, INTVAR, IVAR, &
+                         ICALCF, ITYPEV, IWRK, A, B, &
                          U, GPVALU, EPVALU, &
-                         ESCALE, GSCALE, VSCALE, gvals, XT, DGRAD, &
+                         ESCALE, GSCALE, VSCALE, GVALS, XT, DGRAD, &
                          Q, WRK, intrep, gxeqx, GNAMES, VNAMES, &
                          lo, ch, liwork, lwork, ngng, FT, &
                          ALTRIV, FIRSTG, &

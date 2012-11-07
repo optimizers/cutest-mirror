@@ -39,7 +39,7 @@
 
 !  integer variables from the GLOBAL common block.
 
-      INTEGER :: ESCALE, GSCALE, VSCALE, gvals, XT, DGRAD 
+      INTEGER :: ESCALE, GSCALE, VSCALE, GVALS, XT, DGRAD 
 
 !  integer variables from the LOCAL common block.
 
@@ -63,11 +63,11 @@
 
       llo = gxeqx + data%ngng
       llwrk = llogic - llo
-      IF ( llwrk < data%nelnum ) THEN
-          IF ( iout > 0 ) WRITE( iout, 2000 ) data%nelnum - llwrk 
+      IF ( llwrk < data%nel ) THEN
+          IF ( iout > 0 ) WRITE( iout, 2000 ) data%nel - llwrk 
           STOP
       END IF
-      DO 410 i = 1, data%nelnum
+      DO 410 i = 1, data%nel
          data%LOGIC( i ) = .FALSE.
   410 CONTINUE
 

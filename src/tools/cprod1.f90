@@ -55,13 +55,13 @@
 !  There are non-trivial group functions.
 
       IF ( .NOT. GOTH ) THEN
-         DO 10 i = 1, MAX( data%nelnum, data%ng )
+         DO 10 i = 1, MAX( data%nel, data%ng )
            data%ICALCF( i ) = i
    10    CONTINUE
 
 !  Evaluate the element function values.
 
-         CALL ELFUN ( data%FUVALS, X, data%EPVALU( 1 ), data%nelnum, &
+         CALL ELFUN ( data%FUVALS, X, data%EPVALU( 1 ), data%nel, &
                       data%ITYPEE( 1 ), data%ISTAEV( 1 ), &
                       data%IELVAR( 1 ), data%INTVAR( 1 ), &
                       data%ISTADH( 1 ), data%ISTEP( 1 ), &
@@ -72,7 +72,7 @@
 
 !  Evaluate the element function values.
 
-         CALL ELFUN ( data%FUVALS, X, data%EPVALU( 1 ), data%nelnum, &
+         CALL ELFUN ( data%FUVALS, X, data%EPVALU( 1 ), data%nel, &
                       data%ITYPEE( 1 ), data%ISTAEV( 1 ), &
                       data%IELVAR( 1 ), data%INTVAR( 1 ), &
                       data%ISTADH( 1 ), data%ISTEP( 1 ), &
@@ -202,7 +202,7 @@
 !  Evaluate the product.
 
       IF ( data%numcon > 0 ) THEN
-      CALL DHSPRD( n, nn, data%ng, data%ngel, n, 1, n, nbprod, data%nelnum == 0, &
+      CALL DHSPRD( n, nn, data%ng, data%ntotel, n, 1, n, nbprod, data%nel == 0, &
                    data%IVAR( 1 ), data%ISTAEV( 1 ), data%lstaev, &
                    data%ISTADH( 1 ), data%lstadh, data%INTVAR( 1 ), &
                    data%lntvar, data%IELING( 1 ), data%leling, data%IELVAR( 1 ), &
@@ -222,7 +222,7 @@
                    data%GXEQX( 1 ), data%lgxeqx, data%INTREP( 1 ), &
                    data%lintre, .TRUE., RANGE )
       ELSE
-      CALL DHSPRD( n, nn, data%ng, data%ngel, n, 1, n, nbprod, data%nelnum == 0, &
+      CALL DHSPRD( n, nn, data%ng, data%ntotel, n, 1, n, nbprod, data%nel == 0, &
                    data%IVAR( 1 ), data%ISTAEV( 1 ), data%lstaev, &
                    data%ISTADH( 1 ), data%lstadh, data%INTVAR( 1 ), &
                    data%lntvar, data%IELING( 1 ), data%leling, data%IELVAR( 1 ), &

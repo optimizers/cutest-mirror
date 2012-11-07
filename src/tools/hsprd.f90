@@ -3,13 +3,13 @@
 !  ** FOR THE CRAY 2, LINES STARTING 'CDIR$ IVDEP' TELL THE COMPILER TO
 !     IGNORE POTENTIAL VECTOR DEPENDENCIES AS THEY ARE KNOWN TO BE O.K.
 
-      SUBROUTINE DHSPRD( n, nn, ng, ngel, nfree, nvar1, nvar2,  &
-                         nbprod, ALLLIN, ivar, istaev, lstaev, istadh,  &
-                         lstadh, intvar, lntvar, ieling, leling, ielvar,  &
+      SUBROUTINE DHSPRD( n, nn, ng, ntotel, nfree, nvar1, nvar2,  &
+                         nbprod, ALLLIN, IVAR, ISTAEV, lstaev, ISTADH,  &
+                         lstadh, INTVAR, lntvar, IELING, leling, IELVAR,  &
                          lelvar, ISTAJC, lnstjc, ISELTS, lnelts, ISPTRS,  &
                          lnptrs, IGCOLJ, lngclj, ISLGRP, lnlgrp, ISWKSP,  &
                          lnwksp, ISVGRP, lnvgrp, ISTAGV, lnstgv, IVALJR,  &
-                         lnvljr, itypee, litype, nnonnz, INONNZ, lnnnon, &
+                         lnvljr, ITYPEE, litype, nnonnz, INONNZ, lnnnon, &
                          IUSED, lniuse, INONZ2, lnnno2, ISYMMH, maxszh, &
                          P, Q, GVALS2, GVALS3, GRJAC, lgrjac, &
                          GSCALE, ESCALE, lescal, HUVALS, lhuval, &
@@ -31,7 +31,7 @@
 !  NICK GOULD, 10TH MAY 1989.
 !  FOR CGT PRODUCTIONS.
 
-      INTEGER :: n, nn, ng, ngel, nfree, nvar1, nvar2, nbprod
+      INTEGER :: n, nn, ng, ntotel, nfree, nvar1, nvar2, nbprod
       INTEGER :: nnonnz, maxszh, lgxeqx, lintre, litype
       INTEGER :: lstaev, lstadh, lntvar, leling, lelvar
       INTEGER :: lnstjc, lnelts, lnptrs, lngclj, lnlgrp, lnwksp
@@ -200,7 +200,7 @@
 ! --------------------- CASE 1. P is NOT SPARSE ---------------------
 
          IF ( DENSEP ) THEN
-            DO 280 iell = 1, ngel
+            DO 280 iell = 1, ntotel
                iel = IELING( iell )
                ig = ISLGRP( iell )
                nvarel = ISTAEV( iel + 1 ) - ISTAEV( iel )

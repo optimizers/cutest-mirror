@@ -69,11 +69,11 @@
 
       llo = gxeqx + data%ngng
       llwrk = llogic - llo
-      IF ( llwrk < data%nelnum ) THEN
-          IF ( iout > 0 ) WRITE( iout, 2010 ) data%nelnum - llwrk 
+      IF ( llwrk < data%nel ) THEN
+          IF ( iout > 0 ) WRITE( iout, 2010 ) data%nel - llwrk 
           STOP
       END IF
-      DO 410 i = 1, data%nelnum
+      DO 410 i = 1, data%nel
          data%LOGIC( i ) = .FALSE.
   410 CONTINUE
 

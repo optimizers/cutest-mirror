@@ -3,9 +3,9 @@
 !  ** FOR THE CRAY 2, LINES STARTING CDIR$ IVDEP TELL THE COMPILER TO
 !     IGNORE POTENTIAL VECTOR DEPENDENCIES AS THEY ARE KNOWN TO BE O.K.
 
-      SUBROUTINE ELGRD( n, ng, FIRSTG, icna, licna, istada, lstada, &
-                         ieling, leling, istadg, lstadg, itypee, litype, &
-                         istaev, lstaev, ielvar, lelvar, intvar, lntvar,  &
+      SUBROUTINE ELGRD( n, ng, FIRSTG, ICNA, licna, ISTADA, lstada, &
+                         IELING, leling, ISTADG, lstadg, ITYPEE, litype, &
+                         ISTAEV, lstaev, IELVAR, lelvar, INTVAR, lntvar,  &
                          ISVGRP, lnvgrp, ISTAJC, lnstjc, ISTAGV, lnstgv,  &
                          A, la, GVALS2, lgvals, GUVALS, lguval, GRAD, &
                          GSCALE, lgscal, ESCALE, lescal, GRJAC, lngrjc,  &

@@ -21,25 +21,6 @@
 !  Nick Gould, for CGT productions.
 !  November, 1991.
 
-
-! ---------------------------------------------------------------------
-
-
-
-
-! ---------------------------------------------------------------------
-
-
-
-! ---------------------------------------------------------------------
-
-
-! ---------------------------------------------------------------------
-
-
-
-
-
 !  Integer variables from the PRFCTS common block.
 
 
@@ -55,13 +36,13 @@
 !  There are non-trivial group functions.
 
       IF ( .NOT. GOTH ) THEN
-         DO 10 i = 1, MAX( data%nelnum, data%ng )
+         DO 10 i = 1, MAX( data%nel, data%ng )
            data%ICALCF( i ) = i
    10    CONTINUE
 
 !  Evaluate the element function values.
 
-         CALL ELFUN ( data%FUVALS, X, data%EPVALU( 1 ), data%nelnum, &
+         CALL ELFUN ( data%FUVALS, X, data%EPVALU( 1 ), data%nel, &
                       data%ITYPEE( 1 ), data%ISTAEV( 1 ), &
                       data%IELVAR( 1 ), data%INTVAR( 1 ), &
                       data%ISTADH( 1 ), data%ISTEP( 1 ), &
@@ -72,7 +53,7 @@
 
 !  Evaluate the element function values.
 
-         CALL ELFUN ( data%FUVALS, X, data%EPVALU( 1 ), data%nelnum, &
+         CALL ELFUN ( data%FUVALS, X, data%EPVALU( 1 ), data%nel, &
                       data%ITYPEE( 1 ), data%ISTAEV( 1 ), &
                       data%IELVAR( 1 ), data%INTVAR( 1 ), &
                       data%ISTADH( 1 ), data%ISTEP( 1 ), &
@@ -201,8 +182,24 @@
 
 !  Evaluate the product.
 
+
+!            CALL HSPRD_hessian_times_vector(                                  &
+!                n , ng, nel, S%ntotel, S%nvrels, S%nvargp,                    &
+!                inform%nvar  , nvar1 , S%nvar2 , S%nnonnz,                    &
+!                S%nbprod, S%alllin, IVAR , ISTAEV, ISTADH, INTVAR, IELING,    &
+!                IELVAR, ISWKSP( : S%ntotel ), INNONZ( : n ),                  &
+!                P , Q , GVALS( : , 2 )  , GVALS( : , 3 ),                     &
+!                GRJAC, GSCALE_used, ESCALE, FUVALS( : S%lnhuvl ), S%lnhuvl,   &
+!                GXEQX_used , INTREP, S%densep,                                &
+!                IGCOLJ, ISLGRP, ISVGRP, ISTAGV, IVALJR, ITYPEE, ISYMMH,       &
+!                ISTAJC, IUSED, LIST_elements, LINK_elem_uses_var,             &
+!                NZ_comp_w, W_ws, W_el, W_in, H_in, RANGE, S%skipg, KNDOFG )
+
+
+
+
       IF ( data%numcon > 0 ) THEN
-      CALL DHSPRD( n, nn, data%ng, data%ngel, n, 1, n, nbprod, data%nelnum == 0, &
+      CALL DHSPRD( n, nn, data%ng, data%ntotel, n, 1, n, nbprod, data%nel == 0, &
                    data%IVAR( 1 ), data%ISTAEV( 1 ), data%lstaev, &
                    data%ISTADH( 1 ), data%lstadh, data%INTVAR( 1 ), &
                    data%lntvar, data%IELING( 1 ), data%leling, data%IELVAR( 1 ), &
@@ -222,7 +219,7 @@
                    data%GXEQX( 1 ), data%lgxeqx, data%INTREP( 1 ), &
                    data%lintre, .TRUE., RANGE )
       ELSE
-      CALL DHSPRD( n, nn, data%ng, data%ngel, n, 1, n, nbprod, data%nelnum == 0, &
+      CALL DHSPRD( n, nn, data%ng, data%ntotel, n, 1, n, nbprod, data%nel == 0, &
                    data%IVAR( 1 ), data%ISTAEV( 1 ), data%lstaev, &
                    data%ISTADH( 1 ), data%lstadh, data%INTVAR( 1 ), &
                    data%lntvar, data%IELING( 1 ), data%leling, data%IELVAR( 1 ), &
