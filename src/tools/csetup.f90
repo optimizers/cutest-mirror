@@ -9,21 +9,21 @@
 !   fortran 77 version originally released in CUTE, 30th October, 1991
 !   fortran 2003 version released in CUTEst, 4th November 2012
 
-      SUBROUTINE CSETUP( data, input, out, n, m, X, BL, BU, nmax, EQUATN,      &
-                         LINEAR, V, CL, CU, mmax, efirst, lfirst, nvfrst,      &
-                         status )
+      SUBROUTINE CSETUP( data, status, input, out, n, m, X, X_l, X_u, EQUATN, &
+                         LINEAR, Y, C_l, C_u, efirst, lfirst, nvfrst )
       USE CUTEST
-      TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
-!  Dummy arguments
+!  dummy arguments
 
-      INTEGER :: input, out, n, m, nmax, mmax
-      INTEGER, INTENT( out ) :: status
-      LOGICAL :: efirst, lfirst, nvfrst
-      REAL ( KIND = wp ) :: X( nmax ), BL( nmax ), BU( nmax )
-      REAL ( KIND = wp ) :: V( mmax ), CL( mmax ), CU( mmax )
-      LOGICAL :: EQUATN( mmax ), LINEAR( mmax )
+      TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
+      INTEGER, INTENT( IN ) :: input, out
+      INTEGER, INTENT( INOUT ) :: n, m
+      INTEGER, INTENT( OUT ) :: status
+      LOGICAL, INTENT( IN ) :: efirst, lfirst, nvfrst
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: X, X_l, X_u
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( m ) :: Y, C_l, C_u
+      LOGICAL, INTENT( OUT ), DIMENSION( m ) :: EQUATN, LINEAR
 
 !  ------------------------------------------------------------
 !  set up the input data for the constrained optimization tools
@@ -31,7 +31,7 @@
 
 !  local variables
 
-      INTEGER :: ialgor, iprint, i, ig, j, jg, mend, meq, mlin
+      INTEGER :: ialgor, iprint, i, ig, j, jg, mend, meq, mlin, mmax
       INTEGER :: ii, k, iel, jwrk, kndv, nnlin, nend, neltyp, ngrtyp, itemp
       INTEGER :: alloc_status
       LOGICAL :: fdgrad, debug, ltemp
@@ -45,7 +45,7 @@
       EXTERNAL :: RANGE
 
       CALL CPU_TIME( data%sutime )
-      data%iout2 = out
+      data%out = out
       debug = .FALSE.
       debug = debug .AND. out > 0
       iprint = 0
@@ -70,13 +70,19 @@
           &     ' Execution terminating ' )" )
         status = 2 ; RETURN
       END IF
-      IF ( n > nmax ) THEN
+      IF ( SIZE( X ) < n ) THEN
         CLOSE( input )
-        IF ( out > 0 ) THEN
-          WRITE( out, 2000 ) 'X', 'nmax', n - nmax
-          WRITE( out, 2000 ) 'BL', 'nmax', n - nmax
-          WRITE( out, 2000 ) 'BU', 'nmax', n - nmax
-        END IF
+        IF ( out > 0 ) WRITE( out, 2000 ) 'X', n
+        status = 2 ; RETURN
+      END IF
+      IF ( SIZE( X_l ) < n ) THEN
+        CLOSE( input )
+        IF ( out > 0 ) WRITE( out, 2000 ) 'X_l', n
+        status = 2 ; RETURN
+      END IF
+      IF ( SIZE( X_u ) < n ) THEN
+        CLOSE( input )
+        IF ( out > 0 ) WRITE( out, 2000 ) 'X_u', n
         status = 2 ; RETURN
       END IF
 
@@ -90,7 +96,7 @@
       data%ngng = data%ng + data%ng
       data%nel1 = data%nel + 1
 
-!  partition the integer workspace
+!  allocate integer workspace
 
       ALLOCATE( data%ISTADG( data%ng1 ), STAT = alloc_status )
       IF ( alloc_status /= 0 ) THEN
@@ -219,7 +225,7 @@
         bad_alloc = 'data%VSCALE' ; GO TO 910
       END IF
 
-      ALLOCATE( data%GVALS( 3 * data%ng ), STAT = alloc_status )
+      ALLOCATE( data%GVALS( data%ng, 3 ), STAT = alloc_status )
       IF ( alloc_status /= 0 ) THEN
         bad_alloc = 'data%GVALS' ; GO TO 910
       END IF
@@ -269,6 +275,20 @@
       END IF
 
 !  record the lengths of arrays
+
+      data%ltypee = data%nel
+      data%ltypeg = data%ng
+      data%lstep  = data%nel1 
+      data%lstgp = data%ng1
+      data%lcalcf = MAX( data%nel, data%ng )
+      data%lcalcg = data%ng
+      data%lstaev = data%nel1
+      data%lelvar = data%nvrels
+      data%lntvar = data%nel1
+      data%lstadh = data%nel1
+      data%lvscal = n
+      data%lepvlu = data%nepvlu
+      data%lgpvlu = data%ngpvlu
 
 !     data%lstadg = MAX( 1, data%ng1 )
 !     data%lstada = MAX( 1, data%ng1 )
@@ -388,25 +408,25 @@
       READ( input, 1020 ) ( data%B( i ), i = 1, data%ng )
       IF ( debug ) WRITE( out, 1120 ) 'B     ', ( data%B( i ), i = 1, data%ng )
       IF ( ialgor <= 2 ) THEN
-         READ( input, 1020 ) ( BL( i ), i = 1, n )
-         IF ( debug ) WRITE( out, 1120 ) 'BL    ', ( BL( i ), i = 1, n )
-         READ( input, 1020 ) ( BU( i ), i = 1, n )
-         IF ( debug ) WRITE( out, 1120 ) 'BU    ', ( BU( i ), i = 1, n )
+         READ( input, 1020 ) ( X_l( i ), i = 1, n )
+         IF ( debug ) WRITE( out, 1120 ) 'X_l    ', ( X_l( i ), i = 1, n )
+         READ( input, 1020 ) ( X_u( i ), i = 1, n )
+         IF ( debug ) WRITE( out, 1120 ) 'X_u    ', ( X_u( i ), i = 1, n )
       ELSE
 
-!  use GVALS and FT as temporary storage for the constraint bounds.
+!  use GVALS and FT as temporary storage for the constraint bounds
 
-         READ( input, 1020 ) ( BL( i ), i = 1, n ),                            &
-           ( data%GVALS( i ), i = 1, data%ng )
-         IF ( debug ) WRITE( out, 1120 ) 'BL    ',                             &
-           ( BL( i ), i = 1, n ), ( data%GVALS( i ), i = 1, data%ng )
-         READ( input, 1020 ) ( BU( i ), i = 1, n ),                            &
+         READ( input, 1020 ) ( X_l( i ), i = 1, n ),                           &
+           ( data%GVALS( i, 1 ), i = 1, data%ng )
+         IF ( debug ) WRITE( out, 1120 ) 'X_l    ',                            &
+           ( X_l( i ), i = 1, n ), ( data%GVALS( i, 1 ), i = 1, data%ng )
+         READ( input, 1020 ) ( X_u( i ), i = 1, n ),                           &
            ( data%FT( i ), i = 1, data%ng )
-         IF ( debug ) WRITE( out, 1120 ) 'BU    ',                             &
-           ( BU( i ), i = 1, n ), ( data%FT( i ), i = 1, data%ng )
+         IF ( debug ) WRITE( out, 1120 ) 'X_u    ',                            &
+           ( X_u( i ), i = 1, n ), ( data%FT( i ), i = 1, data%ng )
       END IF
 
-!   input the starting point for the minimization.
+!   input the starting point for the minimization
 
       READ( input, 1020 ) ( X( i ), i = 1, n )
       IF ( debug ) WRITE( out, 1120 ) 'X     ', ( X( i ), i = 1, n )
@@ -416,55 +436,54 @@
             ( data%U( i ), i = 1, data%ng )
       END IF
 
-!  input the parameters in each group.
+!  input the parameters in each group
 
       READ( input, 1020 ) ( data%GPVALU( i ), i = 1, data%ngpvlu )
       IF ( debug ) WRITE( out, 1120 ) 'GPVALU',                                &
         ( data%GPVALU( i ), i = 1, data%ngpvlu )
 
-!  input the parameters in each individual element.
+!  input the parameters in each individual element
 
       READ( input, 1020 ) ( data%EPVALU( i ), i = 1, data%nepvlu )
       IF ( debug ) WRITE( out, 1120 ) 'EPVALU',                                &
         ( data%EPVALU( i ), i = 1, data%nepvlu )
 
-!  input the scale factors for the nonlinear elements.
+!  input the scale factors for the nonlinear elements
 
       READ( input, 1020 ) ( data%ESCALE( i ), i = 1, data%ntotel )
       IF ( debug ) WRITE( out, 1120 ) 'ESCALE',                                &
         ( data%ESCALE( i ), i = 1, data%ntotel )
 
-!  input the scale factors for the groups.
+!  input the scale factors for the groups
 
       READ( input, 1020 ) ( data%GSCALE( i ), i = 1, data%ng )
       IF ( debug ) WRITE( out, 1120 ) 'GSCALE',                                &
         ( data%GSCALE( i ), i = 1, data%ng )
 
-!  input the scale factors for the variables.
+!  input the scale factors for the variables
 
       READ( input, 1020 ) ( data%VSCALE( i ), i = 1, n )
       IF ( debug ) WRITE( out, 1120 ) 'VSCALE',                                &
         ( data%VSCALE( i ), i = 1, n )
 
-!  input the lower and upper bounds on the objective function.
+!  input the lower and upper bounds on the objective function
 
       READ( input, 1080 ) OBFBND( 1 ), OBFBND( 2 )
       IF ( debug ) WRITE( out, 1180 ) 'OBFBND', OBFBND( 1 ), OBFBND( 2 )
 
-!  input a logical array which says whether an element has internal
-!  variables.
+!  input a logical array which says whether an element has internal variables
 
       READ( input, 1030 ) ( data%INTREP( i ), i = 1, data%nel )
       IF ( debug ) WRITE( out, 1130 ) 'INTREP',                                &
         ( data%INTREP( i ), i = 1, data%nel )
 
-!  input a logical array which says whether a group is trivial.
+!  input a logical array which says whether a group is trivial
 
       READ( input, 1030 ) ( data%GXEQX( i ), i = 1, data%ng )
       IF ( debug ) WRITE( out, 1130 ) 'GXEQX ',                                &
         ( data%GXEQX( i ), i = 1, data%ng )
 
-!  input the names given to the groups and to the variables.
+!  input the names given to the groups and to the variables
 
       READ( input, 1040 ) ( data%GNAMES( i ), i = 1, data%ng )
       IF ( debug ) WRITE( out, 1140 ) 'GNAMES',                                &
@@ -473,7 +492,7 @@
       IF ( debug ) WRITE( out, 1140 ) 'VNAMES',                                &
         ( data%VNAMES( i ), i = 1, n )
 
-!  dummy input for the names given to the element and group types.
+!  dummy input for the names given to the element and group types
 
       READ( input, 1040 ) ( CHTEMP, i = 1, neltyp )
       READ( input, 1040 ) ( CHTEMP, i = 1, ngrtyp )
@@ -487,6 +506,8 @@
 !  Lagrange multipliers and set lower and upper bounds on any inequality 
 !  constraints. Reset KNDOFC to point to the list of constraint groups.
 
+      mmax = MIN( SIZE( LINEAR ), SIZE( EQUATN ),                              &
+                  SIZE( C_l ), SIZE( C_u ), SIZE( Y )  )
       m = 0
       DO i = 1, data%ng
         IF ( data%KNDOFC( i ) == 1 ) THEN
@@ -494,17 +515,15 @@
         ELSE
           m = m + 1
           IF ( m <= mmax ) THEN
-            V ( m ) = data%U( i )
+            Y( m ) = data%U( i )
             LINEAR( m ) =                                                      &
               data%GXEQX( i ) .AND. data%ISTADG( i ) >= data%ISTADG( i + 1 )
             IF ( data%KNDOFC( i ) == 2 ) THEN
               EQUATN( m ) = .TRUE.
-              CL ( m ) = zero
-              CU ( m ) = zero
+              C_l( m ) = zero ; C_u( m ) = zero
             ELSE
               EQUATN( m ) = .FALSE.
-              CL ( m ) = data%GVALS( i )
-              CU ( m ) = data%FT( i )
+              C_l( m ) = data%GVALS( i, 1 ) ; C_u( m ) = data%FT( i )
             END IF
           END IF
           data%KNDOFC( i ) = m
@@ -514,15 +533,29 @@
         "( /, ' ** SUBROUTINE CSETUP: ** Warning. The problem has',            &
        &      ' no general constraints. ', /,                                  &
        &      ' Other tools may be preferable' )" )
-      IF ( m > mmax ) THEN
+      IF ( SIZE( Y ) < m ) THEN
         CLOSE( input )
-        IF ( out > 0 ) THEN
-          WRITE( out, 2000 ) 'V', 'mmax', m - mmax
-          WRITE( out, 2000 ) 'CL', 'mmax', m - mmax
-          WRITE( out, 2000 ) 'CU', 'mmax', m - mmax
-          WRITE( out, 2000 ) 'EQUATN', 'mmax', m - mmax
-          WRITE( out, 2000 ) 'LINEAR', 'mmax', m - mmax
-        END IF
+        IF ( out > 0 ) WRITE( out, 2000 ) 'V', m
+        status = 2 ; RETURN
+      END IF
+      IF ( SIZE( C_l ) < m ) THEN
+        CLOSE( input )
+        IF ( out > 0 ) WRITE( out, 2000 ) 'C_l', m
+        status = 2 ; RETURN
+      END IF
+      IF ( SIZE( C_u ) < m ) THEN
+        CLOSE( input )
+        IF ( out > 0 ) WRITE( out, 2000 ) 'C_u', m
+        status = 2 ; RETURN
+      END IF
+      IF ( SIZE( EQUATN ) < m ) THEN
+        CLOSE( input )
+        IF ( out > 0 ) WRITE( out, 2000 ) 'EQUATN', m
+        status = 2 ; RETURN
+      END IF
+      IF ( SIZE( LINEAR ) < m ) THEN
+        CLOSE( input )
+        IF ( out > 0 ) WRITE( out, 2000 ) 'LINEAR', m
         status = 2 ; RETURN
       END IF
       data%numvar = n
@@ -633,15 +666,9 @@
                 itemp = data%IWORK( kndv + i )
                 data%IWORK( kndv + i ) = data%IWORK( kndv + j )
                 data%IWORK( kndv + j ) = itemp
-                atemp = BL ( i )
-                BL ( i ) = BL ( j )
-                BL ( j ) = atemp
-                atemp = BU ( i )
-                BU ( i ) = BU ( j )
-                BU ( j ) = atemp
-                atemp = X ( i )
-                X ( i ) = X ( j )
-                X ( j ) = atemp
+                atemp = X_l( i ) ; X_l( i ) = X_l( j ) ; X_l( j ) = atemp
+                atemp = X_u( i ) ; X_u( i ) = X_u( j ) ; X_u( j ) = atemp
+                atemp = X( i ) ; X( i ) = X( j ) ; X( j ) = atemp
                 atemp = data%VSCALE( i )
                 data%VSCALE( i ) = data%VSCALE( j )
                 data%VSCALE( j ) = atemp
@@ -703,15 +730,9 @@
                   itemp = data%IWORK( kndv + i )
                   data%IWORK( kndv + i ) = data%IWORK( kndv + j )
                   data%IWORK( kndv + j ) = itemp
-                  atemp = BL ( i )
-                  BL ( i ) = BL ( j )
-                  BL ( j ) = atemp
-                  atemp = BU ( i )
-                  BU ( i ) = BU ( j )
-                  BU ( j ) = atemp
-                  atemp = X ( i )
-                  X ( i ) = X ( j )
-                  X ( j ) = atemp
+                  atemp = X_l( i ) ; X_l( i ) = X_l( j ) ; X_l( j ) = atemp
+                  atemp = X_u( i ) ; X_u( i ) = X_u( j ) ; X_u( j ) = atemp
+                  atemp = X( i ) ; X( i ) = X( j ) ; X( j ) = atemp
                   atemp = data%VSCALE( i )
                   data%VSCALE( i ) = data%VSCALE( j )
                   data%VSCALE( j ) = atemp
@@ -750,15 +771,9 @@
                    itemp = data%IWORK( kndv + i )
                    data%IWORK( kndv + i ) = data%IWORK( kndv + j )
                    data%IWORK( kndv + j ) = itemp
-                   atemp = BL( i )
-                   BL ( i ) = BL( j )
-                   BL ( j ) = atemp
-                   atemp = BU ( i )
-                   BU ( i ) = BU( j )
-                   BU ( j ) = atemp
-                   atemp = X( i )
-                   X ( i ) = X( j )
-                   X ( j ) = atemp
+                   atemp = X_l( i ) ;  X_l( i ) = X_l( j ) ;  X_l( j ) = atemp
+                   atemp = X_u( i ) ;  X_u( i ) = X_u( j ) ;  X_u( j ) = atemp
+                   atemp = X( i ) ;  X( i ) = X( j ) ;  X( j ) = atemp
                    atemp = data%VSCALE( i )
                    data%VSCALE( i ) = data%VSCALE( j )
                    data%VSCALE( j ) = atemp
@@ -790,7 +805,7 @@
 !  allocate and initialize workspace
 
       data%firstg = .TRUE.
-      FDGRAD = .FALSE.
+      fdgrad = .FALSE.
 
       data%ntotel = data%ISTADG( data%ng + 1 ) - 1
       data%nvrels = data%ISTAEV( data%nel + 1 ) - 1
@@ -933,15 +948,9 @@
                  ltemp = EQUATN( i )
                  EQUATN( i ) = EQUATN( j )
                  EQUATN( j ) = ltemp
-                 atemp = V ( i )
-                 V ( i ) = V ( j )
-                 V ( j ) = atemp
-                 atemp = CL ( i )
-                 CL ( i ) = CL ( j )
-                 CL ( j ) = atemp
-                 atemp = CU ( i )
-                 CU ( i ) = CU ( j )
-                 CU ( j ) = atemp
+                 atemp = Y( i ) ; Y( i ) = Y( j ) ; Y( j ) = atemp
+                 atemp = C_l( i ) ; C_l( i ) = C_l( j ) ; C_l( j ) = atemp
+                 atemp = C_u( i ) ; C_u( i ) = C_u( j ) ; C_u( j ) = atemp
                  GO TO 120
                END IF
             END DO
@@ -986,15 +995,9 @@
                   ltemp = EQUATN( i )
                   EQUATN( i ) = EQUATN( j )
                   EQUATN( j ) = ltemp
-                  atemp = V ( i )
-                  V ( i ) = V ( j )
-                  V ( j ) = atemp
-                  atemp = CL ( i )
-                  CL ( i ) = CL ( j )
-                  CL ( j ) = atemp
-                  atemp = CU ( i )
-                  CU ( i ) = CU ( j )
-                  CU ( j ) = atemp
+                  atemp = Y( i ) ; Y( i ) = Y( j ) ; Y( j ) = atemp
+                  atemp = C_l( i ) ; C_l( i ) = C_l( j ) ; C_l( j ) = atemp
+                  atemp = C_u( i ) ; C_u( i ) = C_u( j ) ; C_u( j ) = atemp
                   GO TO 220
                 END IF
               END DO
@@ -1035,15 +1038,9 @@
                   ltemp = EQUATN( i )
                   EQUATN( i ) = EQUATN( j )
                   EQUATN( j ) = ltemp
-                  atemp = V ( i )
-                  V ( i ) = V ( j )
-                  V ( j ) = atemp
-                  atemp = CL ( i )
-                  CL ( i ) = CL ( j )
-                  CL ( j ) = atemp
-                  atemp = CU ( i )
-                  CU ( i ) = CU ( j )
-                  CU ( j ) = atemp
+                  atemp = Y( i ) ; Y( i ) = Y( j ) ; Y( j ) = atemp
+                  atemp = C_l( i ) ; C_l( i ) = C_l( j ) ; C_l( j ) = atemp
+                  atemp = C_u( i ) ; C_u( i ) = C_u( j ) ; C_u( j ) = atemp
                   GO TO 250
                 END IF
               END DO
@@ -1088,15 +1085,9 @@
                   ltemp = EQUATN( i )
                   EQUATN( i ) = EQUATN( j )
                   EQUATN( j ) = ltemp
-                  atemp = V ( i )
-                  V ( i ) = V ( j )
-                  V ( j ) = atemp
-                  atemp = CL ( i )
-                  CL ( i ) = CL ( j )
-                  CL ( j ) = atemp
-                  atemp = CU ( i )
-                  CU ( i ) = CU ( j )
-                  CU ( j ) = atemp
+                  atemp = Y( i ) ; Y( i ) = Y( j ) ; Y( j ) = atemp
+                  atemp = C_l( i ) ; C_l( i ) = C_l( j ) ; C_l( j ) = atemp
+                  atemp = C_u( i ) ; C_u( i ) = C_u( j ) ; C_u( j ) = atemp
                   GO TO 320
                 END IF
               END DO
@@ -1148,10 +1139,8 @@
  1130 FORMAT( 1X, A6, /, ( 1X, 72L1 ) )
  1140 FORMAT( 1X, A6, /, ( 1X, 8A10 ) )
  1180 FORMAT( 1X, A6, /, 1P, 2D16.6 )
- 2000 FORMAT( /, ' ** SUBROUTINE CSETUP: array length ', A,                    &
-              ' too small.', /, ' -- Miminimization abandoned.',               &
-              /, ' -- Increase the parameter ', A, ' by at least ', I0,        &
-                 ' and restart.' )
+ 2000 FORMAT( /, ' ** SUBROUTINE CSETUP: array length ', A, ' too small.', /, &
+              ' -- Increase the dimension to at least ', I0, ' and restart.' )
 
 !  End of subroutine CSETUP
 

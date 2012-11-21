@@ -1,10 +1,11 @@
 ! ( Last modified on Mon Feb 25 15:03:37 CST 2002 )
-      SUBROUTINE CSCFG ( data, n, m, X, lc, C, nnzj, lcjac, CJAC, &
+      SUBROUTINE CSCFG ( data, status, n, m, X, lc, C, nnzj, lcjac, CJAC, &
                          INDVAR, INDFUN, GRAD )
       USE CUTEST
       TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
       INTEGER :: n, m, lc, nnzj, lcjac
+      INTEGER, INTENT( OUT ) :: status
       LOGICAL :: GRAD
       INTEGER :: INDVAR( lcjac ), INDFUN( lcjac )
       REAL ( KIND = wp ) :: X( n ), C( lc ), CJAC ( lcjac )
@@ -17,7 +18,7 @@
 
 
       WRITE( iout, 1000 )
-      CALL CCFSG ( n, m, X, lc, C, nnzj, lcjac, CJAC, &
+      CALL CCFSG ( data, status, n, m, X, lc, C, nnzj, lcjac, CJAC, &
                    INDVAR, INDFUN, GRAD )
       RETURN
 

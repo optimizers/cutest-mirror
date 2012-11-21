@@ -1,376 +1,348 @@
-! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE CGR ( data, n, m, X, GRLAGF, lv, V, &
-                         G, JTRANS, lcjac1, lcjac2, CJAC )
-      USE CUTEST
-      TYPE ( CUTEST_data_type ) :: data
-      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: n, m, lv, lcjac1, lcjac2
-      LOGICAL :: GRLAGF, JTRANS
-      REAL ( KIND = wp ) :: X( n ), G( n ), V( lv ), CJAC( lcjac1, lcjac2 )
+! THIS VERSION: CUTEST 1.0 - 20/11/2012 AT 17:00 GMT.
 
+!-*-*-*-*-*-*-*-  C U T E S T    C G R    S U B R O U T I N E  -*-*-*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 77 version originally released in CUTE, November 1991
+!   fortran 2003 version released in CUTEst, 20th November 2012
+
+      SUBROUTINE CGR( data, status, n, m, X, grlagf, Y, G, jtrans,           &
+                      lcjac1, lcjac2, CJAC )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
+      INTEGER, INTENT( IN ) :: n, m, lcjac1, lcjac2
+      INTEGER, INTENT( OUT ) :: status
+      LOGICAL, INTENT( IN ) :: grlagf, jtrans
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( m ) :: Y
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: G
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lcjac1, lcjac2 ) :: CJAC
+
+!  ----------------------------------------------------------------
 !  Compute both the gradients of the objective, or Lagrangian, and
 !  general constraint functions of a problem initially written in
 !  Standard Input Format (SIF).
 
-!  G	 is an array which gives the value of the gradient of
-!	 the objective function evaluated at X (GRLAGF = .FALSE.)
-!        of of the Lagrangian function evaluated at X and V
-! (GRLAGF = .TRUE.),
+!  G	 is an array which gives the value of the gradient of the
+!	 objective function evaluated at X (grlagf = .FALSE.) or of
+!        the Lagrangian function evaluated at X and V (grlagf = .TRUE.)
 
 !  CJAC	 is a two-dimensional array of dimension ( lcjac1, lcjac2 )
 !	 which gives the value of the Jacobian matrix of the
 !	 constraint functions, or its transpose, evaluated at X.
-!	 If JTRANS is .TRUE., the i,j-th component of the array
+!	 If jtrans is .TRUE., the i,j-th component of the array
 !        will contain the i-th derivative of the j-th constraint
-!        function. Otherwise, if JTRANS is .FALSE., the i,j-th
+!        function. Otherwise, if jtrans is .FALSE., the i,j-th
 !        component of the array will contain the j-th derivative
 !        of the i-th constraint function.
+!  ----------------------------------------------------------------
 
-!  Based on the minimization subroutine data%laNCELOT/SBMIN
-!  by Conn, Gould and Toint.
+!  local variables
 
-!  Nick Gould, for CGT productions,
-!  November 1991.
-
-
-! ---------------------------------------------------------------------
-
-
-
-
-! ---------------------------------------------------------------------
-
-
-
-! ---------------------------------------------------------------------
-
-
-! ---------------------------------------------------------------------
-
-!  integer variables from the GLOBAL common block.
-
-
-!  integer variables from the LOCAL common block.
-
-
-!  Integer variables from the PRFCTS common block.
-
-
-!  local variables.
-
-      INTEGER :: i, j, iel, k, ig, ii, ig1, l, jj, ll, icon
-      INTEGER :: nin, nvarel, nelow, nelup, istrgv, iendgv
-      INTEGER :: ifstat, igstat
-      LOGICAL :: NONTRV
-!D    EXTERNAL           SETVL, SETVI, RANGE 
-      REAL ( KIND = wp ) :: ftt, one, zero, gi, scalee, gii
-      PARAMETER ( zero = 0.0_wp, one = 1.0_wp )
+      INTEGER :: i, j, iel, k, ig, ii, ig1, l, jj, ll, icon, nin, nvarel
+      INTEGER :: nelow, nelup, istrgv, iendgv, ifstat, igstat
+      LOGICAL :: nontrv
+      EXTERNAL :: RANGE 
+      REAL ( KIND = wp ) :: ftt, gi, scalee, gii
 
 !  Check input parameters.
 
-!                            dimension-checking.
+!  dimension-checking.
+
       IF ( data%numcon > 0 ) THEN
-         IF ( JTRANS ) THEN
-            IF ( lcjac1 < n .OR. lcjac2 < m ) THEN
-               IF ( lcjac1 < n ) WRITE( iout, 2000 )
-               IF ( lcjac2 < m ) WRITE( iout, 2010 )
-               STOP
-            END IF
-         ELSE
-            IF ( lcjac1 < m .OR. lcjac2 < n ) THEN
-               IF ( lcjac1 < m ) WRITE( iout, 2000 )
-               IF ( lcjac2 < n ) WRITE( iout, 2010 )
-               STOP
-            END IF
+        IF ( JTRANS ) THEN
+          IF ( lcjac1 < n .OR. lcjac2 < m ) THEN
+            IF ( lcjac1 < n .AND. data%out > 0 ) WRITE( data%out, 2000 )
+            IF ( lcjac2 < m .AND. data%out > 0 ) WRITE( data%out, 2010 )
+              status = 2 ; RETURN
+          END IF
+        ELSE
+          IF ( lcjac1 < m .OR. lcjac2 < n ) THEN
+            IF ( lcjac1 < m .AND. data%out > 0 ) WRITE( data%out, 2000 )
+            IF ( lcjac2 < n .AND. data%out > 0) WRITE( data%out, 2010 )
+              status = 2 ; RETURN
          END IF
+        END IF
       END IF
 
 !  there are non-trivial group functions.
 
-      DO 10 i = 1, MAX( data%nel, data%ng )
+      DO i = 1, MAX( data%nel, data%ng )
         data%ICALCF( i ) = i
-   10 CONTINUE
+      END DO
 
 !  evaluate the element function values.
 
-      CALL ELFUN ( data%FUVALS, X, data%EPVALU( 1 ), data%nel, &
-                   data%ITYPEE( 1 ), data%ISTAEV( 1 ), &
-                   data%IELVAR( 1 ), data%INTVAR( 1 ), &
-                   data%ISTADH( 1 ), data%ISTEP( 1 ), &
-                   data%ICALCF( 1 ),  &
-                   data%lintre, data%lstaev, data%lelvar, data%lntvar, data%lstadh,  &
-                   data%lntvar, data%lintre, lfuval, data%lvscal, data%lepvlu,  &
-                   1, ifstat )
+      CALL ELFUN( data%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,          &
+                  data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,          &
+                  data%ISTEP, data%ICALCF, data%ltypee, data%lstaev,           &
+                  data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
+                  data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,          &
+                  1, ifstat )
 
-!  evaluate the element function values.
+! evaluate the element function derivatives
 
-      CALL ELFUN ( data%FUVALS, X, data%EPVALU( 1 ), data%nel, &
-                   data%ITYPEE( 1 ), data%ISTAEV( 1 ), &
-                   data%IELVAR( 1 ), data%INTVAR( 1 ), &
-                   data%ISTADH( 1 ), data%ISTEP( 1 ), &
-                   data%ICALCF( 1 ),  &
-                   data%lintre, data%lstaev, data%lelvar, data%lntvar, data%lstadh,  &
-                   data%lntvar, data%lintre, lfuval, data%lvscal, data%lepvlu,  &
-                   2, ifstat )
+      CALL ELFUN( data%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,          &
+                  data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,          &
+                  data%ISTEP, data%ICALCF, data%ltypee, data%lstaev,           &
+                  data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
+                  data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,          &
+                  2, ifstat )
 
 !  compute the group argument values ft.
 
-      DO 40 ig = 1, data%ng
-         ftt = - data%B( ig )
+      DO ig = 1, data%ng
+        ftt = - data%B( ig )
 
 !  include the contribution from the linear element.
 
-         DO 20 j = data%ISTADA( ig ), data%ISTADA( ig + 1 ) - 1
-            ftt = ftt + data%A( j ) * X( data%ICNA( j ) )
-   20    CONTINUE
+        DO j = data%ISTADA( ig ), data%ISTADA( ig + 1 ) - 1
+          ftt = ftt + data%A( j ) * X( data%ICNA( j ) )
+        END DO
 
 !  include the contributions from the nonlinear elements.
 
-         DO 30 j = data%ISTADG( ig ), data%ISTADG( ig + 1 ) - 1
-            ftt = ftt + data%ESCALE( j ) * data%FUVALS( data%IELING( j ) )
-   30    CONTINUE
-         data%FT( ig ) = ftt
+        DO j = data%ISTADG( ig ), data%ISTADG( ig + 1 ) - 1
+          ftt = ftt + data%ESCALE( j ) * data%FUVALS( data%IELING( j ) )
+        END DO
+        data%FT( ig ) = ftt
 
-!  Record the derivatives of trivial groups.
+!  record the derivatives of trivial groups
 
-         IF ( data%GXEQX( ig ) ) data%GVALS( data%ng + ig ) = one
-   40 CONTINUE
+        IF ( data%GXEQX( ig ) ) data%GVALS( ig, 2 ) = 1.0_wp
+      END DO
 
 !  evaluate the group derivative values.
 
-      IF ( .NOT. data%altriv ) CALL GROUP ( data%GVALS( 1 ), data%ng, &
-            data%FT( 1 ), data%GPVALU( 1 ), data%ng, &
-            data%ITYPEG( 1 ), data%ISTGP( 1 ), &
-            data%ICALCF( 1 ), &
-            data%lcalcg, data%ng1, data%lcalcg, data%lcalcg, data%lgpvlu, &
-            .TRUE., igstat )
+      IF ( .NOT. data%altriv )                                                 &
+        CALL GROUP( data%GVALS, data%ng, data%FT, data%GPVALU, data%ng,        &
+                    data%ITYPEG, data%ISTGP, data%ICALCF, data%ltypeg,         &
+                    data%lstgp, data%lcalcf, data%lcalcg, data%lgpvlu,         &
+                     .TRUE., igstat )
 
-!  For unconstrained problems, skip construction of gradient 
-!  and Jacobian. Call ELGRD instead.
+!  for unconstrained problems, skip construction of gradient and Jacobian. 
+!  Call ELGRD instead
 
       IF ( data%numcon > 0 ) THEN
 
-!  Compute the gradient values. Initialize the gradient and
-!  Jacobian (or its transpose) as zero.
+!  compute the gradient values. Initialize the gradient and Jacobian (or its 
+!  transpose) as zero
 
-         DO 120 j = 1, n
-            G( j ) = zero
-            DO 110 i = 1, m
-               IF ( JTRANS ) THEN
-                  CJAC( j, i ) = zero
-               ELSE
-                  CJAC( i, j ) = zero
-               END IF
-  110       CONTINUE
-  120    CONTINUE
+        G( : n ) = 0.0_wp
+        IF ( jtrans ) THEN
+          CJAC( : n, : m ) = 0.0_wp
+        ELSE
+          CJAC( : m, : n ) = 0.0_wp
+        END IF
 
-!  Consider the IG-th group.
+!  consider the ig-th group
 
-         DO 290 ig = 1, data%ng
-            ig1 = ig + 1
-            icon = data%KNDOFC( ig )
-            istrgv = data%IWORK( data%lstagv + ig )
-            iendgv = data%IWORK( data%lstagv + ig1 ) - 1
-            nelow = data%ISTADG( ig )
-            nelup = data%ISTADG( ig1 ) - 1
-            NONTRV = .NOT. data%GXEQX( ig )
+        DO ig = 1, data%ng
+          ig1 = ig + 1
+          icon = data%KNDOFC( ig )
+          istrgv = data%IWORK( data%lstagv + ig )
+          iendgv = data%IWORK( data%lstagv + ig1 ) - 1
+          nelow = data%ISTADG( ig )
+          nelup = data%ISTADG( ig1 ) - 1
+          nontrv = .NOT. data%GXEQX( ig )
 
-!  Compute the first derivative of the group.
+!  compute the first derivative of the group
 
-            gi = data%GSCALE( ig )
-            IF ( icon == 0 ) THEN
-               gii = gi
-            ELSE
-               IF ( GRLAGF ) gii = gi * V( data%KNDOFC( ig ) )
+          gi = data%GSCALE( ig )
+          IF ( icon == 0 ) THEN
+            gii = gi
+          ELSE
+            IF ( grlagf ) gii = gi * V( data%KNDOFC( ig ) )
+          END IF
+          IF ( nontrv ) THEN
+            gi = gi  * data%GVALS( ig, 2 )
+            IF ( grlagf ) gii = gii * data%GVALS( ig, 2 )
+          END IF
+
+!  this is the first gradient evaluation or the group has nonlinear elements
+
+          IF ( data%firstg .OR. nelow <= nelup ) THEN
+            data%WRK( data%IWORK( data%lsvgrp + istrgv :                       &
+                                  data%lsvgrp + iendgv ) ) = 0.0_wp
+
+!  loop over the group's nonlinear elements
+
+            DO ii = nelow, nelup
+              iel = data%IELING( ii )
+              k = data%INTVAR( iel )
+              l = data%ISTAEV( iel )
+              nvarel = data%ISTAEV( iel + 1 ) - l
+              scalee = data%ESCALE( ii )
+              IF ( data%INTREP( iel ) ) THEN
+
+!  the iel-th element has an internal representation
+
+                nin = data%INTVAR( iel + 1 ) - k
+                CALL RANGE ( iel, .TRUE., data%FUVALS( k ),                    &
+                             data%WRK( n + 1 ), nvarel, nin,                   &
+                             data%ITYPEE( iel ), nin, nvarel )
+!DIR$ IVDEP
+                DO i = 1, nvarel
+                  j = data%IELVAR( l )
+                  data%WRK( j ) = data%WRK( j ) + scalee * data%WRK( n + i )
+                   l = l + 1
+                END DO
+              ELSE
+
+!  the iel-th element has no internal representation
+
+!DIR$ IVDEP
+                DO i = 1, nvarel
+                  j = data%IELVAR( l )
+                  data%WRK( j ) = data%WRK( j ) + scalee * data%FUVALS( k )
+                  k = k + 1 ; l = l + 1
+                END DO
+              END IF
+            END DO
+
+!  include the contribution from the linear element
+
+!DIR$ IVDEP
+            DO k = data%ISTADA( ig ), data%ISTADA( ig1 ) - 1
+              j = data%ICNA( k )
+              data%WRK( j ) = data%WRK( j ) + data%A( k )
+            END DO
+
+!  allocate a gradient
+
+!DIR$ IVDEP
+            DO i = istrgv, iendgv
+              ll = data%IWORK( data%lsvgrp + i )
+
+!  the group belongs to the objective function
+
+              IF ( icon == 0 ) THEN
+                G( ll ) = G( ll ) + gi * data%WRK( ll )
+
+!  the group defines a constraint
+
+              ELSE
+                IF ( jtrans ) THEN
+                  CJAC( ll, icon ) =   gi * data%WRK( ll )
+                ELSE
+                  CJAC( icon, ll ) =   gi * data%WRK( ll )
+                END IF
+                IF ( grlagf ) G( ll ) = G( ll ) + gii * data%WRK( ll )
+              END IF
+
+!  if the group is non-trivial, also store the nonzero entries of the
+!  gradient of the function in GRJAC
+
+              IF ( nontrv ) THEN
+                jj = data%IWORK( data%lstajc + ll )
+                data%FUVALS( data%lgrjac + jj ) = data%WRK( ll )
+
+!  increment the address for the next nonzero in the column of the Jacobian 
+!  for variable ll
+
+                data%IWORK( data%lstajc + ll ) = jj + 1
+              END IF
+            END DO
+
+!  this is not the first gradient evaluation and there is only a linear element
+
+          ELSE
+
+!  allocate a gradient
+
+!DIR$ IVDEP
+            DO k = data%ISTADA( ig ), data%ISTADA( ig1 ) - 1
+              ll = data%ICNA( k )
+
+!  the group belongs to the objective function
+
+              IF ( icon == 0 ) THEN
+                G( ll ) = G( ll ) + gi * data%A( k )
+
+!  the group defines a constraint
+
+              ELSE
+                IF ( jtrans ) THEN
+                  CJAC( ll, icon ) = gi * data%A( k )
+                ELSE
+                  CJAC( icon, ll ) = gi * data%A( k )
+                END IF
+                IF ( grlagf ) G( ll ) = G( ll ) + gii * data%A( k )
+              END IF
+            END DO
+
+!  the group is non-trivial; increment the starting addresses for the groups 
+!  used by each variable in the (unchanged) linear element to avoid resetting 
+!  the nonzeros in the Jacobian
+
+            IF ( nontrv ) THEN
+!DIR$ IVDEP
+              DO i = istrgv, iendgv
+                ll = data%IWORK( data%lsvgrp + i )
+                data%IWORK( data%lstajc + ll )                                 &
+                  = data%IWORK( data%lstajc + ll ) + 1
+              END DO
             END IF
-            IF ( NONTRV ) THEN
-               gi = gi  * data%GVALS( data%ng + ig )
-               IF ( GRLAGF ) gii = gii * data%GVALS( data%ng + ig )
-            END IF
+          END IF
+        END DO
 
-!  This is the first gradient evaluation or the group has nonlinear
-!  elements.
+!  reset the starting addresses for the lists of groups using each variable to 
+!  their values on entry
 
-            IF ( data%firstg .OR. nelow <= nelup ) THEN
-      CALL SETVI( iendgv - istrgv + 1, data%WRK( 1 ), &
-                            data%IWORK( data%lsvgrp + istrgv ), zero )
-
-!  Loop over the group's nonlinear elements.
-
-               DO 150 ii = nelow, nelup
-                  iel = data%IELING( ii )
-                  k = data%INTVAR( iel )
-                  l = data%ISTAEV( iel )
-                  nvarel = data%ISTAEV( iel + 1 ) - l
-                  scalee = data%ESCALE( ii )
-                  IF ( data%INTREP( iel ) ) THEN
-
-!  The IEL-th element has an internal representation.
-
-                     nin = data%INTVAR( iel + 1 ) - k
-                     CALL RANGE ( iel, .TRUE., data%FUVALS( k ), &
-                                  data%WRK( n + 1 ), nvarel, nin, &
-                                  data%ITYPEE( iel ), &
-                                  nin, nvarel )
-!DIR$ IVDEP
-                     DO 130 i = 1, nvarel
-                        j = data%IELVAR( l )
-                        data%WRK( j ) = data%WRK( j ) + &
-                                           scalee * data%WRK( n + i )
-                        l = l + 1
-  130                CONTINUE
-                  ELSE
-
-!  The IEL-th element has no internal representation.
-
-!DIR$ IVDEP
-                     DO 140 i = 1, nvarel
-                        j = data%IELVAR( l )
-                        data%WRK( j ) = data%WRK( j ) + &
-                                           scalee * data%FUVALS( k )
-                        k = k + 1
-                        l = l + 1
-  140                CONTINUE
-                  END IF
-  150          CONTINUE
-
-!  Include the contribution from the linear element.
-
-!DIR$ IVDEP
-               DO 160 k = data%ISTADA( ig ), &
-                                  data%ISTADA( ig1 ) - 1
-                  j = data%ICNA( k )
-                  data%WRK( j ) = data%WRK( j ) + data%A( k )
-  160          CONTINUE
-
-!  Allocate a gradient.
-
-!DIR$ IVDEP
-               DO 190 i = istrgv, iendgv
-                  ll = data%IWORK( data%lsvgrp + i )
-
-!  The group belongs to the objective function.
-
-                  IF ( icon == 0 ) THEN
-                     G( ll ) = G( ll ) + gi * data%WRK( ll )
-
-!  The group defines a constraint.
-
-                  ELSE
-                     IF ( JTRANS ) THEN
-                        CJAC( ll, icon ) =   gi * data%WRK( ll )
-                     ELSE
-                        CJAC( icon, ll ) =   gi * data%WRK( ll )
-                     END IF
-                     IF ( GRLAGF ) &
-                        G( ll ) = G( ll ) + gii * data%WRK( ll )
-                  END IF
-
-!  If the group is non-trivial, also store the nonzero entries of the
-!  gradient of the function in GRJAC.
-
-                  IF ( NONTRV ) THEN
-                     jj = data%IWORK( data%lstajc + ll )
-                     data%FUVALS( data%lgrjac + jj ) = data%WRK( ll )
-
-!  Increment the address for the next nonzero in the column of
-!  the jacobian for variable LL.
-
-                     data%IWORK( data%lstajc + ll ) = jj + 1
-                  END IF
-  190          CONTINUE
-
-!  This is not the first gradient evaluation and there is only a linear
-!  element.
-
-            ELSE
-
-!  Allocate a gradient.
-
-!DIR$ IVDEP
-               DO 210 k = data%ISTADA( ig ), data%ISTADA( ig1 ) - 1
-                  ll = data%ICNA( k )
-
-!  The group belongs to the objective function.
-
-                  IF ( icon == 0 ) THEN
-                     G( ll ) = G( ll ) + gi * data%A( k )
-
-!  The group defines a constraint.
-
-                  ELSE
-                     IF ( JTRANS ) THEN
-                        CJAC( ll, icon ) =            gi * data%A( k )
-                     ELSE
-                        CJAC( icon, ll ) =            gi * data%A( k )
-                     END IF
-                     IF ( GRLAGF ) G( ll ) = G( ll ) + gii * data%A( k )
-                  END IF
-  210          CONTINUE
-
-!  The group is non-trivial; increment the starting addresses for
-!  the groups used by each variable in the (unchanged) linear
-!  element to avoid resetting the nonzeros in the jacobian.
-
-               IF ( NONTRV ) THEN
-!DIR$ IVDEP
-                  DO 220 i = istrgv, iendgv
-                     ll = data%IWORK( data%lsvgrp + i )
-                     data%IWORK( data%lstajc + ll ) = data%IWORK( data%lstajc + ll ) + 1
-  220             CONTINUE
-               END IF
-            END IF
-  290    CONTINUE
-
-!  Reset the starting addresses for the lists of groups using
-!  each variable to their values on entry.
-
-         DO 300 i = n, 2, - 1
-            data%IWORK( data%lstajc + i ) = data%IWORK( data%lstajc + i - 1 )
-  300    CONTINUE
-         data%IWORK( data%lstajc + 1 ) = 1
+        DO i = n, 2, - 1
+           data%IWORK( data%lstajc + i ) = data%IWORK( data%lstajc + i - 1 )
+        END DO
+        data%IWORK( data%lstajc + 1 ) = 1
       ELSE
 
-!  Compute the gradient value.
+!  compute the gradient value
 
-      CALL ELGRD( n, data%ng, data%firstg, data%ICNA( 1 ), data%licna, &
-                      data%ISTADA( 1 ), data%lstada, data%IELING( 1 ), &
-                      data%leling, data%ISTADG( 1 ), data%lstadg, &
-                      data%ITYPEE( 1 ), data%lintre, &
-                      data%ISTAEV( 1 ), data%lstaev, data%IELVAR( 1 ), &
-                      data%lelvar, data%INTVAR( 1 ), data%lntvar, &
+        CALL ELGRD( n, data%ng, data%firstg, data%ICNA, data%licna, &
+                      data%ISTADA, data%lstada, data%IELING, &
+                      data%leling, data%ISTADG, data%lstadg, &
+                      data%ITYPEE, data%lintre, &
+                      data%ISTAEV, data%lstaev, data%IELVAR, &
+                      data%lelvar, data%INTVAR, data%lntvar, &
                       data%IWORK( data%lsvgrp + 1 ), &
                       data%lnvgrp, data%IWORK( data%lstajc + 1 ), data%lnstjc, &
-                      data%IWORK( data%lstagv + 1 ), data%lnstgv, data%A( 1 ), data%la, &
-                      data%GVALS( data%ng + 1 ), data%lgvals, &
+                      data%IWORK( data%lstagv + 1 ), &
+                      data%lnstgv, data%A, data%la, &
+                      data%GVALS(  : , 2 ), data%lgvals, &
                       data%FUVALS, data%lnguvl, data%FUVALS( data%lggfx + 1 ), &
-                      data%GSCALE( 1 ), data%lgscal, &
-                      data%ESCALE( 1 ), data%lescal, data%FUVALS( data%lgrjac + 1 ), &
-                      data%lngrjc, data%WRK( 1 ), data%WRK( n + 1 ), data%maxsel, &
-                      data%GXEQX( 1 ), data%lgxeqx, &
-                      data%INTREP( 1 ), data%lintre, RANGE )
+                      data%GSCALE, data%lgscal, &
+                      data%ESCALE, data%lescal, &
+                      data%FUVALS( data%lgrjac + 1 ), &
+                      data%lngrjc, data%WRK, data%WRK( n + 1 ), &
+                      data%maxsel, data%GXEQX, data%lgxeqx, &
+                      data%INTREP, data%lintre, RANGE )
 
-!  Store the gradient value.
+!  store the gradient value
 
-         DO 400 i = 1, n
-            G( i ) = data%FUVALS( data%lggfx + i )
-  400    CONTINUE
+        DO i = 1, n
+          G( i ) = data%FUVALS( data%lggfx + i )
+        END DO
       END IF
       data%firstg = .FALSE.
 
-!  Update the counters for the report tool.
+!  update the counters for the report tool
 
       data%nc2og = data%nc2og + 1
       data%nc2cg = data%nc2cg + data%pnc
+      status = 0
       RETURN
 
-! Non-executable statements.
+!  non-executable statements
 
- 2000 FORMAT( ' ** SUBROUTINE CGR: Increase the leading dimension', &
-              ' of CJAC ' )
- 2010 FORMAT( ' ** SUBROUTINE CGR: Increase the second dimension', &
-              ' of CJAC ' )
+ 2000 FORMAT( ' ** SUBROUTINE CGR: Increase the leading dimension of CJAC ' )
+ 2010 FORMAT( ' ** SUBROUTINE CGR: Increase the second dimension of CJAC ' )
 
-!  end of CGR.
+!  end of subroutine CGR
 
-      END
+      END SUBROUTINE CGR

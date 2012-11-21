@@ -1,10 +1,11 @@
 ! ( Last modified on Mon Feb 25 15:03:37 CST 2002 )
-      SUBROUTINE CSCIFG ( data, n, icon, X, ci, nnzgci, lgci, GCI, &
+      SUBROUTINE CSCIFG ( data, status, n, icon, X, ci, nnzgci, lgci, GCI, &
                           INDVAR, GRAD )
       USE CUTEST
       TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
       INTEGER :: n, icon, nnzgci, lgci
+      INTEGER, INTENT( OUT ) :: status
       LOGICAL :: GRAD
       INTEGER :: INDVAR( lgci )
       REAL ( KIND = wp ) :: ci
@@ -18,7 +19,7 @@
 
 
       WRITE( iout, 1000 )
-      CALL CCIFSG( n, icon, X, ci, nnzgci, lgci, GCI, &
+      CALL CCIFSG( data, status, n, icon, X, ci, nnzgci, lgci, GCI, &
                    INDVAR, GRAD )
       RETURN
 

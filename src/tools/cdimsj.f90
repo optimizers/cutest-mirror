@@ -1,8 +1,9 @@
 ! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE CDIMSJ( data, nnzj )
+      SUBROUTINE CDIMSJ( data, status, nnzj )
       USE CUTEST
       TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+      INTEGER, INTENT( OUT ) :: status
       INTEGER :: nnzj
 
 !  Compute the space required to store the Jacobian matrix of the 
@@ -57,6 +58,7 @@
 !  Add space for the (dense) gradient of the objective function.
 
       nnzj = nnzj + data%numvar
+      status = 0
       RETURN
 
 !  end of CDIMSJ.

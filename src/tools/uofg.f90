@@ -1,9 +1,10 @@
 ! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE UOFG ( data, n, X, f, G, GRAD )
+      SUBROUTINE UOFG ( data, status, n, X, f, G, GRAD )
       USE CUTEST
       TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
       INTEGER :: n
+      INTEGER, INTENT( OUT ) :: status
       REAL ( KIND = wp ) :: f
       REAL ( KIND = wp ) :: X( n ), G( n )
       LOGICAL :: GRAD
@@ -22,166 +23,137 @@
 !  Ingrid Bongartz 
 !  February 1993.
 
-
-! ---------------------------------------------------------------------
-
-
-
-
-! ---------------------------------------------------------------------
-
-
-
-! ---------------------------------------------------------------------
-
-
-! ---------------------------------------------------------------------
-
-!  integer variables from the GLOBAL common block.
-
-      INTEGER :: ESCALE, GSCALE, VSCALE, GVALS, XT, DGRAD 
-
-!  integer variables from the LOCAL common block.
-
-
-!  integer variables from the PRFCTS common block.
-
-
 !  local variables.
 
       INTEGER :: i, j, ig, ifstat, igstat
-      REAL ( KIND = wp ) :: ftt, DDOT, one, zero
-      PARAMETER ( zero = 0.0_wp, one = 1.0_wp ) 
+      REAL ( KIND = wp ) :: ftt
       EXTERNAL :: RANGE 
 
 !  There are non-trivial group functions.
 
-      DO 10 i = 1, MAX( data%nel, data%ng )
+      DO i = 1, MAX( data%nel, data%ng )
         data%ICALCF( i ) = i
-   10 CONTINUE
+      END DO
 
-!  Evaluate the element function values.
+!  evaluate the element function values
 
-      CALL ELFUN ( data%FUVALS, X, data%EPVALU( 1 ), data%nel, &
-                   data%ITYPEE( 1 ), data%ISTAEV( 1 ), &
-                   data%IELVAR( 1 ), data%INTVAR( 1 ), &
-                   data%ISTADH( 1 ), data%ISTEP( 1 ), &
-                   data%ICALCF( 1 ),  &
-                   data%lintre, data%lstaev, data%lelvar, data%lntvar, data%lstadh,  &
-                   data%lntvar, data%lintre, lfuval, data%lvscal, data%lepvlu,  &
-                   1, ifstat )
+      CALL ELFUN( data%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,          &
+                  data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,          &
+                  data%ISTEP, data%ICALCF, data%ltypee, data%lstaev,           &
+                  data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
+                  data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,          &
+                  1, ifstat )
 
-!  Compute the group argument values ft.
+!  compute the group argument values ft
 
-      DO 100 ig = 1, data%ng
-         ftt = - data%B( ig )
+      DO ig = 1, data%ng
+        ftt = - data%B( ig )
 
-!  Include the contribution from the linear element 
-!  only if the variable belongs to the first n variables.
+!  include the contribution from the linear element only if the variable 
+!  belongs to the first n variables
 
-         DO 30 i = data%ISTADA( ig ), data%ISTADA( ig + 1 ) - 1
-            j = data%ICNA( i ) 
-            IF ( j <= n )  &
-               ftt = ftt + data%A( i ) * X( j )
-   30    CONTINUE
+        DO i = data%ISTADA( ig ), data%ISTADA( ig + 1 ) - 1
+          j = data%ICNA( i ) 
+          IF ( j <= n ) ftt = ftt + data%A( i ) * X( j )
+        END DO
 
-!  Include the contributions from the nonlinear elements.
+!  include the contributions from the nonlinear elements
 
-         DO 60 i = data%ISTADG( ig ), data%ISTADG( ig + 1 ) - 1
-            ftt = ftt + &
-                   data%ESCALE( i ) * data%FUVALS( data%IELING( i ) )
-   60    CONTINUE
-         data%FT( ig ) = ftt
+        DO i = data%ISTADG( ig ), data%ISTADG( ig + 1 ) - 1
+          ftt = ftt + data%ESCALE( i ) * data%FUVALS( data%IELING( i ) )
+        END DO
+        data%FT( ig ) = ftt
 
-!  Record the derivatives of trivial groups.
+!  record the derivatives of trivial groups
 
-         IF ( data%GXEQX( ig ) ) data%GVALS( data%ng + ig ) = one
-  100 CONTINUE
+        IF ( data%GXEQX( ig ) ) data%GVALS( ig, 2 ) = 1.0_wp
+      END DO
 
-!  Compute the group function values.
+!  compute the group function values
 
-!  All group functions are trivial.
+!  all group functions are trivial
 
       IF ( data%altriv ) THEN
-!D       f = DDOT( data%ng, data%GSCALE( 1 ), 1, data%FT( 1 ), 1 )
-      CALL DCOPY( data%ng, data%FT( 1 ), 1, data%GVALS( 1 ), 1 )
-      CALL SETVL( data%ng, data%GVALS( data%ng + 1 ), 1, one )
+        f = DOT_PRODUCT( data%GSCALE( : data%ng ), data%FT( : data%ng ) )
+        data%GVALS( : data%ng, 1 ) = data%FT( : data%ng )
+        data%GVALS( : data%ng, 2 ) = 1.0_wp
+
+!  evaluate the group function values
+
       ELSE
+        CALL GROUP( data%GVALS, data%ng, data%FT, data%GPVALU, data%ng,        &
+                    data%ITYPEG, data%ISTGP, data%ICALCF, data%ltypeg,         &
+                    data%lstgp, data%lcalcf, data%lcalcg, data%lgpvlu,         &
+                    .FALSE., igstat )
 
-!  Evaluate the group function values.
+!  compute the objective function value
 
-         CALL GROUP ( data%GVALS( 1 ), data%ng, data%FT( 1 ), &
-                      data%GPVALU( 1 ), data%ng, &
-                      data%ITYPEG( 1 ), data%ISTGP( 1 ), &
-                      data%ICALCF( 1 ), &
-                      data%lcalcg, data%ng1, data%lcalcg, data%lcalcg, data%lgpvlu, &
-                      .FALSE., igstat )
-
-!  Compute the objective function value.
-
-         f = zero
-         DO 110 ig = 1, data%ng
-            IF ( data%GXEQX( ig ) ) THEN
-               f = f + data%GSCALE( ig ) * data%FT( ig )
-            ELSE
-               f = f + data%GSCALE( ig ) * data%GVALS( ig )
-            END IF
-  110    CONTINUE
+        f = 0.0_wp
+        DO ig = 1, data%ng
+          IF ( data%GXEQX( ig ) ) THEN
+            f = f + data%GSCALE( ig ) * data%FT( ig )
+          ELSE
+            f = f + data%GSCALE( ig ) * data%GVALS( ig, 1 )
+          END IF
+        END DO
       END IF
-      IF ( GRAD ) THEN
 
-!  Evaluate the element function derivatives.
+!  evaluate the element function derivatives
 
-         CALL ELFUN ( data%FUVALS, X, data%EPVALU( 1 ), data%nel, &
-                      data%ITYPEE( 1 ), data%ISTAEV( 1 ), &
-                      data%IELVAR( 1 ), data%INTVAR( 1 ), &
-                      data%ISTADH( 1 ), data%ISTEP( 1 ), &
-                      data%ICALCF( 1 ),  &
-                      data%lintre, data%lstaev, data%lelvar, data%lntvar, data%lstadh,  &
-                      data%lntvar, data%lintre, lfuval, data%lvscal, data%lepvlu,  &
-                      2, ifstat )
+      IF ( grad ) THEN
+        CALL ELFUN( data%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,        &
+                    data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,        &
+                    data%ISTEP, data%ICALCF, data%ltypee, data%lstaev,         &
+                    data%lelvar, data%lntvar, data%lstadh, data%lstep,         &
+                    data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,        &
+                    2, ifstat )
 
-!  Evaluate the group derivative values.
+!  evaluate the group derivative values
 
-         IF ( .NOT. data%altriv ) CALL GROUP ( data%GVALS( 1 ), data%ng,  &
-               data%FT( 1 ), data%GPVALU( 1 ), data%ng, &
-               data%ITYPEG( 1 ), data%ISTGP( 1 ), &
-               data%ICALCF( 1 ), &
-               data%lcalcg, data%ng1, data%lcalcg, data%lcalcg, data%lgpvlu, &
-               .TRUE., igstat )
+        IF ( .NOT. data%altriv )                                               &
+          CALL GROUP( data%GVALS, data%ng, data%FT, data%GPVALU, data%ng,      &
+                      data%ITYPEG, data%ISTGP, data%ICALCF, data%ltypeg,       &
+                      data%lstgp, data%lcalcf, data%lcalcg, data%lgpvlu,       &
+                      .TRUE., igstat )
 
-!  Compute the gradient values. 
+!  compute the gradient values
 
-      CALL ELGRD( n, data%ng, data%firstg, data%ICNA( 1 ), data%licna, &
+        CALL ELGRD( n, data%ng, data%firstg, data%ICNA( 1 ), data%licna, &
                       data%ISTADA( 1 ), data%lstada, data%IELING( 1 ), &
                       data%leling, data%ISTADG( 1 ), data%lstadg, &
                       data%ITYPEE( 1 ), data%lintre, &
-                      data%ISTAEV( 1 ), data%lstaev, data%IELVAR( 1 ), &
-                      data%lelvar, data%INTVAR( 1 ), data%lntvar, data%IWORK(LSVGRP + 1), &
-                      data%lnvgrp, data%IWORK( data%lstajc + 1 ), data%lnstjc, &
-                      data%IWORK( data%lstagv + 1 ), data%lnstgv, data%A( 1 ), data%la, &
-                      data%GVALS( data%ng + 1 ), data%lgvals, &
+                      data%ISTAEV( 1 ), data%lstaev, &
+                      data%IELVAR( 1 ), data%lelvar, &
+                      data%INTVAR( 1 ), data%lntvar, &
+                      data%IWORK(LSVGRP + 1), data%lnvgrp, &
+                      data%IWORK( data%lstajc + 1 ), data%lnstjc, &
+                      data%IWORK( data%lstagv + 1 ), data%lnstgv, &
+                      data%A( 1 ), data%la, &
+                      data%GVALS( : , 2 ), data%lgvals, &
                       data%FUVALS, data%lnguvl, data%FUVALS( data%lggfx + 1 ), &
                       data%GSCALE( 1 ), data%lgscal, &
-                      data%ESCALE( 1 ), data%lescal, data%FUVALS( data%lgrjac + 1 ), &
-                      data%lngrjc, data%WRK( 1 ), data%WRK( n + 1 ), data%maxsel, &
+                      data%ESCALE( 1 ), data%lescal, &
+                      data%FUVALS( data%lgrjac + 1 ), &
+                      data%lngrjc, data%WRK( 1 ), &
+                      data%WRK( n + 1 ), data%maxsel, &
                       data%GXEQX( 1 ), data%lgxeqx, &
                       data%INTREP( 1 ), data%lintre, RANGE )
-         data%firstg = .FALSE.
+        data%firstg = .FALSE.
 
-!  Store the gradient value.
+!  store the gradient value
 
-         DO 300 i = 1, n
-            G( i ) = data%FUVALS( data%lggfx + i )
-  300    CONTINUE
+        DO i = 1, n
+          G( i ) = data%FUVALS( data%lggfx + i )
+        END DO
       END IF
 
-!  Update the counters for the report tool.
+!  update the counters for the report tool
 
       data%nc2of = data%nc2of + 1
-      IF( GRAD ) data%nc2og = data%nc2og + 1
+      IF ( grad ) data%nc2og = data%nc2og + 1
+      status = 0
       RETURN
 
-!  end of UOFG.
+!  end of UOFG
 
       END

@@ -1,0 +1,64 @@
+#  Main body of the installation makefile for the CUTEST packages
+
+#  N. Gould, D. Orban and Ph. L. Toint.
+#  This version: 18 XI 2012
+
+SHELL = /bin/$(BINSHELL)
+
+#  main compilations and runs
+
+all: all_$(PRECIS)
+
+all_single: 
+	( cd tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                     cutest PRECIS=single PWD=$(PWD)/tools )
+	( cd test  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                     test_cutest PRECIS=single PWD=$(PWD)/test )
+
+all_double: 
+	( cd tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                     cutest PRECIS=double PWD=$(PWD)/tools )
+	( cd test  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                     test_cutest PRECIS=double PWD=$(PWD)/test )
+
+all_unconstrained: all_unconstrained_$(PRECIS)
+
+all_unconstrained_single: 
+	( cd tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                     cutest_unconstrained PRECIS=single PWD=$(PWD)/tools )
+	( cd test  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                     test_cutest_unconstrained PRECIS=single PWD=$(PWD)/test )
+
+all_unconstrained_double: 
+	( cd tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                     cutest_unconstrained PRECIS=double PWD=$(PWD)/tools )
+	( cd test  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                     test_cutest_unconstrained PRECIS=double PWD=$(PWD)/test )
+
+all_constrained: all_constrained_$(PRECIS)
+
+all_constrained_single: 
+	( cd tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                     cutest_constrained PRECIS=single PWD=$(PWD)/tools )
+	( cd test  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                     test_cutest_constrained PRECIS=single PWD=$(PWD)/test )
+
+all_constrained_double: 
+	( cd tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                     cutest_constrained PRECIS=double PWD=$(PWD)/tools )
+	( cd test  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                     test_cutest_constrained PRECIS=double PWD=$(PWD)/test )
+
+#  book keeping
+
+clean: 
+	@printf ' %-9s\t\t' "Cleaning" 
+	$(RM) $(OBJ)/*
+	@printf '[ OK ]\n'
+
+cleanall: 
+	@printf ' %-14s\t\t' \
+          "Removing all $(PRECIS) precision object and module files" 
+	$(RM) $(OBJ)/* $(MOD)/*
+#	ls $(OBJ) $(MOD)
+	@printf '[ OK ]\n'

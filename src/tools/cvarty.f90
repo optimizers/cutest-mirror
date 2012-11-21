@@ -1,48 +1,34 @@
-! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE CVARTY( data, n, IVARTY )
+! THIS VERSION: CUTEST 1.0 - 20/11/2012 AT 13:15 GMT.
+
+!-*-*-*-*-*-*-  C U T E S T    C V A R T Y    S U B R O U T I N E  -*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 77 version originally released in CUTEr, December 1999
+!   fortran 2003 version released in CUTEst, 20th November 2012
+
+      SUBROUTINE CVARTY( data, status, n, X_type )
       USE CUTEST
-      TYPE ( CUTEST_data_type ) :: data
-      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: n
-      INTEGER :: IVARTY( n )
 
+!  dummy arguments
+
+      TYPE ( CUTEST_data_type ), INTENT( IN ) :: data
+      INTEGER, INTENT( IN ) :: n
+      INTEGER, INTENT( OUT ) :: status
+      INTEGER, INTENT( OUT ), DIMENSION( n ) :: X_type
+
+!  --------------------------------------------------------------
 !  Determine the type (continuous, 0-1, integer) of each variable
+!  --------------------------------------------------------------
 
-!  Nick Gould, for CGT productions.
-!  December 1999.
+!  set the type of each variable (0 = continuous, 1 = 0-1, 2 = integer)
 
-
-! ---------------------------------------------------------------------
-
-
-
-
-! ---------------------------------------------------------------------
-
-
-
-! ---------------------------------------------------------------------
-
-
-! ---------------------------------------------------------------------
-
-!  integer variables from the GLOBAL common block.
-
-
-!  integer variables from the LOCAL common block.
-
-
-!  local variables.
-
-      INTEGER :: i
-
-!  Set the type of each variable.
-
-      DO 10 i = 1, n
-        IVARTY( i ) = data%ITYPEV( i )
-   10 CONTINUE
+      X_type( : n ) = data%ITYPEV( : n )
+      status = 0
       RETURN
 
-!  end of CVARTY.
+!  end of subroutine CVARTY
 
-      END
+      END SUBROUTINE CVARTY
