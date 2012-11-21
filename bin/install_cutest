@@ -24,7 +24,7 @@ fi
 # fi ;
 #}
 
-export ARCH=$PWD/arch/sh
+export ARCH=$PWD/arch
 
 #  determine the platform and operating system used
 
@@ -366,8 +366,6 @@ VERSION=${MCH}.${OS}.${CMP}
 #PREFIX=$VERSION
 #OD='$CUTEST'/objects/$VERSION
 
-NEED_CUTER="false"
-NEED_AMPL="false"
 CORRECT_SUBSET="false"
 NEWCC="false"
 PLPLOTUSED="unused"
@@ -391,46 +389,33 @@ if [[ -e $CUTEST/versions/$VERSION ]]; then
     fi    
 fi
 
+echo $CMP
+
 while [ $CORRECT_SUBSET == "false" ]; do 
    echo ' Select subset of CUTEST packages to be installed'
    echo ' (the chosen subset will optionally be installed below)'
    echo
    echo '     (1) Everything'
-   echo '     (2) Everything for SIF/CUTEr'
-   echo '     (3) Everything for AMPL'
+   echo '     (2) Unconstrained tools'
+   echo '     (3) Constrained tools'
    if [[ $CMP="g95" || $CMP="gfortran" ]]; then
      echo '     (4) Everything for Matlab'
    fi
-   echo '     (5) LANCELOT B and its interface to SIF'
-   echo '     (6) LANCELOT B and its interface to AMPL'
-   echo '     (7) Just LANCELOT B'
-   echo '     (8) The QP packages and their interfaces to CUTEr'
-   echo '     (9) The QP packages and their interfaces to AMPL'
-   echo '    (10) Just the QP packages and their dependencies'
-   echo '    (11) The regularised quadratic solvers and their interfaces to CUTEr'
-   echo '    (12) Just the regularised quadratic solvers and their dependencies'
-   echo '    (13) FILTRANE and its interface to CUTEr'
-   echo '    (14) FILTRANE and its interface to AMPL'
-   echo '    (15) Just FILTRANE and its dependencies'
-   
-   read CHOICE
+
+  read CHOICE
    
    case  $CHOICE  in
        "1")
             CORRECT_SUBSET="true"
             SUBSET="all"
-            NEED_CUTER="true"
-            NEED_AMPL="true"
 ;;
        "2")
             CORRECT_SUBSET="true"
-            SUBSET="all_cuter"
-            NEED_CUTER="true"
+            SUBSET="all_unconstrained"
 ;;
        "3")
             CORRECT_SUBSET="true"
-            SUBSET="all_ampl"
-            NEED_AMPL="true"
+            SUBSET="all_constrained"
 ;;
        "4")
             if [[ $CMP="g95" || $CMP="gfortran" ]]; then
@@ -452,185 +437,15 @@ while [ $CORRECT_SUBSET == "false" ]; do
                 echo ' GNU compilers to allow Matlab-CUTEST interaction'
               fi
             else
-              echo ' Please give an integer between 1 and 13 ... but not 4!'
+              echo ' Please give an integer between 1 and 3!'
             fi
 ;;
-       "5")
-            CORRECT_SUBSET="true"
-            SUBSET="lanb_sif"
-;;
-       "6")
-            CORRECT_SUBSET="true"
-            SUBSET="lanb_ampl"
-            NEED_AMPL="true"
-;;
-       "7")
-            CORRECT_SUBSET="true"
-            SUBSET="lanb"
-;;
-       "8")
-            CORRECT_SUBSET="true"
-            SUBSET="qps_cuter"
-            NEED_CUTER="true"
-;;
-       "9")
-            CORRECT_SUBSET="true"
-            SUBSET="qps_ampl"
-            NEED_AMPL="true"
-;;
-       "10")
-            CORRECT_SUBSET="true"
-            SUBSET="qps"
-;;
-       "11")
-            CORRECT_SUBSET="true"
-            SUBSET="rq_cuter"
-            NEED_CUTER="true"
-;;
-       "12")
-            CORRECT_SUBSET="true"
-            SUBSET="rq"
-;;
-       "13")
-            CORRECT_SUBSET="true"
-            SUBSET="filtrane_cuter"
-            NEED_CUTER="true"
-;;
-       "14")
-            CORRECT_SUBSET="true"
-            SUBSET="filtrane_ampl"
-            NEED_AMPL="true"
-;;
-       "15")
-            CORRECT_SUBSET="true"
-            SUBSET="filtrane"
-;;
        *)
-         echo ' Please give an integer between 1 and 15'
+         echo ' Please give an integer between 1 and 4'
    esac
 done
 
-#  check to see which CUTEr is required
-
-if [[ $NEED_CUTER == "true" ]]; then
-    CUTERUSED=$MYCUTER
-    
-    YESNO=""
-    
-    echo ' By default, the CUTEr you wish to use is installed in'
-    echo "  $CUTERUSED"
-    echo ' Is this OK (Y/n)?'
-    while [[ $YESNO != 'Y' && $YESNO != 'N' ]]; do
-        read YESNO
-        if [[ $YESNO == "" ]]; then
-          YESNO="Y"
-        fi
-        YESNO=`echo $YESNO | tr a-z A-Z`
-    done
-    
-    CUTER_FOUND='no'
-
-    while [[ $CUTER_FOUND == 'no' ]]; do
-       if [[ $YESNO == 'N' ]]; then
-           echo " Enter alternative directory for CUTEr:"
-           read CUTERUSED
-       fi
-       if [[ -e $CUTERUSED ]]; then
-          CUTER_FOUND='yes'
-       else
-          echo " The CUTEr directory you have specified does not exist."
-          YESNO='N'
-       fi
-    done
-else
-    CUTERUSED=
-fi
-
-#  check to see if AMPLDIR is defined
-
-if [[ $NEED_AMPL == "true" ]]; then
-    if [[ ${AMPLDIR+set} == 'set' ]]; then
-      AMPLLIBDIR=$AMPLDIR
-      YESNO=""
-      echo ' By default, the AMPL interface library you wish to use is in'
-      echo "  $AMPLLIBDIR"
-      echo ' Is this OK (Y/n)?'
-      while [[ $YESNO != 'Y' && $YESNO != 'N' ]]; do
-          read YESNO
-          if [[ $YESNO == "" ]]; then
-        YESNO="Y"
-      fi
-          YESNO=`echo $YESNO | tr a-z A-Z`
-      done
-    else
-       echo ' You plan to use the AMPL interface but the'
-       echo ' AMPLDIR environment variable is not currently set'
-       YESNO='N'
-    fi
-    
-    CORRECT_AMPLLIBDIR="false"
-    while [[ $CORRECT_AMPLLIBDIR == "false" ]]; do 
-       if [[ $YESNO == 'N' ]]; then
-          echo ' Please give the name of the directory'
-          echo ' containing the AMPL interface library:'
-          read AMPLLIBDIR
-       fi
-       if [[ -e $AMPLLIBDIR/amplsolver.a ]]; then
-          CORRECT_AMPLLIBDIR="true"
-       else
-          echo " The directory $AMPLLIBDIR"
-          echo " does not appear to contain a working AMPL interface library."
-          YESNO='N'
-       fi
-    done
-
-    echo ' Select C compiler'
-    echo
-
-    CCOMP=( `$LS $ARCH/ccompiler.${MCH}.${OS}.* $ARCH/ccompiler.all.all.*`)
-    NUMBER=${#CCOMP[@]}
-    LIST=( ${CCOMP[@]} )
-    let count=-1
-    for i  in  ${CCOMP[@]}; do
-      (( count++ ))
-      CCOMP[$count]="`$SED q $i | $SED 's/^[# ]*//'`"
-    done
-
-    CORRECT_CCOMPILER="false"
-    while [[ $CORRECT_CCOMPILER == "false" ]]; do 
-
-        let count=-1
-        for i  in  ${LIST[@]}; do
-          (( count++ ))
-          let counter=count+1
-          echo "        ($counter) ${CCOMP[$count]}"
-        done
-
-        read CHOICE
-       	(( CHOICE-- ))
-
-        i=0
-        while [[ $i -lt $NUMBER &&  $CORRECT_CCOMPILER == "false" ]]; do
-           if [[ $CHOICE == $i ]]; then
-             CORRECT_CCOMPILER="true"
-             CHOICE=$i
-           fi
-           (( i++ ))
-        done
-        if [[ $CORRECT_CCOMPILER == "true" ]]; then
-          CCOMPILER=${LIST[$CHOICE]##*/}
-          CMP=${CCOMPILER##*\.} #${LIST[$CHOICE]%*\.}
-          #CCOMPILER=$LIST[$CHOICE]:t
-          #CMP=$LIST[$CHOICE]:e
-          CCOMPUSED="${CCOMP[$CHOICE]}"
-        else
-          echo " Please give an integer between 1 and $NUMBER"
-        fi
-    done
-else
-    AMPLLIBDIR=
-    CCOMPILER=ccompiler.all.all.gcc
-fi
+CCOMPILER=ccompiler.all.all.gcc
 
 source $ARCH/$CCOMPILER
 if [[ $NEWCC == "true" ]]; then
@@ -683,14 +498,14 @@ MOD='$CUTEST/modules/'$VERSION'/$PRECIS'
 FFLAGS="$LIBCMD"' '`eval echo $MODCMD`' '"$F90"
 echo 'FFLAGS="'$FFLAGS' '$OPENMP'"'                                >> $SYSFILE
 echo 'PROBFLAGS="'$FFLAGS' '$BASIC' '$OPTIMIZATION' '$F77' "'      >> $SYSFILE
-echo 'CUTERUSED="'$CUTERUSED'"'                                    >> $SYSFILE
+#echo 'CUTERUSED="'$CUTERUSED'"'                                    >> $SYSFILE
 echo 'BLAS="'$BLAS'"'                                              >> $SYSFILE
 echo 'LAPACK="'$LAPACK'"'                                          >> $SYSFILE
-echo 'HSL="'$HSL'"'                                                >> $SYSFILE
-echo 'METIS="'$METIS'"'                                            >> $SYSFILE
-echo 'PARDISO="'$PARDISO'"'                                        >> $SYSFILE
-echo 'WSMP="'$WSMP'"'                                              >> $SYSFILE
-echo 'PLPLOT="'$PLPLOT'"'                                          >> $SYSFILE
+#echo 'HSL="'$HSL'"'                                                >> $SYSFILE
+#echo 'METIS="'$METIS'"'                                            >> $SYSFILE
+#echo 'PARDISO="'$PARDISO'"'                                        >> $SYSFILE
+#echo 'WSMP="'$WSMP'"'                                              >> $SYSFILE
+#echo 'PLPLOT="'$PLPLOT'"'                                          >> $SYSFILE
 
 #  write out the cutest/makefile/ file for this architecture
 
@@ -777,10 +592,6 @@ echo '#  Body of makefile'                                         >> $MAKEFILE
 echo ' '                                                           >> $MAKEFILE
 echo 'include $(PWD)/makemaster'                                   >> $MAKEFILE
 
-#  check that required symbolic links are in place
-
-#source $CUTEST/bin/restore_links
-
 #  optionally compile the selected packages
 
 YESNO=""
@@ -825,60 +636,16 @@ if [[ $YESNO == 'Y' ]]; then
             $MAKE $OPTIONS all $MACROS
             [[ $? != 0 ]] && exit 2
 ;;
-        "all_cuter")
-            $MAKE $OPTIONS all_cuter $MACROS
+        "all_unconstrained")
+            $MAKE $OPTIONS all_unconstrained $MACROS
             [[ $? != 0 ]] && exit 2
 ;;
-        "all_ampl")
-            $MAKE $OPTIONS all_ampl $MACROS
+        "all_constrained")
+            $MAKE $OPTIONS all_constrained $MACROS
             [[ $? != 0 ]] && exit 2
 ;;
         "all_matlab")
             $MAKE $OPTIONS all_matlab $MACROS
-            [[ $? != 0 ]] && exit 2
-;;
-        "lanb_sif")
-            $MAKE $OPTIONS lancelotb_sif $MACROS
-            [[ $? != 0 ]] && exit 2
-;;
-        "lanb_ampl")
-            $MAKE $OPTIONS lancelotb_ampl $MACROS
-            [[ $? != 0 ]] && exit 2
-;;
-        "lanb")
-            $MAKE $OPTIONS lancelotb $MACROS
-            [[ $? != 0 ]] && exit 2
-;;
-        "qps_cuter")
-            $MAKE $OPTIONS qp_cuter $MACROS
-            [[ $? != 0 ]] && exit 2
-;;
-        "qps_ampl")
-            $MAKE $OPTIONS qp_ampl $MACROS
-            [[ $? != 0 ]] && exit 2
-;;
-        "rq_cuter")
-            $MAKE $OPTIONS rq_cuter $MACROS
-            [[ $? != 0 ]] && exit 2
-;;
-        "rq")
-            $MAKE $OPTIONS rq $MACROS
-            [[ $? != 0 ]] && exit 2
-;;
-        "qps")
-            $MAKE $OPTIONS qp $MACROS
-            [[ $? != 0 ]] && exit 2
-;;
-        "filtrane_cuter")
-            $MAKE $OPTIONS filtrane_cuter $MACROS
-            [[ $? != 0 ]] && exit 2
-;;
-        "filtrane_ampl")
-            $MAKE $OPTIONS filtrane_ampl $MACROS
-            [[ $? != 0 ]] && exit 2
-;;
-        "filtrane")
-            $MAKE $OPTIONS filtrane $MACROS
             [[ $? != 0 ]] && exit 2
 ;;
     esac
@@ -913,42 +680,13 @@ if [[ $YESNO == 'Y' ]]; then
             $MAKE $OPTIONS all_cuter $MACROS
             [[ $? != 0 ]] && exit 2
 ;;
-        "all_cuter")
-            $MAKE $OPTIONS all_cuter $MACROS
+        "all_unconstrained")
+            $MAKE $OPTIONS all_unconstrained $MACROS
             [[ $? != 0 ]] && exit 2
 ;;
-        "lanb_sif")
-            $MAKE $OPTIONS lancelotb_sif $MACROS
+        "all_constrained")
+            $MAKE $OPTIONS all_constrained $MACROS
             [[ $? != 0 ]] && exit 2
-;;
-        "lanb")
-            $MAKE $OPTIONS lancelotb $MACROS
-            [[ $? != 0 ]] && exit 2
-;;
-        "qps_cuter")
-            $MAKE $OPTIONS qp_cuter $MACROS
-            [[ $? != 0 ]] && exit 2
-;;
-        "qps")
-            $MAKE $OPTIONS qp $MACROS
-            [[ $? != 0 ]] && exit 2
-;;
-        "rq_cuter")
-            $MAKE $OPTIONS rq_cuter $MACROS
-            [[ $? != 0 ]] && exit 2
-;;
-        "rq")
-            $MAKE $OPTIONS rq $MACROS
-            [[ $? != 0 ]] && exit 2
-;;
-        "filtrane_cuter")
-            $MAKE $OPTIONS filtrane_cuter $MACROS
-            [[ $? != 0 ]] && exit 2
-;;
-        "filtrane")
-            $MAKE $OPTIONS filtrane $MACROS
-            [[ $? != 0 ]] && exit 2
-;;
         esac
 
     fi

@@ -1,9 +1,10 @@
 ! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE CCIFG ( data, n, icon, X, ci, GCI, GRAD )
+      SUBROUTINE CCIFG ( data, status, n, icon, X, ci, GCI, GRAD )
       USE CUTEST
       TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
       INTEGER :: n, icon
+      INTEGER, INTENT( OUT ) :: status
       REAL ( KIND = wp ) :: ci
       REAL ( KIND = wp ) :: X( n ), GCI( n )
       LOGICAL :: GRAD
@@ -19,37 +20,13 @@
 !  Ingrid Bongartz
 !  September 1994.
 
-
-! ---------------------------------------------------------------------
-
-
-
-
-! ---------------------------------------------------------------------
-
-
-
-! ---------------------------------------------------------------------
-
-
-! ---------------------------------------------------------------------
-
-!  integer variables from the GLOBAL common block.
-
-
-!  integer variables from the LOCAL common block.
-
-
-!  Integer variables from the PRFCTS common block.
-
-
 !  local variables.
 
       INTEGER :: i, j, iel, k, ig, ii, ig1, l, ll, neling
       INTEGER :: nin, nvarel, nelow, nelup, istrgv, iendgv
       INTEGER :: ifstat, igstat
       LOGICAL :: NONTRV
-!D    EXTERNAL           SETVL, SETVI, RANGE 
+      EXTERNAL :: RANGE 
       REAL ( KIND = wp ) :: ftt, one, zero, gi, scalee
       PARAMETER ( zero = 0.0_wp, one = 1.0_wp )
 
@@ -60,8 +37,8 @@
 !  Check input parameters.
 
       IF ( icon <= 0 ) THEN
-         WRITE( iout, 2000 )
-         STOP
+         IF ( data%out > 0 ) WRITE( data%out, 2000 )
+         status = 2 ; RETURN
       END IF
 
 !  Find group index ig of constraint ICON.
@@ -74,8 +51,8 @@
          END IF
    70 CONTINUE
    80 IF ( ig == 0 ) THEN
-         WRITE( iout, 2000 )
-         STOP
+         IF ( data%out > 0 ) WRITE( data%out, 2000 )
+         status = 2 ; RETURN
       END IF
 
 !  Determine nonlinear elements in group IG.
@@ -90,16 +67,14 @@
          data%ICALCF( i ) = data%IELING( j )
    10 CONTINUE
 
-!  Evaluate the element functions.
+!  evaluate the element functions
 
-      CALL ELFUN ( data%FUVALS, X, data%EPVALU( 1 ), neling, &
-                   data%ITYPEE( 1 ), data%ISTAEV( 1 ), &
-                   data%IELVAR( 1 ), data%INTVAR( 1 ), &
-                   data%ISTADH( 1 ), data%ISTEP( 1 ), &
-                   data%ICALCF( 1 ),  &
-                   data%lintre, data%lstaev, data%lelvar, data%lntvar, data%lstadh,  &
-                   data%lntvar, data%lintre, lfuval, data%lvscal, data%lepvlu,  &
-                   1, ifstat )
+      CALL ELFUN( data%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,          &
+                  data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,          &
+                  data%ISTEP, data%ICALCF, data%ltypee, data%lstaev,           &
+                  data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
+                  data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,          &
+                  1, ifstat )
 
 !  Compute the group argument value FTT.
 !  Consider only the group associated with constraint ICON.
@@ -126,17 +101,16 @@
 !  If ig is a trivial group, record the function value and derivative.
 
       IF ( data%GXEQX( ig ) ) THEN
-         data%GVALS( ig ) = data%FT( ig )
-         data%GVALS( data%ng + ig ) = one
+         data%GVALS( ig, 1 ) = data%FT( ig )
+         data%GVALS( ig, 2 ) = one
+
+!  otherwise, evaluate group ig
+
       ELSE
-
-!  Otherwise, evaluate group IG.
-
-         CALL GROUP ( data%GVALS( 1 ), data%ng, data%FT( 1 ), &
-                      data%GPVALU( 1 ), 1, &
-                      data%ITYPEG( 1 ), data%ISTGP( 1 ), &
-                      ig, data%lcalcg, data%ng1, data%lcalcg, data%lcalcg, data%lgpvlu, &
-                      .FALSE., igstat )
+        CALL GROUP( data%GVALS, data%ng, data%FT, data%GPVALU, data%ng,        &
+                    data%ITYPEG, data%ISTGP, data%ICALCF, data%ltypeg,         &
+                    data%lstgp, data%lcalcf, data%lcalcg, data%lgpvlu,         &
+                    .FALSE., igstat )
       END IF
 
 !  Compute the constraint function value.
@@ -144,7 +118,7 @@
       IF ( data%GXEQX( ig ) ) THEN
          ci = data%GSCALE( ig ) * data%FT( ig )
       ELSE
-         ci = data%GSCALE( ig ) * data%GVALS( ig )
+         ci = data%GSCALE( ig ) * data%GVALS( ig, 1 )
 
 !  Update the constraint function evaluation counter
 
@@ -156,25 +130,22 @@
 
       data%nc2cg = data%nc2cg + 1
 
-!  Evaluate the element function derivatives.
+!  evaluate the element function derivatives
 
-         CALL ELFUN ( data%FUVALS, X, data%EPVALU( 1 ), neling, &
-                      data%ITYPEE( 1 ), data%ISTAEV( 1 ), &
-                      data%IELVAR( 1 ), data%INTVAR( 1 ), &
-                      data%ISTADH( 1 ), data%ISTEP( 1 ), &
-                      data%ICALCF( 1 ),  &
-                      data%lintre, data%lstaev, data%lelvar, data%lntvar, data%lstadh,  &
-                      data%lntvar, data%lintre, lfuval, data%lvscal, data%lepvlu,  &
-                      2, ifstat )
+        CALL ELFUN( data%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,        &
+                    data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,        &
+                    data%ISTEP, data%ICALCF, data%ltypee, data%lstaev,         &
+                    data%lelvar, data%lntvar, data%lstadh, data%lstep,         &
+                    data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,        &
+                    2, ifstat )
 
-!  Evaluate the group derivative.
+!  evaluate the group derivative
 
-         IF ( .NOT. data%GXEQX( ig ) ) &
-            CALL GROUP ( data%GVALS( 1 ), data%ng, data%FT( 1 ), &
-                         data%GPVALU( 1 ), 1, &
-                         data%ITYPEG( 1 ), data%ISTGP( 1 ), &
-                         ig, data%lcalcg, data%ng1, data%lcalcg, data%lcalcg, data%lgpvlu, &
-                         .TRUE., igstat )
+         IF ( .NOT. data%GXEQX( ig ) )                                         &
+          CALL GROUP( data%GVALS, data%ng, data%FT, data%GPVALU, data%ng,      &
+                      data%ITYPEG, data%ISTGP, data%ICALCF, data%ltypeg,       &
+                      data%lstgp, data%lcalcf, data%lcalcg, data%lgpvlu,       &
+                      .TRUE., igstat )
 
 !  Compute the gradient.  Initialize the gradient vector as zero.
 
@@ -192,13 +163,13 @@
 !  Compute the first derivative of the group.
 
          gi = data%GSCALE( ig )
-         IF ( NONTRV ) gi = gi  * data%GVALS( data%ng + ig )
+         IF ( NONTRV ) gi = gi  * data%GVALS( ig, 2 )
 
 !  The group has nonlinear elements.
 
          IF ( nelow <= nelup ) THEN
-      CALL SETVI( iendgv - istrgv + 1, data%WRK( 1 ), &
-                         data%IWORK( data%lsvgrp + istrgv ), zero )
+            data%WRK( data%IWORK( data%lsvgrp + istrgv :                       &
+                                  data%lsvgrp + iendgv ) ) = zero
 
 !  Loop over the group's nonlinear elements.
 
@@ -213,10 +184,9 @@
 !  The IEL-th element has an internal representation.
 
                   nin = data%INTVAR( iel + 1 ) - k
-                  CALL RANGE ( iel, .TRUE., data%FUVALS( k ), &
-                               data%WRK( n + 1 ), nvarel, nin, &
-                               data%ITYPEE( iel ), &
-                               nin, nvarel )
+                  CALL RANGE ( iel, .TRUE., data%FUVALS( k ),                  &
+                               data%WRK( n + 1 ), nvarel, nin,                 &
+                               data%ITYPEE( iel ), nin, nvarel )
 !DIR$ IVDEP
                   DO 130 i = 1, nvarel
                      j = data%IELVAR( l )
@@ -275,6 +245,7 @@
   210       CONTINUE
          END IF
       END IF
+      status = 0
       RETURN
 
 ! Non-executable statements.

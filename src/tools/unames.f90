@@ -1,52 +1,39 @@
-! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE UNAMES( data, n, PNAME, VNAME )
+! THIS VERSION: CUTEST 1.0 - 19/11/2012 AT 13:15 GMT.
+
+!-*-*-*-*-*-*-  C U T E S T    C N A M E S    S U B R O U T I N E  -*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 77 version originally released in CUTE, September 1992
+!   fortran 2003 version released in CUTEst, 19th November 2012
+
+      SUBROUTINE UNAMES( data, status, n, pname, VNAME )
       USE CUTEST
-      TYPE ( CUTEST_data_type ) :: data
-      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: n
-      CHARACTER ( LEN = 10 ) :: PNAME, VNAME( n )
 
-!  Obtain the names of the problem and its variables.
+!  Dummy arguments
 
-!  Nick Gould, for CGT productions.
-!  September 1992.
+      TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
+      INTEGER, INTENT( IN ) :: n
+      INTEGER, INTENT( OUT ) :: status
+      CHARACTER ( LEN = 10 ), INTENT( OUT ) :: pname
+      CHARACTER ( LEN = 10 ), INTENT( OUT ), DIMENSION( n ) :: VNAME
 
+!  -------------------------------------------------
+!  Obtain the names of the problem and its variables
+!  -------------------------------------------------
 
-! ---------------------------------------------------------------------
+!  set the problem name
 
+      pname = data%pname
 
+!  set the names of the variables
 
-
-! ---------------------------------------------------------------------
-
-
-
-! ---------------------------------------------------------------------
-
-
-! ---------------------------------------------------------------------
-
-!  integer variables from the GLOBAL common block.
-
-
-!  integer variables from the LOCAL common block.
-
-
-!  local variables.
-
-      INTEGER :: i
-
-!  Set the problem name.
-
-      PNAME = data%VNAMES( n + 1 )
-
-!  Set the names of the variables.
-
-      DO 10 i = 1, n
-        VNAME( i ) = data%VNAMES( i )
-   10 CONTINUE
+      VNAME( : n ) = data%VNAMES( : n )
+      status = 0
       RETURN
 
-!  end of UNAMES.
+!  end of subroutine UNAMES
 
-      END
+      END SUBROUTINE UNAMES

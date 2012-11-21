@@ -47,9 +47,8 @@
       INTEGER :: ijhess, irow,   jcol,   jcolst
       REAL ( KIND = wp ) :: one,    zero,   wki,    hesnew, gdash,  g2dash, &
                        scalee
-!D    EXTERNAL         SETVL, SETVI
 
-!  Set constant real parameters.
+!  set constant real parameters
 
       PARAMETER ( zero = 0.0_wp, one = 1.0_wp )
 
@@ -60,7 +59,7 @@
       ne = 0
       IPRNHI( 1 ) = 1
       IPRHI ( 1 ) = 1
-      DO 200 ig = 1, ng
+      DO ig = 1, ng
          IF ( iprint >= 100 ) WRITE( iout, 2070 ) ig
          ig1 = ig + 1
          IF ( GXEQX( ig ) ) THEN
@@ -72,8 +71,7 @@
 
 !  Ignore linear groups
 
-         IF ( ISTADG( ig ) >= ISTADG( ig1 ) .AND. GXEQX( ig ) )  &
-            GO TO 200
+         IF ( ISTADG( ig ) >= ISTADG( ig1 ) .AND. GXEQX( ig ) ) CYCLE
 
 !  The group is nonlinear
 
@@ -100,22 +98,22 @@
 !  Record the row indices involved in super-element ne
 
          IF ( GXEQX( ig ) .OR. g2dash == zero ) THEN 
-      CALL SETVL( nsizee, HI( IPRHI( ne ) ), 1, zero )
-            GO TO 200
+           HI( IPRHI( ne : ne + nsizee ) ) = zero
+           CYCLE
          END IF
          k = IPRNHI( ne )
-         DO 110 l = listvs, listve
+         DO l = listvs, listve
             IRNHI( k ) = ISVGRP( l )
             k = k + 1
-  110    CONTINUE   
+         END DO
 
 !  Form the gradient of the ig-th group.
 
-      CALL SETVI( nvarg, WK, ISVGRP( listvs ), zero )
+         WK( ISVGRP( listvs : listve ) ) = zero
 
 !  Consider any nonlinear elements for the group.
 
-         DO 160 iell = ISTADG( ig ), ISTADG( ig1 ) - 1
+         DO iell = ISTADG( ig ), ISTADG( ig1 ) - 1
             iel = IELING( iell )
             k = INTVAR( iel )
             l = ISTAEV( iel )
@@ -126,61 +124,60 @@
 !  The IEL-th element has an internal representation.
 
                nin = INTVAR( iel + 1 ) - k
-               CALL RANGE ( iel, .TRUE., GUVALS( k ), &
-                            WK( n + 1 ), nvarel, nin, &
-                            ITYPEE( iel ), nin, nvarel )
-               DO 140 i = 1, nvarel
+               CALL RANGE( iel, .TRUE., GUVALS( k ), WK( n + 1 ),              &
+                           nvarel, nin, ITYPEE( iel ), nin, nvarel )
+               DO i = 1, nvarel
                   j = IELVAR( l )
                   WK( j ) = WK( j ) + scalee * WK( n + i )
                   l = l + 1
-  140          CONTINUE
+               END DO
             ELSE
 
 !  The IEL-th element has no internal representation.
 
-               DO 150 i = 1, nvarel
+               DO i = 1, nvarel
                   j = IELVAR( l )
                   WK( j ) = WK( j ) + scalee * GUVALS( k )
                   k = k + 1
                   l = l + 1
-  150          CONTINUE
+               END DO
             END IF
-  160    CONTINUE
+         END DO
 
 !  Include the contribution from the linear element.
 
-         DO 170 k = ISTADA( ig ), ISTADA( ig1 ) - 1
+         DO k = ISTADA( ig ), ISTADA( ig1 ) - 1
             j = ICNA( k )
             WK( j ) = WK( j ) + A( k )
-  170    CONTINUE
+         END DO
 
 !  The gradient is complete. Form the J-th column of the rank-one matrix
 
-         DO 190 l = listvs, listve
+         DO l = listvs, listve
             jj = ISVGRP( l )
             j = l - listvs + 1
 
 !  Find the entry in row i of this column.
 
-            DO 180 k = listvs, l
+            DO k = listvs, l
                ii = ISVGRP( k )
                i = k - listvs + 1
                IF ( BYROWS ) THEN
-                  ihi = IPRHI( ne ) - 1 + nvarg * ( i - 1 ) -  &
- ( ( i - 1 ) * i ) / 2 + j
+                  ihi = IPRHI( ne ) - 1 + nvarg * ( i - 1 ) -                  &
+                     ( ( i - 1 ) * i ) / 2 + j
                ELSE
                   ihi = IPRHI( ne ) - 1 + i + ( j * ( j - 1 ) ) / 2
                END IF
                HI( ihi ) = WK( ii ) * WK( jj ) * g2dash
                IF ( iprint >= 100 )  &
                   WRITE( iout, 2090 ) ii, jj, HI( ihi )
-  180       CONTINUE
-  190    CONTINUE
-  200 CONTINUE
+            END DO
+         END DO
+      END DO
 
 !  Reset the workspace array to zero.
 
-      CALL SETVL( maxsel, WK, 1, zero )
+      WK( : maxsel ) = zero
 
 ! --------------------------------------------------------
 !  Add on the low rank first order terms for the I-th group.
@@ -210,13 +207,13 @@
 !  Map the problem variables to the elemental variables.
 
          nvarg = IPRNHI( ne + 1 ) - IPRNHI( ne )
-         DO 210 i = IPRNHI( ne ), IPRNHI( ne + 1 ) - 1
+         DO i = IPRNHI( ne ), IPRNHI( ne + 1 ) - 1
             IWK( IRNHI( i ) ) = i + 1 - IPRNHI( ne )
-  210    CONTINUE   
+         END DO
 
 !  See if the group has any nonlinear elements.
 
-         DO 290 iell = ISTADG( ig ), ISTADG( ig1 ) - 1
+         DO iell = ISTADG( ig ), ISTADG( ig1 ) - 1
             iel = IELING( iell )
             listvs = ISTAEV( iel )
             listve = ISTAEV( iel + 1 ) - 1
@@ -224,7 +221,7 @@
             ielh = ISTADH( iel )
             ihnext = ielh
             scalee = ESCALE( iell )
-            DO 250 l = listvs, listve
+            DO l = listvs, listve
                j = IWK( IELVAR( l ) )
 
 !  The IEL-th element has an internal representation.
@@ -246,16 +243,16 @@
 !  Multiply the internal variables by the element Hessian.
 
                   nn = maxsel + nin
-      CALL SETVL( nin, WK( nn + 1 ), 1, zero )
+                  WK( nn + 1 : nn + nin ) = zero
 
 !  Only the upper triangle of the element Hessian is stored.
 
                   jcolst = ielh - 1
-                  DO 230 jcol = 1, nin
+                  DO jcol = 1, nin
                      ijhess = jcolst
                      jcolst = jcolst + jcol
                      wki = WK( maxsel + jcol ) * gdash
-                     DO 220 irow = 1, nin
+                     DO irow = 1, nin
                         IF ( irow <= jcol ) THEN
                            ijhess = ijhess + 1
                         ELSE
@@ -263,8 +260,8 @@
                         END IF
                         WK( nn + irow ) = WK( nn + irow ) + &
                                           wki * HUVALS( ijhess )
-  220                CONTINUE
-  230             CONTINUE
+                     END DO
+                  END DO
 
 !  Scatter the product back onto the elemental variables.
 
@@ -277,7 +274,7 @@
 !  Find the entry in row i of this column.
 
                END IF
-               DO 240 k = listvs, l
+               DO k = listvs, l
                   i = IWK( IELVAR( k ) )
 
 !  Only the upper triangle of the matrix is stored.
@@ -300,19 +297,19 @@
                   IF ( iprint >= 100 ) &
                      WRITE( 6, 2080 ) ii, jj, iel, hesnew
                   IF ( BYROWS ) THEN
-                     ihi = IPRHI( ne ) - 1 + nvarg * ( ii - 1 ) -  &
- ( ( ii - 1 ) * ii ) / 2 + jj
+                     ihi = IPRHI( ne ) - 1 + nvarg * ( ii - 1 ) -              &
+                        ( ( ii - 1 ) * ii ) / 2 + jj
                   ELSE
-                     ihi = IPRHI( ne ) - 1 + ii + &
- ( jj * ( jj - 1 ) ) / 2
+                     ihi = IPRHI( ne ) - 1 + ii +                              &
+                        ( jj * ( jj - 1 ) ) / 2
                   END IF
                   HI( ihi ) = HI( ihi ) + hesnew
                   IF ( k /= l .AND. ii == jj ) &
                        HI( ihi ) = HI( ihi ) + hesnew
                   ihnext = ihnext + 1
-  240          CONTINUE
-  250       CONTINUE
-  290    CONTINUE
+               END DO
+            END DO
+         END DO
   300 CONTINUE
 
 ! ----------------------------------------
@@ -320,13 +317,13 @@
 ! ----------------------------------------
 
       IF ( iprint >= 10 ) THEN
-         DO 410 ig = 1, ne
-            WRITE( iout, 2000 ) ig
-            WRITE( iout, 2010 ) &
- ( IRNHI( i ), i = IPRNHI( ig ), IPRNHI( ig + 1 ) - 1 )
-            WRITE( iout, 2020 ) &
- ( HI( i ), i = IPRHI( ig ), IPRHI( ig + 1 ) - 1 )
-  410    CONTINUE   
+        DO ig = 1, ne
+          WRITE( iout, 2000 ) ig
+          WRITE( iout, 2010 ) &
+             ( IRNHI( i ), i = IPRNHI( ig ), IPRNHI( ig + 1 ) - 1 )
+          WRITE( iout, 2020 ) &
+              ( HI( i ), i = IPRHI( ig ), IPRHI( ig + 1 ) - 1 )
+        END DO
       END IF
       inform = 0
       RETURN
@@ -343,10 +340,10 @@
  2010 FORMAT( ' Super-element variables     ', 8I7, /, ( 11I7 ) )
  2020 FORMAT( ' Nonzeros   ', 1P, 6D12.4, /, ( 7D12.4 ) )
  2030 FORMAT( ' ** Array dimension lirnhi = ',I8,' too small in ASMBE.')
- 2040 FORMAT( ' ** Array dimension lhi = ', I8,' too small in ASMBE.  &
-           Increase to at least ', I8 )
+ 2040 FORMAT( ' ** Array dimension lhi = ', I8,' too small in ASMBE. ',        &
+              'Increase to at least ', I8 )
  2070 FORMAT( ' Group ', I5, ' rank-one terms ' )
- 2080 FORMAT( ' Row ', I6, ' Column ', I6, ' used from element ', I6, &
+ 2080 FORMAT( ' Row ', I6, ' Column ', I6, ' used from element ', I6,          &
               ' value = ', 1P, D24.16 )
  2090 FORMAT( ' Row ', I6, ' column ', I6, ' used. Value = ',1P,D24.16)
  2100 FORMAT( ' Group ', I5, ' second-order terms ' )

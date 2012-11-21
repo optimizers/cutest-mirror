@@ -61,7 +61,6 @@
       INTEGER :: iell, ii, k, l, ll, nin, nvarel, ielhst, nnonz2
       REAL ( KIND = wp ) :: zero, pi, gi
       LOGICAL :: NULLWK
-!D    EXTERNAL         SETVL
       INTRINSIC        ABS
 
 !  COMMON VARIABLES.
@@ -87,8 +86,8 @@
 
 !  INITIALIZE WK AND Q AS ZERO.
 
-      CALL SETVL( ng, WK, 1, zero )
-      CALL SETVL( n,  Q,  1, zero )
+      WK( : ng ) = zero
+      Q( : n ) = zero
 
 !  FORM THE MATRIX-VECTOR PRODUCT WK = A * P, USING THE COLUMN-WISE
 !  STORAGE OF A.
@@ -406,8 +405,7 @@
 
 !  IF Q HAS A NONZERO IN POSITION l, STORE ITS INDEX IN INONNZ.
 
-                                 IF ( ABS( HUVALS( ijhess ) ) &
-                                    > tiny ) THEN
+                                 IF ( ABS( HUVALS( ijhess ) ) > tiny ) THEN
                                     l = IELVAR( lthvar + irow )
                                     IF ( IUSED( l ) == 0 ) THEN
                                        Q( l ) = pi * HUVALS( ijhess )

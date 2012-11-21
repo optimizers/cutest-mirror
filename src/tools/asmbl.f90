@@ -48,7 +48,6 @@
       REAL ( KIND = wp ) :: one,    zero,   wki,    hesnew, gdash,  g2dash, &
                        scalee
       CHARACTER ( LEN = 2 ) :: MATRIX( 36, 36 )
-!D    EXTERNAL         SETVL, SETVI
       INTRINSIC        ABS,    MAX,    MIN
 
 !  Set constant real parameters.
@@ -109,7 +108,7 @@
 
 !  Form the gradient of the IG-th group.
 
-      CALL SETVI( listve - listvs + 1, WK, ISVGRP( listvs ), zero )
+         WK( ISVGRP( listvs : listve ) ) = zero
 
 !  Consider any nonlinear elements for the group.
 
@@ -233,7 +232,7 @@
 
 !  Reset the workspace array to zero.
 
-      CALL SETVL( maxsel, WK, 1, zero )
+      WK( : maxsel ) = zero
 
 ! --------------------------------------------------------
 !  Add on the low rank first order terms for the I-th group.
@@ -283,7 +282,7 @@
 !  Multiply the internal variables by the element Hessian.
 
                      nn = maxsel + nin
-      CALL SETVL( nin, WK( nn + 1 ), 1, zero )
+                     WK( nn + 1 : n + nin ) = zero
 
 !  Only the upper triangle of the element Hessian is stored.
 

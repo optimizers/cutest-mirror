@@ -1,28 +1,34 @@
-! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE VARNAMES( data, n, VNAME )
+! THIS VERSION: CUTEST 1.0 - 19/11/2012 AT 13:25 GMT.
+
+!-*-*-*-*-*-  C U T E S T    V A R N A M E S    S U B R O U T I N E  -*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Dominique Orban
+
+!  History -
+!   fortran 77 version originally released in CUTEr, August 2005
+!   fortran 2003 version released in CUTEst, 19th November 2012
+
+      SUBROUTINE VARNAMES( data, status, n, VNAME )
       USE CUTEST
-      TYPE ( CUTEST_data_type ) :: data
-      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: n
-      CHARACTER ( LEN = 10 ) :: VNAME( n )
 
-!  Obtain the names of the problem variables.
+!  dummy arguments
 
-!  D. Orban, for GOT productions, Aug 2005, from the version of
-!  Nick Gould, for CGT productions.
-!  September 1992.
+      TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
+      INTEGER, INTENT( IN ) :: n
+      INTEGER, INTENT( OUT ) :: status
+      CHARACTER ( LEN = 10 ), INTENT( OUT ), DIMENSION( n ) :: VNAME
 
-!  local variables.
+!  -----------------------------------------
+!  obtain the names of the problem variables
+!  -----------------------------------------
 
-      INTEGER :: i
+!  set the names of the variables
 
-!  Set the names of the variables.
-
-      DO 10 i = 1, n
-        VNAME( i ) = data%VNAMES( i )
-   10 CONTINUE
+      VNAME( : n ) = data%VNAMES( : n )
+      status = 0
       RETURN
 
-!  end of VARNAMES.
+!  end of subroutine VARNAMES
 
-      END
+      END SUBROUTINE VARNAMES

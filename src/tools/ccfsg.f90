@@ -1,10 +1,11 @@
 ! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE CCFSG ( data, n, m, X, lc, C, nnzj, lcjac, CJAC, &
+      SUBROUTINE CCFSG ( data, status, n, m, X, lc, C, nnzj, lcjac, CJAC, &
                          INDVAR, INDFUN, GRAD )
       USE CUTEST
       TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
       INTEGER :: n, m, lc, nnzj, lcjac
+      INTEGER, INTENT( OUT ) :: status
       LOGICAL :: GRAD
       INTEGER :: INDVAR( lcjac ), INDFUN( lcjac )
       REAL ( KIND = wp ) :: X( n ), C( lc ), CJAC ( lcjac )
@@ -27,37 +28,13 @@
 !  Ingrid Bongartz
 !  April 1992.
 
-
-! ---------------------------------------------------------------------
-
-
-
-
-! ---------------------------------------------------------------------
-
-
-
-! ---------------------------------------------------------------------
-
-
-! ---------------------------------------------------------------------
-
-!  integer variables from the GLOBAL common block.
-
-
-!  integer variables from the LOCAL common block.
-
-
-!  integer variables from the PRFCTS common block.
-
-
 !  local variables.
 
       INTEGER :: i, j, iel, k, ig, ii, ig1, l, ll, icon, icnt
       INTEGER :: nin, nvarel, nelow, nelup, istrgv, iendgv
       INTEGER :: llo, llwrk, ifstat, igstat
       LOGICAL :: NONTRV
-!D    EXTERNAL           SETVL, SETVI, RANGE 
+      EXTERNAL :: RANGE 
       REAL ( KIND = wp ) :: ftt, one, zero, gi, scalee
       PARAMETER ( zero = 0.0_wp, one = 1.0_wp )
 
@@ -70,8 +47,8 @@
       llo = gxeqx + data%ngng
       llwrk = llogic - llo
       IF ( llwrk < data%nel ) THEN
-          IF ( iout > 0 ) WRITE( iout, 2010 ) data%nel - llwrk 
-          STOP
+          IF ( data%out > 0 ) WRITE( data%out, 2010 ) data%nel - llwrk 
+          status = 2 ; RETURN
       END IF
       DO 410 i = 1, data%nel
          data%LOGIC( i ) = .FALSE.
@@ -96,31 +73,26 @@
          END IF
    10 CONTINUE
 
-!  Evaluate the element function values.
+!  evaluate the element function values
 
-      CALL ELFUN ( data%FUVALS, X, data%EPVALU( 1 ), icnt, &
-                   data%ITYPEE( 1 ), data%ISTAEV( 1 ), &
-                   data%IELVAR( 1 ), data%INTVAR( 1 ), &
-                   data%ISTADH( 1 ), data%ISTEP( 1 ), &
-                   data%ICALCF( 1 ),  &
-                   data%lintre, data%lstaev, data%lelvar, data%lntvar, data%lstadh,  &
-                   data%lntvar, data%lintre, lfuval, data%lvscal, data%lepvlu,  &
-                   1, ifstat )
-      IF ( GRAD ) THEN
+      CALL ELFUN( data%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,          &
+                  data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,          &
+                  data%ISTEP, data%ICALCF, data%ltypee, data%lstaev,           &
+                  data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
+                  data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,          &
+                  1, ifstat )
 
-!  Evaluate the element function derivatives.
+!  evaluate the element function derivatives
 
-         CALL ELFUN ( data%FUVALS, X, data%EPVALU( 1 ), icnt, &
-                      data%ITYPEE( 1 ), data%ISTAEV( 1 ), &
-                      data%IELVAR( 1 ), data%INTVAR( 1 ), &
-                      data%ISTADH( 1 ), data%ISTEP( 1 ), &
-                      data%ICALCF( 1 ),  &
-                      data%lintre, data%lstaev, data%lelvar, data%lntvar, data%lstadh,  &
-                      data%lntvar, data%lintre, lfuval, data%lvscal, data%lepvlu,  &
-                      2, ifstat )
-      END IF
+      IF ( GRAD )                                                              &
+        CALL ELFUN( data%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,        &
+                    data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,        &
+                    data%ISTEP, data%ICALCF, data%ltypee, data%lstaev,         &
+                    data%lelvar, data%lntvar, data%lstadh, data%lstep,         &
+                    data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,        &
+                    2, ifstat )
 
-!  Compute the group argument values ft.
+!  compute the group argument values ft
 
       DO 100 ig = 1, data%ng
          ftt = zero
@@ -149,7 +121,7 @@
 
 !  Record derivatives of trivial groups.
 
-            IF ( data%GXEQX( ig ) ) data%GVALS( data%ng + ig ) = one 
+            IF ( data%GXEQX( ig ) ) data%GVALS( ig, 2 ) = one 
          END IF
          data%FT( ig ) = ftt
   100 CONTINUE
@@ -159,27 +131,25 @@
 !  All group functions are trivial.
 
       IF ( data%altriv ) THEN
-      CALL DCOPY( data%ng, data%FT( 1 ), 1, data%GVALS( 1 ), 1 )
-      CALL SETVL( data%ng, data%GVALS( data%ng + 1 ), 1, one )
+        data%GVALS( : data%ng, 1 ) = data%FT( : data%ng )
+        data%GVALS( : data%ng, 2 ) = one
       ELSE
 
 !  Evaluate the group function values.
 !  Evaluate groups belonging to the first m constraints only.
 
-         icnt = 0
-         DO 400 ig = 1, data%ng
-            icon = data%KNDOFC( ig )
-            IF ( icon > 0 .AND. icon <= m ) THEN
-               icnt = icnt + 1
-               data%ICALCF( icnt ) = ig
-            END IF 
-  400    CONTINUE
-         CALL GROUP ( data%GVALS( 1 ), data%ng, data%FT( 1 ), &
-                      data%GPVALU( 1 ), icnt, &
-                      data%ITYPEG( 1 ), data%ISTGP( 1 ), &
-                      data%ICALCF( 1 ), &
-                      data%lcalcg, data%ng1, data%lcalcg, data%lcalcg, data%lgpvlu, &
-                      .FALSE., igstat )
+        icnt = 0
+        DO ig = 1, data%ng
+          icon = data%KNDOFC( ig )
+          IF ( icon > 0 .AND. icon <= m ) THEN
+            icnt = icnt + 1
+            data%ICALCF( icnt ) = ig
+          END IF 
+        END DO
+        CALL GROUP( data%GVALS, data%ng, data%FT, data%GPVALU, data%ng,        &
+                    data%ITYPEG, data%ISTGP, data%ICALCF, data%ltypeg,         &
+                    data%lstgp, data%lcalcf, data%lcalcg, data%lgpvlu,         &
+                    .FALSE., igstat )
       END IF
 
 !  Compute the constraint function values.
@@ -190,7 +160,7 @@
             IF ( data%GXEQX( ig ) ) THEN
                C( i ) = data%GSCALE( ig ) * data%FT( ig )
             ELSE 
-               C( i ) = data%GSCALE( ig ) * data%GVALS( ig )
+               C( i ) = data%GSCALE( ig ) * data%GVALS( ig, 1 )
             END IF
          END IF
   110 CONTINUE
@@ -198,12 +168,11 @@
 
 !  Evaluate the group derivative values.
 
-         IF ( .NOT. data%altriv ) CALL GROUP ( data%GVALS( 1 ), data%ng, &
-               data%FT( 1 ), data%GPVALU( 1 ), icnt, &
-               data%ITYPEG( 1 ), data%ISTGP( 1 ), &
-               data%ICALCF( 1 ), &
-               data%lcalcg, data%ng1, data%lcalcg, data%lcalcg, data%lgpvlu, &
-               .TRUE., igstat )
+        IF ( .NOT. data%altriv )                                               &
+          CALL GROUP( data%GVALS, data%ng, data%FT, data%GPVALU, data%ng,      &
+                      data%ITYPEG, data%ISTGP, data%ICALCF, data%ltypeg,       &
+                      data%lstgp, data%lcalcf, data%lcalcg, data%lgpvlu,       &
+                      .TRUE., igstat )
 
 !  Compute the gradient values.  Initialize the Jacobian as zero.
 
@@ -230,9 +199,9 @@
 !  Compute the first derivative of the group.
 
             gi = data%GSCALE( ig )
-            IF ( NONTRV ) gi = gi  * data%GVALS( data%ng + ig )
-      CALL SETVI( iendgv - istrgv + 1, data%WRK( 1 ), &
-                         data%IWORK( data%lsvgrp + istrgv ), zero )
+            IF ( NONTRV ) gi = gi  * data%GVALS( ig, 2 )
+              data%WRK( data%IWORK( data%lsvgrp + istrgv :                     &
+                                    data%lsvgrp + iendgv ) ) = zero
 
 !  The group has nonlinear elements.
 
@@ -251,10 +220,9 @@
 !  The IEL-th element has an internal representation.
 
                      nin = data%INTVAR( iel + 1 ) - k
-                     CALL RANGE ( iel, .TRUE., data%FUVALS( k ), &
-                                  data%WRK( n + 1 ), nvarel, nin, &
-                                  data%ITYPEE( iel ), &
-                                  nin, nvarel )
+                     CALL RANGE ( iel, .TRUE., data%FUVALS( k ),               &
+                                  data%WRK( n + 1 ), nvarel, nin,              &
+                                  data%ITYPEE( iel ), nin, nvarel )
 !DIR$ IVDEP
                      DO 130 i = 1, nvarel
                         j = data%IELVAR( l )
@@ -340,29 +308,28 @@
 !  Verify that the Jacobian can fit in the allotted space
 
          IF ( nnzj > lcjac ) THEN
-            IF ( iout > 0 ) WRITE( iout, 2000 ) nnzj - lcjac 
-            STOP
+            IF ( data%out > 0 ) WRITE( data%out, 2000 ) nnzj - lcjac 
+            status = 2 ; RETURN
          END IF
       END IF
 
 !  Update the counters for the report tool.
 
       data%nc2cf = data%nc2cf + data%pnc
-      IF ( GRAD ) data%nc2cg = data%nc2cg + data%pnc
+      IF ( grad ) data%nc2cg = data%nc2cg + data%pnc
+      status = 0
       RETURN
 
 !  Non-executable statements.
 
- 2000 FORMAT( /  ' ** SUBROUTINE CCFSG: array length lcjac too small.' &
-              /  ' -- Minimization abandoned.', &
-              /  ' -- Increase the parameter lcjac by at least ', I8, &
+ 2000 FORMAT( /  ' ** SUBROUTINE CCFSG: array length lcjac too small.'      &
+              /  ' -- Increase the parameter lcjac by at least ', I0,        &
                  ' and restart.' )
- 2010 FORMAT( /  ' ** SUBROUTINE CCFSG: array length llogic too small.' &
-              /  ' -- Minimization abandoned.', &
-              /  ' -- Increase the parameter llogic by at least ', I8, &
+ 2010 FORMAT( /  ' ** SUBROUTINE CCFSG: array length llogic too small.'      &
+              /  ' -- Increase the parameter llogic by at least ', I0,       &
                  ' and restart.' )
 
-!  end of CSCFG.
+!  end of CSCFG
 
       END
 

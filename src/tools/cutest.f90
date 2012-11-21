@@ -19,7 +19,8 @@
 
       PRIVATE
       PUBLIC :: CUTEST_initialize_workspace, CUTEST_form_gradients,            &
-                CUTEST_assemble_hessian, CUTEST_hessian_times_vector
+                CUTEST_assemble_hessian, CUTEST_hessian_times_vector,          &
+                CUTEST_extend_array
 
 !--------------------
 !   P r e c i s i o n
@@ -45,7 +46,7 @@
 
 !  define generic interfaces to routines for extending allocatable arrays
 
-      INTERFACE CUTEST_extend_arrays
+      INTERFACE CUTEST_extend_array
         MODULE PROCEDURE CUTEST_extend_array_real, CUTEST_extend_array_integer
       END INTERFACE
 
@@ -70,16 +71,19 @@
 
       TYPE, PUBLIC :: CUTEST_data_type
 
+        INTEGER :: out
+
 !  Integer variables from the GLOBAL common block.
 
         INTEGER :: n, ng, nel, ntotel, nvrels, nnza, ngpvlu, nepvlu
         INTEGER :: ng1, nel1, nvargp, nvar2, nnonnz, nbprod, ntotin
- 
+
         INTEGER :: lo, ch, liwork, lwork, ngng, la, lb, nobjgr, lu, lelvar
         INTEGER :: lstaev, lstadh, lntvar, lcalcf, leling, lintre, lft
         INTEGER :: lgxeqx, licna, lstada, lkndof, lgpvlu, lepvlu
         INTEGER :: lstadg, lgvals, lgscal, lescal, lvscal, lcalcg            
         INTEGER :: llink, lpos, lwtran, litran, l_link_e_u_v, lfuval
+        INTEGER :: ltypee, ltypeg, lstep, lstgp
 
         INTEGER :: lirnh = lmin
         INTEGER :: ljcnh = lmin
@@ -118,14 +122,14 @@
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: ESCALE
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: GSCALE
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: VSCALE
-        REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: GVALS
+        REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( :  , : ) :: GVALS
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: XT
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: DGRAD
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: Q
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: FT
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: WRK
-        LOGICAL, ALLOCATABLE, DIMENSION( : ) :: intrep
-        LOGICAL, ALLOCATABLE, DIMENSION( : ) :: gxeqx
+        LOGICAL, ALLOCATABLE, DIMENSION( : ) :: INTREP
+        LOGICAL, ALLOCATABLE, DIMENSION( : ) :: GXEQX
         LOGICAL, ALLOCATABLE, DIMENSION( : ) :: LOGIC
         CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : ) :: GNAMES
         CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : ) :: VNAMES
@@ -186,7 +190,7 @@
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: H_el
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: H_in
 
-!  Integer variables from the LOCAL common block.
+!  Integer variables from the old LOCAL common block
 
         INTEGER :: lfxi, lgxi, lhxi, lggfx, ldx, lgrjac
         INTEGER :: lqgrad, lbreak, lp, lxcp, lx0, lgx0
@@ -205,20 +209,16 @@
         INTEGER :: lnwtra, lsiset, lssvse, lniset, lnsvse
         LOGICAL :: altriv, firstg                                 
 
-!  variables from the PRFCTS common block
+!  variables from the old PRFCTS common block
 
         INTEGER :: nc2of, nc2og, nc2oh, nc2cf, nc2cg, nc2ch, nhvpr, pnc
         REAL :: sutime, sttime
 
-!  variables from the NNVARS common block
+!  variables from the old NNVARS common block
 
         INTEGER :: nnov, nnjv 
 
-!  variables from the OUTPUT common block
-
-        INTEGER :: iout2
-
-!  variables from the DIMS common block
+!  variables from the old DIMS common block
 
         INTEGER :: numvar, numcon
 

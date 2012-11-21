@@ -40,15 +40,14 @@
       INTEGER :: nin, nvarel, nelow, nelup, istrgv, iendgv
       REAL ( KIND = wp ) :: zero, gi, scalee
       LOGICAL :: NONTRV
-!D    EXTERNAL         SETVL, SETVI
 
-!  SET CONSTANT REAL PARAMETERS.
+!  Set constant real parameters
 
       PARAMETER ( zero = 0.0_wp )
 
 !  INITIALIZE THE GRADIENT AS ZERO.
 
-      CALL SETVL( n, GRAD, 1, zero )
+      GRAD( : n ) = zero
 
 !  CONSIDER THE IG-TH GROUP.
 
@@ -72,8 +71,7 @@
 !  ELEMENTS.
 
          IF ( FIRSTG .OR. nelow <= nelup ) THEN
-      CALL SETVI( iendgv - istrgv + 1, WKPVAR, ISVGRP( istrgv ), &
-                         zero )
+           WKPVAR( ISVGRP( istrgv : iendgv ) ) = zero
 
 !  LOOP OVER THE GROUP'S NONLINEAR ELEMENTS.
 

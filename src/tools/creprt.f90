@@ -9,13 +9,14 @@
 !   fortran 77 version originally released in CUTEr, 23rd December, 2000
 !   fortran 2003 version released in CUTEst, 4th November 2012
 
-      SUBROUTINE CREPRT( data, CALLS, TIME )
+      SUBROUTINE CREPRT( data, status, CALLS, TIME )
       USE CUTEST
       TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
 !  Dummy arguments
 
+      INTEGER, INTENT( OUT ) :: status
       REAL ( KIND = wp ), DIMENSION( 7 ):: CALLS
       REAL ( KIND = wp ), DIMENSION( 2 ):: TIME
 
@@ -62,6 +63,9 @@
         CALLS( 6 ) = data%nc2cg
         CALLS( 7 ) = data%nc2ch
       ENDIF
+
+      status = 0
+      RETURN
 
 !  End of subroutine CREPRT
 

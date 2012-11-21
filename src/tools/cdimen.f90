@@ -1,81 +1,87 @@
-! ( Last modified on 10 Sepc 2004 at 16:35:38 )
-!  Correction: 10/Sep/2004: undeclared integer variables declared
-      SUBROUTINE CDIMEN( input, n, m )
-      INTEGER :: input, n, m
+! THIS VERSION: CUTEST 1.0 - 19/11/2012 AT 13:35 GMT.
 
-!  Compute the basic array dimensions for the constrained optimization tools.
+!-*-*-*-*-*-*-  C U T E S T    C D I M E N    S U B R O U T I N E  -*-*-*-*-*-
 
-!  Nick Gould, for CGT productions,
-!  26th August, 1999.
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 77 version originally released in CUTEr, September 1999
+!   fortran 2003 version released in CUTEst, 19th November 2012
+
+      SUBROUTINE CDIMEN( input, status, n, m )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: input
+      INTEGER, INTENT( OUT ) :: n, m, status
+
+!  -------------------------------------------------------------------------
+!  Compute the basic array dimensions for the constrained optimization tools
+!  -------------------------------------------------------------------------
+
+!  local variables
 
       INTEGER :: ialgor, i, j, ng, nel, idummy
       INTEGER :: ng1, nel1, nslack, nobjgr, iend
-      INTEGER :: IARRAY( 10 )
-      CHARACTER ( LEN = 8 ) :: PNAME
+      INTEGER, DIMENSION( 10 ) :: IARRAY
+      CHARACTER ( LEN = 8 ) :: pname
 
-!  Input the problem dimensions.
+!  input the problem dimensions
 
       REWIND input
-      READ( input, 1001 ) n, ng, nel
+      READ( input, "( 3I8 )" ) n, ng, nel
 
-!  Input the problem type.
+!  input the problem type
 
-      READ( input, 1000 ) ialgor, PNAME
+      READ( input, "( I2, A8 )" ) ialgor, pname
       IF ( ialgor < 2 ) THEN
-         m = 0
-         GO TO 100
+        m = 0
+      ELSE
+
+!  set useful integer values
+
+        ng1 = ng + 1
+        nel1 = nel + 1
+
+!  print out problem data. input the number of variables, groups, elements and 
+!  the identity of the objective function group
+
+        IF ( ialgor == 2 ) READ( input, "( 2I8 )" ) nslack, nobjgr
+
+!  input the starting addresses of the elements in each group, of the 
+!  parameters used for each group and of the nonzeros of the linear element 
+!  in each group
+
+        READ( input, "( ( 10I8 ) )" ) ( idummy, i = 1, ng1 )
+        READ( input, "( ( 10I8 ) )" ) ( idummy, i = 1, ng1 )
+        READ( input, "( ( 10I8 ) )" ) ( idummy, i = 1, ng1 )
+
+!  Input the starting addresses of the variables and parameters in each element
+
+        READ( input, "( ( 10I8 ) )" ) ( idummy, i = 1, nel1 )
+        READ( input, "( ( 10I8 ) )" ) ( idummy, i = 1, nel1 )
+
+!  input the group type of each group
+
+        READ( input, "( ( 10I8 ) )" ) ( idummy, i = 1, ng )
+
+!  count the number of constraint groups
+
+        m = 0
+        DO i = 1, ng, 10
+          iend = MIN( i + 9, ng )
+          READ( input, "( ( 10I8 ) )" ) ( IARRAY( j - i + 1 ), j = i, iend )
+          DO j = i, iend
+            IF ( IARRAY( j - i + 1 ) /= 1 ) m = m + 1
+          END DO
+        END DO
       END IF
 
-!  Set useful integer values.
-
-      ng1 = ng + 1
-      nel1 = nel + 1
-
-!  Print out problem data. input the number of variables, groups,
-!  elements and the identity of the objective function group.
-
-      IF ( ialgor == 2 ) READ( input, 1002 ) nslack, nobjgr
-
-!  Input the starting addresses of the elements in each group,
-!  of the parameters used for each group and
-!  of the nonzeros of the linear element in each group.
-
-      READ( input, 1010 ) ( idummy, i = 1, ng1 )
-      READ( input, 1010 ) ( idummy, i = 1, ng1 )
-      READ( input, 1010 ) ( idummy, i = 1, ng1 )
-
-!  Input the starting addresses of the variables and parameters
-!  in each element.
-
-      READ( input, 1010 ) ( idummy, i = 1, nel1 )
-      READ( input, 1010 ) ( idummy, i = 1, nel1 )
-
-!  Input the group type of each group
-
-      READ( input, 1010 ) ( idummy, i = 1, ng )
-
-!  Count the number of constraint groups
-
-      m = 0
-      DO 20 i = 1, ng, 10
-         iend = MIN( i + 9, ng )
-         READ( input, 1010 ) ( IARRAY( j - i + 1 ), j = i, iend )
-         DO 10 j = i, iend
-           IF ( IARRAY( j - i + 1 ) /= 1 ) m = m + 1
-   10    CONTINUE
-   20 CONTINUE
-
-  100 CONTINUE
       REWIND input
+      status = 0
       RETURN
 
-!  Non-executable statements.
+!  End of subroutine CDIMEN
 
- 1000 FORMAT( I2, A8 )
- 1001 FORMAT( 3I8 )
- 1002 FORMAT( 2I8 )
- 1010 FORMAT( ( 10I8 ) )
-
-!  End of CDIMEN.
-
-      END
+      END SUBROUTINE CDIMEN

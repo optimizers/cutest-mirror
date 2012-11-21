@@ -1,146 +1,127 @@
-! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE CFN ( data, n, m, X, f, lc, C )
+! THIS VERSION: CUTEST 1.0 - 20/11/2012 AT 13:30 GMT.
+
+!-*-*-*-*-*-*-*-  C U T E S T    C F N    S U B R O U T I N E  -*-*-*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 77 version originally released in CUTE, October 1991
+!   fortran 2003 version released in CUTEst, 20th November 2012
+
+      SUBROUTINE CFN ( data, status, n, m, X, f, C )
       USE CUTEST
-      TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: n, m, lc
-      REAL ( KIND = wp ) :: f
-      REAL ( KIND = wp ) :: X ( n ), C ( lc )
 
+!  dummy arguments
+
+      TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
+      INTEGER, INTENT( IN ) :: n, m
+      INTEGER, INTENT( OUT ) :: status
+      REAL ( KIND = wp ), INTENT( OUT ) :: f
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( m ) :: C
+
+!  ---------------------------------------------------------------------
 !  Compute the values of the objective function and general constraints
-!  of a function initially written in Standard Input Format (SIF).
+!  of a function initially written in Standard Input Format (SIF)
+!  ---------------------------------------------------------------------
 
-!  Based on the minimization subroutine SBMIN by Conn, Gould and Toint.
-
-!  Nick Gould, for CGT productions.
-!  October 1991.
-
-
-! ---------------------------------------------------------------------
-
-
-
-
-! ---------------------------------------------------------------------
-
-
-
-! ---------------------------------------------------------------------
-
-
-! ---------------------------------------------------------------------
-
-!  integer variables from the GLOBAL common block.
-
-
-!  integer variables from the LOCAL common block.
-
-
-!  Integer variables from the PRFCTS common block.
-
-
-!  local variables.
+!  local variables
 
       INTEGER :: i, j, ig, ifstat, igstat
-      REAL ( KIND = wp ) :: ftt, one, zero
-      PARAMETER ( zero = 0.0_wp, one = 1.0_wp )
+      REAL ( KIND = wp ) :: ftt
 
-!  there are non-trivial group functions.
+!  there are non-trivial group functions
 
-      DO 10 i = 1, MAX( data%nel, data%ng )
+      DO i = 1, MAX( data%nel, data%ng )
         data%ICALCF( i ) = i
-   10 CONTINUE
+      END DO
 
-!  evaluate the element function values.
+!  evaluate the element function values
 
-      CALL ELFUN ( data%FUVALS, X, data%EPVALU( 1 ), data%nel, &
-                   data%ITYPEE( 1 ), data%ISTAEV( 1 ), &
-                   data%IELVAR( 1 ), data%INTVAR( 1 ), &
-                   data%ISTADH( 1 ), data%ISTEP( 1 ), &
-                   data%ICALCF( 1 ),  &
-                   data%lintre, data%lstaev, data%lelvar, data%lntvar, data%lstadh,  &
-                   data%lntvar, data%lintre, lfuval, data%lvscal, data%lepvlu,  &
-                   1, ifstat )
+      CALL ELFUN( data%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,          &
+                  data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,          &
+                  data%ISTEP, data%ICALCF, data%ltypee, data%lstaev,           &
+                  data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
+                  data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,          &
+                  1, ifstat )
 
-!  compute the group argument values ft.
+!  compute the group argument values ft
 
-      DO 100 ig = 1, data%ng
-         ftt = - data%B( ig )
+      DO ig = 1, data%ng
+        ftt = - data%B( ig )
 
-!  include the contribution from the linear element.
+!  include the contribution from the linear element
 
-         DO 30 j = data%ISTADA( ig ), data%ISTADA( ig + 1 ) - 1
-            ftt = ftt + data%A( j ) * X( data%ICNA( j ) )
-   30    CONTINUE
+        DO j = data%ISTADA( ig ), data%ISTADA( ig + 1 ) - 1
+          ftt = ftt + data%A( j ) * X( data%ICNA( j ) )
+        END DO
 
-!  include the contributions from the nonlinear elements.
+!  include the contributions from the nonlinear elements
 
-         DO 60 j = data%ISTADG( ig ), data%ISTADG( ig + 1 ) - 1
-            ftt = ftt + data%ESCALE( j ) * data%FUVALS( data%IELING( j ) )
-   60    CONTINUE
-         data%FT( ig ) = ftt
-  100 CONTINUE
+        DO j = data%ISTADG( ig ), data%ISTADG( ig + 1 ) - 1
+          ftt = ftt + data%ESCALE( j ) * data%FUVALS( data%IELING( j ) )
+        END DO
+        data%FT( ig ) = ftt
+      END DO
 
-!  compute the group function values.
+!  compute the group function values
 
-!  all group functions are trivial.
+!  all group functions are trivial
 
       IF ( data%altriv ) THEN
-      CALL DCOPY( data%ng, data%FT( 1 ), 1, data%GVALS( 1 ), 1 )
-      CALL SETVL( data%ng, data%GVALS( data%ng + 1 ), 1, one )
+        data%GVALS( : data%ng, 1 ) = data%FT( : data%ng )
+        data%GVALS( : data%ng, 2 ) = 1.0_wp
+
+!  evaluate the group function values
+
       ELSE
-
-!  evaluate the group function values.
-
-         CALL GROUP ( data%GVALS( 1 ), data%ng, data%FT( 1 ), &
-                      data%GPVALU( 1 ), data%ng, &
-                      data%ITYPEG( 1 ), data%ISTGP( 1 ), &
-                      data%ICALCF( 1 ), &
-                      data%lcalcg, data%ng1, data%lcalcg, data%lcalcg, data%lgpvlu, &
-                      .FALSE., igstat )
+        CALL GROUP( data%GVALS, data%ng, data%FT, data%GPVALU, data%ng,        &
+                    data%ITYPEG, data%ISTGP, data%ICALCF, data%ltypeg,         &
+                    data%lstgp, data%lcalcf, data%lcalcg, data%lgpvlu,         &
+                    .FALSE., igstat )
       END IF
 
-!  Compute the objective and constraint function values.
+!  compute the objective and constraint function values.
 
-!                            block if there are no constraints. 
-      f = zero
+      f = 0.0_wp
       IF ( data%numcon > 0 ) THEN
-         DO 210 ig = 1, data%ng
-            IF ( data%KNDOFC( ig ) == 0 ) THEN
-               IF ( data%GXEQX( ig ) ) THEN
-                  f = f + data%GSCALE( ig ) * data%FT( ig )
-               ELSE
-                  f = f + data%GSCALE( ig ) * data%GVALS( ig )
-               END IF
+        DO ig = 1, data%ng
+          IF ( data%KNDOFC( ig ) == 0 ) THEN
+            IF ( data%GXEQX( ig ) ) THEN
+              f = f + data%GSCALE( ig ) * data%FT( ig )
             ELSE
-               IF ( data%GXEQX( ig ) ) THEN
-                  C( data%KNDOFC( ig ) ) = &
-                      data%GSCALE( ig ) * data%FT( ig )
-               ELSE
-                  C( data%KNDOFC( ig ) ) = &
-                      data%GSCALE( ig ) * data%GVALS( ig )
-                  END IF
-               END IF
-  210    CONTINUE
+              f = f + data%GSCALE( ig ) * data%GVALS( ig, 1 )
+            END IF
+          ELSE
+            IF ( data%GXEQX( ig ) ) THEN
+              C( data%KNDOFC( ig ) ) = data%GSCALE( ig ) * data%FT( ig )
+            ELSE
+               C( data%KNDOFC( ig ) ) = data%GSCALE( ig ) * data%GVALS( ig, 1 )
+            END IF
+          END IF
+        END DO
       ELSE
 
-!  There are no constraints, so we need not check data%KNDOFC( ig ).
+!  there are no constraints, so we need not check KNDOFC
 
-         DO 220 ig = 1, data%ng
-            IF ( data%GXEQX( ig ) ) THEN
-               f = f + data%GSCALE( ig ) * data%FT( ig )
-            ELSE
-               f = f + data%GSCALE( ig ) * data%GVALS( ig )
-            END IF
-  220    CONTINUE
+        DO ig = 1, data%ng
+          IF ( data%GXEQX( ig ) ) THEN
+            f = f + data%GSCALE( ig ) * data%FT( ig )
+          ELSE
+            f = f + data%GSCALE( ig ) * data%GVALS( ig, 1 )
+          END IF
+        END DO
       END IF
 
 !  Update the counters for the report tool.
 
       data%nc2of = data%nc2of + 1
       data%nc2cf = data%nc2cf + data%pnc
+      status = 0
       RETURN
 
-!  end of CFN.
+!  end of subroutine CFN
 
-      END
+      END SUBROUTINE CFN

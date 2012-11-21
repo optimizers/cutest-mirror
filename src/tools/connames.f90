@@ -1,53 +1,41 @@
-! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE CONNAMES( data, m, GNAME )
+! THIS VERSION: CUTEST 1.0 - 19/11/2012 AT 13:10 GMT.
+
+!-*-*-*-*-*-  C U T E S T    C O N N A M E S    S U B R O U T I N E  -*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Dominique Orban
+
+!  History -
+!   fortran 77 version originally released in CUTEr, August 2005
+!   fortran 2003 version released in CUTEst, 19th November 2012
+
+      SUBROUTINE CONNAMES( data, status, m, CNAME )
       USE CUTEST
-      TYPE ( CUTEST_data_type ) :: data
-      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: m
-      CHARACTER ( LEN = 10 ) :: GNAME( m )
 
-!  Obtain the names of the general constraints.
+!  dummy arguments
 
-!  D. Orban, for GOT productions, Aug 2005, from the version of
-!  Nick Gould, for CGT productions.
-!  September 1992.
+      TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
+      INTEGER, INTENT( IN ) :: m
+      INTEGER, INTENT( OUT ) :: status
+      CHARACTER ( LEN = 10 ), INTENT( OUT ), DIMENSION( m ) :: CNAME
 
+!  -------------------------------------------
+!  obtain the names of the general constraints
+!  -------------------------------------------
 
-! ---------------------------------------------------------------------
+      INTEGER :: ig
 
+!  Set the names of the general constraints
 
-
-
-! ---------------------------------------------------------------------
-
-
-
-! ---------------------------------------------------------------------
-
-
-! ---------------------------------------------------------------------
-
-!  integer variables from the GLOBAL common block.
-
-
-!  integer variables from the LOCAL common block.
-
-
-!  local variables.
-
-      INTEGER :: i, ig
-
-!  Set the names of the general constraints.
-
-!                            only if there are constraints.
       IF ( data%numcon > 0 ) THEN
-         DO 20 ig = 1, data%ng
-            IF ( data%KNDOFC( ig ) /= 0 ) &
-                 GNAME( data%KNDOFC( ig ) ) = data%GNAMES( ig )
-   20    CONTINUE
+        DO ig = 1, data%ng
+          IF ( data%KNDOFC( ig ) /= 0 )                                        &
+             CNAME( data%KNDOFC( ig ) ) = data%GNAMES( ig )
+        END DO
       END IF
+      status = 0
       RETURN
 
-!  end of CONNAMES.
+!  end of subroutine CONNAMES
 
-      END
+      END SUBROUTINE CONNAMES

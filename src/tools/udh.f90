@@ -1,9 +1,10 @@
 ! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE UDH ( data, n, X, lh1, H )
+      SUBROUTINE UDH ( data, status, n, X, lh1, H )
       USE CUTEST
       TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
       INTEGER :: n, lh1
+      INTEGER, INTENT( OUT ) :: status
       REAL ( KIND = wp ) :: X( n ), H( lh1, n )
 
 !  Compute the Hessian matrix of a group partially separable function.
@@ -15,108 +16,78 @@
 !  Nick Gould, for CGT productions.
 !  December 1990.
 
-
-! ---------------------------------------------------------------------
-
-
-
-
-! ---------------------------------------------------------------------
-
-
-
-! ---------------------------------------------------------------------
-
-
-! ---------------------------------------------------------------------
-
-!  integer variables from the GLOBAL common block.
-
-
-!  integer variables from the LOCAL common block.
-
-
-!  integer variables from the PRFCTS common block.
-
-
 !  Local variables
 
       INTEGER :: i, j, k, lih, nnzh, ljcnh, ifstat
       INTEGER :: ig, lh, lwkh, liwkh, lirnh, igstat
       INTEGER :: lnxtrw, linxtr, inform
-      REAL ( KIND = wp ) :: zero, one, ftt
-      PARAMETER ( zero = 0.0_wp, one = 1.0_wp )
+      REAL ( KIND = wp ) :: ftt
       EXTERNAL :: RANGE 
 
 !  Check input parameters.
 
       IF ( lh1 < n ) THEN
-         WRITE( iout, 2020 )
-         STOP
+         IF ( data%out > 0 ) WRITE( data%out, 2020 )
+         status = 2 ; RETURN
       END IF
 
 !  there are non-trivial group functions.
 
-      DO 10 i = 1, MAX( data%nel, data%ng )
+      DO i = 1, MAX( data%nel, data%ng )
         data%ICALCF( i ) = i
-   10 CONTINUE
+      END DO
 
 !  evaluate the element function values.
 
-      CALL ELFUN ( data%FUVALS, X, data%EPVALU( 1 ), data%nel, &
-                   data%ITYPEE( 1 ), data%ISTAEV( 1 ), &
-                   data%IELVAR( 1 ), data%INTVAR( 1 ), &
-                   data%ISTADH( 1 ), data%ISTEP( 1 ), &
-                   data%ICALCF( 1 ),  &
-                   data%lintre, data%lstaev, data%lelvar, data%lntvar, data%lstadh,  &
-                   data%lntvar, data%lintre, lfuval, data%lvscal, data%lepvlu,  &
-                   1, ifstat )
+      CALL ELFUN( data%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,          &
+                  data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,          &
+                  data%ISTEP, data%ICALCF, data%ltypee, data%lstaev,           &
+                  data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
+                  data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,          &
+                  1, ifstat )
 
 !  evaluate the element function values.
 
-      CALL ELFUN ( data%FUVALS, X, data%EPVALU( 1 ), data%nel, &
-                   data%ITYPEE( 1 ), data%ISTAEV( 1 ), &
-                   data%IELVAR( 1 ), data%INTVAR( 1 ), &
-                   data%ISTADH( 1 ), data%ISTEP( 1 ), &
-                   data%ICALCF( 1 ),  &
-                   data%lintre, data%lstaev, data%lelvar, data%lntvar, data%lstadh,  &
-                   data%lntvar, data%lintre, lfuval, data%lvscal, data%lepvlu,  &
-                   3, ifstat )
+      CALL ELFUN( data%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,          &
+                  data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,          &
+                  data%ISTEP, data%ICALCF, data%ltypee, data%lstaev,           &
+                  data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
+                  data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,          &
+                  3, ifstat )
 
 !  compute the group argument values ft.
 
-      DO 90 ig = 1, data%ng
-         ftt = - data%B( ig )
+      DO ig = 1, data%ng
+        ftt = - data%B( ig )
 
 !  include the contribution from the linear element.
 
-         DO 30 j = data%ISTADA( ig ), data%ISTADA( ig + 1 ) - 1
-            ftt = ftt + data%A( j ) * X( data%ICNA( j ) )
-   30    CONTINUE
+        DO j = data%ISTADA( ig ), data%ISTADA( ig + 1 ) - 1
+          ftt = ftt + data%A( j ) * X( data%ICNA( j ) )
+        END DO
 
 !  include the contributions from the nonlinear elements.
 
-         DO 60 j = data%ISTADG( ig ), data%ISTADG( ig + 1 ) - 1
-            ftt = ftt + data%ESCALE( j ) * data%FUVALS( data%IELING( j ) )
-   60    CONTINUE
-         data%FT( ig ) = ftt
+        DO j = data%ISTADG( ig ), data%ISTADG( ig + 1 ) - 1
+          ftt = ftt + data%ESCALE( j ) * data%FUVALS( data%IELING( j ) )
+        END DO
+        data%FT( ig ) = ftt
 
 !  Record the derivatives of trivial groups.
 
-         IF ( data%GXEQX( ig ) ) THEN
-            data%GVALS( data%ng + ig ) = one
-            data%GVALS( 2 * data%ng + ig ) = zero
-         END IF
-   90 CONTINUE
+        IF ( data%GXEQX( ig ) ) THEN
+          data%GVALS( ig, 2 ) = 1.0_wp
+          data%GVALS( ig, 3 ) = 0.0_wp
+        END IF
+      END DO
 
 !  evaluate the group derivative values.
 
-      IF ( .NOT. data%altriv ) CALL GROUP ( data%GVALS( 1 ), data%ng, &
-            data%FT( 1 ), data%GPVALU( 1 ), data%ng, &
-            data%ITYPEG( 1 ), data%ISTGP( 1 ), &
-            data%ICALCF( 1 ), &
-            data%lcalcg, data%ng1, data%lcalcg, data%lcalcg, data%lgpvlu, &
-            .TRUE., igstat )
+      IF ( .NOT. data%altriv )                                                 &
+        CALL GROUP( data%GVALS, data%ng, data%FT, data%GPVALU, data%ng,        &
+                    data%ITYPEG, data%ISTGP, data%ICALCF, data%ltypeg,         &
+                    data%lstgp, data%lcalcf, data%lcalcg, data%lgpvlu,         &
+                    .TRUE., igstat )
 
 !  Compute the gradient value.
 
@@ -128,7 +99,7 @@
                    data%lelvar, data%INTVAR( 1 ), data%lntvar, data%IWORK( data%lsvgrp + 1 ), &
                    data%lnvgrp, data%IWORK( data%lstajc + 1 ), data%lnstjc, &
                    data%IWORK( data%lstagv + 1 ), data%lnstgv, data%A( 1 ), data%la, &
-                   data%GVALS( data%ng + 1 ), data%lgvals, &
+                   data%GVALS( : , 2 ), data%lgvals, &
                    data%FUVALS, data%lnguvl, data%FUVALS( data%lggfx + 1 ), &
                    data%GSCALE( 1 ), data%lgscal, &
                    data%ESCALE( 1 ), data%lescal, data%FUVALS( data%lgrjac + 1 ), &
@@ -142,8 +113,8 @@
 
       lwkh = data%lwk2 - n - 3 * data%maxsel
       IF ( lwkh <= 0 ) THEN
-         IF ( iout > 0 ) WRITE( iout, 2000 )
-         STOP
+        IF ( data%out > 0 ) WRITE( data%out, 2000 )
+        status = 2 ; RETURN
       END IF
 
 !  Define the integer work space needed for ASMBL.
@@ -153,8 +124,8 @@
       lh = MIN( lwkh, ( liwkh - 3 * n ) / 4 )
       linxtr = lh + n
       IF ( lh <= 0 ) THEN
-         IF ( iout > 0 ) WRITE( iout, 2010 )
-         STOP
+        IF ( data%out > 0 ) WRITE( data%out, 2010 )
+        status = 2 ; RETURN
       END IF
 
 !  Set starting addresses for partitions of the integer workspace.
@@ -163,9 +134,9 @@
       lirnh = 0
       ljcnh = lirnh + lih
       lnxtrw = ljcnh + lih
-      DO 100 i = 1, n
-         data%IVAR( i ) = i
-  100 CONTINUE
+      DO i = 1, n
+        data%IVAR( i ) = i
+      END DO
 
 !  Assemble the Hessian.
 
@@ -180,43 +151,40 @@
                    data%IWORK( data%lsend + lnxtrw + 1 ), linxtr, &
                    data%IWORK( data%lsend + liwkh + 1 ), n, &
                    data%A( 1 ), data%la, data%FUVALS, data%lnguvl, data%FUVALS, data%lnhuvl, &
-                   data%GVALS( data%ng + 1 ), data%GVALS( 2 * data%ng + 1 ), &
+                   data%GVALS( : , 2 ), data%GVALS( : , 3 ), &
                    data%GSCALE( 1 ), data%ESCALE( 1 ), data%lescal, &
                    data%WRK( 1 ), data%WRK( lwkh + 1 ), &
                    data%lwk2 - lwkh, data%GXEQX( 1 ), &
                    data%lgxeqx, data%INTREP( 1 ), data%lintre, &
                    data%ITYPEE( 1 ), data%lintre, &
-                   RANGE, 1, iout, .FALSE., i, inform, .FALSE., &
+                   RANGE, 1, data%out, .FALSE., i, inform, .FALSE., &
                    .FALSE. )
 
 !  Check that there is sufficient integer workspace.
 
       IF ( inform > 0 ) THEN
-         IF ( iout > 0 ) WRITE( iout, 2010 )
-         STOP
+        IF ( data%out > 0 ) WRITE( data%out, 2010 )
+        status = 2 ; RETURN
       END IF
 
 !  Initialize the dense matrix.
 
-      DO 120 j = 1, n
-         DO 110 i = 1, n
-            H( i, j ) = zero
-  110    CONTINUE
-  120 CONTINUE
+      H( : n, : n ) = 0.0_wp
 
 !  Transfer the matrix from co-ordinate to dense storage and
 !  symmetrize the martix.
 
-      DO 130 k = 1, nnzh
-         i = data%IWORK( data%lsend + lirnh + k )
-         j = data%IWORK( data%lsend + ljcnh + k )
-         H( i, j ) = data%WRK( k )
-         H( j, i ) = data%WRK( k )
-  130 CONTINUE
+      DO k = 1, nnzh
+        i = data%IWORK( data%lsend + lirnh + k )
+        j = data%IWORK( data%lsend + ljcnh + k )
+        H( i, j ) = data%WRK( k )
+        H( j, i ) = data%WRK( k )
+      END DO
 
 !  Update the counters for the report tool.
 
       data%nc2oh = data%nc2oh + 1
+      status = 0
       RETURN
 
 ! Non-executable statements.

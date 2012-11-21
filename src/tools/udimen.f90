@@ -1,20 +1,31 @@
-! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE UDIMEN( input, n )
-      INTEGER :: input, n
+! THIS VERSION: CUTEST 1.0 - 19/11/2012 AT 13:30 GMT.
 
-!  Compute the basic array dimension for the unconstrained optimization tools.
+!-*-*-*-*-*-*-  C U T E S T    C D I M E N    S U B R O U T I N E  -*-*-*-*-*-
 
-!  Nick Gould, for CGT productions,
-!  26th August, 1999.
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 77 version originally released in CUTEr, 26th August 1999
+!   fortran 2003 version released in CUTEst, 19th November 2012
+
+      SUBROUTINE UDIMEN( input, status, n )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: input
+      INTEGER, INTENT( OUT ) ::  n
+      INTEGER, INTENT( OUT ) :: status
+
+!  --------------------------------------------------------------------------
+!  Compute the basic array dimension for the unconstrained optimization tools
+!  --------------------------------------------------------------------------
 
       REWIND input
-      READ( input, 1001 ) n
+      READ( input, "( I8 )" ) n
       REWIND input
+      status = 0
       RETURN
-
-!  Non-executable statements.
-
- 1001 FORMAT( I8 )
 
 !  End of UDIMEN.
 

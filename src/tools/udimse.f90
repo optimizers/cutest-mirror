@@ -1,10 +1,11 @@
 ! ( Last modified on 10 Sepc 2004 at 16:45:38 )
 !  Correction: 10/Sep/2004: undeclared integer variable declared
-      SUBROUTINE UDIMSE( data, ne, nzh, nzirnh )
+      SUBROUTINE UDIMSE( data, status, ne, nzh, nzirnh )
       USE CUTEST
       TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
       INTEGER :: ne, nzh, nzirnh
+      INTEGER, INTENT( OUT ) :: status
 
 !  Compute the number of elements and the space required to store
 !  the Hessian matrix of the objective function of a problem
@@ -70,21 +71,23 @@
 
 !  Loop over the groups
 
-      DO 10 ig = 1, data%ng
-         ig1 = ig + 1
+      DO ig = 1, data%ng
+        ig1 = ig + 1
 
 !  Only consider nonlinear groups
 
-         IF ( data%ISTADG( ig ) < data%ISTADG( ig1 ) .OR.  &
-              .NOT. data%GXEQX( ig ) ) THEN
-            ne = ne + 1
-            nvarg = data%IWORK( data%lstagv + ig1 ) - data%IWORK( data%lstagv + ig )
-            nzirnh = nzirnh + nvarg
-            nzh = nzh + ( nvarg * ( nvarg + 1 ) ) / 2
-         END IF
-   10 CONTINUE
+        IF ( data%ISTADG( ig ) < data%ISTADG( ig1 ) .OR.                       &
+             .NOT. data%GXEQX( ig ) ) THEN
+          ne = ne + 1
+          nvarg                                                                &
+            = data%IWORK( data%lstagv + ig1 ) - data%IWORK( data%lstagv + ig )
+          nzirnh = nzirnh + nvarg
+          nzh = nzh + ( nvarg * ( nvarg + 1 ) ) / 2
+        END IF
+      END DO
+      status = 0
       RETURN
 
-!  end of UDIMSE.
+!  end of UDIMSE
 
       END

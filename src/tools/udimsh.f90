@@ -1,8 +1,9 @@
 ! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE UDIMSH( data, nnzh )
+      SUBROUTINE UDIMSH( data, status, nnzh )
       USE CUTEST
       TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+      INTEGER, INTENT( OUT ) :: status
       INTEGER :: nnzh
 
 !  Compute the space required to store the Hessian matrix of the 
@@ -20,30 +21,6 @@
 
 !  Nick Gould, for CGT productions,
 !  August 1999.
-
-
-! ---------------------------------------------------------------------
-
-
-
-
-! ---------------------------------------------------------------------
-
-
-
-! ---------------------------------------------------------------------
-
-
-! ---------------------------------------------------------------------
-
-!  integer variables from the GLOBAL common block.
-
-
-!  integer variables from the LOCAL common block.
-
-
-!  integer variables from the PRFCTS common block.
-
 
 !  Local variables
 
@@ -70,145 +47,145 @@
 !  Initialize the link list which points to the row numbers which
 !  are used in the columns of the assembled Hessian
 
-      DO 20 i = 1, data%numvar
+      DO i = 1, data%numvar
          data%IWORK( nxtrw1 + i ) = - 1
-   20 CONTINUE
+      END DO
 
 ! -------------------------------------------------------
 !  Form the rank-one second order term for the IG-th group
 ! -------------------------------------------------------
 
-      DO 200 ig = 1, data%ng
-         IF ( data%GXEQX( ig ) ) GO TO 200
-         ig1 = ig + 1
-         listvs = data%IWORK( data%lstagv + ig )
-         listve = data%IWORK( data%lstagv + ig1 ) - 1
+      DO ig = 1, data%ng
+        IF ( data%GXEQX( ig ) ) CYCLE
+        ig1 = ig + 1
+        listvs = data%IWORK( data%lstagv + ig )
+        listve = data%IWORK( data%lstagv + ig1 ) - 1
 
 !  Form the J-th column of the rank-one matrix
 
-         DO 190 l = listvs, listve
-            j = data%IWORK( data%lsvgrp + l )
-            IF ( j == 0 ) GO TO 190
+        DO l = listvs, listve
+          j = data%IWORK( data%lsvgrp + l )
+          IF ( j == 0 ) CYCLE
 
 !  Find the entry in row i of this column
 
-            DO 180 k = listvs, listve
-               i = data%IWORK( data%lsvgrp + k )
-               IF ( i == 0 .OR. i > j ) GO TO 180
+          DO k = listvs, listve
+            i = data%IWORK( data%lsvgrp + k )
+            IF ( i == 0 .OR. i > j ) CYCLE
 
 !  Obtain the appropriate storage location in H for the new entry
 
-               istart = j
-  150          CONTINUE
-               inext = data%IWORK( nxtrw1 + istart )
-               IF ( inext == - 1 ) THEN
-                  IF ( newpt > lnxtrw ) GO TO 900
+            istart = j
+  150       CONTINUE
+            inext = data%IWORK( nxtrw1 + istart )
+            IF ( inext == - 1 ) THEN
+              IF ( newpt > lnxtrw ) GO TO 900
 
 !  The (I,J)-th location is empty. Place the new entry in this location
 !  and add another link to the list
 
-                  nnzh = nnzh + 1
-                  IF ( nnzh > lirnh ) GO TO 900
-                  data%IWORK( irnh + nnzh ) = i
-                  data%IWORK( nxtrw1 + istart ) = newpt
-                  data%IWORK( nxtrw2 + istart ) = nnzh
-                  data%IWORK( nxtrw1 + newpt ) = - 1
-                  newpt = newpt + 1
-               ELSE
+              nnzh = nnzh + 1
+              IF ( nnzh > lirnh ) GO TO 900
+              data%IWORK( irnh + nnzh ) = i
+              data%IWORK( nxtrw1 + istart ) = newpt
+              data%IWORK( nxtrw2 + istart ) = nnzh
+              data%IWORK( nxtrw1 + newpt ) = - 1
+              newpt = newpt + 1
 
 !  Continue searching the linked list for an entry in row i, column j
 
-                  IF ( data%IWORK( irnh + data%IWORK( nxtrw2 + istart ) )/=I ) THEN
-                     istart = inext
-                     GO TO 150
-                  END IF
-               END IF
-  180       CONTINUE
-  190    CONTINUE
-  200 CONTINUE
+            ELSE
+              IF ( data%IWORK( irnh + data%IWORK( nxtrw2 + istart ) ) /=i ) THEN
+                istart = inext
+                GO TO 150
+              END IF
+            END IF
+          END DO
+        END DO
+      END DO
 
 ! --------------------------------------------------------
 !  Add on the low rank first order terms for the I-th group
 ! --------------------------------------------------------
 
-      DO 300 ig = 1, data%ng
-         ig1 = ig + 1
+      DO ig = 1, data%ng
+        ig1 = ig + 1
 
 !  See if the group has any nonlinear elements
 
-         DO 290 iell = data%ISTADG( ig ), data%ISTADG( ig1 ) - 1
-            iel = data%IELING( iell )
-            listvs = data%ISTAEV( iel )
-            listve = data%ISTAEV( iel + 1 ) - 1
-            DO 250 l = listvs, listve
-               j = data%IELVAR( l )
-               IF ( j /= 0 ) THEN
+        DO iell = data%ISTADG( ig ), data%ISTADG( ig1 ) - 1
+          iel = data%IELING( iell )
+          listvs = data%ISTAEV( iel )
+          listve = data%ISTAEV( iel + 1 ) - 1
+          DO l = listvs, listve
+            j = data%IELVAR( l )
+            IF ( j /= 0 ) THEN
 
 !  The IEL-th element has an internal representation.
 !  Compute the J-th column of the element Hessian matrix
 
 !  Find the entry in row i of this column
 
-                  DO 240 k = listvs, l
-                     i = data%IELVAR( k )
-                     IF ( i /= 0 ) THEN
+              DO k = listvs, l
+                i = data%IELVAR( k )
+                IF ( i /= 0 ) THEN
 
 !  Only the upper triangle of the matrix is stored
 
-                        IF ( i <= j ) THEN
-                           ii = i
-                           jj = j
-                        ELSE
-                           ii = j
-                           jj = i
-                        END IF
+                  IF ( i <= j ) THEN
+                    ii = i
+                    jj = j
+                  ELSE
+                    ii = j
+                    jj = i
+                  END IF
 
 !  Obtain the appropriate storage location in H for the new entry
 
-                        istart = jj
-  230                   CONTINUE
-                        inext = data%IWORK( nxtrw1 + istart )
-                        IF ( inext == - 1 ) THEN
-                           IF ( newpt > lnxtrw ) GO TO 900
+                  istart = jj
+  230             CONTINUE
+                  inext = data%IWORK( nxtrw1 + istart )
+                  IF ( inext == - 1 ) THEN
+                    IF ( newpt > lnxtrw ) GO TO 900
 
 !  The (I,J)-th location is empty. Place the new entry in this location
 !  and add another link to the list
 
-                           nnzh = nnzh + 1
-                           IF ( nnzh > lirnh ) GO TO 900
-                           data%IWORK( irnh + nnzh ) = ii
-                           data%IWORK( nxtrw1 + istart ) = newpt
-                           data%IWORK( nxtrw2 + istart ) = nnzh
-                           data%IWORK( nxtrw1 + newpt ) = - 1
-                           newpt = newpt + 1
-                        ELSE
+                    nnzh = nnzh + 1
+                    IF ( nnzh > lirnh ) GO TO 900
+                    data%IWORK( irnh + nnzh ) = ii
+                    data%IWORK( nxtrw1 + istart ) = newpt
+                    data%IWORK( nxtrw2 + istart ) = nnzh
+                    data%IWORK( nxtrw1 + newpt ) = - 1
+                    newpt = newpt + 1
+                  ELSE
 
 !  Continue searching the linked list for an entry in row i, column j
 
-                           IF ( data%IWORK( irnh + data%IWORK( nxtrw2 + istart ) ) &
- == ii ) THEN
-                           ELSE
-                              istart = inext
-                              GO TO 230
-                           END IF
-                        END IF
-                     END IF
-  240             CONTINUE
-               END IF
-  250       CONTINUE
-  290    CONTINUE
-  300 CONTINUE
+                   IF ( data%IWORK( irnh + data%IWORK( nxtrw2 + istart ) )     &
+                         == ii ) THEN
+                    ELSE
+                      istart = inext
+                      GO TO 230
+                    END IF
+                  END IF
+                END IF
+              END DO
+            END IF
+          END DO
+        END DO
+      END DO
+
+      status = 0
       RETURN
 
 !  Unsuccessful returns.
 
   900 CONTINUE
-      WRITE( iout, 2000 )
-      STOP
-
-! Non-executable statements.
-
- 2000 FORMAT( ' ** SUBROUTINE UDIMSH: Increase the size of IWK ' )
+      IF ( data%out > 0 ) WRITE( data%out,                                      &
+        "( ' ** SUBROUTINE UDIMSH: Increase the size of IWK' )" )
+      status = 2
+      RETURN
 
 !  end of UDIMSH.
 

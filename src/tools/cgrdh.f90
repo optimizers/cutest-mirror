@@ -1,11 +1,12 @@
 ! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE CGRDH ( data, n, m, X, GRLAGF, lv, V, G, &
-                         JTRANS, lcjac1, lcjac2, CJAC, lh1, H )
+      SUBROUTINE CGRDH( data, status, n, m, X, grlagf, lv, V, G, &
+                        jtrans, lcjac1, lcjac2, CJAC, lh1, H )
       USE CUTEST
       TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
       INTEGER :: n, m, lv, lh1, lcjac1, lcjac2
-      LOGICAL :: GRLAGF, JTRANS
+      INTEGER, INTENT( OUT ) :: status
+      LOGICAL :: grlagf, jtrans
       REAL ( KIND = wp ) :: X ( n ), G ( n ), V ( lv ), &
                          CJAC ( lcjac1, lcjac2 ), &
                          H ( lh1, n )
@@ -40,30 +41,6 @@
 !  Nick Gould, for CGT productions,
 !  November 1991.
 
-
-! ---------------------------------------------------------------------
-
-
-
-
-! ---------------------------------------------------------------------
-
-
-
-! ---------------------------------------------------------------------
-
-
-! ---------------------------------------------------------------------
-
-!  integer variables from the GLOBAL common block.
-
-
-!  integer variables from the LOCAL common block.
-
-
-!  Integer variables from the PRFCTS common block.
-
-
 !  Local variables
 
       INTEGER :: lh, lwkh, liwkh, lirnh, ljcnh, icon
@@ -72,9 +49,8 @@
       INTEGER :: nin, nvarel, nelow, nelup, istrgv
       INTEGER :: ifstat, igstat
       LOGICAL :: NONTRV
-!D    EXTERNAL           SETVL, SETVI, RANGE 
-      REAL ( KIND = wp ) :: ftt, one, zero, gi, scalee, gii
-      PARAMETER ( zero = 0.0_wp, one = 1.0_wp )
+      EXTERNAL :: RANGE 
+      REAL ( KIND = wp ) :: ftt, gi, scalee, gii
 
 !  Check input parameters.
 
@@ -82,21 +58,21 @@
       IF ( data%numcon > 0 ) THEN
          IF ( JTRANS ) THEN
             IF ( lcjac1 < n .OR. lcjac2 < m ) THEN
-               IF ( lcjac1 < n ) WRITE( iout, 2020 )
-               IF ( lcjac2 < m ) WRITE( iout, 2030 )
-               STOP
+               IF ( lcjac1 < n .AND. data%out > 0 ) WRITE( data%out, 2020 )
+               IF ( lcjac2 < m .AND. data%out > 0 ) WRITE( data%out, 2030 )
+               status = 2 ; RETURN
             END IF
          ELSE
             IF ( lcjac1 < m .OR. lcjac2 < n ) THEN
-               IF ( lcjac1 < m ) WRITE( iout, 2020 )
-               IF ( lcjac2 < n ) WRITE( iout, 2030 )
-               STOP
+               IF ( lcjac1 < m .AND. data%out > 0 ) WRITE( data%out, 2020 )
+               IF ( lcjac2 < n .AND. data%out > 0 ) WRITE( data%out, 2030 )
+               status = 2 ; RETURN
             END IF
          END IF
       END IF
       IF ( lh1 < n ) THEN
-         WRITE( iout, 2040 )
-         STOP
+         IF ( data%out > 0 ) WRITE( data%out, 2040 )
+         status = 2 ; RETURN
       END IF
 
 !  there are non-trivial group functions.
@@ -107,25 +83,21 @@
 
 !  evaluate the element function values.
 
-      CALL ELFUN ( data%FUVALS, X, data%EPVALU( 1 ), data%nel, &
-                   data%ITYPEE( 1 ), data%ISTAEV( 1 ), &
-                   data%IELVAR( 1 ), data%INTVAR( 1 ), &
-                   data%ISTADH( 1 ), data%ISTEP( 1 ), &
-                   data%ICALCF( 1 ),  &
-                   data%lintre, data%lstaev, data%lelvar, data%lntvar, data%lstadh,  &
-                   data%lntvar, data%lintre, lfuval, data%lvscal, data%lepvlu,  &
-                   1, ifstat )
+      CALL ELFUN( data%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,          &
+                  data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,          &
+                  data%ISTEP, data%ICALCF, data%ltypee, data%lstaev,           &
+                  data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
+                  data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,          &
+                  1, ifstat )
 
 !  evaluate the element function values.
 
-      CALL ELFUN ( data%FUVALS, X, data%EPVALU( 1 ), data%nel, &
-                   data%ITYPEE( 1 ), data%ISTAEV( 1 ), &
-                   data%IELVAR( 1 ), data%INTVAR( 1 ), &
-                   data%ISTADH( 1 ), data%ISTEP( 1 ), &
-                   data%ICALCF( 1 ),  &
-                   data%lintre, data%lstaev, data%lelvar, data%lntvar, data%lstadh,  &
-                   data%lntvar, data%lintre, lfuval, data%lvscal, data%lepvlu,  &
-                   3, ifstat )
+      CALL ELFUN( data%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,          &
+                  data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,          &
+                  data%ISTEP, data%ICALCF, data%ltypee, data%lstaev,           &
+                  data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
+                  data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,          &
+                  3, ifstat )
 
 !  compute the group argument values ft.
 
@@ -148,26 +120,25 @@
 !  Record the derivatives of trivial groups.
 
          IF ( data%GXEQX( ig ) ) THEN
-            data%GVALS( data%ng + ig ) = one
-            data%GVALS( 2 * data%ng + ig ) = zero
+            data%GVALS( ig, 2 ) = 1.0_wp
+            data%GVALS( ig, 3 ) = 0.0_wp
          END IF
    40 CONTINUE
 
 !  evaluate the group derivative values.
 
-      IF ( .NOT. data%altriv ) CALL GROUP ( data%GVALS( 1 ), data%ng, &
-            data%FT( 1 ), data%GPVALU( 1 ), data%ng, &
-            data%ITYPEG( 1 ), data%ISTGP( 1 ), &
-            data%ICALCF( 1 ), &
-            data%lcalcg, data%ng1, data%lcalcg, data%lcalcg, data%lgpvlu, &
-            .TRUE., igstat )
+      IF ( .NOT. data%altriv )                                                 &
+        CALL GROUP( data%GVALS, data%ng, data%FT, data%GPVALU, data%ng,        &
+                    data%ITYPEG, data%ISTGP, data%ICALCF, data%ltypeg,         &
+                    data%lstgp, data%lcalcf, data%lcalcg, data%lgpvlu,         &
+                   .TRUE., igstat )
 
 !  Define the real work space needed for ELGRD.
 !  Ensure that there is sufficient space.
 
       IF ( data%lwk2 < data%ng ) THEN
-         IF ( iout > 0 ) WRITE( iout, 2000 )
-         STOP
+         IF ( data%out > 0 ) WRITE( data%out, 2000 )
+         status = 2 ; RETURN
       END IF
 
 !  For unconstrained problems, skip construction of data%WRK( ig ) 
@@ -192,12 +163,12 @@
 !  Jacobian (or its transpose) as zero.
 
          DO 120 j = 1, n
-            G( j ) = zero
+            G( j ) = 0.0_wp
             DO 110 i = 1, m
                IF ( JTRANS ) THEN
-                  CJAC( j, i ) = zero
+                  CJAC( j, i ) = 0.0_wp
                ELSE
-                  CJAC( i, j ) = zero
+                  CJAC( i, j ) = 0.0_wp
                END IF
   110       CONTINUE
   120    CONTINUE
@@ -218,16 +189,16 @@
             gi = data%GSCALE( ig )
             gii = data%WRK( ig )
             IF ( NONTRV ) THEN
-               gi = gi  * data%GVALS( data%ng + ig )
-               gii = gii * data%GVALS( data%ng + ig )
+               gi = gi  * data%GVALS( ig, 2 )
+               gii = gii * data%GVALS( ig, 2 )
             END IF
 
 !  This is the first gradient evaluation or the group has nonlinear
 !  elements.
 
             IF ( data%firstg .OR. nelow <= nelup ) THEN
-      CALL SETVI( iendgv - istrgv + 1, data%WRK( 1 ), &
-                            data%IWORK( data%lsvgrp + istrgv ), zero )
+              data%WRK( data%IWORK( data%lsvgrp + istrgv :                     &
+                                    data%lsvgrp + iendgv ) ) = 0.0_wp
 
 !  Loop over the group's nonlinear elements.
 
@@ -242,10 +213,9 @@
 !  The IEL-th element has an internal representation.
 
                      nin = data%INTVAR( iel + 1 ) - k
-                     CALL RANGE ( iel, .TRUE., data%FUVALS( k ), &
-                                  data%WRK( n + 1 ), nvarel, nin, &
-                                  data%ITYPEE( iel ), &
-                                  nin, nvarel )
+                     CALL RANGE ( iel, .TRUE., data%FUVALS( k ),               &
+                                  data%WRK( n + 1 ), nvarel, nin,              &
+                                  data%ITYPEE( iel ), nin, nvarel )
 !DIR$ IVDEP
                      DO 130 i = 1, nvarel
                         j = data%IELVAR( l )
@@ -376,7 +346,7 @@
                       data%IWORK( data%lsvgrp + 1 ), &
                       data%lnvgrp, data%IWORK( data%lstajc + 1 ), data%lnstjc, &
                       data%IWORK( data%lstagv + 1 ), data%lnstgv, data%A( 1 ), data%la, &
-                      data%GVALS( data%ng + 1 ), data%lgvals, &
+                      data%GVALS( : , 2 ), data%lgvals, &
                       data%FUVALS, data%lnguvl, data%FUVALS( data%lggfx + 1 ), &
                       data%GSCALE( 1 ), data%lgscal, &
                       data%ESCALE( 1 ), data%lescal, data%FUVALS( data%lgrjac + 1 ), &
@@ -402,8 +372,8 @@
          lwkh = data%lwk2 - n - 3 * data%maxsel
       END IF
       IF ( lwkh <= 0 ) THEN
-         IF ( iout > 0 ) WRITE( iout, 2000 )
-         STOP
+         IF ( data%out > 0 ) WRITE( data%out, 2000 )
+         status = 2 ; RETURN
       END IF
 
 !  Define the integer work space needed for ASMBL.
@@ -413,8 +383,8 @@
       lh = MIN( lwkh, ( liwkh - 3 * n ) / 4 )
       linxtr = lh + n
       IF ( lh <= 0 ) THEN
-         IF ( iout > 0 ) WRITE( iout, 2010 )
-         STOP
+         IF ( data%out > 0 ) WRITE( data%out, 2010 )
+         status = 2 ; RETURN
       END IF
 
 !  Set starting addresses for partitions of the integer workspace.
@@ -441,13 +411,13 @@
                    data%IWORK( data%lsend + lnxtrw + 1 ), linxtr, &
                    data%IWORK( data%lsend + liwkh + 1 ), n, &
                    data%A( 1 ), data%la, data%FUVALS, data%lnguvl, data%FUVALS, data%lnhuvl, &
-                   data%GVALS( data%ng + 1 ), data%GVALS( 2 * data%ng + 1 ), &
+                   data%GVALS( : , 2 ), data%GVALS( : , 3 ), &
                    data%WRK( 1 ), data%ESCALE( 1 ), data%lescal, &
                    data%WRK( data%ng + 1 ), data%WRK( lwkh + data%ng + 1 ), &
                    data%lwk2 - lwkh, data%GXEQX( 1 ), &
                    data%lgxeqx, data%INTREP( 1 ), data%lintre, &
                    data%ITYPEE( 1 ), data%lintre, &
-                   RANGE, 1, iout, .FALSE., i, inform, &
+                   RANGE, 1, data%out, .FALSE., i, inform, &
                    .FALSE., .FALSE. )
       ELSE
       CALL ASMBL( n, data%ng, data%maxsel, n, lh, lih, nnzh, &
@@ -461,30 +431,26 @@
                    data%IWORK( data%lsend + lnxtrw + 1 ), linxtr, &
                    data%IWORK( data%lsend + liwkh + 1 ), n, &
                    data%A( 1 ), data%la, data%FUVALS, data%lnguvl, data%FUVALS, data%lnhuvl, &
-                   data%GVALS( data%ng + 1 ), data%GVALS( 2 * data%ng + 1 ), &
+                   data%GVALS( : , 2 ), data%GVALS( : , 3 ), &
                    data%GSCALE( 1 ), data%ESCALE( 1 ), data%lescal, &
                    data%WRK( 1 ), data%WRK( lwkh + 1 ), &
                    data%lwk2 - lwkh, data%GXEQX( 1 ), &
                    data%lgxeqx, data%INTREP( 1 ), data%lintre, &
                    data%ITYPEE( 1 ), data%lintre, &
-                   RANGE, 1, iout, .FALSE., i, inform, &
+                   RANGE, 1, data%out, .FALSE., i, inform, &
                    .FALSE., .FALSE. )
       END IF
 
 !  Check that there is sufficient integer workspace.
 
       IF ( inform > 0 ) THEN
-         IF ( iout > 0 ) WRITE( iout, 2010 )
-         STOP
+         IF ( data%out > 0 ) WRITE( iout, 2010 )
+         status = 2 ; RETURN
       END IF
 
 !  Initialize the dense Hessian matrix.
 
-      DO 420 j = 1, n
-         DO 410 i = 1, n
-            H( i, j ) = zero
-  410    CONTINUE
-  420 CONTINUE
+      H( : n, : n ) = 0.0_wp
 
 !  Transfer the matrix from co-ordinate to dense storage and
 !  symmetrize the martix.
@@ -511,6 +477,7 @@
       data%nc2cg = data%nc2cg + data%pnc
       data%nc2oh = data%nc2oh + 1
       data%nc2ch = data%nc2ch + data%pnc
+      status = 0
       RETURN
 
 ! Non-executable statements.
