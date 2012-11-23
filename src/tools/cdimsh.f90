@@ -185,6 +185,6 @@
       status = 2
       RETURN
 
-!  end of CDIMSH.
+!  end of subroutine CDIMSH
 
-      END
+      END SUBROUTINE CDIMSH

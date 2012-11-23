@@ -24,6 +24,7 @@
 
       INTEGER, PARAMETER :: input = 55
       INTEGER, PARAMETER :: out = 6
+      INTEGER, PARAMETER :: buffer = 77
       REAL ( KIND = wp ), PARAMETER :: one = 1.0_wp
 
 !--------------------------------
@@ -52,7 +53,6 @@
 
       WRITE( out, "( ' Call UDIMEN ' )" )
       CALL UDIMEN( input, status, n )
-      IF ( alloc_stat /= 0 ) GO TO 990
       l_h2_1 = n
       ALLOCATE( X( n ), X_l( n ), X_u( n ), G( n ), P( n ), HP( n ),           &
                 X_names( n ), X_type( n ), stat = alloc_stat )
@@ -63,7 +63,7 @@
 !  set up SIF data
 
       WRITE( out, "( ' Call USETUP ' )" )
-      CALL USETUP( data, status, input, out, n, X, X_l, X_u )
+      CALL USETUP( data, status, input, out, buffer, n, X, X_l, X_u )
       IF ( status /= 0 ) GO to 900
 
 !  obtain variable and problem names

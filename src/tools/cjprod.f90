@@ -58,6 +58,7 @@
                     data%lelvar, data%lntvar, data%lstadh, data%lstep,         &
                     data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,        &
                     1, ifstat )
+      IF ( ifstat /= 0 ) GO TO 930
 
 !  evaluate the element function values
 
@@ -67,6 +68,7 @@
                     data%lelvar, data%lntvar, data%lstadh, data%lstep,         &
                     data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,        &
                     3, ifstat )
+      IF ( ifstat /= 0 ) GO TO 930
 
 !  compute the group argument values ft
 
@@ -93,11 +95,13 @@
 
 !  evaluate the group derivative values
 
-        IF ( .NOT. data%altriv )                                               &
+        IF ( .NOT. data%altriv ) THEN
           CALL GROUP( data%GVALS, data%ng, data%FT, data%GPVALU, data%ng,      &
                       data%ITYPEG, data%ISTGP, data%ICALCF, data%ltypeg,       &
                       data%lstgp, data%lcalcf, data%lcalcg, data%lgpvlu,       &
                       .TRUE., igstat )
+         IF ( igstat /= 0 ) GO TO 930
+        END IF
       END IF
 
 !  ensure that there is sufficient space
@@ -250,12 +254,20 @@
       status = 0
       RETURN
 
+!  unsuccessful returns
+
+  930 CONTINUE
+      IF ( data%out > 0 ) WRITE( data%out,                                     &
+        "( ' ** SUBROUTINE CJPROD: error flag raised during SIF evaluation' )" )
+      status = 3
+      RETURN
+
 ! Non-executable statements.
 
- 2000 FORMAT( ' ** SUBROUTINE CJPROD: Increase the size of WK ' )
- 2010 FORMAT( ' ** SUBROUTINE CJPROD: Increase the size of V ' )
- 2020 FORMAT( ' ** SUBROUTINE CJPROD: Increase the size of R ' )
+ 2000 FORMAT( ' ** SUBROUTINE CJPROD: Increase the size of WK' )
+ 2010 FORMAT( ' ** SUBROUTINE CJPROD: Increase the size of V' )
+ 2020 FORMAT( ' ** SUBROUTINE CJPROD: Increase the size of R' )
 
-!  end of CJPROD.
+!  end of subroutine CJPROD
 
-      END
+      END SUBROUTINE CJPROD

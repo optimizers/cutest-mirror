@@ -50,6 +50,7 @@
                   data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
                   data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,          &
                   1, ifstat )
+      IF ( ifstat /= 0 ) GO TO 930
 
 !  compute the group argument values ft
 
@@ -86,6 +87,7 @@
                     data%ITYPEG, data%ISTGP, data%ICALCF, data%ltypeg,         &
                     data%lstgp, data%lcalcf, data%lcalcg, data%lgpvlu,         &
                     .FALSE., igstat )
+        IF ( igstat /= 0 ) GO TO 930
         f = zero
         DO ig = 1, data%ng
           IF ( data%GXEQX( ig ) ) THEN
@@ -96,6 +98,14 @@
         END DO
       END IF
       status = 0
+      RETURN
+
+!  unsuccessful returns
+
+  930 CONTINUE
+      IF ( data%out > 0 ) WRITE( data%out,                                     &
+        "( ' ** SUBROUTINE UFN: error flag raised by SIF evaluation' )" )
+      status = 3
       RETURN
 
 !  end of subroutine UFN

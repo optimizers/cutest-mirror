@@ -1,12 +1,12 @@
 ! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE COFG ( data, status, n, X, f, G, grad )
+      SUBROUTINE COFG( data, status, n, X, f, G, grad )
       USE CUTEST
       TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
       INTEGER :: n
       INTEGER, INTENT( OUT ) :: status
       REAL ( KIND = wp ) :: f
-      REAL ( KIND = wp ) :: X( n ), G( * )
+      REAL ( KIND = wp ) :: X( n ), G( n )
       LOGICAL :: grad
 
 !  Compute the value of the objective function and its gradient
@@ -25,9 +25,8 @@
 
 !  local variables.
 
-      INTEGER :: i, j, iel, k, ig, ii, ig1, l, ll, icon
+      INTEGER :: i, j, iel, k, ig, ii, ig1, l, ll, icon, icnt, ifstat, igstat
       INTEGER :: nin, nvarel, nelow, nelup, istrgv, iendgv
-      INTEGER :: icnt, llo, llwrk, ifstat, igstat
       EXTERNAL :: RANGE 
       REAL ( KIND = wp ) :: ftt, gi, scalee
 
@@ -62,6 +61,7 @@
                   data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
                   data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,          &
                   1, ifstat )
+      IF ( ifstat /= 0 ) GO TO 930
 
 !  evaluate the element function derivatives
 
@@ -72,6 +72,7 @@
                     data%lelvar, data%lntvar, data%lstadh, data%lstep,         &
                     data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,        &
                     2, ifstat )
+      IF ( ifstat /= 0 ) GO TO 930
 
 !  compute the group argument values ft
 
@@ -155,7 +156,7 @@
                     data%ITYPEG, data%ISTGP, data%ICALCF, data%ltypeg,         &
                     data%lstgp, data%lcalcf, data%lcalcg, data%lgpvlu,         &
                     .FALSE., igstat )
-
+        IF ( igstat /= 0 ) GO TO 930
       END IF
 
 !  compute the objective function value
@@ -190,11 +191,13 @@
 !  evaluate the group derivative values
 
       IF ( grad ) THEN
-        IF ( .NOT. data%altriv )                                               &
+        IF ( .NOT. data%altriv ) THEN
           CALL GROUP( data%GVALS, data%ng, data%FT, data%GPVALU, data%ng,      &
                       data%ITYPEG, data%ISTGP, data%ICALCF, data%ltypeg,       &
                       data%lstgp, data%lcalcf, data%lcalcg, data%lgpvlu,       &
                       .TRUE., igstat )
+          IF ( igstat /= 0 ) GO TO 930
+        END IF
 
 !  compute the gradient values. Initialize the gradient as zero
 
@@ -306,7 +309,15 @@
       status = 0
       RETURN
 
-!  end of COFG
+!  unsuccessful returns
 
-      END
+  930 CONTINUE
+      IF ( data%out > 0 ) WRITE( data%out,                                     &
+        "( ' ** SUBROUTINE COFG: error flag raised during SIF evaluation' )" )
+      status = 3
+      RETURN
+
+!  end of subroutine COFG
+
+      END SUBROUTINE COFG
 

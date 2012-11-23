@@ -24,6 +24,7 @@
 
       INTEGER, PARAMETER :: input = 55
       INTEGER, PARAMETER :: out = 6
+      INTEGER, PARAMETER :: buffer = 77 
       REAL ( KIND = wp ), PARAMETER :: one = 1.0_wp
 
 !--------------------------------
@@ -56,7 +57,6 @@
 
       WRITE( out, "( ' CALL CDIMEN ' )" )
       CALL CDIMEN( input, status, n, m )
-      IF ( alloc_stat /= 0 ) GO TO 990
       l_h2_1 = n
       ALLOCATE( X( n ), X_l( n ), X_u( n ), G( n ), P( n ), Ji( n ),           &
                 HP( n ), X_names( n ), X_type( n ), stat = alloc_stat )
@@ -74,7 +74,7 @@
 
       efirst = .TRUE. ; lfirst = .TRUE. ; nvfrst = .TRUE.
       WRITE( out, "( ' CALL CSETUP ' )" )
-      CALL CSETUP( data, status, input, out, n, m, X, X_l, X_u,                 &
+      CALL CSETUP( data, status, input, out, buffer, n, m, X, X_l, X_u,        &
                    EQUATION, LINEAR, Y, C_l, C_u, efirst, lfirst, nvfrst )
       IF ( status /= 0 ) GO to 900
 
@@ -106,22 +106,22 @@
 
       grlagf = .TRUE. ; jtrans = .TRUE.
       WRITE( out, "( ' CALL CGR with grlagf = .TRUE. and jtrans = .TRUE.' )" )
-      CALL CGR( data, status, n, m, X, grlagf, m, Y, G, jtrans,                 &
+      CALL CGR( data, status, n, m, X, grlagf, Y, G, jtrans,                   &
                 l_j2_1, l_j2_2, J2_val )
       IF ( status /= 0 ) GO to 900
       grlagf = .TRUE. ; jtrans = .FALSE.
       WRITE( out, "( ' CALL CGR with grlagf = .TRUE. and jtrans = .FALSE.' )" )
-      CALL CGR( data, status, n, m, X, grlagf, m, Y, G, jtrans,                 &
+      CALL CGR( data, status, n, m, X, grlagf, Y, G, jtrans,                   &
                 l_j2_1, l_j2_2, J2_val )
       IF ( status /= 0 ) GO to 900
       grlagf = .FALSE. ; jtrans = .TRUE.
       WRITE( out, "( ' CALL CGR with grlagf = .FALSE. and jtrans = .TRUE.' )" )
-      CALL CGR( data, status, n, m, X, grlagf, m, Y, G, jtrans,                 &
+      CALL CGR( data, status, n, m, X, grlagf, Y, G, jtrans,                   &
                 l_j2_1, l_j2_2, J2_val )
       IF ( status /= 0 ) GO to 900
       grlagf = .FALSE. ; jtrans = .FALSE.
       WRITE( out, "( ' CALL CGR with grlagf = .FALSE. and jtrans = .FALSE.' )" )
-      CALL CGR( data, status, n, m, X, grlagf, m, Y, G, jtrans,                 &
+      CALL CGR( data, status, n, m, X, grlagf, Y, G, jtrans,                   &
                 l_j2_1, l_j2_2, J2_val )
       IF ( status /= 0 ) GO to 900
 
@@ -182,12 +182,12 @@
 
       grad = .TRUE.
       WRITE( out, "( ' CALL CSCFG with grad = .TRUE.' )" )
-      CALL CSCFG( data, status, n, m, X, m, C, J_ne, l_j, J_val, J_col, J_row, &
+      CALL CSCFG( data, status, n, m, X, C, J_ne, l_j, J_val, J_col, J_row,    &
                   grad )
       IF ( status /= 0 ) GO to 900
       grad = .FALSE.
       WRITE( out, "( ' CALL CSCFG with grad = .FALSE.' )" )
-      CALL CSCFG( data, status, n, m, X, m, C, J_ne, l_j, J_val, J_col, J_row, &
+      CALL CSCFG( data, status, n, m, X, C, J_ne, l_j, J_val, J_col, J_row,    &
                   grad )
       IF ( status /= 0 ) GO to 900
 
@@ -217,7 +217,7 @@
 !  compute the dense Hessian value
 
       WRITE( out, "( ' CALL CDH' )" )
-      CALL CDH( data, status, n, m, X, m, Y, l_h2_1, H2_val )
+      CALL CDH( data, status, n, m, X, Y, l_h2_1, H2_val )
       IF ( status /= 0 ) GO to 900
 
 !  compute the dense Hessian value of the objective or a constraint
@@ -235,22 +235,22 @@
 
       grlagf = .TRUE. ; jtrans = .TRUE.
       WRITE( out, "( ' CALL CGRDH with grlagf = .TRUE. and jtrans = .TRUE.' )" )
-      CALL CGRDH( data, status, n, m, X, grlagf, m, Y, G, jtrans,              &
+      CALL CGRDH( data, status, n, m, X, grlagf, Y, G, jtrans,                &
                   l_c2_1, l_c2_2, J2_val, l_h2_1, H2_val )
       IF ( status /= 0 ) GO to 900
       grlagf = .TRUE. ; jtrans = .FALSE.
       WRITE( out, "( ' CALL CGRDH with grlagf = .TRUE. and jtrans = .FALSE.' )")
-      CALL CGRDH( data, status, n, m, X, grlagf, m, Y, G, jtrans,              &
+      CALL CGRDH( data, status, n, m, X, grlagf, Y, G, jtrans,                &
                   l_c2_1, l_c2_2, J2_val, l_h2_1, H2_val )
       IF ( status /= 0 ) GO to 900
       grlagf = .FALSE. ; jtrans = .TRUE.
       WRITE( out, "( ' CALL CGRDH with grlagf = .FALSE. and jtrans = .TRUE.' )")
-      CALL CGRDH( data, status, n, m, X, grlagf, m, Y, G, jtrans,              &
+      CALL CGRDH( data, status, n, m, X, grlagf, Y, G, jtrans,                &
                   l_c2_1, l_c2_2, J2_val, l_h2_1, H2_val )
       IF ( status /= 0 ) GO to 900
       grlagf = .FALSE. ; jtrans = .FALSE.
       WRITE( out, "( ' CALL CGRDH with grlagf = .FALSE. and jtrans = .FALSE.')")
-      CALL CGRDH( data, status, n, m, X, grlagf, m, Y, G, jtrans,              &
+      CALL CGRDH( data, status, n, m, X, grlagf, Y, G, jtrans,                &
                   l_c2_1, l_c2_2, J2_val, l_h2_1, H2_val )
       IF ( status /= 0 ) GO to 900
 
@@ -267,13 +267,13 @@
 !  compute the sparse Hessian value
 
       WRITE( out, "( ' CALL CSH' )" )
-      CALL CSH( data, status, n, m, X, m, Y, H_ne, l_h, H_val, H_row, H_col )
+      CALL CSH( data, status, n, m, X, Y, H_ne, l_h, H_val, H_row, H_col )
       IF ( status /= 0 ) GO to 900
 
 !  compute the sparse Hessian value without the objective
 
       WRITE( out, "( ' CALL CSH1' )" )
-      CALL CSH1( data, status, n, m, X, m, Y, H_ne, l_h, H_val, H_row, H_col )
+      CALL CSH1( data, status, n, m, X, Y, H_ne, l_h, H_val, H_row, H_col )
       IF ( status /= 0 ) GO to 900
 
 !  compute the sparse Hessian value of the objective or a constraint
@@ -291,12 +291,12 @@
 
       grlagf = .TRUE.
       WRITE( out, "( ' CALL CSGRSH with grlagf = .TRUE.' )" )
-      CALL CSGRSH( data, status, n, m, X, grlagf, m, Y, J_ne, l_j, J_val,      &
+      CALL CSGRSH( data, status, n, m, X, grlagf, Y, J_ne, l_j, J_val,         &
                    J_col, J_row, H_ne, l_h, H_val, H_row, H_col )
       IF ( status /= 0 ) GO to 900
       grlagf = .FALSE.
       WRITE( out, "( ' CALL CSGRSH with grlagf = .FALSE.' )" )
-      CALL CSGRSH( data, status, n, m, X, grlagf, m, Y, J_ne, l_j, J_val, 
+      CALL CSGRSH( data, status, n, m, X, grlagf, Y, J_ne, l_j, J_val,         &
                    J_col, J_row, H_ne, l_h, H_val, H_row, H_col )
       IF ( status /= 0 ) GO to 900
 
@@ -317,12 +317,12 @@
 
       byrows = .FALSE.
       WRITE( out, "( ' CALL CEH with byrows = .FALSE.' )" )
-      CALL CEH( data, status, n, m, X, m, Y, HE_nel, HE_row, l_he_row, l_hel,  &
+      CALL CEH( data, status, n, m, X, Y, HE_nel, HE_row, l_he_row, l_hel,     &
                       HE_row_ptr, HE_val, l_he_val, HE_val_ptr, byrows )
       IF ( status /= 0 ) GO to 900
       byrows = .TRUE.
       WRITE( out, "( ' CALL CEH with byrows = .TRUE.' )" )
-      CALL CEH( data, status, n, m, X, m, Y, HE_nel, HE_row, l_he_row, l_hel,  &
+      CALL CEH( data, status, n, m, X, Y, HE_nel, HE_row, l_he_row, l_hel,     &
                       HE_row_ptr, HE_val, l_he_val, HE_val_ptr, byrows )
       IF ( status /= 0 ) GO to 900
 
@@ -330,25 +330,25 @@
 
       grlagf = .TRUE. ; byrows = .TRUE.
       WRITE( out, "( ' CALL CSGREH with grlagf = .TRUE. and byrows = .TRUE.')" )
-      CALL CSGREH( data, status, n, m, X, grlagf, m, Y, J_ne, l_j, J_val,      &
+      CALL CSGREH( data, status, n, m, X, grlagf, Y, J_ne, l_j, J_val,         &
                    J_col, J_row, HE_nel, HE_row, l_he_row, l_hel, HE_row_ptr,  &
                    HE_val, l_he_val, HE_val_ptr, byrows )
       IF ( status /= 0 ) GO to 900
       grlagf = .TRUE. ; byrows = .FALSE.
       WRITE( out, "(' CALL CSGREH with grlagf = .TRUE. and byrows = .FALSE.')" )
-      CALL CSGREH( data, status, n, m, X, grlagf, m, Y, J_ne, l_j, J_val,      &
+      CALL CSGREH( data, status, n, m, X, grlagf, Y, J_ne, l_j, J_val,         &
                    J_col, J_row, HE_nel, HE_row, l_he_row, l_hel, HE_row_ptr,  &
                    HE_val, l_he_val, HE_val_ptr, byrows )
       IF ( status /= 0 ) GO to 900
       grlagf = .FALSE. ; byrows = .TRUE.
       WRITE( out, "( ' CALL CSGREH with grlagf = .FALSE. and byrows = .TRUE.')")
-      CALL CSGREH( data, status, n, m, X, grlagf, m, Y, J_ne, l_j, J_val,      &
+      CALL CSGREH( data, status, n, m, X, grlagf, Y, J_ne, l_j, J_val,         &
                    J_col, J_row, HE_nel, HE_row, l_he_row, l_hel, HE_row_ptr,  &
                    HE_val, l_he_val, HE_val_ptr, byrows )
       IF ( status /= 0 ) GO to 900
       grlagf = .FALSE. ; byrows = .FALSE.
       WRITE( out, "(' CALL CSGREH with grlagf = .FALSE. and byrows = .FALSE.')")
-      CALL CSGREH( data, status, n, m, X, grlagf, m, Y, J_ne, l_j, J_val,      &
+      CALL CSGREH( data, status, n, m, X, grlagf, Y, J_ne, l_j, J_val,         &
                    J_col, J_row, HE_nel, HE_row, l_he_row, l_hel, HE_row_ptr,  &
                    HE_val, l_he_val, HE_val_ptr, byrows )
       IF ( status /= 0 ) GO to 900
@@ -358,11 +358,11 @@
       P = one
       goth = .FALSE.
       WRITE( out, "( ' Call CPROD with goth = .FALSE.' )" )
-      CALL CPROD( data, status, n, m, goth, X, m, Y, P, HP )
+      CALL CPROD( data, status, n, m, goth, X, Y, P, HP )
       IF ( status /= 0 ) GO to 900
       goth = .TRUE.
       WRITE( out, "( ' Call CPROD with goth = .TRUE.' )" )
-      CALL CPROD( data, status, n, m, goth, X, m, Y, P, HP )
+      CALL CPROD( data, status, n, m, goth, X, Y, P, HP )
       IF ( status /= 0 ) GO to 900
 
 !  compute a Hessian-vector product ignoring the objective
@@ -370,11 +370,11 @@
       P = one
       goth = .FALSE.
       WRITE( out, "( ' Call CPROD1 with goth = .FALSE.' )" )
-      CALL CPROD1( data, status, n, m, goth, X, m, Y, P, HP )
+      CALL CPROD1( data, status, n, m, goth, X, Y, P, HP )
       IF ( status /= 0 ) GO to 900
       goth = .TRUE.
       WRITE( out, "( ' Call CPROD1 with goth = .TRUE.' )" )
-      CALL CPROD1( data, status, n, m, goth, X, m, Y, P, HP )
+      CALL CPROD1( data, status, n, m, goth, X, Y, P, HP )
       IF ( status /= 0 ) GO to 900
 
 !  terminal exit

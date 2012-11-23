@@ -1,11 +1,11 @@
 ! ( Last modified on 14 Jan 2001 at 19:03:33 )
-      SUBROUTINE CISH ( data, status, n, X, iprob, nnzh, lh, H, irnh, ICNH )
+      SUBROUTINE CISH( data, status, n, X, iprob, nnzh, lh, H, IRNH, ICNH )
       USE CUTEST
       TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
       INTEGER :: n, iprob, nnzh, lh
       INTEGER, INTENT( OUT ) :: status
-      INTEGER :: irnh ( lh ), ICNH ( lh )
+      INTEGER :: IRNH ( lh ), ICNH ( lh )
       REAL ( KIND = wp ) :: X ( n ), H( lh )
 
 !  Compute the Hessian matrix of a specified problem function 
@@ -101,6 +101,7 @@
                   data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
                   data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,          &
                   1, ifstat )
+      IF ( ifstat /= 0 ) GO TO 930
 
 !  evaluate the element function derivatives
 
@@ -110,6 +111,7 @@
                   data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
                   data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,          &
                   3, ifstat )
+      IF ( ifstat /= 0 ) GO TO 930
 
 !  Compute the list of groups involved in the required problem function
 
@@ -156,11 +158,13 @@
 
 !  evaluate the group derivative values
 
-      IF ( .NOT. data%altriv )                                                 &
+      IF ( .NOT. data%altriv ) THEN
         CALL GROUP( data%GVALS, data%ng, data%FT, data%GPVALU, data%ng,        &
                     data%ITYPEG, data%ISTGP, data%ICALCF, data%ltypeg,         &
                     data%lstgp, data%lcalcf, data%lcalcg, data%lgpvlu,         &
                     .TRUE., igstat )
+        IF ( igstat /= 0 ) GO TO 930
+      END IF
 
 !  define the real work space needed for ELGRD. Ensure that there is 
 !  sufficient space
@@ -171,63 +175,79 @@
       END IF
       IF ( data%numcon > 0 ) THEN
 
-!  change the group weightings to include the contributions from the
-!  Lagrange multipliers
+!  change the group weightings to isolate the required function
 
-         DO 140 ig = 1, data%ng
+         DO ig = 1, data%ng
             i = data%KNDOFC( ig )
             IF ( i == iprob ) THEN
-               data%WRK( ig ) = data%GSCALE( ig )
+               data%GSCALE_used( ig ) = data%GSCALE( ig )
             ELSE
-               data%WRK( ig ) = 0.0_wp
+               data%GSCALE_used( ig ) = 0.0_wp
             END IF
-  140    CONTINUE
+         END DO
 
 !  compute the gradient value
 
-      CALL ELGRD( n, data%ng, data%firstg, data%ICNA( 1 ), data%licna, &
-                      data%ISTADA( 1 ), data%lstada, data%IELING( 1 ), &
-                      data%leling, data%ISTADG( 1 ), data%lstadg, &
-                      data%ITYPEE( 1 ), data%lintre, &
-                      data%ISTAEV( 1 ), data%lstaev, data%IELVAR( 1 ), &
-                      data%lelvar, data%INTVAR( 1 ), data%lntvar, &
-                      data%IWORK( data%lsvgrp + 1 ), &
-                      data%lnvgrp, data%IWORK( data%lstajc + 1 ), data%lnstjc, &
-                      data%IWORK( data%lstagv + 1 ), data%lnstgv, &
-                      data%A( 1 ), data%la, &
-                      data%GVALS( : , 2 ), data%lgvals, &
-                      data%FUVALS, data%lnguvl, data%FUVALS( data%lggfx + 1 ), &
-                      data%WRK( 1 ), data%ng, &
-                      data%ESCALE( 1 ), data%lescal, &
-                      data%FUVALS( data%lgrjac + 1 ), &
-                      data%lngrjc, data%WRK( 1 ), data%WRK( n + 1 ), &
-                      data%maxsel, &
-                      data%GXEQX( 1 ), data%lgxeqx, &
-                      data%INTREP( 1 ), data%lintre, RANGE )
+        CALL CUTEST_form_gradients( n, data%ng, data%nel, data%ntotel,         &
+               data%nvrels, data%nnza, data%nvargp, data%firstg, data%ICNA,    &
+               data%ISTADA, data%IELING, data%ISTADG, data%ISTAEV,             &
+               data%IELVAR, data%INTVAR, data%A, data%GVALS( : , 2 ),          &
+               data%FUVALS, data%lnguvl, data%FUVALS( data%lggfx + 1 ),        &
+               data%GSCALE_used, data%ESCALE, data%FUVALS( data%lgrjac + 1 ),  &
+               data%GXEQX, data%INTREP, data%ISVGRP, data%ISTAGV, data%ITYPEE, &
+               data%ISTAJC, data%W_ws, data%W_el, RANGE )
       ELSE
-
-!  compute the gradient value
-
-      CALL ELGRD( n, data%ng, data%firstg, data%ICNA( 1 ), data%licna, &
-                      data%ISTADA( 1 ), data%lstada, data%IELING( 1 ), &
-                      data%leling, data%ISTADG( 1 ), data%lstadg, &
-                      data%ITYPEE( 1 ), data%lintre, &
-                      data%ISTAEV( 1 ), data%lstaev, data%IELVAR( 1 ), &
-                      data%lelvar, data%INTVAR( 1 ), data%lntvar, &
-                      data%IWORK( data%lsvgrp + 1 ), &
-                      data%lnvgrp, data%IWORK( data%lstajc + 1 ), data%lnstjc, &
-                      data%IWORK( data%lstagv + 1 ), data%lnstgv, &
-                      data%A( 1 ), data%la, &
-                      data%GVALS( : , 2 ), data%lgvals, &
-                      data%FUVALS, data%lnguvl, data%FUVALS( data%lggfx + 1 ), &
-                      data%GSCALE( 1 ), data%lgscal, &
-                      data%ESCALE( 1 ), data%lescal, &
-                      data%FUVALS( data%lgrjac + 1 ), &
-                      data%lngrjc, data%WRK( 1 ), data%WRK( n + 1 ), &
-                      data%maxsel, &
-                      data%GXEQX( 1 ), data%lgxeqx, &
-                      data%INTREP( 1 ), data%lintre, RANGE )
+        CALL CUTEST_form_gradients( n, data%ng, data%nel, data%ntotel,         &
+               data%nvrels, data%nnza, data%nvargp, data%firstg, data%ICNA,    &
+               data%ISTADA, data%IELING, data%ISTADG, data%ISTAEV,             &
+               data%IELVAR, data%INTVAR, data%A, data%GVALS( : , 2 ),          &
+               data%FUVALS, data%lnguvl, data%FUVALS( data%lggfx + 1 ),        &
+               data%GSCALE, data%ESCALE, data%FUVALS( data%lgrjac + 1 ),       &
+               data%GXEQX, data%INTREP, data%ISVGRP, data%ISTAGV, data%ITYPEE, &
+               data%ISTAJC, data%W_ws, data%W_el, RANGE )
       END IF
+
+!      CALL ELGRD( n, data%ng, data%firstg, data%ICNA( 1 ), data%licna, &
+!                      data%ISTADA( 1 ), data%lstada, data%IELING( 1 ), &
+!                      data%leling, data%ISTADG( 1 ), data%lstadg, &
+!                      data%ITYPEE( 1 ), data%lintre, &
+!                      data%ISTAEV( 1 ), data%lstaev, data%IELVAR( 1 ), &
+!                      data%lelvar, data%INTVAR( 1 ), data%lntvar, &
+!                      data%IWORK( data%lsvgrp + 1 ), &
+!                      data%lnvgrp, data%IWORK( data%lstajc + 1 ), data%lnstjc,&
+!                      data%IWORK( data%lstagv + 1 ), data%lnstgv, &
+!                      data%A( 1 ), data%la, &
+!                      data%GVALS( : , 2 ), data%lgvals, &
+!                      data%FUVALS, data%lnguvl, data%FUVALS( data%lggfx + 1 ),&
+!                      data%WRK( 1 ), data%ng, &
+!                      data%ESCALE( 1 ), data%lescal, &
+!                      data%FUVALS( data%lgrjac + 1 ), &
+!                      data%lngrjc, data%WRK( 1 ), data%WRK( n + 1 ), &
+!                      data%maxsel, &
+!                      data%GXEQX( 1 ), data%lgxeqx, &
+!                      data%INTREP( 1 ), data%lintre, RANGE )
+!      ELSE
+!
+!      CALL ELGRD( n, data%ng, data%firstg, data%ICNA( 1 ), data%licna, &
+!                      data%ISTADA( 1 ), data%lstada, data%IELING( 1 ), &
+!                      data%leling, data%ISTADG( 1 ), data%lstadg, &
+!                      data%ITYPEE( 1 ), data%lintre, &
+!                      data%ISTAEV( 1 ), data%lstaev, data%IELVAR( 1 ), &
+!                      data%lelvar, data%INTVAR( 1 ), data%lntvar, &
+!                      data%IWORK( data%lsvgrp + 1 ), &
+!                      data%lnvgrp, data%IWORK( data%lstajc + 1 ), data%lnstjc,&
+!                      data%IWORK( data%lstagv + 1 ), data%lnstgv, &
+!                      data%A( 1 ), data%la, &
+!                      data%GVALS( : , 2 ), data%lgvals, &
+!                      data%FUVALS, data%lnguvl, data%FUVALS( data%lggfx + 1 ),&
+!                      data%GSCALE( 1 ), data%lgscal, &
+!                      data%ESCALE( 1 ), data%lescal, &
+!                      data%FUVALS( data%lgrjac + 1 ), &
+!                      data%lngrjc, data%WRK( 1 ), data%WRK( n + 1 ), &
+!                      data%maxsel, &
+!                      data%GXEQX( 1 ), data%lgxeqx, &
+!                      data%INTREP( 1 ), data%lintre, RANGE )
+
       data%firstg = .FALSE.
 
 !  define the real work space needed for ASMBL. Ensure that there is 
@@ -277,7 +297,7 @@
                    data%ISTAEV( 1 ), data%lstaev, &
                    data%IWORK( data%lstagv + 1 ), data%lnstgv, &
                    data%IWORK( data%lsvgrp + 1 ), data%lnvgrp, &
-                   irnh, ICNH, data%IWORK( data%lsend + lnxtrw + 1 ), linxtr, &
+                   IRNH, ICNH, data%IWORK( data%lsend + lnxtrw + 1 ), linxtr, &
                    data%IWORK( data%lsend + liwkh + 1 ), n, &
                    data%A( 1 ), data%la, &
                    data%FUVALS, data%lnguvl, data%FUVALS, data%lnhuvl, &
@@ -300,7 +320,7 @@
                    data%ISTAEV( 1 ), data%lstaev, &
                    data%IWORK( data%lstagv + 1 ), data%lnstgv, &
                    data%IWORK( data%lsvgrp + 1 ), data%lnvgrp, &
-                   irnh, ICNH, data%IWORK( data%lsend + lnxtrw + 1 ), linxtr, &
+                   IRNH, ICNH, data%IWORK( data%lsend + lnxtrw + 1 ), linxtr, &
                    data%IWORK( data%lsend + liwkh + 1 ), n, &
                    data%A( 1 ), data%la, &
                    data%FUVALS, data%lnguvl, data%FUVALS, data%lnhuvl, &
@@ -330,12 +350,20 @@
       status = 0
       RETURN
 
+!  unsuccessful returns
+
+  930 CONTINUE
+      IF ( data%out > 0 ) WRITE( data%out,                                     &
+        "( ' ** SUBROUTINE CISH: error flag raised during SIF evaluation' )" )
+      status = 3
+      RETURN
+
 !  non-executable statements.
 
- 2000 FORMAT( ' ** SUBROUTINE CISH: Increase the size of WK ' )
+ 2000 FORMAT( ' ** SUBROUTINE CISH: Increase the size of WK' )
  2010 FORMAT( ' ** SUBROUTINE CISH: Increase the sizes of IWK and LH' )
- 2020 FORMAT( ' ** SUBROUTINE CISH: invalid problem index iprob ' )
+ 2020 FORMAT( ' ** SUBROUTINE CISH: invalid problem index iprob' )
 
-!  end of CISH.
+!  end of subroutine CISH
 
-      END
+      END SUBROUTINE CISH

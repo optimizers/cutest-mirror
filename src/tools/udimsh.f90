@@ -179,14 +179,14 @@
       status = 0
       RETURN
 
-!  Unsuccessful returns.
+!  Unsuccessful returns
 
   900 CONTINUE
-      IF ( data%out > 0 ) WRITE( data%out,                                      &
+      IF ( data%out > 0 ) WRITE( data%out,                                     &
         "( ' ** SUBROUTINE UDIMSH: Increase the size of IWK' )" )
       status = 2
       RETURN
 
-!  end of UDIMSH.
+!  end of subroutine UDIMSH
 
-      END
+      END SUBROUTINE UDIMSH
