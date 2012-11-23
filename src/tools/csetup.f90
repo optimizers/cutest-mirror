@@ -9,15 +9,15 @@
 !   fortran 77 version originally released in CUTE, 30th October, 1991
 !   fortran 2003 version released in CUTEst, 4th November 2012
 
-      SUBROUTINE CSETUP( data, status, input, out, n, m, X, X_l, X_u, EQUATN, &
-                         LINEAR, Y, C_l, C_u, efirst, lfirst, nvfrst )
+      SUBROUTINE CSETUP( data, status, input, out, buffer, n, m, X, X_l, X_u,  &
+                         EQUATN, LINEAR, Y, C_l, C_u, efirst, lfirst, nvfrst )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
 !  dummy arguments
 
       TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
-      INTEGER, INTENT( IN ) :: input, out
+      INTEGER, INTENT( IN ) :: input, out, buffer
       INTEGER, INTENT( INOUT ) :: n, m
       INTEGER, INTENT( OUT ) :: status
       LOGICAL, INTENT( IN ) :: efirst, lfirst, nvfrst
@@ -31,10 +31,10 @@
 
 !  local variables
 
-      INTEGER :: ialgor, iprint, i, ig, j, jg, mend, meq, mlin, mmax
+      INTEGER :: ialgor, i, ig, j, jg, mend, meq, mlin, mmax
       INTEGER :: ii, k, iel, jwrk, kndv, nnlin, nend, neltyp, ngrtyp, itemp
       INTEGER :: alloc_status
-      LOGICAL :: fdgrad, debug, ltemp
+      LOGICAL :: debug, ltemp
       CHARACTER ( LEN = 8 ) :: pname
       CHARACTER ( LEN = 10 ) :: ctemp
       CHARACTER ( LEN = 10 ) :: chtemp
@@ -46,10 +46,9 @@
 
       CALL CPU_TIME( data%sutime )
       data%out = out
+      data%io_buffer = buffer
       debug = .FALSE.
       debug = debug .AND. out > 0
-      iprint = 0
-      IF ( debug ) iprint = 3
 
 !  input the problem dimensions
 
@@ -218,6 +217,11 @@
       ALLOCATE( data%GSCALE( data%ng ), STAT = alloc_status )
       IF ( alloc_status /= 0 ) THEN
         bad_alloc = 'data%GSCALE' ; GO TO 910
+      END IF
+
+      ALLOCATE( data%GSCALE_used( data%ng ), STAT = alloc_status )
+      IF ( alloc_status /= 0 ) THEN
+        bad_alloc = 'data%GSCALE_used' ; GO TO 910
       END IF
 
       ALLOCATE( data%VSCALE( n ), STAT = alloc_status )
@@ -494,8 +498,8 @@
 
 !  dummy input for the names given to the element and group types
 
-      READ( input, 1040 ) ( CHTEMP, i = 1, neltyp )
-      READ( input, 1040 ) ( CHTEMP, i = 1, ngrtyp )
+      READ( input, 1040 ) ( chtemp, i = 1, neltyp )
+      READ( input, 1040 ) ( chtemp, i = 1, ngrtyp )
 
 !  input the type of each variable.
 
@@ -805,7 +809,6 @@
 !  allocate and initialize workspace
 
       data%firstg = .TRUE.
-      fdgrad = .FALSE.
 
       data%ntotel = data%ISTADG( data%ng + 1 ) - 1
       data%nvrels = data%ISTAEV( data%nel + 1 ) - 1
@@ -838,7 +841,7 @@
 !         data%lstaev, data%INTVAR, data%lntvar, data%ISTADH, data%lstadh,     &
 !         data%ICNA, data%licna, data%ISTADA, data%lstada, data%ITYPEE,        &
 !         data%lintre, data%GXEQX, data%lgxeqx, data%INTREP, data%lintre,      &
-!         lfuval, data%altriv, .TRUE., FDGRAD, data%lfxi, LGXI, LHXI, LGGFX,   &
+!         lfuval, data%altriv, .TRUE., fdgrad, data%lfxi, LGXI, LHXI, LGGFX,   &
 !         data%ldx, data%lgrjac, data%lqgrad, data%lbreak, data%lp, data%lxcp, &
 !         data%lx0, data%lgx0, data%ldeltx, data%lbnd, data%lwkstr,            &
 !         data%lsptrs, data%lselts, data%lindex, data%lswksp, data%lstagv,     &

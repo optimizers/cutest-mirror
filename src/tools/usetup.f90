@@ -9,14 +9,14 @@
 !   fortran 77 version originally released in CUTE, 30th October, 1991
 !   fortran 2003 version released in CUTEst, 4th November 2012
 
-      SUBROUTINE USETUP( data, status, input, out, n, X, X_l, X_u )
+      SUBROUTINE USETUP( data, status, input, out, buffer, n, X, X_l, X_u )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
 !  dummy arguments
 
       TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
-      INTEGER, INTENT( IN ) :: input, out
+      INTEGER, INTENT( IN ) :: input, out, buffer
       INTEGER, INTENT( INOUT ) :: n
       INTEGER, INTENT( OUT ) :: status
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: X, X_l, X_u
@@ -27,9 +27,9 @@
 
 !  local variables
 
-      INTEGER :: i, ialgor, iprint, inform, nslack
+      INTEGER :: i, ialgor
       INTEGER :: alloc_status
-      LOGICAL :: fdgrad, debug
+      LOGICAL :: debug
       REAL ( KIND = wp ), DIMENSION( 2 ) :: OBFBND
       CHARACTER ( LEN = 8 ) :: pname
       CHARACTER ( LEN = 10 ) :: chtemp
@@ -38,10 +38,9 @@
 
       CALL CPU_TIME( data%sutime )
       data%out = out
+      data%io_buffer = buffer
       debug = .FALSE.
       debug = debug .AND. out > 0
-      iprint = 0
-      IF ( debug ) iprint = 3
 
 !  input the problem dimensions
 
@@ -170,7 +169,7 @@
         bad_alloc = 'data%ITYPEV' ; GO TO 910
       END IF
 
-      ALLOCATE( data%IWORK( MAX( m, 2 * n ) ), STAT = alloc_status )
+      ALLOCATE( data%IWORK( 2 * n ), STAT = alloc_status )
       IF ( alloc_status /= 0 ) THEN
         bad_alloc = 'data%IWORK' ; GO TO 910
       END IF
@@ -210,6 +209,11 @@
       ALLOCATE( data%GSCALE( data%ng ), STAT = alloc_status )
       IF ( alloc_status /= 0 ) THEN
         bad_alloc = 'data%GSCALE' ; GO TO 910
+      END IF
+
+      ALLOCATE( data%GSCALE_used( data%ng ), STAT = alloc_status )
+      IF ( alloc_status /= 0 ) THEN
+        bad_alloc = 'data%GSCALE_used' ; GO TO 910
       END IF
 
       ALLOCATE( data%VSCALE( n ), STAT = alloc_status )
@@ -507,8 +511,6 @@
 !  portions of IWK
 
       data%firstg = .TRUE.
-      fdgrad = .FALSE.
-
       data%ntotel = data%ISTADG( data%ng + 1 ) - 1
       data%nvrels = data%ISTAEV( data%nel + 1 ) - 1
       data%nnza = data%ISTADA( data%ng + 1 ) - 1
@@ -558,7 +560,7 @@
 !         data%lniwtr, data%lnwtra, data%lsiset, data%lssvse, data%lniset,     &
 !         data%lnsvse, RANGE, data%IWORK(IWRK + 1), liwork, data%WRK, lwork,   &
 !         iprint, out, inform )
-      IF ( ststus /= 0 ) RETURN
+      IF ( status /= 0 ) RETURN
 
 !  shift the starting addresses for the real workspace relative to WRK
 
@@ -627,7 +629,7 @@
 
  1000 FORMAT( I2, A8 )
  1001 FORMAT( 10I8 )
- 1002 FORMAT( 2I8 )
+!1002 FORMAT( 2I8 )
  1010 FORMAT( ( 10I8 ) )
  1020 FORMAT( ( 1P, 4D16.8 ) )
  1030 FORMAT( ( 72L1 ) )

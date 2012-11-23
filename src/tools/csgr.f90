@@ -1,14 +1,14 @@
 ! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE CSGR ( data, status, n, m, grlagf, lv, V, X, nnzj, &
-                        lcjac, CJAC, INDVAR, INDFUN )
+      SUBROUTINE CSGR( data, status, n, m, grlagf, Y, X, nnzj, lcjac, CJAC,    &
+                       INDVAR, INDFUN )
       USE CUTEST
       TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: n, m, lv, nnzj, lcjac
+      INTEGER :: n, m, nnzj, lcjac
       INTEGER, INTENT( OUT ) :: status
       LOGICAL :: grlagf
-      INTEGER :: INDVAR( LCJAC), INDFUN( lcjac )
-      REAL ( KIND = wp ) :: X( n ), V ( lv ), CJAC ( lcjac )
+      INTEGER :: INDVAR( lcjac ), INDFUN( lcjac )
+      REAL ( KIND = wp ) :: X( n ), Y( m ), CJAC( lcjac )
 
 !  Compute the gradients of the objective function and general
 !  constraints of a function initially written in Standard
@@ -16,7 +16,7 @@
 
 !  CJAC	 is an array which gives the values of the nonzeros of the
 !	 gradients of the objective, or Lagrangian, and general
-!	 constraint functions evaluated  at X and V. The i-th entry
+!	 constraint functions evaluated  at X and Y. The i-th entry
 !	 of CJAC gives the value of the derivative with respect to
 !	 variable INDVAR(i) of function INDFUN(i). INDFUN(i) = 0
 !        indicates the objective function whenever grlagf is .FALSE.
@@ -52,6 +52,7 @@
                   data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
                   data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,          &
                   1, ifstat )
+      IF ( ifstat /= 0 ) GO TO 930
 
 !  evaluate the element function gradient values
 
@@ -61,6 +62,7 @@
                   data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
                   data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,          &
                   2, ifstat )
+      IF ( ifstat /= 0 ) GO TO 930
 
 !  compute the group argument values ft
 
@@ -87,23 +89,25 @@
 
 !  evaluate the group derivative values.
 
-      IF ( .NOT. data%altriv )                                                 &
+      IF ( .NOT. data%altriv ) THEN
         CALL GROUP( data%GVALS, data%ng, data%FT, data%GPVALU, data%ng,        &
                     data%ITYPEG, data%ISTGP, data%ICALCF, data%ltypeg,         &
                     data%lstgp, data%lcalcf, data%lcalcg, data%lgpvlu,         &
                     .TRUE., igstat )
+        IF ( igstat /= 0 ) GO TO 930
+      END IF
 
 !  compute the gradient values. Initialize the gradient of the objective 
 !  function as zero
 
       nnzj = 0
       IF ( data%numcon > 0 ) THEN
-        lgtemp = WRK + n + data%maxsel
+        lgtemp = n + data%maxsel
         DO j = 1, n
           data%WRK( lgtemp + j ) = 0.0_wp
         END DO
 
-!  consider the IG-th group
+!  consider the ig-th group
 
         DO ig = 1, data%ng
           ig1 = ig + 1
@@ -120,7 +124,7 @@
           IF ( icon == 0 ) THEN
             gii = gi
           ELSE
-            IF ( grlagf ) gii = gi * V( data%KNDOFC( ig ) )
+            IF ( grlagf ) gii = gi * Y( data%KNDOFC( ig ) )
           END IF
           IF ( nontrv ) THEN
             gi = gi  * data%GVALS( ig, 2 )
@@ -282,29 +286,38 @@
             INDVAR( nnzj ) = i
           END IF
         END DO
-      ELSE
 
 !  compute the gradient value
 
-        CALL ELGRD( n, data%ng, data%firstg, data%ICNA( 1 ), data%licna, &
-                    data%ISTADA( 1 ), data%lstada, data%IELING( 1 ), &
-                    data%leling, data%ISTADG( 1 ), data%lstadg, &
-                    data%ITYPEE( 1 ), data%lintre, &
-                    data%ISTAEV( 1 ), data%lstaev, data%IELVAR( 1 ), &
-                    data%lelvar, data%INTVAR( 1 ), data%lntvar, &
-                    data%IWORK( data%lsvgrp + 1 ), &
-                    data%lnvgrp, data%IWORK( data%lstajc + 1 ), data%lnstjc, &
-                    data%IWORK( data%lstagv + 1 ), data%lnstgv, &
-                    data%A( 1 ), data%la, &
-                    data%GVALS( : , 2 ), data%lgvals, &
-                    data%FUVALS, data%lnguvl, data%FUVALS( data%lggfx + 1 ), &
-                    data%GSCALE( 1 ), data%lgscal, &
-                    data%ESCALE( 1 ), data%lescal, &
-                    data%FUVALS( data%lgrjac + 1 ), &
-                    data%lngrjc, data%WRK( 1 ), data%WRK( n + 1 ), &
-                    data%maxsel, &
-                    data%GXEQX( 1 ), data%lgxeqx, &
-                    data%INTREP( 1 ), data%lintre, RANGE )
+      ELSE
+        CALL CUTEST_form_gradients( n, data%ng, data%nel, data%ntotel,         &
+               data%nvrels, data%nnza, data%nvargp, data%firstg, data%ICNA,    &
+               data%ISTADA, data%IELING, data%ISTADG, data%ISTAEV,             &
+               data%IELVAR, data%INTVAR, data%A, data%GVALS( : , 2 ),          &
+               data%FUVALS, data%lnguvl, data%FUVALS( data%lggfx + 1 ),        &
+               data%GSCALE, data%ESCALE, data%FUVALS( data%lgrjac + 1 ),       &
+               data%GXEQX, data%INTREP, data%ISVGRP, data%ISTAGV, data%ITYPEE, &
+               data%ISTAJC, data%W_ws, data%W_el, RANGE )
+
+!        CALL ELGRD( n, data%ng, data%firstg, data%ICNA( 1 ), data%licna, &
+!                    data%ISTADA( 1 ), data%lstada, data%IELING( 1 ), &
+!                    data%leling, data%ISTADG( 1 ), data%lstadg, &
+!                    data%ITYPEE( 1 ), data%lintre, &
+!                    data%ISTAEV( 1 ), data%lstaev, data%IELVAR( 1 ), &
+!                    data%lelvar, data%INTVAR( 1 ), data%lntvar, &
+!                    data%IWORK( data%lsvgrp + 1 ), &
+!                    data%lnvgrp, data%IWORK( data%lstajc + 1 ), data%lnstjc, &
+!                    data%IWORK( data%lstagv + 1 ), data%lnstgv, &
+!                    data%A( 1 ), data%la, &
+!                    data%GVALS( : , 2 ), data%lgvals, &
+!                    data%FUVALS, data%lnguvl, data%FUVALS( data%lggfx + 1 ), &
+!                    data%GSCALE( 1 ), data%lgscal, &
+!                    data%ESCALE( 1 ), data%lescal, &
+!                    data%FUVALS( data%lgrjac + 1 ), &
+!                    data%lngrjc, data%WRK( 1 ), data%WRK( n + 1 ), &
+!                    data%maxsel, &
+!                    data%GXEQX( 1 ), data%lgxeqx, &
+!                    data%INTREP( 1 ), data%lintre, RANGE )
 
 !  transfer the gradient of the objective function to the sparse storage scheme
 
@@ -333,12 +346,20 @@
       status = 0
       RETURN
 
+!  unsuccessful returns
+
+  930 CONTINUE
+      IF ( data%out > 0 ) WRITE( data%out,                                     &
+        "( ' ** SUBROUTINE CSGR: error flag raised during SIF evaluation' )" )
+      status = 3
+      RETURN
+
 !  non-executable statements
 
- 2000 FORMAT( /, ' ** SUBROUTINE CSGR: array length lcjac too small.',  &
-              /, ' -- Increase the parameter lcjac by at least ', I0, &
+ 2000 FORMAT( /, ' ** SUBROUTINE CSGR: array length lcjac too small.',         &
+              /, ' -- Increase the parameter lcjac by at least ', I0,          &
                  ' and restart.' )
 
-!  end of CSGR
+!  end of subroutine CSGR
 
-      END
+      END SUBROUTINE CSGR

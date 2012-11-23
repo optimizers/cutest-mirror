@@ -14,8 +14,7 @@
 !  dummy arguments
 
       INTEGER, INTENT( IN ) :: input
-      INTEGER, INTENT( OUT ) ::  n
-      INTEGER, INTENT( OUT ) :: status
+      INTEGER, INTENT( OUT ) :: status, n
 
 !  --------------------------------------------------------------------------
 !  Compute the basic array dimension for the unconstrained optimization tools
@@ -27,6 +26,6 @@
       status = 0
       RETURN
 
-!  End of UDIMEN.
+!  End of subroutine UDIMEN
 
-      END
+      END SUBROUTINE UDIMEN

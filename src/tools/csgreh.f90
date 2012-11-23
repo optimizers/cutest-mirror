@@ -1,20 +1,17 @@
 ! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE CSGREH( data, status, n, m, X, GRLAGF, lv, V,  &
-                         nnzj, lcjac, CJAC, INDVAR, INDFUN,  &
-                         ne, IRNHI, lirnhi, le, &
+      SUBROUTINE CSGREH( data, status, n, m, X, GRLAGF, Y, nnzj, lcjac,        &
+                         CJAC, INDVAR, INDFUN, ne, IRNHI, lirnhi, le,          &
                          IPRNHI, HI, lhi, IPRHI, BYROWS )
       USE CUTEST
       TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: n, m, lv, nnzj, lcjac 
-      INTEGER :: ne, le, lirnhi, lhi 
+      INTEGER :: n, m, nnzj, ne, lcjac, le, lirnhi, lhi 
       INTEGER, INTENT( OUT ) :: status
       LOGICAL :: GRLAGF, BYROWS
       INTEGER :: INDVAR( LCJAC), INDFUN( lcjac )
       INTEGER :: IRNHI ( lirnhi )
       INTEGER :: IPRNHI( le ), IPRHI ( le )
-      REAL ( KIND = wp ) :: X ( n ), V ( lv ),  &
-                         HI ( lhi ), CJAC ( lcjac )
+      REAL ( KIND = wp ) :: X( n ), Y( m ), HI( lhi ), CJAC( lcjac )
 
 !  Compute the Jacobian matrix for an optimization problem
 !  initially written in Standard Input Format (SIF).
@@ -80,6 +77,7 @@
                   data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
                   data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,          &
                   1, ifstat )
+      IF ( ifstat /= 0 ) GO TO 930
 
 !  evaluate the element function gradients and Hessians
 
@@ -89,6 +87,7 @@
                   data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
                   data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,          &
                   3, ifstat )
+      IF ( ifstat /= 0 ) GO TO 930
 
 !  compute the group argument values ft
 
@@ -118,11 +117,13 @@
 
 !  evaluate the group derivative values
 
-      IF ( .NOT. data%altriv )                                                 &
+      IF ( .NOT. data%altriv ) THEN
         CALL GROUP( data%GVALS, data%ng, data%FT, data%GPVALU, data%ng,        &
                     data%ITYPEG, data%ISTGP, data%ICALCF, data%ltypeg,         &
                     data%lstgp, data%lcalcf, data%lcalcg, data%lgpvlu,         &
                     .TRUE., igstat )
+        IF ( igstat /= 0 ) GO TO 930
+      END IF
 
 !  define the real work space needed for ELGRD. Ensure that there is 
 !  sufficient space
@@ -131,17 +132,17 @@
         IF ( data%out > 0 ) WRITE( data%out, 2000 )
         status = 2 ; RETURN
       END IF
-      IF ( data%numcon > 0 ) THEN
 
 !  change the group weightings to include the contributions from the
 !  Lagrange multipliers
 
+      IF ( data%numcon > 0 ) THEN
          DO ig = 1, data%ng
            i = data%KNDOFC( ig )
            IF ( i == 0 ) THEN
-             data%WRK( ig ) = data%GSCALE( ig )
+             data%GSCALE_used( ig ) = data%GSCALE( ig )
            ELSE
-             data%WRK( ig ) = data%GSCALE( ig ) * V( i )
+             data%GSCALE_used( ig ) = data%GSCALE( ig ) * Y( i )
            END IF
          END DO
 
@@ -149,7 +150,7 @@
 !  function as zero
 
          nnzj = 0
-         lgtemp = WRK + n + data%maxsel
+         lgtemp = n + data%maxsel
          DO j = 1, n
            data%WRK( lgtemp + j ) = 0.0_wp
          END DO
@@ -168,7 +169,7 @@
 !  compute the first derivative of the group
 
            gi = data%GSCALE( ig )
-           gii = data%WRK( ig )
+           gii = data%GSCALE_used( ig )
            IF ( nontrv ) THEN
              gi = gi  * data%GVALS( ig, 2 )
              gii = gii * data%GVALS( ig, 2 )
@@ -333,25 +334,34 @@
 
 !  compute the gradient value
 
-      CALL ELGRD( n, data%ng, data%firstg, data%ICNA( 1 ), data%licna, &
-                      data%ISTADA( 1 ), data%lstada, data%IELING( 1 ), &
-                      data%leling, data%ISTADG( 1 ), data%lstadg, &
-                      data%ITYPEE( 1 ), data%lintre, &
-                      data%ISTAEV( 1 ), data%lstaev, data%IELVAR( 1 ), &
-                      data%lelvar, data%INTVAR( 1 ), data%lntvar, &
-                      data%IWORK( data%lsvgrp + 1 ), &
-                      data%lnvgrp, data%IWORK( data%lstajc + 1 ), data%lnstjc, &
-                      data%IWORK( data%lstagv + 1 ), data%lnstgv, &
-                      data%A( 1 ), data%la, &
-                      data%GVALS( : , 2 ), data%lgvals, &
-                      data%FUVALS, data%lnguvl, data%FUVALS( data%lggfx + 1 ), &
-                      data%GSCALE( 1 ), data%lgscal, &
-                      data%ESCALE( 1 ), data%lescal, &
-                      data%FUVALS( data%lgrjac + 1 ), &
-                      data%lngrjc, data%WRK( 1 ), data%WRK( n + 1 ), &
-                      data%maxsel, &
-                      data%GXEQX( 1 ), data%lgxeqx, &
-                      data%INTREP( 1 ), data%lintre, RANGE )
+        CALL CUTEST_form_gradients( n, data%ng, data%nel, data%ntotel,         &
+               data%nvrels, data%nnza, data%nvargp, data%firstg, data%ICNA,    &
+               data%ISTADA, data%IELING, data%ISTADG, data%ISTAEV,             &
+               data%IELVAR, data%INTVAR, data%A, data%GVALS( : , 2 ),          &
+               data%FUVALS, data%lnguvl, data%FUVALS( data%lggfx + 1 ),        &
+               data%GSCALE, data%ESCALE, data%FUVALS( data%lgrjac + 1 ),       &
+               data%GXEQX, data%INTREP, data%ISVGRP, data%ISTAGV, data%ITYPEE, &
+               data%ISTAJC, data%W_ws, data%W_el, RANGE )
+
+!        CALL ELGRD( n, data%ng, data%firstg, data%ICNA( 1 ), data%licna, &
+!                      data%ISTADA( 1 ), data%lstada, data%IELING( 1 ), &
+!                      data%leling, data%ISTADG( 1 ), data%lstadg, &
+!                      data%ITYPEE( 1 ), data%lintre, &
+!                      data%ISTAEV( 1 ), data%lstaev, data%IELVAR( 1 ), &
+!                      data%lelvar, data%INTVAR( 1 ), data%lntvar, &
+!                      data%IWORK( data%lsvgrp + 1 ), &
+!                      data%lnvgrp, data%IWORK( data%lstajc + 1 ), data%lnstjc,&
+!                      data%IWORK( data%lstagv + 1 ), data%lnstgv, &
+!                      data%A( 1 ), data%la, &
+!                      data%GVALS( : , 2 ), data%lgvals, &
+!                      data%FUVALS, data%lnguvl, data%FUVALS( data%lggfx + 1 ),&
+!                      data%GSCALE( 1 ), data%lgscal, &
+!                      data%ESCALE( 1 ), data%lescal, &
+!                      data%FUVALS( data%lgrjac + 1 ), &
+!                      data%lngrjc, data%WRK( 1 ), data%WRK( n + 1 ), &
+!                      data%maxsel, &
+!                      data%GXEQX( 1 ), data%lgxeqx, &
+!                      data%INTREP( 1 ), data%lintre, RANGE )
 
 !  transfer the gradient of the objective function to the sparse storage scheme
 
@@ -458,15 +468,23 @@
       status = 0
       RETURN
 
+!  unsuccessful returns
+
+  930 CONTINUE
+      IF ( data%out > 0 ) WRITE( data%out,                                     &
+        "( ' ** SUBROUTINE CSGREH: error flag raised during SIF evaluation' )" )
+      status = 3
+      RETURN
+
 !  non-executable statements
 
- 2000 FORMAT( ' ** SUBROUTINE CSGREH: Increase the size of WK ' )
- 2020 FORMAT( ' ** SUBROUTINE CSGREH: Increase the size of', &
-              ' IPNRHI, IPRHI, IRNHI or HI ' )
- 2030 FORMAT( /, ' ** SUBROUTINE CSGREH: array length lcjac too small.', &
-              /, ' -- Increase the parameter lcjac by at least ', I0, &
+ 2000 FORMAT( ' ** SUBROUTINE CSGREH: Increase the size of WK' )
+ 2020 FORMAT( ' ** SUBROUTINE CSGREH: Increase the size of',                   &
+              ' IPNRHI, IPRHI, IRNHI or HI' )
+ 2030 FORMAT( /, ' ** SUBROUTINE CSGREH: array length lcjac too small.',       &
+              /, ' -- Increase the parameter lcjac by at least ', I0,          &
                  ' and restart.' )
 
-!  end of CSGREH.
+!  end of subroutine CSGREH
 
-      END
+      END SUBROUTINE CSGREH

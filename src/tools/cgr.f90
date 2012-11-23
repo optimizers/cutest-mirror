@@ -9,7 +9,7 @@
 !   fortran 77 version originally released in CUTE, November 1991
 !   fortran 2003 version released in CUTEst, 20th November 2012
 
-      SUBROUTINE CGR( data, status, n, m, X, grlagf, Y, G, jtrans,           &
+      SUBROUTINE CGR( data, status, n, m, X, grlagf, Y, G, jtrans,             &
                       lcjac1, lcjac2, CJAC )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
@@ -32,7 +32,7 @@
 
 !  G	 is an array which gives the value of the gradient of the
 !	 objective function evaluated at X (grlagf = .FALSE.) or of
-!        the Lagrangian function evaluated at X and V (grlagf = .TRUE.)
+!        the Lagrangian function evaluated at X and Y (grlagf = .TRUE.)
 
 !  CJAC	 is a two-dimensional array of dimension ( lcjac1, lcjac2 )
 !	 which gives the value of the Jacobian matrix of the
@@ -49,8 +49,8 @@
       INTEGER :: i, j, iel, k, ig, ii, ig1, l, jj, ll, icon, nin, nvarel
       INTEGER :: nelow, nelup, istrgv, iendgv, ifstat, igstat
       LOGICAL :: nontrv
-      EXTERNAL :: RANGE 
       REAL ( KIND = wp ) :: ftt, gi, scalee, gii
+      EXTERNAL :: RANGE 
 
 !  Check input parameters.
 
@@ -86,6 +86,7 @@
                   data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
                   data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,          &
                   1, ifstat )
+      IF ( ifstat /= 0 ) GO TO 930
 
 ! evaluate the element function derivatives
 
@@ -95,6 +96,7 @@
                   data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
                   data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,          &
                   2, ifstat )
+      IF ( ifstat /= 0 ) GO TO 930
 
 !  compute the group argument values ft.
 
@@ -121,11 +123,13 @@
 
 !  evaluate the group derivative values.
 
-      IF ( .NOT. data%altriv )                                                 &
+      IF ( .NOT. data%altriv ) THEN
         CALL GROUP( data%GVALS, data%ng, data%FT, data%GPVALU, data%ng,        &
                     data%ITYPEG, data%ISTGP, data%ICALCF, data%ltypeg,         &
                     data%lstgp, data%lcalcf, data%lcalcg, data%lgpvlu,         &
                      .TRUE., igstat )
+        IF ( igstat /= 0 ) GO TO 930
+      END IF
 
 !  for unconstrained problems, skip construction of gradient and Jacobian. 
 !  Call ELGRD instead
@@ -159,7 +163,7 @@
           IF ( icon == 0 ) THEN
             gii = gi
           ELSE
-            IF ( grlagf ) gii = gi * V( data%KNDOFC( ig ) )
+            IF ( grlagf ) gii = gi * Y( data%KNDOFC( ig ) )
           END IF
           IF ( nontrv ) THEN
             gi = gi  * data%GVALS( ig, 2 )
@@ -304,24 +308,33 @@
 
 !  compute the gradient value
 
-        CALL ELGRD( n, data%ng, data%firstg, data%ICNA, data%licna, &
-                      data%ISTADA, data%lstada, data%IELING, &
-                      data%leling, data%ISTADG, data%lstadg, &
-                      data%ITYPEE, data%lintre, &
-                      data%ISTAEV, data%lstaev, data%IELVAR, &
-                      data%lelvar, data%INTVAR, data%lntvar, &
-                      data%IWORK( data%lsvgrp + 1 ), &
-                      data%lnvgrp, data%IWORK( data%lstajc + 1 ), data%lnstjc, &
-                      data%IWORK( data%lstagv + 1 ), &
-                      data%lnstgv, data%A, data%la, &
-                      data%GVALS(  : , 2 ), data%lgvals, &
-                      data%FUVALS, data%lnguvl, data%FUVALS( data%lggfx + 1 ), &
-                      data%GSCALE, data%lgscal, &
-                      data%ESCALE, data%lescal, &
-                      data%FUVALS( data%lgrjac + 1 ), &
-                      data%lngrjc, data%WRK, data%WRK( n + 1 ), &
-                      data%maxsel, data%GXEQX, data%lgxeqx, &
-                      data%INTREP, data%lintre, RANGE )
+        CALL CUTEST_form_gradients( n, data%ng, data%nel, data%ntotel,         &
+               data%nvrels, data%nnza, data%nvargp, data%firstg, data%ICNA,    &
+               data%ISTADA, data%IELING, data%ISTADG, data%ISTAEV,             &
+               data%IELVAR, data%INTVAR, data%A, data%GVALS( : , 2 ),          &
+               data%FUVALS, data%lnguvl, data%FUVALS( data%lggfx + 1 ),        &
+               data%GSCALE, data%ESCALE, data%FUVALS( data%lgrjac + 1 ),       &
+               data%GXEQX, data%INTREP, data%ISVGRP, data%ISTAGV, data%ITYPEE, &
+               data%ISTAJC, data%W_ws, data%W_el, RANGE )
+
+!        CALL ELGRD( n, data%ng, data%firstg, data%ICNA, data%licna, &
+!                    data%ISTADA, data%lstada, data%IELING, &
+!                    data%leling, data%ISTADG, data%lstadg, &
+!                    data%ITYPEE, data%lintre, &
+!                    data%ISTAEV, data%lstaev, data%IELVAR, &
+!                    data%lelvar, data%INTVAR, data%lntvar, &
+!                    data%IWORK( data%lsvgrp + 1 ), &
+!                    data%lnvgrp, data%IWORK( data%lstajc + 1 ), data%lnstjc, &
+!                    data%IWORK( data%lstagv + 1 ), &
+!                    data%lnstgv, data%A, data%la, &
+!                    data%GVALS(  : , 2 ), data%lgvals, &
+!                    data%FUVALS, data%lnguvl, data%FUVALS( data%lggfx + 1 ), &
+!                    data%GSCALE, data%lgscal, &
+!                    data%ESCALE, data%lescal, &
+!                    data%FUVALS( data%lgrjac + 1 ), &
+!                    data%lngrjc, data%WRK, data%WRK( n + 1 ), &
+!                    data%maxsel, data%GXEQX, data%lgxeqx, &
+!                    data%INTREP, data%lintre, RANGE )
 
 !  store the gradient value
 
@@ -336,6 +349,14 @@
       data%nc2og = data%nc2og + 1
       data%nc2cg = data%nc2cg + data%pnc
       status = 0
+      RETURN
+
+!  unsuccessful returns
+
+  930 CONTINUE
+      IF ( data%out > 0 ) WRITE( data%out,                                     &
+        "( ' ** SUBROUTINE CGR: error flag raised during SIF evaluation' )" )
+      status = 3
       RETURN
 
 !  non-executable statements

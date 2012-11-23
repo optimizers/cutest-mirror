@@ -35,46 +35,22 @@
 !  Nick Gould, for CGT productions,
 !  November 1994.
 
-
-! ---------------------------------------------------------------------
-
-
-
-
-! ---------------------------------------------------------------------
-
-
-
-! ---------------------------------------------------------------------
-
-
-! ---------------------------------------------------------------------
-
-!  integer variables from the GLOBAL common block.
-
-
-!  integer variables from the LOCAL common block.
-
-
-!  Integer variables from the PRFCTS common block.
-
-
-!  Local variables
+!  local variables
 
       INTEGER :: ig, nvarg, ig1
 
-!  Initilaize counts
+!  initilaize counts
 
       ne = 0
       nzh = 0
       nzirnh = 0
 
-!  Loop over the groups
+!  loop over the groups
 
       DO ig = 1, data%ng
         ig1 = ig + 1
 
-!  Only consider nonlinear groups
+!  only consider nonlinear groups
 
         IF ( data%ISTADG( ig ) < data%ISTADG( ig1 ) .OR.                       &
              .NOT. data%GXEQX( ig ) ) THEN
@@ -88,6 +64,6 @@
       status = 0
       RETURN
 
-!  end of UDIMSE
+!  end of subroutine UDIMSE
 
-      END
+      END SUBROUTINE UDIMSE

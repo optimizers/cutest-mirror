@@ -9,7 +9,7 @@
 !   fortran 77 version originally released in CUTE, October 1991
 !   fortran 2003 version released in CUTEst, 20th November 2012
 
-      SUBROUTINE CFN ( data, status, n, m, X, f, C )
+      SUBROUTINE CFN( data, status, n, m, X, f, C )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
@@ -46,6 +46,7 @@
                   data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
                   data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,          &
                   1, ifstat )
+      IF ( ifstat /= 0 ) GO TO 930
 
 !  compute the group argument values ft
 
@@ -81,6 +82,7 @@
                     data%ITYPEG, data%ISTGP, data%ICALCF, data%ltypeg,         &
                     data%lstgp, data%lcalcf, data%lcalcg, data%lgpvlu,         &
                     .FALSE., igstat )
+        IF ( igstat /= 0 ) GO TO 930
       END IF
 
 !  compute the objective and constraint function values.
@@ -120,6 +122,14 @@
       data%nc2of = data%nc2of + 1
       data%nc2cf = data%nc2cf + data%pnc
       status = 0
+      RETURN
+
+!  unsuccessful returns
+
+  930 CONTINUE
+      IF ( data%out > 0 ) WRITE( data%out,                                     &
+        "( ' ** SUBROUTINE CFN: error flag raised during SIF evaluation' )" )
+      status = 3
       RETURN
 
 !  end of subroutine CFN

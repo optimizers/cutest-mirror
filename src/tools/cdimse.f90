@@ -1,5 +1,4 @@
 ! ( Last modified on 10 Sepc 2004 at 16:35:38 )
-!  Correction: 10/Sep/2004: undeclared integer variables declared
       SUBROUTINE CDIMSE( data, status, ne, nzh, nzirnh )
       USE CUTEST
       TYPE ( CUTEST_data_type ) :: data
@@ -64,6 +63,6 @@
       status = 0
       RETURN
 
-!  end of CDIMSE
+!  end of subroutine CDIMSE
 
-      END
+      END SUBROUTINE CDIMSE

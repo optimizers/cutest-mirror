@@ -22,8 +22,7 @@
 
 !  local variables
 
-      INTEGER :: ialgor, i, j, ng, nel, idummy
-      INTEGER :: ng1, nel1, nslack, nobjgr, iend
+      INTEGER :: ialgor, i, idummy, iend, j, ng, ng1, nel1, nel, nslack, nobjgr
       INTEGER, DIMENSION( 10 ) :: IARRAY
       CHARACTER ( LEN = 8 ) :: pname
 

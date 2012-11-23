@@ -121,6 +121,7 @@
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: EPVALU
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: ESCALE
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: GSCALE
+        REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: GSCALE_used
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: VSCALE
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( :  , : ) :: GVALS
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: XT
@@ -146,6 +147,9 @@
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: LINK_col
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: POS_in_H
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: LINK_elem_uses_var
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: H_row
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: H_col
+        REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: H_val
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: WTRANS
 
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISYMMD
@@ -181,6 +185,8 @@
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: GV_old
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : , : ) :: BND
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : , : ) :: BND_radius
+!       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: DIAG
+!       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : , : ) :: OFFDIA
 
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: IW_asmbl
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: NZ_comp_w
@@ -221,6 +227,8 @@
 !  variables from the old DIMS common block
 
         INTEGER :: numvar, numcon
+
+        TYPE ( CUTEST_assemble_type ) :: assemble_data
 
       END TYPE CUTEST_data_type
 
