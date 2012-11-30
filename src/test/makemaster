@@ -99,29 +99,57 @@ test_cutest_constrained_double: $(C_TEST)
 
 run_test_cutest: run_test_cutest_unconstrained run_test_cutest_constrained
 
-run_test_cutest_unconstrained: tools test_cutest_unconstrained
+run_test_cutest_unconstrained: utools test_cutest_unconstrained
 	echo " Exhaustive test of unconstrained tools"
 	$(SED) -f $(SEDS) ../test/utest.f90 > $(OBJ)/utest.f90
 	cd $(OBJ) ; $(FORTRAN) $(RUNFFLAGS) $(SPECIAL) -o run_test \
             $(U_TEST) utest.f90 -L$(OBJ) $(LIBS)
-	- $(OBJ)/run_test
-#	- $(OBJ)/run_test >& ../test/test_unc.output
-#	cat ../test/test_unc.output
+#	- $(OBJ)/run_test
+	- $(OBJ)/run_test >& ../test/test_unc.output
+	cat ../test/test_unc.output
 	rm $(OBJ)/run_test
 
-run_test_cutest_constrained: tools test_cutest_constrained
+run_test_cutest_constrained: ctools test_cutest_constrained
 	echo " Exhaustive test of constrained tools"
 	$(SED) -f $(SEDS) ../test/ctest.f90 > $(OBJ)/ctest.f90
+	cd $(OBJ) ; echo "$(FORTRAN) $(RUNFFLAGS) $(SPECIAL) -o run_test \
+            $(C_TEST) ctest.f90 -L$(OBJ) $(LIBS)"
 	cd $(OBJ) ; $(FORTRAN) $(RUNFFLAGS) $(SPECIAL) -o run_test \
             $(C_TEST) ctest.f90 -L$(OBJ) $(LIBS)
-	- $(OBJ)/run_test
-#	- $(OBJ)/run_test >& ../test/test_con.output
-#	cat ../test/test_con.output
+#	- $(OBJ)/run_test
+	- $(OBJ)/run_test >& ../test/test_con.output
+	cat ../test/test_con.output
+	rm $(OBJ)/run_test
+
+run_test_cuter_unconstrained: test_cutest_unconstrained
+	echo " Exhaustive test of ** CUTEr ** unconstrained tools"
+	$(SED) -f $(SEDS) ../test/ucutertest.f90 > $(OBJ)/ucutertest.f90
+	cd $(OBJ) ; $(FORTRAN) $(RUNFFLAGS) $(SPECIAL) -o run_test \
+            $(U_TEST) ucutertest.f90 -L$(CUTERUSED)/double/lib -lcuter -lblas
+#	- $(OBJ)/run_test
+	- $(OBJ)/run_test >& ../test/test_unc_cuter.output
+	cat ../test/test_unc_cuter.output
+	rm $(OBJ)/run_test
+
+run_test_cuter_constrained: test_cutest_constrained
+	echo " Exhaustive test of ** CUTEr ** constrained tools"
+	$(SED) -f $(SEDS) ../test/ccutertest.f90 > $(OBJ)/ccutertest.f90
+	cd $(OBJ) ; $(FORTRAN) $(RUNFFLAGS) $(SPECIAL) -o run_test \
+            $(U_TEST) ccutertest.f90 -L$(CUTERUSED)/double/lib -lcuter -lblas
+#	- $(OBJ)/run_test
+	- $(OBJ)/run_test >& ../test/test_con_cuter.output
+	cat ../test/test_con_cuter.output
 	rm $(OBJ)/run_test
 
 tools: 
 	( cd ../tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      cutest PRECIS=$(PRECIS) PWD=$(PWD)/../tools )
+utools: 
+	( cd ../tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                     cutest_unconstrained PRECIS=$(PRECIS) PWD=$(PWD)/../tools )
+ctools: 
+	( cd ../tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                     cutest_constrained PRECIS=$(PRECIS) PWD=$(PWD)/../tools )
 
 #  individual compilations
 

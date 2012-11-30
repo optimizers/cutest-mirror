@@ -1,31 +1,41 @@
-! ( Last modified on 23 Dec 2000 at 22:01:38 )
+! THIS VERSION: CUTEST 1.0 - 28/11/2012 AT 10:15 GMT.
+
+!-*-*-*-*-*-*-  C U T E S T    C C I F G    S U B R O U T I N E  -*-*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal authors: Ingrid Bongartz and Nick Gould
+
+!   fortran 77 version originally released in CUTE, September 1994
+!   fortran 2003 version released in CUTEst, 28th November 2012
+
       SUBROUTINE CCIFG( data, status, n, icon, X, ci, GCI, grad )
       USE CUTEST
-      TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: n, icon
+
+!  dummy arguments
+
+      TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
+      INTEGER, INTENT( IN ) :: n, icon
       INTEGER, INTENT( OUT ) :: status
-      REAL ( KIND = wp ) :: ci
-      REAL ( KIND = wp ) :: X( n ), GCI( n )
-      LOGICAL :: grad
+      LOGICAL, INTENT( IN ) :: grad
+      REAL ( KIND = wp ), INTENT( OUT ) :: ci
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: GCI
 
-!  Evaluate constraint function icon and possibly its gradient,
-!  for constraints initially written in Standard Input Format (SIF).  
+!  -----------------------------------------------------------------
+!  evaluate constraint function icon and possibly its gradient, for
+!  constraints initially written in Standard Input Format (SIF).  
 !  The constraint gradient is stored as a dense vector in array GCI;
-!  that is, GCI( j ) is the partial derivative of constraint icon
-!  with respect to variable j.
-! (Subroutine CSCIFG performs the same calculations for a sparse
-!  constraint gradient vector.)
+!  that is, GCI(j) is the partial derivative of constraint icon with 
+!  respect to variable j. (Subroutine CSCIFG performs the same 
+!  calculations for a sparse constraint gradient vector.)
+!  -----------------------------------------------------------------
 
-!  Ingrid Bongartz
-!  September 1994.
-
-!  local variables.
+!  local variables
 
       INTEGER :: i, j, iel, k, ig, ii, ig1, l, ll, neling
-      INTEGER :: nin, nvarel, nelow, nelup, istrgv, iendgv
-      INTEGER :: ifstat, igstat
-      LOGICAL :: NONTRV
+      INTEGER :: nin, nvarel, nelow, nelup, istrgv, iendgv, ifstat, igstat
+      LOGICAL :: nontrv
       EXTERNAL :: RANGE 
       REAL ( KIND = wp ) :: ftt, gi, scalee
 
@@ -54,8 +64,7 @@
         status = 2 ; RETURN
       END IF
 
-!  determine nonlinear elements in group ig. Record their indices in 
-!  data%IWORK( ICALCF )
+!  determine nonlinear elements in group ig. Record their indices in ICALCF
 
       nelow = data%ISTADG( ig )
       nelup = data%ISTADG( ig + 1 ) - 1
@@ -156,8 +165,8 @@
 !  consider only group ig
 
         ig1 = ig + 1
-        istrgv = data%IWORK( data%lstagv + ig )
-        iendgv = data%IWORK( data%lstagv + ig1 ) - 1
+        istrgv = data%ISTAGV( ig )
+        iendgv = data%ISTAGV( ig1 ) - 1
         nontrv = .NOT. data%GXEQX( ig )
 
 !  compute the first derivative of the group
@@ -168,8 +177,7 @@
 !  the group has nonlinear elements
 
         IF ( nelow <= nelup ) THEN
-          data%WRK( data%IWORK( data%lsvgrp + istrgv :                        &
-                                data%lsvgrp + iendgv ) ) = 0.0_wp
+          data%W_ws( data%ISVGRP( istrgv : iendgv ) ) = 0.0_wp
 
 !  loop over the group's nonlinear elements
 
@@ -179,18 +187,17 @@
             l = data%ISTAEV( iel )
             nvarel = data%ISTAEV( iel + 1 ) - l
             scalee = data%ESCALE( ii )
-            IF ( data%INTREP( iel ) ) THEN
 
 !  the iel-th element has an internal representation
 
+            IF ( data%INTREP( iel ) ) THEN
               nin = data%INTVAR( iel + 1 ) - k
-              CALL RANGE( iel, .TRUE., data%FUVALS( k ),                       &
-                           data%WRK( n + 1 ), nvarel, nin,                     &
-                           data%ITYPEE( iel ), nin, nvarel )
+              CALL RANGE( iel, .TRUE., data%FUVALS( k ), data%W_el,            &
+                          nvarel, nin, data%ITYPEE( iel ), nin, nvarel )
 !DIR$ IVDEP
               DO i = 1, nvarel
                 j = data%IELVAR( l )
-                data%WRK( j ) = data%WRK( j ) + scalee * data%WRK( n + i )
+                data%W_ws( j ) = data%W_ws( j ) + scalee * data%W_el( i )
                 l = l + 1
               END DO
 
@@ -200,7 +207,7 @@
 !DIR$ IVDEP
               DO i = 1, nvarel
                 j = data%IELVAR( l )
-                data%WRK( j ) = data%WRK( j ) + scalee * data%FUVALS( k )
+                data%W_ws( j ) = data%W_ws( j ) + scalee * data%FUVALS( k )
                 k = k + 1 ; l = l + 1
               END DO
             END IF
@@ -211,18 +218,18 @@
 !DIR$ IVDEP
           DO k = data%ISTADA( ig ), data%ISTADA( ig1 ) - 1
             j = data%ICNA( k )
-            data%WRK( j ) = data%WRK( j ) + data%A( k )
+            data%W_ws( j ) = data%W_ws( j ) + data%A( k )
           END DO
 
 !  allocate a gradient
 
 !DIR$ IVDEP
           DO i = istrgv, iendgv
-            ll = data%IWORK( data%lsvgrp + i )
+            ll = data%ISVGRP( i )
 
 !  include contributions from the first n variables only
 
-            IF ( ll <= n ) GCI( ll ) = gi * data%WRK( ll )
+            IF ( ll <= n ) GCI( ll ) = gi * data%W_ws( ll )
           END DO
 
 !  the group has only linear elements

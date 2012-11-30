@@ -1,39 +1,50 @@
-! ( Last modified on 14 Jan 2001 at 19:03:33 )
-      SUBROUTINE CISH( data, status, n, X, iprob, nnzh, lh, H, IRNH, ICNH )
-      USE CUTEST
-      TYPE ( CUTEST_data_type ) :: data
-      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: n, iprob, nnzh, lh
-      INTEGER, INTENT( OUT ) :: status
-      INTEGER :: IRNH ( lh ), ICNH ( lh )
-      REAL ( KIND = wp ) :: X ( n ), H( lh )
+! THIS VERSION: CUTEST 1.0 - 24/11/2012 AT 15:15 GMT.
 
-!  Compute the Hessian matrix of a specified problem function 
-! (IPROB = 0 is the objective function, while iprob > 0 is the 
-!   IPROB-th constraint) of a problem initially written in 
+!-*-*-*-*-*-*-*-  C U T E S T    C I S H    S U B R O U T I N E  -*-*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 77 version originally released in CUTE, August 1998
+!   fortran 2003 version released in CUTEst, 24th November 2012
+
+      SUBROUTINE CISH( data, status, n, X, iprob, nnzh, lh,                    &
+                       H_val, H_row, H_col )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
+      INTEGER, INTENT( IN ) :: n, iprob, lh
+      INTEGER, INTENT( OUT ) :: nnzh, status
+      INTEGER, INTENT( OUT ), DIMENSION( lh ) :: H_row, H_col
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lh ) :: H_val
+
+!  ---------------------------------------------------------------
+!  compute the Hessian matrix of a specified problem function 
+!  (iprob = 0 is the objective function, while iprob > 0 is the 
+!  iprob-th constraint) of a problem initially written in 
 !  Standard Input Format (SIF).
 
 !  The upper triangle of the Hessian is stored in coordinate form,
-!  i.e., the entry H(i) has row index IRNH(i) and column index ICNH(i)
-!  for i = 1, ...., NNZH.
+!  i.e., the entry H_val(i) has row index H_row(i) and column index 
+!  H_col(i) for i = 1, ...., nnzh
+!  ---------------------------------------------------------------
 
-!  Based on the minimization subroutine data%laNCELOT/SBMIN
-!  by Conn, Gould and Toint.
+!  local variables
 
-!  Nick Gould, for CGT productions,
-!  August 1998.
-
-!  Local variables
-
-      INTEGER :: i, j, ncalcf, ncalcg, ifstat, igstat
-      INTEGER :: ig, lih, liwkh, lnxtrw, linxtr, inform
+      INTEGER :: i, ig, j, ncalcf, ncalcg, ifstat, igstat, alloc_status
       REAL ( KIND = wp ) :: ftt
+      CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
       EXTERNAL :: RANGE 
 
 !  check input parameters
 
       IF ( iprob < 0 ) THEN
-         IF ( data%out > 0 ) WRITE( data%out, 2020 )
+         IF ( data%out > 0 ) WRITE( data%out, 2020 ) iprob
          status = 2 ; RETURN
       END IF
 
@@ -48,7 +59,7 @@
             END IF
          END DO
          IF ( ig == 0 ) THEN
-            IF ( data%out > 0 ) WRITE( data%out, 2020 )
+            IF ( data%out > 0 ) WRITE( data%out, 2020 ) iprob
             status = 2 ; RETURN
          END IF
       END IF
@@ -95,7 +106,7 @@
 
 !  evaluate the element function values
 
-      CALL ELFUN( data%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,          &
+      CALL ELFUN( data%FUVALS, X, data%EPVALU, ncalcf, data%ITYPEE,            &
                   data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,          &
                   data%ISTEP, data%ICALCF, data%ltypee, data%lstaev,           &
                   data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
@@ -105,7 +116,7 @@
 
 !  evaluate the element function derivatives
 
-      CALL ELFUN( data%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,          &
+      CALL ELFUN( data%FUVALS, X, data%EPVALU, ncalcf, data%ITYPEE,            &
                   data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,          &
                   data%ISTEP, data%ICALCF, data%ltypee, data%lstaev,           &
                   data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
@@ -159,24 +170,16 @@
 !  evaluate the group derivative values
 
       IF ( .NOT. data%altriv ) THEN
-        CALL GROUP( data%GVALS, data%ng, data%FT, data%GPVALU, data%ng,        &
+        CALL GROUP( data%GVALS, data%ng, data%FT, data%GPVALU, ncalcg,         &
                     data%ITYPEG, data%ISTGP, data%ICALCF, data%ltypeg,         &
                     data%lstgp, data%lcalcf, data%lcalcg, data%lgpvlu,         &
                     .TRUE., igstat )
         IF ( igstat /= 0 ) GO TO 930
       END IF
 
-!  define the real work space needed for ELGRD. Ensure that there is 
-!  sufficient space
-
-      IF ( data%lwk2 < data%ng ) THEN
-         IF ( data%out > 0 ) WRITE( data%out, 2000 )
-         status = 2 ; RETURN
-      END IF
-      IF ( data%numcon > 0 ) THEN
-
 !  change the group weightings to isolate the required function
 
+      IF ( data%numcon > 0 ) THEN
          DO ig = 1, data%ng
             i = data%KNDOFC( ig )
             IF ( i == iprob ) THEN
@@ -206,6 +209,7 @@
                data%GXEQX, data%INTREP, data%ISVGRP, data%ISTAGV, data%ITYPEE, &
                data%ISTAJC, data%W_ws, data%W_el, RANGE )
       END IF
+      data%firstg = .FALSE.
 
 !      CALL ELGRD( n, data%ng, data%firstg, data%ICNA( 1 ), data%licna, &
 !                      data%ISTADA( 1 ), data%lstada, data%IELING( 1 ), &
@@ -248,97 +252,105 @@
 !                      data%GXEQX( 1 ), data%lgxeqx, &
 !                      data%INTREP( 1 ), data%lintre, RANGE )
 
-      data%firstg = .FALSE.
+!!$      IF ( data%numcon > 0 ) THEN
+!!$      CALL ASMBL( n, data%ng, data%maxsel, n, lh, lih, nnzh, &
+!!$                   n, data%IVAR( 1), data%ISTADH( 1 ), data%lstadh, &
+!!$                   data%ICNA( 1 ), data%licna, &
+!!$                   data%ISTADA( 1 ), data%lstada, &
+!!$                   data%INTVAR( 1 ), data%lntvar, &
+!!$                   data%IELVAR( 1 ), data%lelvar, &
+!!$                   data%IELING( 1 ), data%leling, &
+!!$                   data%ISTADG( 1 ), data%lstadg, &
+!!$                   data%ISTAEV( 1 ), data%lstaev, &
+!!$                   data%IWORK( data%lstagv + 1 ), data%lnstgv, &
+!!$                   data%IWORK( data%lsvgrp + 1 ), data%lnvgrp, &
+!!$                   IRNH, ICNH, &
+!!$                   data%IWORK( data%lsend + lnxtrw + 1 ), linxtr, &
+!!$                   data%IWORK( data%lsend + liwkh + 1 ), n, &
+!!$                   data%A( 1 ), data%la, &
+!!$                   data%FUVALS, data%lnguvl, data%FUVALS, data%lnhuvl, &
+!!$                   data%GVALS( : , 2 ), data%GVALS( : , 3 ), &
+!!$                   data%WRK( 1 ), data%ESCALE( 1 ), data%lescal, &
+!!$                   H, data%WRK( data%ng + 1 ), data%lwk2 - data%ng, &
+!!$                   data%GXEQX( 1 ), data%lgxeqx, data%INTREP( 1 ), &
+!!$                   data%lintre, data%ITYPEE( 1 ), data%lintre, &
+!!$                   RANGE, 1, data%out, .FALSE., i, inform,  &
+!!$                   .FALSE., .FALSE. )
+!!$      ELSE
+!!$      CALL ASMBL( n, data%ng, data%maxsel, n, lh, lih, nnzh, &
+!!$                   n, data%IVAR( 1), data%ISTADH( 1 ), data%lstadh, &
+!!$                   data%ICNA( 1 ), data%licna, &
+!!$                   data%ISTADA( 1 ), data%lstada, &
+!!$                   data%INTVAR( 1 ), data%lntvar, &
+!!$                   data%IELVAR( 1 ), data%lelvar, &
+!!$                   data%IELING( 1 ), data%leling, &
+!!$                   data%ISTADG( 1 ), data%lstadg, &
+!!$                   data%ISTAEV( 1 ), data%lstaev, &
+!!$                   data%IWORK( data%lstagv + 1 ), data%lnstgv, &
+!!$                   data%IWORK( data%lsvgrp + 1 ), data%lnvgrp, &
+!!$                   IRNH, ICNH, &
+!!$                   data%IWORK( data%lsend + lnxtrw + 1 ), linxtr, &
+!!$                   data%IWORK( data%lsend + liwkh + 1 ), n, &
+!!$                   data%A( 1 ), data%la, &
+!!$                   data%FUVALS, data%lnguvl, data%FUVALS, data%lnhuvl, &
+!!$                   data%GVALS( : , 2 ), data%GVALS( : , 3 ), &
+!!$                   data%GSCALE( 1 ), data%ESCALE( 1 ), data%lescal, &
+!!$                   H, data%WRK( 1 ), data%lwk2 - data%ng, &
+!!$                   data%GXEQX( 1 ), data%lgxeqx, data%INTREP( 1 ), &
+!!$                   data%lintre, data%ITYPEE( 1 ), data%lintre, &
+!!$                   RANGE, 1, data%out, .FALSE., i, inform, &
+!!$                   .FALSE., .FALSE. )
+!!$      END IF
 
-!  define the real work space needed for ASMBL. Ensure that there is 
-!  sufficient space
+!  assemble the Hessian; use every variable
+
+      DO i = 1, n
+        data%IVAR( i ) = i
+      END DO
 
       IF ( data%numcon > 0 ) THEN
-         IF ( data%lwk2 < n + 3 * data%maxsel + data%ng ) THEN
-            IF ( data%out > 0 ) WRITE( data%out, 2000 )
-            status = 2 ; RETURN
-         END IF
+        CALL CUTEST_assemble_hessian(                                          &
+             n, data%ng, data%nel, data%ntotel, data%nvrels, data%nnza,        &
+             data%maxsel, data%nvargp, data%ISTADH,                            &
+             data%ICNA, data%ISTADA, data%INTVAR, data%IELVAR, data%IELING,    &
+             data%ISTADG, data%ISTAEV, data%ISTAGV, data%ISVGRP, data%A,       &
+             data%FUVALS, data%lnguvl, data%FUVALS, data%lnhuvl,               &
+             data%GVALS( : , 2 ), data%GVALS( :  , 3 ), data%GSCALE_used,      &
+             data%ESCALE, data%GXEQX, data%ITYPEE, data%INTREP, RANGE,         &
+             0, data%out, data%out, data%io_buffer, .FALSE., .FALSE.,          &
+             n, status, alloc_status, bad_alloc,                               &
+             data%array_status, data%lh_row, data%lh_col, data%lh_val,         &
+             data%H_row, data%H_col, data%H_val,                               &
+             data%LINK_col, data%POS_in_H, data%llink, data%lpos,              &
+             data%W_ws, data%W_el, data%W_in, data%H_el, data%H_in,            &
+             nnzh = nnzh )
       ELSE
-         IF ( data%lwk2 < n + 3 * data%maxsel ) THEN
-            IF ( data%out > 0 ) WRITE( data%out, 2000 )
-            status = 2 ; RETURN
-         END IF
+        CALL CUTEST_assemble_hessian(                                          &
+             n, data%ng, data%nel, data%ntotel, data%nvrels, data%nnza,        &
+             data%maxsel, data%nvargp, data%ISTADH,                            &
+             data%ICNA, data%ISTADA, data%INTVAR, data%IELVAR, data%IELING,    &
+             data%ISTADG, data%ISTAEV, data%ISTAGV, data%ISVGRP, data%A,       &
+             data%FUVALS, data%lnguvl, data%FUVALS, data%lnhuvl,               &
+             data%GVALS( : , 2 ), data%GVALS( :  , 3 ), data%GSCALE,           &
+             data%ESCALE, data%GXEQX, data%ITYPEE, data%INTREP, RANGE,         &
+             0, data%out, data%out, data%io_buffer, .FALSE., .FALSE.,          &
+             n, status, alloc_status, bad_alloc,                               &
+             data%array_status, data%lh_row, data%lh_col, data%lh_val,         &
+             data%H_row, data%H_col, data%H_val,                               &
+             data%LINK_col, data%POS_in_H, data%llink, data%lpos,              &
+             data%W_ws, data%W_el, data%W_in, data%H_el, data%H_in,            &
+             nnzh = nnzh )
       END IF
 
-!  define the integer work space needed for ASMBL. Ensure that there is 
-!  sufficient space
+!  check for errors in the assembly
 
-      liwkh = data%liwk2 - n
-      linxtr = liwkh / 2
-      IF ( linxtr < n ) THEN
-         IF ( data%out > 0 ) WRITE( data%out, 2010 )
-         status = 2 ; RETURN
-      END IF
+      IF ( status > 0 ) RETURN
 
-!  set starting addresses for partitions of the integer workspace
+!  record the sparse Hessian
 
-      lih = lh
-      lnxtrw = 0
-      DO 190 i = 1, n
-         data%IVAR( i ) = i
-  190 CONTINUE
-
-!  assemble the Hessian
-
-      IF ( data%numcon > 0 ) THEN
-      CALL ASMBL( n, data%ng, data%maxsel, n, lh, lih, nnzh, &
-                   n, data%IVAR( 1), data%ISTADH( 1 ), data%lstadh, &
-                   data%ICNA( 1 ), data%licna, &
-                   data%ISTADA( 1 ), data%lstada, &
-                   data%INTVAR( 1 ), data%lntvar, &
-                   data%IELVAR( 1 ), data%lelvar, &
-                   data%IELING( 1 ), data%leling, &
-                   data%ISTADG( 1 ), data%lstadg, &
-                   data%ISTAEV( 1 ), data%lstaev, &
-                   data%IWORK( data%lstagv + 1 ), data%lnstgv, &
-                   data%IWORK( data%lsvgrp + 1 ), data%lnvgrp, &
-                   IRNH, ICNH, data%IWORK( data%lsend + lnxtrw + 1 ), linxtr, &
-                   data%IWORK( data%lsend + liwkh + 1 ), n, &
-                   data%A( 1 ), data%la, &
-                   data%FUVALS, data%lnguvl, data%FUVALS, data%lnhuvl, &
-                   data%GVALS( : , 2 ), data%GVALS( : , 3 ), &
-                   data%WRK( 1 ), data%ESCALE( 1 ), data%lescal, &
-                   H, data%WRK( data%ng + 1 ), data%lwk2 - data%ng, &
-                   data%GXEQX( 1 ), data%lgxeqx, data%INTREP( 1 ), &
-                   data%lintre, data%ITYPEE( 1 ), data%lintre, &
-                   RANGE, 1, data%out, .FALSE., i, inform,  &
-                   .FALSE., .FALSE. )
-      ELSE
-      CALL ASMBL( n, data%ng, data%maxsel, n, lh, lih, nnzh, &
-                   n, data%IVAR( 1), data%ISTADH( 1 ), data%lstadh, &
-                   data%ICNA( 1 ), data%licna, &
-                   data%ISTADA( 1 ), data%lstada, &
-                   data%INTVAR( 1 ), data%lntvar, &
-                   data%IELVAR( 1 ), data%lelvar, &
-                   data%IELING( 1 ), data%leling, &
-                   data%ISTADG( 1 ), data%lstadg, &
-                   data%ISTAEV( 1 ), data%lstaev, &
-                   data%IWORK( data%lstagv + 1 ), data%lnstgv, &
-                   data%IWORK( data%lsvgrp + 1 ), data%lnvgrp, &
-                   IRNH, ICNH, data%IWORK( data%lsend + lnxtrw + 1 ), linxtr, &
-                   data%IWORK( data%lsend + liwkh + 1 ), n, &
-                   data%A( 1 ), data%la, &
-                   data%FUVALS, data%lnguvl, data%FUVALS, data%lnhuvl, &
-                   data%GVALS( : , 2 ), data%GVALS( : , 3 ), &
-                   data%GSCALE( 1 ), data%ESCALE( 1 ), data%lescal, &
-                   H, data%WRK( 1 ), data%lwk2 - data%ng, &
-                   data%GXEQX( 1 ), data%lgxeqx, data%INTREP( 1 ), &
-                   data%lintre, data%ITYPEE( 1 ), data%lintre, &
-                   RANGE, 1, data%out, .FALSE., i, inform, &
-                   .FALSE., .FALSE. )
-      END IF
-
-!  check that there is sufficient integer workspace
-
-      IF ( inform > 0 ) THEN
-        IF ( data%out > 0 ) WRITE( data%out, 2010 )
-        status = 2 ; RETURN
-      END IF
+      H_row( : nnzh ) = data%H_row( : nnzh )
+      H_col( : nnzh ) = data%H_col( : nnzh )
+      H_val( : nnzh ) = data%H_val( : nnzh )
 
 !  update the counters for the report tool
 
@@ -360,9 +372,7 @@
 
 !  non-executable statements.
 
- 2000 FORMAT( ' ** SUBROUTINE CISH: Increase the size of WK' )
- 2010 FORMAT( ' ** SUBROUTINE CISH: Increase the sizes of IWK and LH' )
- 2020 FORMAT( ' ** SUBROUTINE CISH: invalid problem index iprob' )
+ 2020 FORMAT( ' ** SUBROUTINE CISH: invalid problem index iprob = ', I0 )
 
 !  end of subroutine CISH
 

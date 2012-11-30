@@ -1,58 +1,69 @@
-! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE CEH( data, status, n, m, X, Y, ne, IRNHI, lirnhi, le,         &
-                      IPRNHI, HI, lhi, IPRHI, byrows )
+! THIS VERSION: CUTEST 1.0 - 27/11/2012 AT 14:30 GMT.
+
+!-*-*-*-*-*-*-*-  C U T E S T    C E H    S U B R O U T I N E  -*-*-*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 77 version originally released in CUTEr, November 1994
+!   fortran 2003 version released in CUTEst, 27th November 2012
+
+      SUBROUTINE CEH( data, status, n, m, X, Y, ne, lhe_ptr, HE_row_ptr,       &
+                      HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val, byrows )
       USE CUTEST
-      TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: n, m, ne, le, lirnhi, lhi 
-      INTEGER, INTENT( OUT ) :: status
-      LOGICAL :: byrows
-      INTEGER :: IRNHI ( lirnhi )
-      INTEGER :: IPRNHI( le ), IPRHI ( le )
-      REAL ( KIND = wp ) :: X ( n ), Y( m ), HI ( lhi )
 
-!  Compute the Hessian matrix of the Lagrangian function of
-!  a problem initially written in Standard Input Format (SIF).
+!  dummy arguments
 
-!  The matrix is represented in "finite element format", i.e., 
+      TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
+      INTEGER, INTENT( IN ) :: n, m, lhe_ptr, lhe_row, lhe_val
+      INTEGER, INTENT( OUT ) :: ne, status
+      LOGICAL, INTENT( IN ) :: byrows
+      INTEGER, INTENT( OUT ), DIMENSION( lhe_ptr ) :: HE_row_ptr, HE_val_ptr
+      INTEGER, INTENT( OUT ), DIMENSION( lhe_row ) :: HE_row
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( m ) :: Y
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lhe_val ) :: HE_val
+
+!  ----------------------------------------------------------------------------
+!  compute the Hessian matrix of the Lagrangian function of a problem
+!  initially written in Standard Input Format (SIF)
+
+!  the matrix is represented in "finite element format", i.e., 
 
 !           ne
-!      H = sum H_i, 
-!          i=1
+!      H = sum H_e, 
+!          e=1
 
-!  where each element H_i involves a small subset of the rows of H.
-!  H is stored as a list of the row indices involved in each element
-!  and the upper triangle of H_i (stored by rows or columns). 
-!  Specifically,
+!  where each element H_i involves a small subset of the rows of H. H is stored
+!  as a list of the row indices involved in each element and the upper triangle
+!  of H_e (stored by rows or columns). Specifically,
 
 !  ne (integer) number of elements
-!  IRNHI (integer array) a list of the row indices involved which each
-!          element. Those for element i directly proceed those for 
-!          element i + 1, i = 1, ..., NE-1
-!  IPRNHI (integer array) pointers to the position in IRNHI of the first 
-!          row index in each element. IPRNHI(NE + 1) points to the first 
+!  HE_row (integer array) a list of the row indices involved which each
+!          element. Those for element e directly proceed those for 
+!          element e + 1, e = 1, ..., ne-1
+!  HE_row_ptr (integer array) pointers to the position in HE_row of the first 
+!          row index in each element. HE_row_ptr(ne+1) points to the first 
 !          empty location in IRPNHI
-!  HI (real array) a list of the nonzeros in the upper triangle of
-!          H_i, stored by rows, or by columns, for each element. Those 
-!          for element i directly proceed those for element, i + 1, 
-!          i = 1, ..., NE-1
-!  IPRHI (integer array) pointers to the position in HI of the first 
-!          nonzero in each element. IPRHI(NE + 1) points to the first 
-!          empty location in HI
-!  BYROWS (logical) must be set .TRUE. if the upper triangle of each H_i 
-!          is to be stored by rows, and .FALSE. if it is to be stored
-!          by columns.
+!  HE_val (real array) a list of the nonzeros in the upper triangle of
+!          H_e, stored by rows, or by columns, for each element. Those 
+!          for element i directly proceed those for element, e + 1, 
+!          e = 1, ..., ne-1
+!  HE_val_ptr (integer array) pointers to the position in HE_val of the first 
+!          nonzero in each element. HE_val_ptr(ne+1) points to the first 
+!          empty location in HE_val
+!  byrows (logical) must be set .TRUE. if the upper triangle of each H_e is
+!          to be stored by rows, and .FALSE. if it is to be stored by columns
+!  ----------------------------------------------------------------------------
 
-!  Based on the minimization subroutine data%laNCELOT/SBMIN
-!  by Conn, Gould and Toint.
+!  local variables
 
-!  Nick Gould, for CGT productions,
-!  November 1994.
-
-!  Local variables
-
-      INTEGER :: i, j, ifstat, igstat, ig, liwkh, inform
+      INTEGER :: i, ig, j, ifstat, igstat, alloc_status
+      INTEGER :: lhe_row_int, lhe_val_int
       REAL ( KIND = wp ) :: ftt
+      CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
       EXTERNAL :: RANGE
 
 !  there are non-trivial group functions
@@ -120,10 +131,10 @@
 !  define the real work space needed for ELGRD. Ensure that there is 
 !  sufficient space
 
-      IF ( data%lwk2 < data%ng ) THEN
-         IF ( data%out > 0 ) WRITE( data%out, 2000 )
-         status = 2 ; RETURN
-      END IF
+!     IF ( data%lwk2 < data%ng ) THEN
+!        IF ( data%out > 0 ) WRITE( data%out, 2000 )
+!        status = 2 ; RETURN
+!     END IF
 
 !  change the group weightings to include the contributions from the
 !  Lagrange multipliers
@@ -210,82 +221,147 @@
 !  define the real work space needed for ASMBE. Ensure that there is 
 !  sufficient space
 
-      IF ( data%numcon > 0 ) THEN
-        IF ( data%lwk2 < n + 3 * data%maxsel + data%ng ) THEN
-          IF ( data%out > 0 ) WRITE( data%out, 2000 )
-          status = 2 ; RETURN
-        END IF
-      ELSE
-        IF ( data%lwk2 < n + 3 * data%maxsel ) THEN
-          IF ( data%out > 0 ) WRITE( data%out, 2000 )
-          status = 2 ; RETURN
-        END IF
-      END IF
+!     IF ( data%numcon > 0 ) THEN
+!       IF ( data%lwk2 < n + 3 * data%maxsel + data%ng ) THEN
+!         IF ( data%out > 0 ) WRITE( data%out, 2000 )
+!         status = 2 ; RETURN
+!       END IF
+!     ELSE
+!       IF ( data%lwk2 < n + 3 * data%maxsel ) THEN
+!         IF ( data%out > 0 ) WRITE( data%out, 2000 )
+!         status = 2 ; RETURN
+!       END IF
+!     END IF
 
 !  define the integer work space needed for ASMBE. Ensure that there is 
 !  sufficient space
 
-      liwkh = data%liwk2 - n
+!     liwkh = data%liwk2 - n
 
 !  assemble the Hessian
 
+      lhe_row_int = lhe_row ; lhe_val_int = lhe_val
       IF ( data%numcon > 0 ) THEN
-        CALL ASMBE( n, data%ng, data%maxsel,  &
-                        data%ISTADH( 1 ), data%lstadh, &
-                        data%ICNA( 1 ), data%licna, &
-                        data%ISTADA( 1 ), data%lstada, &
-                        data%INTVAR( 1 ), data%lntvar, &
-                        data%IELVAR( 1 ), data%lelvar, &
-                        data%IELING( 1 ), data%leling, &
-                        data%ISTADG( 1 ), data%lstadg, &
-                        data%ISTAEV( 1 ), data%lstaev, &
-                        data%IWORK( data%lstagv + 1 ), data%lnstgv, &
-                        data%IWORK( data%lsvgrp + 1 ), data%lnvgrp, &
-                        data%IWORK( liwkh + 1 ), data%liwk2 - liwkh, &
-                        data%A( 1 ), data%la, data%FUVALS, data%lnguvl, &
-                        data%FUVALS, data%lnhuvl, &
-                        data%GVALS( : , 2 ), data%GVALS( : , 3 ), &
-                        data%WRK( 1 ), data%ESCALE( 1 ), data%lescal, &
-                        data%WRK( data%ng + 1 ), data%lwk2 - data%ng, &
-                        data%GXEQX( 1 ), data%lgxeqx, data%INTREP( 1 ), &
-                        data%lintre, data%ITYPEE( 1 ), data%lintre, &
-                        RANGE, ne, &
-                        IRNHI, lirnhi, IPRNHI, HI, lhi, IPRHI, &
-                        BYROWS, 1, data%out, inform )
+        CALL CUTEST_assemble_element_hessian(                                  &
+                        n, data%ng, data%nel,data% ntotel, data%nvrels,        &
+                        data%nnza, data%maxsel, data%nvargp,                   &
+                        data%lnguvl, data%lnhuvl, data%ISTADH, data%ICNA,      &
+                        data%ISTADA, data%INTVAR, data%IELVAR,                 &
+                        data%IELING, data%ISTADG, data%ISTAEV,                 &
+                        data%ISTAGV, data%ISVGRP, data%ITYPEE,                 &
+                        data%A, data%FUVALS, data%FUVALS,                      &
+                        data%GVALS( : , 2 ), data%GVALS( : , 3 ),              &
+                        data%GSCALE_used, data%ESCALE,                         &
+                        data%GXEQX, data%INTREP,                               &
+                        data%IW_asmbl, data%W_ws, data%W_el, data%W_in,        &
+                        data%H_el, data%H_in, RANGE, ne, lhe_row_int,          &
+                        lhe_val_int, data%H_row, HE_row_ptr, data%H_val,       &
+                        HE_val_ptr, byrows, 0, data%out, data%out,             &
+                        data%io_buffer, alloc_status, bad_alloc, status )
       ELSE
-        CALL ASMBE( n, data%ng, data%maxsel,  &
-                        data%ISTADH( 1 ), data%lstadh, &
-                        data%ICNA( 1 ), data%licna, &
-                        data%ISTADA( 1 ), data%lstada, &
-                        data%INTVAR( 1 ), data%lntvar, &
-                        data%IELVAR( 1 ), data%lelvar, &
-                        data%IELING( 1 ), data%leling, &
-                        data%ISTADG( 1 ), data%lstadg, &
-                        data%ISTAEV( 1 ), data%lstaev, &
-                        data%IWORK( data%lstagv + 1 ), data%lnstgv, &
-                        data%IWORK( data%lsvgrp + 1 ), data%lnvgrp, &
-                        data%IWORK( liwkh + 1 ), data%liwk2 - liwkh, &
-                        data%A( 1 ), data%la, data%FUVALS, data%lnguvl, &
-                        data%FUVALS, data%lnhuvl, &
-                        data%GVALS( : , 2 ), data%GVALS( : , 3 ), &
-                        data%GSCALE( 1 ), data%ESCALE( 1 ), data%lescal, &
-                        data%WRK( 1 ), data%lwk2 - data%ng, &
-                        data%GXEQX( 1 ), data%lgxeqx, data%INTREP( 1 ), &
-                        data%lintre, data%ITYPEE( 1 ), data%lintre, &
-                        RANGE, ne, &
-                        IRNHI, lirnhi, IPRNHI, HI, lhi, IPRHI, &
-                        BYROWS, 1, data%out, inform )
-      END IF
+        CALL CUTEST_assemble_element_hessian(                                  &
+                        n, data%ng, data%nel,data% ntotel, data%nvrels,        &
+                        data%nnza, data%maxsel, data%nvargp,                   &
+                        data%lnguvl, data%lnhuvl, data%ISTADH, data%ICNA,      &
+                        data%ISTADA, data%INTVAR, data%IELVAR,                 &
+                        data%IELING, data%ISTADG, data%ISTAEV,                 &
+                        data%ISTAGV, data%ISVGRP, data%ITYPEE,                 &
+                        data%A, data%FUVALS, data%FUVALS,                      &
+                        data%GVALS( : , 2 ), data%GVALS( : , 3 ),              &
+                        data%GSCALE, data%ESCALE, data%GXEQX, data%INTREP,     &
+                        data%IW_asmbl, data%W_ws, data%W_el, data%W_in,        &
+                        data%H_el, data%H_in, RANGE, ne, lhe_row_int,          &
+                        lhe_val_int, data%H_row, HE_row_ptr, data%H_val,       &
+                        HE_val_ptr, byrows, 0, data%out, data%out,             &
+                        data%io_buffer, alloc_status, bad_alloc, status )
+      END IF 
 
-!  check that there is room for the elements
+!  check for errors in the assembly
 
-      IF ( inform > 0 ) THEN
-        IF ( data%out > 0 ) WRITE( data%out, 2020 )
+      IF ( status > 0 ) RETURN
+
+!  check that HE_row and HE_val are large enough
+
+      IF ( lhe_row < HE_row_ptr( ne + 1 ) - 1 ) THEN
+        IF ( data%out > 0 ) WRITE( data%out, "( ' ** SUBROUTINE UEH: ',        &
+       &  'Increase the dimension of HE_row to ',  I0 )" )                     &
+             HE_row_ptr( ne + 1 ) - 1 
         status = 2 ; RETURN
       END IF
 
-!     write( 6, * ) 'ceh: lirnhi = ', lirnhi
-!     write( 6, * ) 'ceh: irnhi = ', (IRNHI(I), I=1,LIRNHI)
+      IF ( lhe_val < HE_val_ptr( ne + 1 ) - 1 ) THEN
+        IF ( data%out > 0 ) WRITE( data%out, "( ' ** SUBROUTINE UEH: ',        &
+       &  'Increase the dimension of HE_val to ',  I0 )" )                     &
+             HE_val_ptr( ne + 1 ) - 1 
+        status = 2 ; RETURN
+      END IF
+
+!  record the element Hessian
+
+      HE_row( : HE_row_ptr( ne + 1 ) - 1 )                                     &
+         = data%H_row( : HE_row_ptr( ne + 1 ) - 1 )
+      HE_val( : HE_val_ptr( ne + 1 ) - 1 )                                     &
+         = data%H_val( : HE_val_ptr( ne + 1 ) - 1 )
+
+!      IF ( data%numcon > 0 ) THEN
+!        CALL ASMBE( n, data%ng, data%maxsel,  &
+!                        data%ISTADH( 1 ), data%lstadh, &
+!                        data%ICNA( 1 ), data%licna, &
+!                        data%ISTADA( 1 ), data%lstada, &
+!                        data%INTVAR( 1 ), data%lntvar, &
+!                        data%IELVAR( 1 ), data%lelvar, &
+!                        data%IELING( 1 ), data%leling, &
+!                        data%ISTADG( 1 ), data%lstadg, &
+!                        data%ISTAEV( 1 ), data%lstaev, &
+!                        data%IWORK( data%lstagv + 1 ), data%lnstgv, &
+!                        data%IWORK( data%lsvgrp + 1 ), data%lnvgrp, &
+!                        data%IWORK( liwkh + 1 ), data%liwk2 - liwkh, &
+!                        data%A( 1 ), data%la, data%FUVALS, data%lnguvl, &
+!                        data%FUVALS, data%lnhuvl, &
+!                        data%GVALS( : , 2 ), data%GVALS( : , 3 ), &
+!                        data%WRK( 1 ), data%ESCALE( 1 ), data%lescal, &
+!                        data%WRK( data%ng + 1 ), data%lwk2 - data%ng, &
+!                        data%GXEQX( 1 ), data%lgxeqx, data%INTREP( 1 ), &
+!                        data%lintre, data%ITYPEE( 1 ), data%lintre, &
+!                        RANGE, ne, &
+!                        HE_row, lhe_row, HE_row_ptr, HE_val, &
+!                        lHE_val, HE_val_ptr, &
+!                        BYROWS, 1, data%out, inform )
+!      ELSE
+!        CALL ASMBE( n, data%ng, data%maxsel,  &
+!                        data%ISTADH( 1 ), data%lstadh, &
+!                        data%ICNA( 1 ), data%licna, &
+!                        data%ISTADA( 1 ), data%lstada, &
+!                        data%INTVAR( 1 ), data%lntvar, &
+!                        data%IELVAR( 1 ), data%lelvar, &
+!                        data%IELING( 1 ), data%leling, &
+!                        data%ISTADG( 1 ), data%lstadg, &
+!                        data%ISTAEV( 1 ), data%lstaev, &
+!                        data%IWORK( data%lstagv + 1 ), data%lnstgv, &
+!                        data%IWORK( data%lsvgrp + 1 ), data%lnvgrp, &
+!                        data%IWORK( liwkh + 1 ), data%liwk2 - liwkh, &
+!                        data%A( 1 ), data%la, data%FUVALS, data%lnguvl, &
+!                        data%FUVALS, data%lnhuvl, &
+!                        data%GVALS( : , 2 ), data%GVALS( : , 3 ), &
+!                        data%GSCALE( 1 ), data%ESCALE( 1 ), data%lescal, &
+!                        data%WRK( 1 ), data%lwk2 - data%ng, &
+!                        data%GXEQX( 1 ), data%lgxeqx, data%INTREP( 1 ), &
+!                        data%lintre, data%ITYPEE( 1 ), data%lintre, &
+!                        RANGE, ne, &
+!                        HE_row, lhe_row, HE_row_ptr, HE_val, &
+!                        lHE_val, HE_val_ptr, &
+!                        BYROWS, 1, data%out, inform )
+!      END IF
+
+!  check that there is room for the elements
+
+!     IF ( inform > 0 ) THEN
+!       IF ( data%out > 0 ) WRITE( data%out, 2020 )
+!       status = 2 ; RETURN
+!     END IF
+
+!     write( 6, * ) 'ceh: lhe_row = ', lhe_row
+!     write( 6, * ) 'ceh: HE_row = ', (HE_row(I), I=1,lhe_row)
 
 !  update the counters for the report tool
 
@@ -304,9 +380,9 @@
 
 !  non-executable statements
 
- 2000 FORMAT( ' ** SUBROUTINE CEH: Increase the size of WK' )
- 2020 FORMAT( ' ** SUBROUTINE CEH: Increase the size of',                     &
-              ' IPNRHI, IPRHI, IRNHI or HI' )
+!2000 FORMAT( ' ** SUBROUTINE CEH: Increase the size of WK' )
+!2020 FORMAT( ' ** SUBROUTINE CEH: Increase the size of',                      &
+!             ' HE_row_ptr, HE_val_ptr, HE_row or HE_val' )
 
 !  end of subroutine CEH
 

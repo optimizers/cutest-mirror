@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.0 - 24/10/2012 AT 13:00 GMT.
+! THIS VERSION: CUTEST 1.0 - 26/10/2012 AT 16:00 GMT.
 
 !-*-*-*-*-*-*-*-*-*-*-*-*-*- C U T E S T   M O D U l E -*-*-*-*-*-*-*-*-*-*-*-*-
 
@@ -19,8 +19,10 @@
 
       PRIVATE
       PUBLIC :: CUTEST_initialize_workspace, CUTEST_form_gradients,            &
-                CUTEST_assemble_hessian, CUTEST_hessian_times_vector,          &
-                CUTEST_extend_array
+                CUTEST_assemble_hessian, CUTEST_size_sparse_hessian,           &
+                CUTEST_assemble_element_hessian, CUTEST_size_element_hessian,  &
+                CUTEST_hessian_times_vector, CUTEST_extend_array,              &
+                CUTEST_allocate_array, asmbe, CUTEST_assemble_hessian_old
 
 !--------------------
 !   P r e c i s i o n
@@ -37,8 +39,6 @@
 !     INTEGER, PARAMETER :: lmin = 1
       INTEGER, PARAMETER :: lmin = 10000
       INTEGER, PARAMETER :: io_buffer = 75
-      REAL ( KIND = wp ), PARAMETER :: zero = 0.0_wp
-      REAL ( KIND = wp ), PARAMETER :: one = 1.0_wp
 
 !-------------------------------------
 !   G e n e r i c  i n t e r f a c e s
@@ -47,7 +47,13 @@
 !  define generic interfaces to routines for extending allocatable arrays
 
       INTERFACE CUTEST_extend_array
-        MODULE PROCEDURE CUTEST_extend_array_real, CUTEST_extend_array_integer
+        MODULE PROCEDURE CUTEST_extend_array_integer,                          &
+                         CUTEST_extend_array_real
+      END INTERFACE
+
+      INTERFACE CUTEST_allocate_array
+        MODULE PROCEDURE CUTEST_allocate_array_integer,                        &
+                         CUTEST_allocate_array_real
       END INTERFACE
 
 !-------------------------------------------------
@@ -58,12 +64,12 @@
 !  The CUTEST_assemble_type derived type
 !  =====================================
 
-      TYPE, PUBLIC :: CUTEST_assemble_type
-        LOGICAL :: ptr_status
-        INTEGER, DIMENSION( 30 ) :: ICNTL
-        INTEGER, DIMENSION( 20 ) :: INFO
-        REAL ( KIND = wp ), DIMENSION( 5 ) :: CNTL
-      END TYPE CUTEST_assemble_type
+!     TYPE, PUBLIC :: CUTEST_assemble_type
+!       LOGICAL :: ptr_status
+!       INTEGER, DIMENSION( 30 ) :: ICNTL
+!       INTEGER, DIMENSION( 20 ) :: INFO
+!       REAL ( KIND = wp ), DIMENSION( 5 ) :: CNTL
+!     END TYPE CUTEST_assemble_type
 
 !  =================================
 !  The CUTEST_data_type derived type
@@ -85,15 +91,15 @@
         INTEGER :: llink, lpos, lwtran, litran, l_link_e_u_v, lfuval
         INTEGER :: ltypee, ltypeg, lstep, lstgp
 
-        INTEGER :: lirnh = lmin
-        INTEGER :: ljcnh = lmin
+        INTEGER :: lh_row = lmin
+        INTEGER :: lh_col = lmin
         INTEGER :: llink_min = lmin
-        INTEGER :: lirnh_min = lmin
-        INTEGER :: ljcnh_min = lmin
+        INTEGER :: lh_row_min = lmin
+        INTEGER :: lh_col_min = lmin
         INTEGER :: lh_min = lmin
         INTEGER :: lwtran_min = lmin
         INTEGER :: litran_min = lmin
-        INTEGER :: lh = lmin
+        INTEGER :: lh_val = lmin
         INTEGER :: io_buffer = io_buffer
 
         LOGICAL :: alllin, densep, skipg
@@ -126,7 +132,7 @@
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( :  , : ) :: GVALS
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: XT
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: DGRAD
-        REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: Q
+        REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: G_temp
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: FT
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: WRK
         LOGICAL, ALLOCATABLE, DIMENSION( : ) :: INTREP
@@ -181,7 +187,6 @@
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: RADII
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: DELTAX
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: QGRAD
-        REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: GRJAC
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: GV_old
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : , : ) :: BND
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : , : ) :: BND_radius
@@ -228,7 +233,9 @@
 
         INTEGER :: numvar, numcon
 
-        TYPE ( CUTEST_assemble_type ) :: assemble_data
+        LOGICAL :: array_status = .FALSE.
+
+!       TYPE ( CUTEST_assemble_type ) :: assemble_data
 
       END TYPE CUTEST_data_type
 
@@ -242,8 +249,9 @@
                     n, ng, nel, ntotel, nvrels, nnza, numvar, nvargp,          &
                     IELING, ISTADG, IELVAR, ISTAEV, INTVAR, ISTADH, ICNA,      &
                     ISTADA, ITYPEE, GXEQX, INTREP, alllin, altriv, direct,     &
-                    fdgrad, lfxi, lgxi, lhxi, lggfx, ldx, lnguvl, lnhuvl,      &
-                    ntotin, ntype, nsets, maxsel, RANGE, iprint, iout, buffer, &
+                    fdgrad, lfxi, lgxi, lhxi, lggfx, ldx, lgrjac,              &
+                    lnguvl, lnhuvl, ntotin, ntype, nsets, maxsel,              &
+                    RANGE, iprint, iout, buffer,                               &
 ! workspace
                     lwtran, litran, lwtran_min, litran_min, l_link_e_u_v,      &
                     llink_min, FUVALS, lfuval, ITRANS, LINK_elem_uses_var,     &
@@ -251,7 +259,8 @@
                     IGCOLJ, IVALJR, IUSED, ITYPER, ISSWTR, ISSITR,             &
                     ISET, ISVSET, INVSET, LIST_elements, ISYMMH,               &
                     IW_asmbl, NZ_comp_w, W_ws, W_el, W_in, H_el, H_in,         &
-                    status, alloc_status, bad_alloc, skipg, KNDOFG )
+                    status, alloc_status, bad_alloc, array_status, skipg,      &
+                    KNDOFG )
 
 !  Compute the starting addresses for the partitions of the workspace array
 !  FUVALS. Also fill relevant portions of the workspace arrays WTRANS and ITRANS
@@ -268,11 +277,11 @@
 
       INTEGER, INTENT( IN ) :: n, ng, nel, ntotel, nvrels, nnza, numvar
       INTEGER, INTENT( IN ) :: iprint, iout, buffer
-      INTEGER, INTENT( OUT ) :: lfxi, lgxi, lhxi, lggfx, ldx  
+      INTEGER, INTENT( OUT ) :: lfxi, lgxi, lhxi, lggfx, ldx, lgrjac  
       INTEGER, INTENT( OUT ) :: lnguvl, lnhuvl, nvargp, status, alloc_status
       INTEGER, INTENT( OUT ) :: ntotin, ntype, nsets, maxsel
       LOGICAL, INTENT( IN ) :: direct, fdgrad, skipg
-      LOGICAL, INTENT( OUT ) :: altriv, alllin
+      LOGICAL, INTENT( OUT ) :: altriv, alllin, array_status
       CHARACTER ( LEN = 24 ), INTENT( OUT ) :: bad_alloc
       INTEGER, INTENT( IN ), DIMENSION( ntotel  ) :: IELING
       INTEGER, INTENT( IN ), DIMENSION( ng  + 1 ) :: ISTADA, ISTADG
@@ -330,8 +339,8 @@
 !-----------------------------------------------
 
       INTERFACE
-        SUBROUTINE RANGE ( ielemn, transp, W1, W2, nelvar, ninvar, ieltyp,     &
-                           lw1, lw2 )
+        SUBROUTINE RANGE( ielemn, transp, W1, W2, nelvar, ninvar, ieltyp,      &
+                          lw1, lw2 )
         INTEGER, INTENT( IN ) :: ielemn, nelvar, ninvar, ieltyp, lw1, lw2
         LOGICAL, INTENT( IN ) :: transp
         REAL ( KIND = KIND( 1.0D+0 ) ), INTENT( IN ), DIMENSION ( lw1 ) :: W1
@@ -354,12 +363,12 @@
 
 !     CHARACTER ( LEN = 80 ) :: array
 
-!  Set constants
+!  set constants
 
       nel1 = nel + 1
       alllin = nel == 0
 
-!  Set up INTVAR, the starting addresses for the element gradients with
+!  set up INTVAR, the starting addresses for the element gradients with
 !  respect to their internal variables. Also compute maxsin, the maximum
 !  number of internal variables in an element
 
@@ -379,11 +388,11 @@
         maxsin = 0
       END IF
 
-!  Compute the total number of internal variables
+!  compute the total number of internal variables
 
       ntotin = INTVAR( nel1 ) - INTVAR( 1 )
 
-!  Calculate the length, iielts, of workspace required to determine which
+!  calculate the length, iielts, of workspace required to determine which
 !  elements use each of the variables. Also find the maximum number of
 !  variables in an element, maxsel. This is a dummy run merely to calculate
 !  the space required
@@ -410,7 +419,7 @@
       iielts = n ; maxsel = 0
       IF ( .NOT. alllin ) THEN
 
-!  Loop over the groups, considering each nonlinear element in turn
+!  loop over the groups, considering each nonlinear element in turn
 
         DO iel = 1, nel
           maxsel = MAX( maxsel, ISTAEV( iel + 1 ) - ISTAEV( iel ) )
@@ -418,14 +427,14 @@
         DO i = 1, ntotel
           iel = IELING( i )
 
-!  Loop on the variables from the I-th element
+!  loop on the variables from the i-th element
 
           DO k = ISTAEV( iel ), ISTAEV( iel + 1 ) - 1
             ientry = IELVAR( k )
             IF ( LINK_elem_uses_var( ientry ) >= 0 ) THEN
 
-!  If we have reached the end of the list of the elements using the variable
-!  IELVAR( K ), add the IEL-th element to it. Otherwise, find the next entry
+!  if we have reached the end of the list of the elements using the variable
+!  IELVAR( K ), add the iel-th element to it. Otherwise, find the next entry
 !  in the list
 
   30          CONTINUE
@@ -449,7 +458,7 @@
               END IF
             ELSE
 
-!  The list of elements involving the variable IELVAR( K ) was
+!  the list of elements involving the variable IELVAR(k) was
 !  previously empty. Indicate that the list has now been started and
 !  that its end has been reached
 
@@ -543,7 +552,7 @@
           bad_alloc = 'ISTAGV' ; GO TO 600 ; END IF
       END IF
 
-!  Allocate LIST_elements
+!  allocate LIST_elements
 
       reallocate = .TRUE.
       IF ( ALLOCATED( LIST_elements ) ) THEN
@@ -557,7 +566,7 @@
           bad_alloc = 'LIST_e' ; GO TO 600 ; END IF
       END IF
 
-!  Determine which elements use each variable. Initialization
+!  determine which elements use each variable. Initialization
 
       IF ( .NOT. alllin ) THEN
 
@@ -569,18 +578,18 @@
         LIST_elements( : n ) = - 1   ! needed for epcf90 debugging compiler
         iielts = n
 
-!  Loop over the groups, considering each nonlinear element in turn
+!  loop over the groups, considering each nonlinear element in turn
 
         DO i = 1, ntotel
           iel = IELING( i )
 
-!  Loop on the variables of the I-th element
+!  loop on the variables of the I-th element
 
           DO k = ISTAEV( iel ), ISTAEV( iel + 1 ) - 1
             ientry = IELVAR( k )
             IF ( LINK_elem_uses_var( ientry ) >= 0 ) THEN
 
-!  If we have reached the end of the list of the elements using the variable
+!  if we have reached the end of the list of the elements using the variable
 !  IELVAR( K ), add the I-th element to it and record that the end of the list
 !  has occured. Otherwise, find the next entry in the list
 
@@ -596,7 +605,7 @@
               END IF
             ELSE
 
-!  The list of elements involving the variable IELVAR( K ) was previously
+!  the list of elements involving the variable IELVAR( K ) was previously
 !  empty. Indicate that the list has now been started, record the element
 !  which contains the variable and indicate that the end of the list has
 !  been reached
@@ -608,7 +617,7 @@
         END DO
       END IF
 
-!  Set up symmetric addresses for the upper triangular storage
+!  set up symmetric addresses for the upper triangular storage
 !  schemes for the element hessians
 
       IF ( maxsin > 0 ) THEN
@@ -645,7 +654,7 @@
         END IF
       END IF
 
-!  Set up the starting addresses for the element Hessians
+!  set up the starting addresses for the element Hessians
 !  with respect to their internal variables and a pointer beyond
 !  the end of the space required for the Hessians
 
@@ -663,29 +672,29 @@
 
       altriv = .TRUE.
 
-!  Pass 1: Count the total number of variables in all the groups, nvargp
+!  pass 1: Count the total number of variables in all the groups, nvargp
 
       nvargp = 0
 
-!  Start by initializing the counting array to zero
+!  start by initializing the counting array to zero
 
       ISWKSP( : numvar ) = 0
 
-!  Loop over the groups. See if the IG-th group is trivial
+!  loop over the groups. See if the ig-th group is trivial
 
       DO ig = 1, ng
 
-!  Check to see if all of the groups are trivial
+!  check to see if all of the groups are trivial
 
         IF ( skipg ) THEN ; IF ( KNDOFG( ig ) == 0 ) CYCLE ; END IF
         IF ( .NOT. GXEQX( ig ) ) altriv = .FALSE.
 
-!  Loop over the nonlinear elements from the IG-th group
+!  loop over the nonlinear elements from the ig-th group
 
         DO k = ISTADG( ig ), ISTADG( ig + 1 ) - 1
           iel = IELING( k )
 
-!  Run through all the elemental variables changing the I-th entry of
+!  run through all the elemental variables changing the I-th entry of
 !  ISWKSP from zero to one if variable I appears in an element
 
           DO j = ISTAEV( iel ), ISTAEV( iel + 1 ) - 1
@@ -697,7 +706,7 @@
           END DO
         END DO
 
-!  Consider variables which arise from the linear element
+!  consider variables which arise from the linear element
 
         DO j = ISTADA( ig ), ISTADA( ig + 1 ) - 1
           i = ICNA( j )
@@ -714,7 +723,7 @@
 !  variables which are used by each group in turn. Those for group i occur
 !  in locations ISTAGV( i ) to ISTAGV( i + 1 ) - 1
 
-!  Allocate the array ISVGRP
+!  allocate the array ISVGRP
 
       reallocate = .TRUE.
       IF ( ALLOCATED( ISVGRP ) ) THEN
@@ -727,18 +736,18 @@
           bad_alloc = 'ISVGRP' ; GO TO 600 ; END IF
       END IF
 
-!  Store the indices of variables which appears in each group and how many
+!  store the indices of variables which appears in each group and how many
 !  groups use each variable. Reinitialize counting arrays to zero
 
       ISTAJC( 2 : n + 1 ) = 0
       ISWKSP( : numvar ) = 0
 
-!  Pass 2: store the list of variables
+!  pass 2: store the list of variables
 
       nvargp = 0
       ISTAGV( 1 ) = 1
 
-!  Loop over the groups. See if the IG-th group is trivial
+!  loop over the groups. See if the ig-th group is trivial
 
       DO ig = 1, ng
 
@@ -750,12 +759,12 @@
           END IF
         END IF
 
-!  Again, loop over the nonlinear elements from the IG-th group
+!  again, loop over the nonlinear elements from the ig-th group
 
         DO k = ISTADG( ig ), ISTADG( ig + 1 ) - 1
           iel = IELING( k )
 
-!  Run through all the elemental variables changing the I-th entry of
+!  run through all the elemental variables changing the i-th entry of
 !  ISWKSP from zero to one if variable I appears in an element
 
           DO j = ISTAEV( iel ), ISTAEV( iel + 1 ) - 1
@@ -763,19 +772,19 @@
             IF ( ISWKSP( i ) < ig ) THEN
               ISWKSP( i ) = ig
 
-!  Record the nonlinear variables from the ig-th group
+!  record the nonlinear variables from the ig-th group
 
               nvargp = nvargp + 1
               ISVGRP( nvargp ) = i
             END IF
           END DO
 
-!  Record that nonlinear element K occurs in group IELGRP( IEL )
+!  record that nonlinear element K occurs in group IELGRP(iel)
 
           ISLGRP( k ) = ig
         END DO
 
-!  Consider variables which arise from the linear element
+!  consider variables which arise from the linear element
 
         DO j = ISTADA( ig ), ISTADA( ig + 1 ) - 1
           i = ICNA( j )
@@ -783,7 +792,7 @@
             IF ( ISWKSP( i ) < ig ) THEN
               ISWKSP( i ) = ig
 
-!  Record the linear variables from the ig-th group
+!  record the linear variables from the ig-th group
 
               nvargp = nvargp + 1
               ISVGRP( nvargp ) = i
@@ -791,7 +800,7 @@
           END IF
         END DO
 
-!  Record that one further nontrivial group uses variable l - 1
+!  record that one further nontrivial group uses variable l-1
 
         IF ( .NOT. GXEQX( ig ) ) THEN
           DO j = ISTAGV( ig ), nvargp
@@ -800,7 +809,7 @@
           END DO
         END IF
 
-!  Record the starting address of the variables in the next group
+!  record the starting address of the variables in the next group
 
         ISTAGV( ig + 1 ) = nvargp + 1
       END DO
@@ -836,7 +845,7 @@
         END IF
       END IF
 
-!  Set the starting addresses for the lists of nontrivial groups which use
+!  set the starting addresses for the lists of nontrivial groups which use
 !  each variable in turn
 
       k = 1
@@ -846,7 +855,7 @@
         ISTAJC( k ) = ISTAJC( k ) + ISTAJC( k - 1 )
       END DO
 
-!  Consider the IG-th group in order to associate variables with groups
+!  consider the ig-th group in order to associate variables with groups
 
       DO ig = 1, ng
         IF ( skipg ) THEN ; IF ( KNDOFG( ig ) == 0 ) CYCLE ; END IF
@@ -854,12 +863,12 @@
           DO i = ISTAGV( ig ), ISTAGV( ig + 1 ) - 1
             l = ISVGRP( i )
 
-!  Record that group IG uses variable ISVGRP( i )
+!  record that group ig uses variable ISVGRP( i )
 
             j = ISTAJC( l )
             IGCOLJ( j ) = ig
 
-!  Store the locations in the Jacobian of the groups of the nonzeros
+!  store the locations in the Jacobian of the groups of the nonzeros
 !  corresponding to each variable in the IG-TH group. Increment the starting
 !  address for the pointer to the next group using variable ISVGRP( i )
 
@@ -869,18 +878,18 @@
         END IF
       END DO
 
-!  Reset the starting addresses for the lists of groups using each variable
+!  reset the starting addresses for the lists of groups using each variable
 
       DO i = n, 2, - 1
         ISTAJC( i ) = ISTAJC( i - 1 )
       END DO
       ISTAJC( 1 ) = 1
 
-!  Initialize workspace values for subroutine HSPRD
+!  initialize workspace values for subroutine HSPRD
 
       IUSED( : MAX( n, ng ) ) = 0
 
-!  Initialize general workspace arrays
+!  initialize general workspace arrays
 
       maxsin = MAX( 1, maxsin )
       maxsel = MAX( 1, maxsel )
@@ -920,12 +929,12 @@
       IF ( alloc_status /= 0 ) THEN ; bad_alloc = 'H_in' ; GO TO 600
       END IF
 
-!  Define further partitions of the workspace whenever finite-difference
+!  define further partitions of the workspace whenever finite-difference
 !  gradients are used
 
       IF ( fdgrad ) THEN
 
-!  The range transformation for each nonlinear element is of a given type.
+!  the range transformation for each nonlinear element is of a given type.
 !  Suppose there are NTYPE non-trivial types. ITYPER( i ) gives the type
 !  of nonlinear element i for i = 1, ...., nel
 
@@ -940,7 +949,7 @@
             bad_alloc = 'ITYPER' ; GO TO 600 ; END IF
         END IF
 
-!  The range transformation from elemental to internal variables is defined by
+!  the range transformation from elemental to internal variables is defined by
 !  a matrix W. For each non-trivial transformation, the matrix W is recorded.
 !  The information for the I-th type starts in location 
 !  ISSWTR( i ), i = 1, ...., ntype of WTRANS
@@ -956,7 +965,7 @@
             bad_alloc = 'ISSWTR' ; GO TO 600 ; END IF
         END IF
 
-!  For each type of nonlinear element using a nontrivial range transformation,
+!  for each type of nonlinear element using a nontrivial range transformation,
 !  integer information is also recorded. The information for the i-th type
 !  starts in location ISSITR( i ), i = 1, ...., ntype of ITRANS
 
@@ -971,7 +980,7 @@
             bad_alloc = 'ISSITR' ; GO TO 600 ; END IF
         END IF
 
-!  The following pieces of integer information are recorded for the I-th type
+!  the following pieces of integer information are recorded for the i-th type
 !  of nonlinear element:
 
 !    ITRANS( ISSITR( i ) + 1 ):
@@ -981,10 +990,10 @@
 !    ITRANS( ISSITR( i ) + 2 + j ), j = 1, ..., ninvr + nelvr:
 !            pivot sequences for the LU factors of W.
 
-!  After the factorization and compression, only ninvr linearly independent
+!  after the factorization and compression, only ninvr linearly independent
 !  columns of W are stored
 
-!  -- Make an initial allocation of WTRANS and ITRANS
+!  -- make an initial allocation of WTRANS and ITRANS
 
         reallocate = .TRUE.
         IF ( ALLOCATED( WTRANS ) ) THEN
@@ -1015,21 +1024,21 @@
 !  ---------------------------------------------------
 
         ntype = 0 ; lwfree = 1 ; lifree = 1 
-        W_el( : maxsel ) = zero
+        W_el( : maxsel ) = 0.0_wp
 
-!  Loop over all nonlinear elements
+!  loop over all nonlinear elements
 
   LIEL: DO iel = 1, nel
           IF ( INTREP( iel ) ) THEN
 
-!  Calculate the range transformation matrix WTRANS
+!  calculate the range transformation matrix WTRANS
 
             is = ISTAEV( iel )
             ninvr = INTVAR( iel + 1 ) - INTVAR( iel )
             nelvr = ISTAEV( iel + 1 ) - is
             mwtran = lwfree + ninvr * nelvr - 1
                   
-!  Ensure that there is enough space
+!  ensure that there is enough space
 
             IF ( mwtran > lwtran ) THEN
               nwtran = 2 * ( lwfree + ninvr * nelvr - 1 )
@@ -1045,14 +1054,14 @@
             is = is - 1
   
             DO i = 1, nelvr
-              W_el( i ) = one
-              CALL RANGE ( iel, .FALSE., W_el( : nelvr ),                     &
-                           WTRANS( k + 1 : k + ninvr ), nelvr, ninvr,         &
-                           ITYPEE( iel ), nelvr, ninvr )
-              W_el( i ) = zero
+              W_el( i ) = 1.0_wp
+              CALL RANGE( iel, .FALSE., W_el( : nelvr ),                       &
+                          WTRANS( k + 1 : k + ninvr ), nelvr, ninvr,           &
+                          ITYPEE( iel ), nelvr, ninvr )
+              W_el( i ) = 0.0_wp
               k = k + ninvr
 
-!  Check to see if any of the columns belong to duplicated variables
+!  check to see if any of the columns belong to duplicated variables
 
               ii = IELVAR( is + i )
               DO j = 1, i - 1
@@ -1060,17 +1069,17 @@
               END DO
               CYCLE
 
-!  Amalgamate columns from duplicate variables
+!  amalgamate columns from duplicate variables
 
   300         CONTINUE
               kk = lwfree + ( j - 1 ) * ninvr - 1
               ll = k - ninvr
               WTRANS( kk + 1 : kk + ninvr ) =                                 &
                 WTRANS( kk + 1 : kk + ninvr ) + WTRANS( ll + 1 : ll + ninvr )
-              WTRANS( ll + 1 : ll + ninvr ) = zero
+              WTRANS( ll + 1 : ll + ninvr ) = 0.0_wp
             END DO
 
-!  Compare this transformation matrix with previous ones
+!  compare this transformation matrix with previous ones
 
         LI: DO i = 1, ntype
               IF ( ITRANS( ISSITR( i ) ) /= ninvr .OR.                        &
@@ -1080,7 +1089,7 @@
                      WTRANS( ISSWTR( i ) + j ) ) CYCLE LI
               END DO
 
-!  The transformation is an existing one. Record which.
+!  the transformation is an existing one. Record which.
 
               ITYPER( iel ) = i
               CYCLE LIEL
@@ -1088,7 +1097,7 @@
 
             mitran = lifree + ninvr + nelvr + 1
                   
-!  Ensure that there is enough space
+!  ensure that there is enough space
 
             IF ( mitran > litran ) THEN
               nitran = 2 * ( lifree + ninvr + nelvr + 1 )
@@ -1100,7 +1109,7 @@
               litran = nitran
             END IF
 
-!  The transformation defines a new type. Record its details
+!  the transformation defines a new type. Record its details
 
             ntype = ntype + 1
             ITYPER( iel ) = ntype
@@ -1116,14 +1125,14 @@
           END IF
         END DO LIEL
 
-!  For each type of element with internal variables:
+!  for each type of element with internal variables:
 
         DO i = 1, ntype
           lwfree = ISSWTR( i ) ; lifree = ISSITR( i )
           ninvr = ITRANS( lifree )
           nelvr = ITRANS( lifree + 1 )
 
-!  Factorize W. Use Gaussian elimination with complete pivoting.
+!  factorize W. Use Gaussian elimination with complete pivoting.
 !  Determine the "most independent" set of columns of W
 
           CALL CUTEST_gauss_elim(                                             &
@@ -1133,9 +1142,9 @@
      
         END DO
 
-!  Compress the data structures to remove redundant information
+!  compress the data structures to remove redundant information
 
-!  Compress integer data
+!  compress integer data
 
         litran = 0
         lwtran = 0
@@ -1149,7 +1158,7 @@
           ISSITR( i ) = litran + 1
           litran = litran + k
 
-!  Compress real data
+!  compress real data
 
           lwfreo = ISSWTR( i ) - 1
           DO j = 1, ninvr * ninvr
@@ -1197,17 +1206,17 @@
             bad_alloc = 'INVSET' ; GO TO 600 ; END IF
         END IF
 
-!  Assign initial set numbers to each variable
+!  assign initial set numbers to each variable
 
         nsets = 0
         ISET( : n ) = n
 
-!  Use the Curtis-Powell-Reid algorithm to determine which set each variable
+!  use the Curtis-Powell-Reid algorithm to determine which set each variable
 !  belongs to. Loop over the variables.
 
         DO i = 1, n
 
-!  Loop over the elements which use variable i. The elements are obtained from
+!  loop over the elements which use variable i. The elements are obtained from
 !  a linked-list
 
           vrused = .FALSE.
@@ -1218,7 +1227,7 @@
             iel = IELING( iell )
             itype = ITYPER( iel )
 
-!  Check that the variable belongs to the "independence" set of elements with
+!  check that the variable belongs to the "independence" set of elements with
 !  internal variables
 
             IF ( itype > 0 ) THEN
@@ -1235,17 +1244,17 @@
             vrused = .TRUE.
   450       CONTINUE
 
-!  Loop over the complete list of variables used by element iel
+!  loop over the complete list of variables used by element iel
 
 !DIR$ IVDEP
             DO j = ISTAEV( iel ), ISTAEV( iel + 1 ) - 1
 
-!  If variable IV is used, flag the set which contains it
+!  if variable iv is used, flag the set which contains it
 
               INVSET( ISET( IELVAR( j ) ) ) = 1
             END DO
 
-!  Check the link-list to see if further elements use the variable
+!  check the link-list to see if further elements use the variable
 
             IF ( ipt > 0 ) THEN
               iell = LIST_elements( ipt )
@@ -1254,7 +1263,7 @@
             END IF
           END IF
 
-!  See if the variable may be placed in the first nsets sets
+!  see if the variable may be placed in the first nsets sets
 
           IF ( vrused ) THEN
             DO j = 1, nsets
@@ -1262,29 +1271,29 @@
               INVSET( j ) = 0
             END DO
 
-!  The variable needs a new set
+!  the variable needs a new set
 
             nsets = nsets + 1
 
-!  The variable will be placed in set j
+!  the variable will be placed in set j
 
             j = nsets
 
   480       CONTINUE
             ISET( i ) = j
 
-!  Reset the flags to zero
+!  reset the flags to zero
 
             INVSET( j : nsets ) = 0
           ELSE
 
-!  The variable is not to be used
+!  the variable is not to be used
 
             ISET( i ) = n
           END IF
         END DO
 
-!  Check that there is at least one set
+!  check that there is at least one set
 
         IF ( nsets /= 0 ) THEN
           ISET( : n ) = MIN( ISET( : n ), nsets + 1 )
@@ -1293,11 +1302,11 @@
 !  Obtain a list, INVSET, of the variables corresponding to each set
 !  ---------------------------------------------------------------------
 
-!  Clear ISVSET
+!  clear ISVSET
 
           ISVSET( 2 : nsets + 2 ) = 0
 
-!  Count the number of elements in each set and store in ISVSET.
+!  count the number of elements in each set and store in ISVSET.
 !  Negate the set numbers in ISET, so that they are flagged as
 !  ISET is gradually overwritten by variable indices.
 
@@ -1307,14 +1316,14 @@
             ISVSET( j + 1 ) = ISVSET( j + 1 ) + 1
           END DO
 
-!  Compute the starting addresses for each set within IISET
+!  compute the starting addresses for each set within IISET
 
           ISVSET( 1 ) = 1
           DO j = 2, nsets + 2
             ISVSET( j ) = ISVSET( j ) + ISVSET( j - 1 )
           END DO
 
-!  Store in INVSET the variable whose set number is the
+!  store in INVSET the variable whose set number is the
 !  ISVSET( j )-th entry of INVSET
 
           isofar = 0
@@ -1329,38 +1338,38 @@
             INVSET( j ) = isofar
           END DO
 
-!  Reorder the elements into set order. Fill in each set from the front. As a
+!  reorder the elements into set order. Fill in each set from the front. As a
 !  new entry is placed in set K increase the pointer ISVSET( k ) by one
 !  and find the new variable, INVSET( k ), that corresponds to the set now
 !  pointed to by ISVSET( k )
 
           DO j = 1, nsets + 1
 
-!  Determine the next unplaced entry, ISVSET, in ISET
+!  determine the next unplaced entry, ISVSET, in ISET
 
   560       CONTINUE
             istrt = ISVSET( j )
             IF ( istrt == ISVSET( j + 1 ) ) CYCLE
             IF ( ISET( istrt ) > 0 ) CYCLE
 
-!  Extract the variable and set numbers of the starting element
+!  extract the variable and set numbers of the starting element
 
             ivar = INVSET( j )
             jset = - ISET( istrt )
 
-!  Move elements in a cycle, ending back at set J
+!  move elements in a cycle, ending back at set J
 
             DO k = istrt, n
 
-!  Find the first empty location in set JSET in INVSET
+!  find the first empty location in set JSET in INVSET
 
               inext = ISVSET( jset )
 
-!  Extract the variable index of the next element
+!  extract the variable index of the next element
 
               newvar = INVSET( jset )
 
-!  Update ISVSET( jset ), find the new variable index and store it in
+!  update ISVSET( jset ), find the new variable index and store it in
 !  INVSET( jset )
 
               istarj = inext + 1
@@ -1373,27 +1382,27 @@
               INVSET( jset ) = ivarp1 - 1
               IF ( jset == j ) EXIT
 
-!  Extract the number of the set of the next element
+!  extract the number of the set of the next element
 
               newset = - ISET( inext )
 
-!  Store the variable index of the current element
+!  store the variable index of the current element
 
               ISET( inext ) = ivar
 
-!  Make the next element into the current one
+!  make the next element into the current one
 
               ivar = newvar
               jset = newset
             END DO
 
-!  Store the variable index of the starting element
+!  store the variable index of the starting element
 
             ISET( istrt ) = ivar
             GO TO 560
           END DO
 
-!  Revise ISVSET to point to the start of each set
+!  revise ISVSET to point to the start of each set
 
           ISVSET( nsets + 1 : 2 : - 1 ) = ISVSET( nsets : 1 : - 1 )
           ISVSET( 1 ) = 1
@@ -1401,7 +1410,7 @@
 
       ELSE
 
-!  Allocate unused arrays to have length zero
+!  allocate unused arrays to have length zero
 
         reallocate = .TRUE.
         IF ( ALLOCATED( ITYPER ) ) THEN
@@ -1494,12 +1503,12 @@
 
       END IF
 
-!  Set the length of the remaining partitions of the workspace for array bound
+!  set the length of the remaining partitions of the workspace for array bound
 !  checking in calls to other subprograms
 
-!  -- Set the starting addresses for the partitions within FUVALS --
+!  -- set the starting addresses for the partitions within FUVALS --
 
-!  A full description of the partitions of FUVALS is given in the introductory
+!  a full description of the partitions of FUVALS is given in the introductory
 !  comments to the LANCELOT package
 
       lfxi = 0
@@ -1507,15 +1516,16 @@
       lhxi = INTVAR( nel1 ) - 1
       lggfx = lggfx - 1
       ldx = lggfx + n
-      lfuval = ldx + n
+      lgrjac = ldx + n
+      lfuval = lgrjac + nvargp
 
-!  Print all of the starting addresses for the workspace array partitions
+!  print all of the starting addresses for the workspace array partitions
 
        IF ( iprint >= 3 ) WRITE( iout,                                         &
             "( /,' Starting addresses for the partitions of FUVALS ', /,       &
          &       ' ----------------------------------------------- ', //,      &
-         &       '   lfxi   lgxi   lhxi  lggfx ','   ldx ', /, 5I7 )" )        &
-           lfxi, lgxi, lhxi, lggfx, ldx
+         &       '   lfxi   lgxi   lhxi  lggfx    ldx   lgrjac', /, 6I7 )" )   &
+           lfxi, lgxi, lhxi, lggfx, ldx, lgrjac
 
 !  set the length of each partition of the real workspace array FUVALS for
 !  array bound checking in calls to other subprograms
@@ -1536,10 +1546,14 @@
           bad_alloc = 'FUVALS' ; GO TO 600 ; END IF
       END IF
 
+!  mark remaining arrays as unallocated
+
+      array_status = .FALSE.
+
       status = 0
       RETURN
 
-!  Unsuccessful returns
+!  unsuccessful returns
 
   600 CONTINUE
       status = 1000 + alloc_status
@@ -1548,7 +1562,7 @@
       WRITE( iout, 2600 ) bad_alloc, alloc_status
       RETURN
 
-!  Non-executable statements
+!  non-executable statements
 
  2600 FORMAT( ' ** Message from -CUTEST_initialize_workspace-', /,             &
               ' Allocation error, for ', A, ', status = ', I0 )
@@ -1631,9 +1645,9 @@
 
 !  Initialize the gradient as zero
 
-      GRAD = zero
+      GRAD = 0.0_wp
 
-!  Consider the IG-th group
+!  consider the IG-th group
 
       DO ig = 1, ng
         IF ( PRESENT( KNDOFG ) ) THEN
@@ -1643,7 +1657,7 @@
         nelow = ISTADG( ig ) ; nelup = ISTADG( ig1 ) - 1
         nontrv = .NOT. GXEQX( ig )
 
-!  Compute the first derivative of the group
+!  compute the first derivative of the group
 
         IF ( nontrv ) THEN
           gi = GSCALE( ig ) * GVALS2( ig )
@@ -1651,12 +1665,12 @@
           gi = GSCALE( ig )
         END IF
 
-!  This is the first gradient evaluation or the group has nonlinear elements
+!  this is the first gradient evaluation or the group has nonlinear elements
 
         IF ( firstg .OR. nelow <= nelup ) THEN
-          GRAD_el( ISVGRP( istrgv : iendgv ) ) = zero
+          GRAD_el( ISVGRP( istrgv : iendgv ) ) = 0.0_wp
 
-!  Loop over the group's nonlinear elements
+!  loop over the group's nonlinear elements
 
           DO ii = nelow, nelup
             iel = IELING( ii )
@@ -1665,12 +1679,12 @@
             scalee = ESCALE( ii )
             IF ( INTREP( iel ) ) THEN
 
-!  The IEL-th element has an internal representation
+!  the iel-th element has an internal representation
 
               nin = INTVAR( iel + 1 ) - k
-              CALL RANGE ( iel, .TRUE., GUVALS( k : k + nin - 1 ),             &
-                           W_el( : nvarel ), nvarel, nin, ITYPEE( iel ),       &
-                           nin, nvarel )
+              CALL RANGE( iel, .TRUE., GUVALS( k : k + nin - 1 ),              &
+                          W_el( : nvarel ), nvarel, nin, ITYPEE( iel ),        &
+                          nin, nvarel )
 !DIR$ IVDEP
               DO i = 1, nvarel
                 j = IELVAR( l )
@@ -1679,7 +1693,7 @@
               END DO
             ELSE
 
-!  The IEL-th element has no internal representation
+!  the iel-th element has no internal representation
 
 !DIR$ IVDEP
               DO i = 1, nvarel
@@ -1691,14 +1705,14 @@
             END IF
           END DO
 
-!  Include the contribution from the linear element
+!  include the contribution from the linear element
 
 !DIR$ IVDEP
           DO k = ISTADA( ig ), ISTADA( ig1 ) - 1
             GRAD_el( ICNA( k ) ) = GRAD_el( ICNA( k ) ) + A( k )
           END DO
 
-!  Find the gradient of the group
+!  find the gradient of the group
 
           IF ( nontrv ) THEN
 
@@ -1709,20 +1723,20 @@
               ll = ISVGRP( i )
               GRAD( ll ) = GRAD( ll ) + gi * GRAD_el( ll )
 
-!  As the group is non-trivial, also store the nonzero entries of the
+!  as the group is non-trivial, also store the nonzero entries of the
 !  gradient of the function in GRJAC
 
               jj = ISTAJC( ll )
               GRJAC( jj ) = GRAD_el( ll )
 
-!  Increment the address for the next nonzero in the column of
-!  the Jacobian for variable LL
+!  increment the address for the next nonzero in the column of the Jacobian 
+!  for variable ll
 
               ISTAJC( ll ) = jj + 1
             END DO
           ELSE
 
-!  The group is trivial
+!  the group is trivial
 
 !DIR$ IVDEP
             DO i = istrgv, iendgv
@@ -1731,18 +1745,18 @@
             END DO
           END IF
 
-!  This is not the first gradient evaluation and there is only a linear element
+!  this is not the first gradient evaluation and there is only a linear element
 
         ELSE
 
-!  Add the gradient of the linear element to the overall gradient
+!  add the gradient of the linear element to the overall gradient
 
 !DIR$ IVDEP
           DO k = ISTADA( ig ), ISTADA( ig1 ) - 1
             GRAD( ICNA( k ) ) = GRAD( ICNA( k ) ) + gi * A( k )
           END DO
 
-!  The group is non-trivial; increment the starting addresses for
+!  the group is non-trivial; increment the starting addresses for
 !  the groups used by each variable in the (unchanged) linear
 !  element to avoid resetting the nonzeros in the Jacobian
 
@@ -1755,7 +1769,7 @@
         END IF
       END DO
 
-!  Reset the starting addresses for the lists of groups using each variable to
+!  reset the starting addresses for the lists of groups using each variable to
 !  their values on entry
 
       DO i = n, 2, - 1
@@ -1772,17 +1786,16 @@
 !-*-*-  C U T E S T _ a s s e m b l e _ h e s s i a n  S U B R O U T I N E -*-*-
 
       SUBROUTINE CUTEST_assemble_hessian(                                      &
-                      n, ng, nel, ntotel, nvrels, nnza, maxsel,                &
-                      nvargp, nfree, IFREE, ISTADH, ICNA,                      &
-                      ISTADA, INTVAR, IELVAR, IELING, ISTADG, ISTAEV,          &
-                      ISTAGV, ISVGRP, A, GUVALS, lnguvl, HUVALS,               &
+                      n, ng, nel, ntotel, nvrels, nnza, maxsel, nvargp,        &
+                      ISTADH, ICNA, ISTADA, INTVAR, IELVAR, IELING, ISTADG,    &
+                      ISTAEV, ISTAGV, ISVGRP, A, GUVALS, lnguvl, HUVALS,       &
                       lnhuvl, GVALS2, GVALS3, GSCALE, ESCALE, GXEQX,           &
                       ITYPEE, INTREP, RANGE, iprint, error, out,               &
-                      buffer, use_band, no_zeros, fixed_structure, nsemib,     &
-                      status, alloc_status, bad_alloc,                         &
-                      S, lirnh, ljcnh, lh, IRNH, JCNH, H,                      &
+                      buffer, fixed_structure, use_band, nsemib,               &
+                      status, alloc_status, bad_alloc, array_status,           &
+                      lh_row, lh_col, lh_val, H_row, H_col, H_val,             &
                       LINK_col, POS_in_H, llink, lpos,                         &
-                      IW_asmbl, GRAD_el, W_el, W_in, H_el, H_in, skipg,        &
+                      GRAD_el, W_el, W_in, H_el, H_in,                         &
                       nnzh, maxsbw, DIAG, OFFDIA, KNDOFG )
 
 !  Assemble the second derivative matrix of a groups partially separable
@@ -1799,13 +1812,13 @@
 !   D u m m y   A r g u m e n t s
 !-----------------------------------------------
 
-      INTEGER, INTENT( IN  ) :: n, ng, maxsel, nsemib, nvargp, nnza
-      INTEGER, INTENT( IN  ) :: nvrels, ntotel, nfree, nel, buffer
+      INTEGER, INTENT( IN  ) :: n, nel, ng, maxsel, nsemib, nvargp, nnza
+      INTEGER, INTENT( IN  ) :: nvrels, ntotel, buffer
       INTEGER, INTENT( IN  ) :: lnguvl, lnhuvl, iprint, error, out
       INTEGER, INTENT( OUT ) :: status, alloc_status
-      LOGICAL, INTENT( IN  ) :: use_band, no_zeros, fixed_structure, skipg
+      LOGICAL, INTENT( IN  ) :: fixed_structure, use_band
+      LOGICAL, INTENT( INOUT ) :: array_status
       CHARACTER ( LEN = 24 ) :: bad_alloc
-      INTEGER, INTENT( IN  ), DIMENSION( n       ) :: IFREE
       INTEGER, INTENT( IN  ), DIMENSION( nnza    ) :: ICNA
       INTEGER, INTENT( IN  ), DIMENSION( ng  + 1 ) :: ISTADA, ISTADG, ISTAGV
       INTEGER, INTENT( IN  ), DIMENSION( nel + 1 ) :: INTVAR, ISTAEV, ISTADH
@@ -1822,20 +1835,18 @@
       REAL ( KIND = wp ), INTENT( IN  ), DIMENSION( ntotel ) :: ESCALE
       LOGICAL, INTENT( IN ), DIMENSION( ng  ) :: GXEQX
       LOGICAL, INTENT( IN ), DIMENSION( nel ) :: INTREP
-      TYPE ( CUTEST_assemble_type ), INTENT( INOUT ) :: S
 
 !---------------------------------------------------------------
 !   D u m m y   A r g u m e n t s   f o r   W o r k s p a c e 
 !--------------------------------------------------------------
 
-      INTEGER, INTENT( INOUT ) :: lirnh, ljcnh, lh, llink, lpos
+      INTEGER, INTENT( INOUT ) :: lh_row, lh_col, lh_val, llink, lpos
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: LINK_col
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: POS_in_H
-      INTEGER, ALLOCATABLE, DIMENSION( : ) :: IRNH
-      INTEGER, ALLOCATABLE, DIMENSION( : ) :: JCNH
-      REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: H
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: H_row
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: H_col
+      REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: H_val
 
-      INTEGER, INTENT( OUT ), DIMENSION( : ) :: IW_asmbl
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( : ) :: GRAD_el
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( : ) :: W_el
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( : ) :: W_in
@@ -1848,9 +1859,9 @@
 
       INTEGER, INTENT( OUT ), OPTIONAL :: maxsbw, nnzh
       REAL ( KIND = wp ), INTENT( OUT ), OPTIONAL,                             &
-                                         DIMENSION( nfree ) :: DIAG
+                                         DIMENSION( n ) :: DIAG
       REAL ( KIND = wp ), INTENT( OUT ), OPTIONAL,                             &
-                                         DIMENSION( nsemib, nfree ) :: OFFDIA
+                                         DIMENSION( nsemib, n ) :: OFFDIA
       INTEGER, INTENT( IN ), OPTIONAL, DIMENSION( ng ) :: KNDOFG
 
 !-----------------------------------------------
@@ -1871,58 +1882,55 @@
 !   L o c a l   V a r i a b l e s
 !-----------------------------------------------
 
-      INTEGER :: i, ii, j, jj, k, ig, ip, l, newpt, nin
+      INTEGER :: i, ii, j, jj, k, ig, ip, l, newpt, nin, nlh, ulh, mlh
       INTEGER :: iell, iel, ihnext, nvarel, ig1, listvs, listve
       INTEGER :: ielh, inext, ijhess, irow, jcol, jcolst, istart
-      INTEGER :: nlh, ulh, mlh
       REAL ( KIND = wp ) :: wki, hesnew, gdash, g2dash, scalee
       CHARACTER ( LEN = 2 ), DIMENSION( 36, 36 ) :: MATRIX
 !     CHARACTER ( LEN = 80 ) :: array
 
-!  If a band storage scheme is to be used, initialize the entries within the
+!  if a band storage scheme is to be used, initialize the entries within the
 !  band as zero
 
       IF ( use_band ) THEN
         maxsbw = 0
-        DIAG = zero ; OFFDIA = zero
+        DIAG = 0.0_wp ; OFFDIA = 0.0_wp
 
-!  If a co-ordinate scheme is to be used, allocate arrays to hold the link
+!  if a co-ordinate scheme is to be used, allocate arrays to hold the link
 !  list which points to the row numbers  which are used in the columns of
 !  the assembled Hessian
 
-!  LINK_col( . ) gives the link list. The list for column J starts
-!                 in LINK_col( J ) and ends when LINK_col( K ) = - 1
-!  POS_in_H( . ) gives the position in H of the current link
+!  LINK_col(.) gives the link list. The list for column j starts
+!                 in LINK_col( J ) and ends when LINK_col(k) = - 1
+!  POS_in_H(.) gives the position in H of the current link
 
       ELSE
-        IF ( .NOT. S%ptr_status ) THEN
-          S%ptr_status = .TRUE.
-          llink = MIN( lirnh, ljcnh, lh ) + nfree
-          lpos = MIN( lirnh, ljcnh, lh ) + nfree
+        IF ( .NOT. array_status ) THEN
+          array_status = .TRUE.
+          llink = MIN( lh_row, lh_col, lh_val ) + n
+          lpos = MIN( lh_row, lh_col, lh_val ) + n
         
-          ALLOCATE( LINK_col( llink ), STAT = alloc_status )
-          IF ( alloc_status /= 0 ) THEN ; bad_alloc = 'LINK_c' ; GO TO 980
-          END IF
+          CALL CUTEST_allocate_array( LINK_col, llink, alloc_status )
+          IF ( alloc_status /= 0 ) THEN
+            bad_alloc = 'LINK_col' ; GO TO 980 ; END IF
         
-          ALLOCATE( POS_in_H( lpos ), STAT = alloc_status )
-          IF ( alloc_status /= 0 ) THEN ; bad_alloc = 'POS_in' ; GO TO 980
-          END IF
+          CALL CUTEST_allocate_array( POS_in_H, lpos, alloc_status )
+          IF ( alloc_status /= 0 ) THEN
+            bad_alloc = 'POS_in_H' ; GO TO 980 ; END IF
         
-          ALLOCATE( IRNH( lirnh ), STAT = alloc_status )
-          IF ( alloc_status /= 0 ) THEN ; bad_alloc = 'IRNH' ; GO TO 980
-          END IF
+          CALL CUTEST_allocate_array( H_row, lh_row, alloc_status )
+          IF ( alloc_status /= 0 ) THEN
+            bad_alloc = 'H_row' ; GO TO 980 ; END IF
         
-          ALLOCATE( JCNH( ljcnh ), STAT = alloc_status )
-          IF ( alloc_status /= 0 ) THEN ; bad_alloc = 'JCNH' ; GO TO 980
-          END IF
+          CALL CUTEST_allocate_array( H_col, lh_col, alloc_status )
+          IF ( alloc_status /= 0 ) THEN
+            bad_alloc = 'H_col' ; GO TO 980 ; END IF
         
-          ALLOCATE( H( lh ), STAT = alloc_status )
-          IF ( alloc_status /= 0 ) THEN ; bad_alloc = 'H' ; GO TO 980
-          END IF
-        
+          CALL CUTEST_allocate_array( H_val, lh_val, alloc_status )
+          IF ( alloc_status /= 0 ) THEN
+            bad_alloc = 'H_val' ; GO TO 980 ; END IF
         ELSE
-        
-          k = MIN( lirnh, ljcnh, lh ) + nfree
+          k = MIN( lh_row, lh_col, lh_val ) + n
           IF ( llink < k ) THEN
             DEALLOCATE( LINK_col ) ; llink = k
             ALLOCATE( LINK_col( llink ), STAT = alloc_status )
@@ -1930,53 +1938,43 @@
               bad_alloc = 'LINK_c'; GO TO 980 ; END IF
           END IF
         
-          k = MIN( lirnh, ljcnh, lh ) + nfree
+          k = MIN( lh_row, lh_col, lh_val ) + n
           IF ( lpos < k ) THEN 
             DEALLOCATE( POS_in_H ) ; lpos = k
             ALLOCATE( POS_in_H( lpos ), STAT = alloc_status )
             IF ( alloc_status /= 0 ) THEN 
               bad_alloc = 'POS_in'; GO TO 980 ; END IF
           END IF
-        
         END IF
-        LINK_col( : nfree ) = - 1 ; POS_in_H( : nfree ) = - 1
-        newpt = nfree
+        LINK_col( : n ) = - 1 ; POS_in_H( : n ) = - 1
+        newpt = n
+!       newpt = n + 1
 
-!  Make an initial allocation of the space required to hold the Hessian
+!  make an initial allocation of the space required to hold the Hessian
 
         nnzh = 0
       END IF
-
-!  Renumber the free variables so that they are variables 1 to NFREE
-
-      IW_asmbl( : n ) = 0
-      DO i = 1, nfree
-        IW_asmbl( IFREE( i ) ) = i
-      END DO
-      IF ( iprint >= 10 ) WRITE( out, 2060 ) nfree, ( IFREE( i ), i = 1, nfree )
 
 !  ------------------------------------------------------
 !  Form the rank-one second order term for the I-th group
 !  ------------------------------------------------------
 
       DO ig = 1, ng
-        IF ( skipg ) THEN
-          IF ( KNDOFG( ig ) == 0 ) CYCLE ; END IF
         IF ( GXEQX( ig ) ) CYCLE
-        IF ( .NOT. fixed_structure .AND. GSCALE( ig ) == zero ) CYCLE
-        IF ( iprint >= 100 ) WRITE( out, 2070 ) ig
+        IF ( .NOT. fixed_structure .AND. GSCALE( ig ) == 0.0_wp ) CYCLE
+        IF ( iprint >= 100 ) WRITE( out,                                       &
+          "( ' Group ', I5, ' rank-one terms ' )" ) ig
         g2dash = GSCALE( ig ) * GVALS3( ig )
         IF ( iprint >= 100 ) WRITE( 6, * ) ' GVALS3( ig ) ', GVALS3( ig )
-        IF ( no_zeros .AND. g2dash == zero ) CYCLE
         ig1 = ig + 1
         listvs = ISTAGV( ig )
         listve = ISTAGV( ig1 ) - 1
 
-!  Form the gradient of the IG-th group
+!  form the gradient of the ig-th group
 
-        GRAD_el( ISVGRP( listvs : listve ) ) = zero
+        GRAD_el( ISVGRP( listvs : listve ) ) = 0.0_wp
 
-!  Consider any nonlinear elements for the group
+!  consider any nonlinear elements for the group
 
         DO iell = ISTADG( ig ), ISTADG( ig1 ) - 1
           iel = IELING( iell )
@@ -1984,72 +1982,70 @@
           l = ISTAEV( iel )
           nvarel = ISTAEV( iel + 1 ) - l
           scalee = ESCALE( iell )
+
+!  the iel-th element has an internal representation
+
           IF ( INTREP( iel ) ) THEN
-
-!  The IEL-th element has an internal representation
-
             nin = INTVAR( iel + 1 ) - k
-            CALL RANGE ( iel, .TRUE., GUVALS( k : k + nin - 1 ),               &
-                         H_el, nvarel, nin, ITYPEE( iel ), nin, nvarel )
+            CALL RANGE( iel, .TRUE., GUVALS( k : k + nin - 1 ),                &
+                        H_el, nvarel, nin, ITYPEE( iel ), nin, nvarel )
             DO i = 1, nvarel
               j = IELVAR( l )
               GRAD_el( j ) = GRAD_el( j ) + scalee * H_el( i )
               l = l + 1
             END DO
+
+!  the iel-th element has no internal representation
+
           ELSE
-
-!  The IEL-th element has no internal representation
-
             DO i = 1, nvarel
               j = IELVAR( l )
               GRAD_el( j ) = GRAD_el( j ) + scalee * GUVALS( k )
-              k = k + 1
-              l = l + 1
+              k = k + 1 ; l = l + 1
             END DO
           END IF
         END DO
 
-!  Include the contribution from the linear element
+!  include the contribution from the linear element
 
         DO k = ISTADA( ig ), ISTADA( ig1 ) - 1
           j = ICNA( k )
           GRAD_el( j ) = GRAD_el( j ) + A( k )
         END DO
 
-!  The gradient is complete. Form the J-TH column of the rank-one matrix
+!  the gradient is complete. Form the j-th column of the rank-one matrix
 
         DO l = listvs, listve
-          jj = ISVGRP( l )
-          j = IW_asmbl( jj )
+          j = ISVGRP( l )
           IF ( j == 0 ) CYCLE
 
-!  Find the entry in row I of this column
+!  find the entry in row i of this column
 
           DO k = listvs, listve
-            ii = ISVGRP( k )
-            i = IW_asmbl( ii )
+            i = ISVGRP( k )
             IF ( i == 0 .OR. i > j ) CYCLE
 
-!  Skip all elements which lie outside a band of width NSEMIB
+!  Skip all elements which lie outside a band of width nsemib
 
             IF ( use_band ) maxsbw = MAX( maxsbw, j - i )
             IF ( j - i > nsemib ) CYCLE
-            hesnew = GRAD_el( ii ) * GRAD_el( jj ) * g2dash
-            IF ( iprint >= 100 ) WRITE( out, 2090 ) i, j, hesnew
-            IF ( no_zeros .AND. hesnew == zero ) CYCLE
+            hesnew = GRAD_el( i ) * GRAD_el( j ) * g2dash
+            IF ( iprint >= 100 ) WRITE( out,                                   &
+              "( ' Row ', I6, ' column ', I6, ' used. Value = ', ES24.16 )" )  &
+                i, j, hesnew
 
-!  Obtain the appropriate storage location in H for the new entry
+!  obtain the appropriate storage location in H for the new entry
 
 !  Case 1: band matrix storage scheme
 
             IF ( use_band ) THEN
 
-!  The entry belongs on the diagonal
+!  the entry belongs on the diagonal
 
               IF ( i == j ) THEN
                 DIAG( i ) = DIAG( i ) + hesnew
 
-!  The entry belongs off the diagonal
+!  the entry belongs off the diagonal
 
               ELSE
                 OFFDIA( j - i, i ) = OFFDIA( j - i, i ) + hesnew
@@ -2061,34 +2057,33 @@
               istart = j
  150          CONTINUE
               inext = LINK_col( istart )
-              IF ( inext == - 1 ) THEN
 
 !  the (i,j)-th location is empty. Place the new entry in this location and
 !  add another link to the list
 
+              IF ( inext == - 1 ) THEN
                 nnzh = nnzh + 1
-                IF ( nnzh > lh .OR. nnzh > lirnh .OR. nnzh > ljcnh ) THEN
-                  nlh = lirnh ; ulh = nnzh - 1 ; mlh = nnzh
-                  CALL CUTEST_extend_array( IRNH, lirnh, ulh, nlh, mlh,        &
+                IF ( nnzh > lh_val .OR. nnzh > lh_row .OR. nnzh > lh_col ) THEN
+                  nlh = lh_row ; ulh = nnzh - 1 ; mlh = nnzh
+                  CALL CUTEST_extend_array( H_row, lh_row, ulh, nlh, mlh,      &
                                             buffer, status, alloc_status )
                   IF ( status /= 0 ) THEN
-                    bad_alloc = 'IRNH' ; GO TO 980 ; END IF
-                  lirnh = nlh
-                  nlh = ljcnh ; ulh = nnzh - 1 ; mlh = nnzh
-                  CALL CUTEST_extend_array( JCNH, lirnh, ulh, nlh, mlh,        &
+                    bad_alloc = 'H_row' ; GO TO 980 ; END IF
+                  lh_row = nlh
+                  nlh = lh_col ; ulh = nnzh - 1 ; mlh = nnzh
+                  CALL CUTEST_extend_array( H_col, lh_col, ulh, nlh, mlh,      &
                                             buffer, status, alloc_status )
                   IF ( status /= 0 ) THEN
-                    bad_alloc = 'JCNH' ; GO TO 980 ; END IF
-                  ljcnh = nlh
-                  nlh = lh ; ulh = nnzh - 1 ; mlh = nnzh
-                  CALL CUTEST_extend_array( H, lh, ulh, nlh, mlh, buffer,      &
-                                            status, alloc_status )
+                    bad_alloc = 'H_col' ; GO TO 980 ; END IF
+                  lh_col = nlh
+                  nlh = lh_val ; ulh = nnzh - 1 ; mlh = nnzh
+                  CALL CUTEST_extend_array( H_val, lh_val, ulh, nlh, mlh,      &
+                                            buffer, status, alloc_status )
                   IF ( status /= 0 ) THEN
                     bad_alloc = 'H' ; GO TO 980 ; END IF
-                  lh = nlh
+                  lh_val = nlh
                 END IF
-                IRNH( nnzh ) = i ; JCNH( nnzh ) = j
-                H( nnzh ) = hesnew
+                H_row( nnzh ) = i ; H_col( nnzh ) = j ; H_val( nnzh ) = hesnew
                 IF ( newpt == llink ) THEN
                   nlh = llink
                   ulh = newpt; mlh = llink + 1
@@ -2110,13 +2105,21 @@
                 POS_in_H( istart ) = nnzh
                 LINK_col( newpt  ) = - 1
                 POS_in_H( newpt ) = - 1
+
+!                LINK_col( istart ) = newpt
+!                POS_in_H( istart ) = nnzh
+!write(6,*) '  LINK_col( ', istart, ' ) = ', newpt
+!write(6,*) '  POS_in_H( ', istart, ' ) = ', nnzh
+!                LINK_col( newpt  ) = - 1
+!                newpt = newpt + 1
+!               POS_in_H( newpt ) = - 1
               ELSE
 
-!  Continue searching the linked list for an entry in row I, column J
+!  continue searching the linked list for an entry in row i, column j
 
-                IF ( IRNH( POS_in_H( istart ) ) == i ) THEN
+                IF ( H_row( POS_in_H( istart ) ) == i ) THEN
                   ip = POS_in_H( istart )
-                  H( ip ) = H( ip ) + hesnew
+                  H_val( ip ) = H_val( ip ) + hesnew
                 ELSE
                   istart = inext
                   GO TO 150
@@ -2127,29 +2130,27 @@
         END DO
       END DO
 
-!  Reset the workspace array to zero
+!  reset the workspace array to zero
 
-      W_el( : maxsel ) = zero
+      W_el( : maxsel ) = 0.0_wp
 
-! --------------------------------------------------------
-! Add on the low rank first order terms for the I-th group
-! --------------------------------------------------------
+! ---------------------------------------------------------
+! Add on the low rank first order terms for the ig-th group
+! ---------------------------------------------------------
 
       DO ig = 1, ng
-        IF ( skipg ) THEN
-          IF ( KNDOFG( ig ) == 0 ) CYCLE ; END IF
-        IF ( .NOT. fixed_structure .AND. GSCALE( ig ) == zero ) CYCLE
-        IF ( iprint >= 100 ) WRITE( out, 2100 ) ig
+        IF ( .NOT. fixed_structure .AND. GSCALE( ig ) == 0.0_wp ) CYCLE
+        IF ( iprint >= 100 ) WRITE( out,                                       &
+          "( ' Group ', I5, ' second-order terms ' )" )  ig
         IF ( GXEQX( ig ) ) THEN
           gdash = GSCALE( ig )
         ELSE
           gdash = GSCALE( ig ) * GVALS2( ig )
           IF ( iprint >= 100 ) WRITE( 6, * ) ' GVALS2( ig )', GVALS2( ig )
-          IF ( no_zeros .AND. gdash == zero ) CYCLE
         END IF
         ig1 = ig + 1
 
-!  See if the group has any nonlinear elements
+!  see if the group has any nonlinear elements
 
         DO iell = ISTADG( ig ), ISTADG( ig1 ) - 1
           iel = IELING( iell )
@@ -2160,174 +2161,183 @@
           ihnext = ielh
           scalee = ESCALE( iell )
           DO l = listvs, listve
-            j = IW_asmbl( IELVAR( l ) )
+            j = IELVAR( l )
             IF ( j /= 0 ) THEN
 
-!  The IEL-th element has an internal representation. Compute the J-th column
+!  the iel-th element has an internal representation. Compute the j-th column
 !  of the element Hessian matrix
 
               IF ( INTREP( iel ) ) THEN
 
-!  Compute the J-th column of the Hessian
+!  compute the j-th column of the Hessian
 
-                W_el( l - listvs + 1 ) = one
+                W_el( l - listvs + 1 ) = 1.0_wp
 
-!  Find the internal variables
+!  find the internal variables
 
                 nin = INTVAR( iel + 1 ) - INTVAR( iel )
-                CALL RANGE ( iel, .FALSE., W_el, W_in, nvarel, nin,            &
-                             ITYPEE( iel ), nvarel, nin )
+                CALL RANGE( iel, .FALSE., W_el, W_in, nvarel, nin,             &
+                            ITYPEE( iel ), nvarel, nin )
 
-!  Multiply the internal variables by the element Hessian
+!  multiply the internal variables by the element Hessian
 
-                H_in( : nin ) = zero
+                H_in( : nin ) = 0.0_wp
 
-!  Only the upper triangle of the element Hessian is stored
+!  only the upper triangle of the element Hessian is stored
 
-                  jcolst = ielh - 1
-                  DO jcol = 1, nin
-                    ijhess = jcolst
-                    jcolst = jcolst + jcol
-                    wki = W_in( jcol ) * gdash
-                    DO irow = 1, nin
-                      IF ( irow <= jcol ) THEN
-                        ijhess = ijhess + 1
-                      ELSE
-                        ijhess = ijhess + irow - 1
-                      END IF
-                      H_in( irow ) = H_in( irow ) + wki * HUVALS( ijhess )
-                    END DO
+                jcolst = ielh - 1
+                DO jcol = 1, nin
+                  ijhess = jcolst
+                  jcolst = jcolst + jcol
+                  wki = W_in( jcol ) * gdash
+                  DO irow = 1, nin
+                    IF ( irow <= jcol ) THEN
+                      ijhess = ijhess + 1
+                    ELSE
+                      ijhess = ijhess + irow - 1
+                    END IF
+                    H_in( irow ) = H_in( irow ) + wki * HUVALS( ijhess )
                   END DO
+                END DO
 
-!  Scatter the product back onto the elemental variables
+!  scatter the product back onto the elemental variables
 
-                 CALL RANGE ( iel, .TRUE., H_in, H_el, nvarel, nin,            &
-                              ITYPEE( iel ), nin, nvarel )
-                 W_el( l - listvs + 1 ) = zero
-               END IF
+                CALL RANGE( iel, .TRUE., H_in, H_el, nvarel, nin,              &
+                            ITYPEE( iel ), nin, nvarel )
+                W_el( l - listvs + 1 ) = 0.0_wp
+              END IF
 
 !  Find the entry in row I of this column
 
-               DO k = listvs, l
-                 i = IW_asmbl( IELVAR( k ) )
+              DO k = listvs, l
+                i = IELVAR( k )
 
-!  Skip all elements which lie outside a band of width nsemib
+!  skip all elements which lie outside a band of width nsemib
 
-                 IF ( use_band .AND. i /= 0 )                                  &
-                   maxsbw = MAX( maxsbw, ABS( j - i ) )
-                 IF ( ABS( i - j ) <= nsemib .AND. i /= 0 ) THEN
+                IF ( use_band .AND. i /= 0 ) maxsbw = MAX( maxsbw, ABS( j - i ))
+                IF ( ABS( i - j ) <= nsemib .AND. i /= 0 ) THEN
 
-!  Only the upper triangle of the matrix is stored
+!  only the upper triangle of the matrix is stored
 
-                   IF ( i <= j ) THEN
-                     ii = i
-                     jj = j
-                   ELSE
-                     ii = j
-                     jj = i
-                   END IF
+                  IF ( i <= j ) THEN
+                    ii = i
+                    jj = j
+                  ELSE
+                    ii = j
+                    jj = i
+                  END IF
 
-!  Obtain the appropriate storage location in H for the new entry
+!  obtain the appropriate storage location in H for the new entry
 
-                   IF ( INTREP( iel ) ) THEN
-                     hesnew = scalee * H_el( k - listvs + 1 )
-                   ELSE
-                     hesnew = scalee * HUVALS( ihnext ) * gdash
-                   END IF
-                   IF ( iprint >= 100 ) WRITE( 6, 2080 ) ii, jj, iel, hesnew
+                  IF ( INTREP( iel ) ) THEN
+                    hesnew = scalee * H_el( k - listvs + 1 )
+                  ELSE
+                    hesnew = scalee * HUVALS( ihnext ) * gdash
+                  END IF
+                  IF ( iprint >= 100 ) WRITE( 6, "( ' Row ', I6, ' Column ',   &
+                 &   I6, ' used from element ', I6, ' value = ', ES24.16 )" )  &
+                    ii, jj, iel, hesnew
 
 !  Case 1: band matrix storage scheme
 
-                   IF ( use_band ) THEN
+                  IF ( use_band ) THEN
 
 !  The entry belongs on the diagonal
 
-                     IF ( ii == jj ) THEN
-                       DIAG( ii ) = DIAG( ii ) + hesnew
-                       IF ( k /= l ) DIAG( ii ) = DIAG( ii ) + hesnew
+                    IF ( ii == jj ) THEN
+                      DIAG( ii ) = DIAG( ii ) + hesnew
+                      IF ( k /= l ) DIAG( ii ) = DIAG( ii ) + hesnew
 
-!  The entry belongs off the diagonal
+!  the entry belongs off the diagonal
 
-                     ELSE
-                       OFFDIA( jj - ii, ii ) = OFFDIA( jj - ii, ii ) + hesnew
-                     END IF
+                    ELSE
+                      OFFDIA( jj - ii, ii ) = OFFDIA( jj - ii, ii ) + hesnew
+                    END IF
 
 !  Case 2: co-ordinate storage scheme
 
-                   ELSE
-                     IF ( .NOT. no_zeros .OR. hesnew /= zero ) THEN
-                      istart = jj
-  230                 CONTINUE
-                      inext = LINK_col( istart )
-                      IF ( inext == - 1 ) THEN
+                  ELSE
+                    istart = jj
+  230               CONTINUE
+                    inext = LINK_col( istart )
+                    IF ( inext == - 1 ) THEN
 
-!  The (i,j)-th location is empty. Place the new entry in this location
+!  the (i,j)-th location is empty. Place the new entry in this location
 !  and add another link to the list
 
-                        nnzh = nnzh + 1
-                        
-                        IF ( nnzh > lh .OR.                                    &
-                             nnzh > lirnh .OR. nnzh > ljcnh ) THEN
-                          nlh = lirnh ; ulh = nnzh - 1; mlh = nnzh
-                          CALL CUTEST_extend_array( IRNH, lirnh, ulh, nlh,     &
-                                                    mlh, buffer, status,       &
-                                                    alloc_status )
-                          IF ( status /= 0 ) THEN
-                             bad_alloc = 'IRNH' ; GO TO 980 ; END IF
-                          lirnh = nlh
-                          nlh = ljcnh ; ulh = nnzh - 1; mlh = nnzh
-                          CALL CUTEST_extend_array( JCNH, lirnh, ulh, nlh,     &
-                                                    mlh, buffer, status,       &
-                                                    alloc_status )
-                          IF ( status /= 0 ) THEN
-                             bad_alloc = 'JCNH' ; GO TO 980 ; END IF
-                          ljcnh = nlh
-                          nlh = lh ; ulh = nnzh - 1 ; mlh = nnzh
-                          CALL CUTEST_extend_array( H, lh, ulh, nlh,           &
-                                                    mlh, buffer, status,       &
-                                                    alloc_status )
-                          IF ( status /= 0 ) THEN
-                             bad_alloc = 'H' ; GO TO 980 ; END IF
-                          lh = nlh
-                        END IF   
-                        IRNH( nnzh ) = ii ; JCNH( nnzh ) = jj
-                        H( nnzh ) = hesnew
-                        IF( k /= l .AND. ii == jj ) H( nnzh ) = hesnew + hesnew
-                        IF ( newpt == llink ) THEN
-                          nlh = llink
-                          ulh = newpt; mlh = llink + 1
-                          CALL CUTEST_extend_array( LINK_col, llink, ulh, nlh, &
-                                                    mlh, buffer, status,       &
-                                                    alloc_status )
-                          IF ( status /= 0 ) THEN
-                            bad_alloc = 'LINK_col' ; GO TO 980 ; END IF
-                          llink = nlh
-                          nlh = lpos
-                          ulh = newpt; mlh = lpos + 1
-                          CALL CUTEST_extend_array( POS_in_H, lpos, ulh, nlh,  &
-                                                    mlh, buffer, status,       &
-                                                    alloc_status )
-                          IF ( status /= 0 ) THEN
-                            bad_alloc = 'POS_in_H' ; GO TO 980 ; END IF
-                          lpos = nlh
-                        END IF
-                        newpt = newpt + 1
-                        LINK_col( istart ) = newpt
-                        POS_in_H( istart ) = nnzh
-                        LINK_col( newpt  ) = - 1
-                        POS_in_H( newpt ) = - 1
+                      nnzh = nnzh + 1
+                      
+                      IF ( nnzh > lh_val .OR.                                  &
+                           nnzh > lh_row .OR. nnzh > lh_col ) THEN
+                        nlh = lh_row ; ulh = nnzh - 1; mlh = nnzh
+                        CALL CUTEST_extend_array( H_row, lh_row, ulh, nlh,     &
+                                                  mlh, buffer, status,         &
+                                                  alloc_status )
+                        IF ( status /= 0 ) THEN
+                           bad_alloc = 'H_row' ; GO TO 980 ; END IF
+                        lh_row = nlh
+                        nlh = lh_col ; ulh = nnzh - 1; mlh = nnzh
+                        CALL CUTEST_extend_array( H_col, lh_col, ulh, nlh,     &
+                                                  mlh, buffer, status,         &
+                                                  alloc_status )
+                        IF ( status /= 0 ) THEN
+                           bad_alloc = 'H_col' ; GO TO 980 ; END IF
+                        lh_col = nlh
+                        nlh = lh_val ; ulh = nnzh - 1 ; mlh = nnzh
+                        CALL CUTEST_extend_array( H_val, lh_val, ulh, nlh,     &
+                                                  mlh, buffer, status,         &
+                                                  alloc_status )
+                        IF ( status /= 0 ) THEN
+                           bad_alloc = 'H' ; GO TO 980 ; END IF
+                        lh_val = nlh
+                      END IF   
+                      H_row( nnzh ) = ii ; H_col( nnzh ) = jj
+                      H_val( nnzh ) = hesnew
+                      IF ( k /= l .AND. ii == jj )                             &
+                        H_val( nnzh ) = hesnew + hesnew
+                      IF ( newpt == llink ) THEN
+                        nlh = llink
+                        ulh = newpt; mlh = llink + 1
+                        CALL CUTEST_extend_array( LINK_col, llink, ulh, nlh,   &
+                                                  mlh, buffer, status,         &
+                                                  alloc_status )
+                        IF ( status /= 0 ) THEN
+                          bad_alloc = 'LINK_col' ; GO TO 980 ; END IF
+                        llink = nlh
+                        nlh = lpos
+                        ulh = newpt; mlh = lpos + 1
+                        CALL CUTEST_extend_array( POS_in_H, lpos, ulh, nlh,    &
+                                                  mlh, buffer, status,         &
+                                                  alloc_status )
+                        IF ( status /= 0 ) THEN
+                          bad_alloc = 'POS_in_H' ; GO TO 980 ; END IF
+                        lpos = nlh
+                      END IF
+                      newpt = newpt + 1
+                      LINK_col( istart ) = newpt
+                      POS_in_H( istart ) = nnzh
+                      LINK_col( newpt  ) = - 1
+                      POS_in_H( newpt ) = - 1
+
+!                     LINK_col( istart ) = newpt
+!                     POS_in_H( istart ) = nnzh
+!write(6,*) '  LINK_col( ', istart, ' ) = ', newpt
+!write(6,*) '  POS_in_H( ', istart, ' ) = ', nnzh
+!                     LINK_col( newpt  ) = - 1
+!                     POS_in_H( newpt ) = - 1
+!                     newpt = newpt + 1
+                    ELSE
+
+!  continue searching the linked list for an entry in row I, column J
+
+                      IF ( H_row( POS_in_H( istart ) ) == ii ) THEN
+                        ip = POS_in_H( istart )
+                        H_val( ip ) = H_val( ip ) + hesnew
+                        IF( k /= l .AND. ii == jj )                            &
+                          H_val( ip ) = H_val( ip ) + hesnew
                       ELSE
-
-! Continue searching the linked list for an entry in row I, column J
-
-                        IF ( IRNH( POS_in_H( istart ) ) == ii ) THEN
-                          ip = POS_in_H( istart )
-                          H( ip ) = H( ip ) + hesnew
-                          IF( k /= l .AND. ii == jj ) H( ip ) = H( ip ) + hesnew
-                        ELSE
-                          istart = inext
-                          GO TO 230
-                        END IF
+                        istart = inext
+                        GO TO 230
                       END IF
                     END IF
                   END IF
@@ -2347,17 +2357,21 @@
 
       IF ( iprint >= 10 ) THEN
         IF ( .NOT. use_band )                                                  &
-          WRITE( out, 2000 ) ( IRNH( i ), JCNH( i ), H( i ), i = 1, nnzh )
+          WRITE( out,                                                          &
+           "( '    Row  Column    Value        Row  Column    Value ', /       &
+         &    '    ---  ------    -----        ---  ------    ----- ', /       &
+         &    ( 2I6, ES24.16, 2I6, ES24.16 ) )" )                              &
+            ( H_row( i ), H_col( i ), H_val( i ), i = 1, nnzh )
 
-!  For debugging, print the nonzero pattern of the matrix
+!  for debugging, print the nonzero pattern of the matrix
 
-        IF ( nfree <= 36 ) THEN
-          MATRIX( : nfree, : nfree ) = '  '
+        IF ( n <= 36 ) THEN
+          MATRIX( : n, : n ) = '  '
           IF ( use_band ) THEN
-            DO i = 1, nfree
-              IF ( DIAG( i ) /= zero ) MATRIX( i, i ) = ' *'
-              DO j = 1, MIN( nsemib, nfree - i )
-                IF ( OFFDIA( j, i ) /= zero ) THEN
+            DO i = 1, n
+              IF ( DIAG( i ) /= 0.0_wp ) MATRIX( i, i ) = ' *'
+              DO j = 1, MIN( nsemib, n - i )
+                IF ( OFFDIA( j, i ) /= 0.0_wp ) THEN
                    MATRIX( i + j, i ) = ' *'
                    MATRIX( i, i + j ) = ' *'
                 END IF
@@ -2365,109 +2379,797 @@
             END DO
           ELSE
             DO i = 1, nnzh
-              IF ( IRNH( i ) > nfree ) THEN
-                WRITE( out, * ) ' Entry out of bounds in ASMBL ',              &
-                                 ' row number = ', IRNH( i )
+              IF ( H_row( i ) > n ) THEN
+                WRITE( out,                                                    &
+                  "( ' Entry out of bounds in CUTEST_assemble_hessian',        &
+                 &   ' row number = ', I0 )" ) H_row( i )
 !               STOP
               END IF
-              IF ( JCNH( i ) > nfree ) THEN
-                WRITE( out, * ) ' Entry out of bounds in ASMBL ',              &
-                                 ' col number = ', JCNH( i )
+              IF ( H_col( i ) > n ) THEN
+                WRITE( out,                                                    &
+                  "( ' Entry out of bounds in CUTEST_assemble_hessian',        &
+                 &   ' col number = ', I0 )" ) H_col( i )
 !               STOP
               END IF
-              MATRIX( IRNH( i ), JCNH( i ) ) = ' *'
-              MATRIX( JCNH( i ), IRNH( i ) ) = ' *'
+              MATRIX( H_row( i ), H_col( i ) ) = ' *'
+              MATRIX( H_col( i ), H_row( i ) ) = ' *'
             END DO
           END IF
-          WRITE( out, 2040 ) ( i, i = 1, nfree )
-          DO i = 1, nfree
-            WRITE( out, 2050 ) i, ( MATRIX( i, j ), j = 1, nfree )
+          WRITE( out, "( /, 5X, 36I2 )" ) ( i, i = 1, n )
+          DO i = 1, n
+            WRITE( out, "( I3, 2X, 36A2 )" ) i, ( MATRIX( i, j ), j = 1, n )
           END DO
         END IF
       END IF
 
-!  Successful return
+!  successful return
 
       status = 0
       RETURN
 
-!  Unsuccessful returns
+!  unsuccessful returns
 
   980 CONTINUE
-      WRITE( error, 2990 ) alloc_status, bad_alloc
+      WRITE( error, "( ' ** Message from -CUTEST_assemble_hessian-',           &
+     &    /, ' Allocation error (status = ', I0, ') for ', A )" )              &
+        alloc_status, bad_alloc
       RETURN
-
-!  Non-executable statements
-
- 2000 FORMAT( '    Row  Column    Value        Row  Column    Value ', /       &
-              '    ---  ------    -----        ---  ------    ----- ', /       &
-              ( 2I6, ES24.16, 2I6, ES24.16 ) )
- 2040 FORMAT( /, 5X, 36I2 )
- 2050 FORMAT( I3, 2X, 36A2 )
- 2060 FORMAT( /, I6, ' free variables. They are ', 8I5, /, ( 14I5 ) )
- 2070 FORMAT( ' Group ', I5, ' rank-one terms ' )
- 2080 FORMAT( ' Row ', I6, ' Column ', I6, ' used from element ', I6,          &
-              ' value = ', ES24.16 )
- 2090 FORMAT( ' Row ', I6, ' column ', I6, ' used. Value = ', ES24.16 )
- 2100 FORMAT( ' Group ', I5, ' second-order terms ' )
- 2990 FORMAT( ' ** Message from -CUTEST_assemble_hessian-', /,                 &
-              ' Allocation error (status = ', I6, ') for ', A24 )
 
 !  end of subroutine CUTEST_assemble_hessian
 
      END SUBROUTINE CUTEST_assemble_hessian
 
+!-  C U T E S T _ s i z e _ s p a r s e  _ h e s s i a n  S U B R O U T I N E -
+
+      SUBROUTINE CUTEST_size_sparse_hessian(                                   &
+                      n, ng, nel, ntotel, nvrels, nvargp,                      &
+                      IELVAR, IELING, ISTADG, ISTAEV, ISTAGV, ISVGRP, GXEQX,   &
+                      error, buffer, status, alloc_status, bad_alloc,          &
+                      lh_row, H_row, LINK_col, POS_in_H, llink, lpos, nnzh )
+
+!  Determine the number of nonzeros in the second derivative matrix of a 
+!  groups partially separable function in co-ordinate format
+
+!  History -
+!   Derived from CUTEst_assemble_hessian in this module
+!   fortran 2003 version released in CUTEst, 25th November 2012
+
+!-----------------------------------------------
+!   D u m m y   A r g u m e n t s
+!-----------------------------------------------
+
+      INTEGER, INTENT( IN  ) :: n, ng, nvargp
+      INTEGER, INTENT( IN  ) :: nvrels, ntotel, nel, error, buffer
+      INTEGER, INTENT( OUT ) :: status, nnzh, alloc_status
+      CHARACTER ( LEN = 24 ) :: bad_alloc
+      INTEGER, INTENT( IN  ), DIMENSION( ng  + 1 ) :: ISTADG, ISTAGV
+      INTEGER, INTENT( IN  ), DIMENSION( nel + 1 ) :: ISTAEV
+      INTEGER, INTENT( IN  ), DIMENSION( nvrels  ) :: IELVAR
+      INTEGER, INTENT( IN  ), DIMENSION( ntotel  ) :: IELING
+      INTEGER, INTENT( IN  ), DIMENSION( nvargp  ) :: ISVGRP
+      LOGICAL, INTENT( IN ), DIMENSION( ng  ) :: GXEQX
+
+!---------------------------------------------------------------
+!   D u m m y   A r g u m e n t s   f o r   W o r k s p a c e 
+!--------------------------------------------------------------
+
+      INTEGER, INTENT( INOUT ) :: lh_row, llink, lpos
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: LINK_col
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: POS_in_H
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: H_row
+
+!-----------------------------------------------
+!   L o c a l   V a r i a b l e s
+!-----------------------------------------------
+
+      INTEGER :: i, ii, iel, iell, ig, j, jj, k, l, listvs, listve, inext
+      INTEGER :: istart, newpt, nlh, ulh, mlh
+
+!  if a co-ordinate scheme is to be used, allocate arrays to hold the link
+!  list which points to the row numbers  which are used in the columns of
+!  the assembled Hessian
+
+!  LINK_col(.) gives the link list. The list for column j starts
+!              in LINK_col(j) and ends when LINK_col(k) = - 1
+!  POS_in_H(.) gives the position in H of the current link
+
+      llink = lh_row + n
+      lpos = lh_row + n
+      
+      CALL CUTEST_allocate_array( LINK_col, llink, alloc_status )
+      IF ( alloc_status /= 0 ) THEN
+        bad_alloc = 'LINK_col' ; GO TO 980 ; END IF
+    
+      CALL CUTEST_allocate_array( POS_in_H, lpos, alloc_status )
+      IF ( alloc_status /= 0 ) THEN
+        bad_alloc = 'POS_in_H' ; GO TO 980 ; END IF
+    
+      CALL CUTEST_allocate_array( H_row, lh_row, alloc_status )
+      IF ( alloc_status /= 0 ) THEN
+        bad_alloc = 'H_row' ; GO TO 980 ; END IF
+        
+      LINK_col( : n ) = - 1 ; POS_in_H( : n ) = - 1
+      newpt = n
+
+!  make an initial allocation of the space required to hold the Hessian
+
+      nnzh = 0
+
+!  ------------------------------------------------------
+!  Form the rank-one second order term for the i-th group
+!  ------------------------------------------------------
+
+      DO ig = 1, ng
+        IF ( GXEQX( ig ) ) CYCLE
+        listvs = ISTAGV( ig )
+        listve = ISTAGV( ig + 1 ) - 1
+
+!  Form the j-th column of the rank-one matrix
+
+        DO l = listvs, listve
+          j = ISVGRP( l )
+          IF ( j == 0 ) CYCLE
+
+!  find the entry in row I of this column
+
+          DO k = listvs, listve
+            i = ISVGRP( k )
+            IF ( i == 0 .OR. i > j ) CYCLE
+
+!  obtain the appropriate storage location in H for the new entry
+
+            istart = j
+ 150        CONTINUE
+            inext = LINK_col( istart )
+            IF ( inext == - 1 ) THEN
+
+!  the (i,j)-th location is empty. Place the new entry in this location and
+!  add another link to the list
+
+              nnzh = nnzh + 1
+              IF ( nnzh > lh_row ) THEN
+                nlh = lh_row ; ulh = nnzh - 1 ; mlh = nnzh
+                CALL CUTEST_extend_array( H_row, lh_row, ulh, nlh, mlh,        &
+                                          buffer, status, alloc_status )
+                IF ( status /= 0 ) THEN
+                  bad_alloc = 'H_row' ; GO TO 980 ; END IF
+                lh_row = nlh
+              END IF
+              H_row( nnzh ) = i
+              IF ( newpt == llink ) THEN
+                nlh = llink
+                ulh = newpt; mlh = llink + 1
+                CALL CUTEST_extend_array( LINK_col, llink, ulh, nlh, mlh,      &
+                                          buffer, status, alloc_status )
+                IF ( status /= 0 ) THEN
+                  bad_alloc = 'LINK_col' ; GO TO 980 ; END IF
+                llink = nlh
+                nlh = lpos
+                ulh = newpt; mlh = lpos + 1
+                CALL CUTEST_extend_array( POS_in_H, lpos, ulh, nlh, mlh,       &
+                                          buffer, status, alloc_status )
+                IF ( status /= 0 ) THEN
+                  bad_alloc = 'POS_in_H' ; GO TO 980 ; END IF
+                lpos = nlh
+              END IF
+              newpt = newpt + 1
+              LINK_col( istart ) = newpt
+              POS_in_H( istart ) = nnzh
+              LINK_col( newpt  ) = - 1
+              POS_in_H( newpt ) = - 1
+            ELSE
+
+!  continue searching the linked list for an entry in row i, column j
+
+              IF ( H_row( POS_in_H( istart ) ) /= i ) THEN
+                istart = inext
+                GO TO 150
+              END IF
+            END IF
+          END DO
+        END DO
+      END DO
+
+! --------------------------------------------------------
+! Add on the low rank first order terms for the i-th group
+! --------------------------------------------------------
+
+      DO ig = 1, ng
+
+!  see if the group has any nonlinear elements
+
+        DO iell = ISTADG( ig ), ISTADG( ig + 1 ) - 1
+          iel = IELING( iell )
+          listvs = ISTAEV( iel )
+          listve = ISTAEV( iel + 1 ) - 1
+          DO l = listvs, listve
+            j = IELVAR( l )
+
+!  find the entry in row i of this column
+
+            IF ( j /= 0 ) THEN
+              DO k = listvs, l
+                i = IELVAR( k )
+
+!  only the upper triangle of the matrix is stored
+
+                IF ( i /= 0 ) THEN
+                  IF ( i <= j ) THEN
+                    ii = i
+                    jj = j
+                  ELSE
+                    ii = j
+                    jj = i
+                  END IF
+
+!  obtain the appropriate storage location in H for the new entry
+
+                  istart = jj
+  230             CONTINUE
+                  inext = LINK_col( istart )
+                  IF ( inext == - 1 ) THEN
+
+!  the (i,j)-th location is empty. Place the new entry in this location
+!  and add another link to the list
+
+                    nnzh = nnzh + 1
+                    IF ( nnzh > lh_row ) THEN
+                      nlh = lh_row ; ulh = nnzh - 1; mlh = nnzh
+                      CALL CUTEST_extend_array( H_row, lh_row, ulh, nlh,       &
+                                                mlh, buffer, status,           &
+                                                alloc_status )
+                      IF ( status /= 0 ) THEN
+                         bad_alloc = 'H_row' ; GO TO 980 ; END IF
+                      lh_row = nlh
+                    END IF   
+                    H_row( nnzh ) = ii
+                    IF ( newpt == llink ) THEN
+                      nlh = llink
+                      ulh = newpt; mlh = llink + 1
+                      CALL CUTEST_extend_array( LINK_col, llink, ulh, nlh,     &
+                                                mlh, buffer, status,           &
+                                                alloc_status )
+                      IF ( status /= 0 ) THEN
+                        bad_alloc = 'LINK_col' ; GO TO 980 ; END IF
+                      llink = nlh
+                      nlh = lpos
+                      ulh = newpt; mlh = lpos + 1
+                      CALL CUTEST_extend_array( POS_in_H, lpos, ulh, nlh,      &
+                                                mlh, buffer, status,           &
+                                                alloc_status )
+                      IF ( status /= 0 ) THEN
+                        bad_alloc = 'POS_in_H' ; GO TO 980 ; END IF
+                      lpos = nlh
+                    END IF
+                    newpt = newpt + 1
+                    LINK_col( istart ) = newpt
+                    POS_in_H( istart ) = nnzh
+                    LINK_col( newpt  ) = - 1
+                    POS_in_H( newpt ) = - 1
+                  ELSE
+
+!  continue searching the linked list for an entry in row i, column j
+
+                    IF ( H_row( POS_in_H( istart ) ) /= ii ) THEN
+                      istart = inext
+                      GO TO 230
+                    END IF
+                  END IF
+                END IF
+              END DO
+            END IF
+          END DO
+        END DO
+      END DO
+
+!  successful return
+
+      status = 0
+      RETURN
+
+!  unsuccessful returns
+
+  980 CONTINUE
+      WRITE( error, "( ' ** Message from -CUTEST_size_sparse_hessian-',        &
+     &    /, ' Allocation error (status = ', I0, ') for ', A )" )              &
+        alloc_status, bad_alloc
+      RETURN
+
+!  end of subroutine CUTEST_size_sparse_hessian
+
+     END SUBROUTINE CUTEST_size_sparse_hessian
+
+! - C U T E S T _ a s s e m b l e _ e l e m e n t _ h e s s i a n  SUBROUTINE  -
+
+      SUBROUTINE CUTEST_assemble_element_hessian(                              &
+                        n, ng, nel, ntotel, nvrels, nnza, maxsel, nvargp,      &
+                        lnguvl, lnhuvl, ISTADH, ICNA, ISTADA, INTVAR, IELVAR,  &
+                        IELING, ISTADG, ISTAEV, ISTAGV, ISVGRP, ITYPEE,        &
+                        A, GUVALS, HUVALS, GVALS2, GVALS3, GSCALE, ESCALE,     &
+                        GXEQX, INTREP, IW_asmbl, GRAD_el, W_el, W_in, H_el,    &
+                        H_in, RANGE, ne, lhe_row, lhe_val,                     &
+                        HE_row, HE_row_ptr, HE_val, HE_val_ptr, BYROWS,        &
+                        iprint, out, error, buffer, alloc_status, bad_alloc,   &
+                        status )
+
+!  ------------------------------------------------------------------
+!  assemble the second derivative matrix of a groups partially
+!  separable function into finite-element format
+
+!           ne
+!      H = sum H_e, 
+!          e=1
+
+!  where each element H_e involves a small subset of the rows of H.
+!  H is stored as a list of the row indices involved in each element
+!  and the upper triangle of H_e (stored by rows or columns)
+!  ------------------------------------------------------------------
+
+!  History -
+!   fortran 77 version released in CUTEr as ASMBE, November 25th 1994
+!   fortran 2003 version released in CUTEst, 26th November 2012
+
+      INTEGER, INTENT( IN ) :: n, ng, nel, ntotel, nvrels, nnza, maxsel, iprint
+      INTEGER, INTENT( IN ) :: nvargp, lnguvl, lnhuvl, out, error, buffer
+      INTEGER, INTENT( INOUT ) :: lhe_row, lhe_val
+      INTEGER, INTENT( OUT ) :: ne, status, alloc_status
+      LOGICAL, INTENT( IN ) :: byrows
+      CHARACTER ( LEN = 24 ), INTENT( OUT ) :: bad_alloc
+      INTEGER, INTENT( IN  ), DIMENSION( nnza    ) :: ICNA
+      INTEGER, INTENT( IN  ), DIMENSION( ng  + 1 ) :: ISTADA, ISTADG, ISTAGV
+      INTEGER, INTENT( IN  ), DIMENSION( nel + 1 ) :: INTVAR, ISTAEV, ISTADH
+      INTEGER, INTENT( IN  ), DIMENSION( nvrels  ) :: IELVAR
+      INTEGER, INTENT( IN  ), DIMENSION( ntotel  ) :: IELING
+      INTEGER, INTENT( IN  ), DIMENSION( nvargp  ) :: ISVGRP
+      INTEGER, INTENT( IN  ), DIMENSION( nel ) :: ITYPEE
+      INTEGER, DIMENSION( ng + 1 ) :: HE_row_ptr
+      INTEGER, DIMENSION( ng + 1 ) :: HE_val_ptr 
+      REAL ( KIND = wp ), INTENT( IN  ), DIMENSION( nnza ) :: A
+      REAL ( KIND = wp ), INTENT( IN  ), DIMENSION( lnguvl ) :: GUVALS
+      REAL ( KIND = wp ), INTENT( IN  ), DIMENSION( lnhuvl ) :: HUVALS
+      REAL ( KIND = wp ), INTENT( IN  ), DIMENSION( ng ) :: GVALS2
+      REAL ( KIND = wp ), INTENT( IN  ), DIMENSION( ng ) :: GVALS3
+      REAL ( KIND = wp ), INTENT( IN  ), DIMENSION( ng ) :: GSCALE
+      REAL ( KIND = wp ), INTENT( IN  ), DIMENSION( ntotel ) :: ESCALE
+      LOGICAL, INTENT( IN ), DIMENSION( ng  ) :: GXEQX
+      LOGICAL, INTENT( IN ), DIMENSION( nel ) :: INTREP
+      INTEGER, INTENT( OUT ), DIMENSION( : ) :: IW_asmbl
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( : ) :: GRAD_el
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( : ) :: W_el
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( : ) :: W_in
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( : ) :: H_el
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( : ) :: H_in
+      EXTERNAL :: RANGE 
+
+!---------------------------------------------------------------
+!   D u m m y   A r g u m e n t s   f o r   W o r k s p a c e 
+!--------------------------------------------------------------
+
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: HE_row 
+      REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: HE_val
+
+!  local variables
+
+      INTEGER :: i, ii, ig, iel, iell, ielh, ihi, j, jj, k, l, nin
+      INTEGER :: nvarel, ig1, listvs, listve, ihnext, nvarg, nsizee
+      INTEGER :: ijhess, irow, jcol, jcolst, nlh, ulh, mlh
+      REAL ( KIND = wp ) :: wki, hesnew, gdash,  g2dash, scalee
+
+!  ensure that there is sufficient space
+
+      CALL CUTEST_allocate_array( HE_row, lhe_row, alloc_status )
+      IF ( alloc_status /= 0 ) THEN
+        bad_alloc = 'HE_row' ; status = 1 ; GO TO 980 ; END IF
+      
+      CALL CUTEST_allocate_array( HE_val, lhe_val, alloc_status )
+      IF ( alloc_status /= 0 ) THEN
+        bad_alloc = 'HE_val' ; status = 1 ; GO TO 980 ; END IF
+
+! -------------------------------------------------------
+!  form the rank-one second order term for the i-th group
+! -------------------------------------------------------
+
+      ne = 0
+      HE_row_ptr( 1 ) = 1 ; HE_val_ptr( 1 ) = 1
+      DO ig = 1, ng
+        IF ( iprint >= 100 ) WRITE( out,                                       &
+           "( ' Group ', I5, ' rank-one terms ' )" ) ig
+        ig1 = ig + 1
+        IF ( GXEQX( ig ) ) THEN
+          g2dash = 0.0_wp
+        ELSE
+          g2dash = GSCALE( ig ) * GVALS3( ig )
+          IF ( iprint >= 100 ) WRITE( out, * ) ' GVALS3(ig) ', GVALS3( ig )
+        END IF
+
+!  ignore linear groups
+
+        IF ( ISTADG( ig ) >= ISTADG( ig1 ) .AND. GXEQX( ig ) ) CYCLE
+
+!  the group is nonlinear
+
+        ne = ne + 1
+        listvs = ISTAGV( ig )
+        listve = ISTAGV( ig1 ) - 1
+        nvarg = listve - listvs + 1
+
+!  set the starting addresses for the integer and real arrays for group ig + 1
+
+        HE_row_ptr( ne + 1 ) = HE_row_ptr( ne ) + nvarg
+        IF ( HE_row_ptr( ne + 1 ) > lhe_row ) THEN
+          nlh = 3 * HE_row_ptr( ne + 1 ) / 2 ; ulh = HE_row_ptr( ne ) - 1
+          mlh = HE_row_ptr( ne + 1 )
+          CALL CUTEST_extend_array( HE_row, lhe_row, ulh, nlh, mlh, buffer,    &
+                                    status, alloc_status )
+          IF ( status /= 0 ) THEN
+             bad_alloc = 'HE_row' ; GO TO 980 ; END IF
+          lhe_row = nlh
+        END IF
+        nsizee = ( nvarg * ( nvarg + 1 ) ) / 2
+        HE_val_ptr( ne + 1 ) = HE_val_ptr( ne ) + nsizee
+        IF ( HE_val_ptr( ne + 1 ) >= lhe_val ) THEN
+          nlh = 3 * HE_val_ptr( ne + 1 ) / 2 ; ulh = HE_val_ptr( ne ) - 1
+          mlh = HE_val_ptr( ne + 1 )
+          CALL CUTEST_extend_array( HE_val, lhe_row, ulh, nlh, mlh, buffer,    &
+                                    status, alloc_status )
+          IF ( status /= 0 ) THEN
+             bad_alloc = 'HE_val' ; GO TO 980 ; END IF
+          lhe_row = nlh
+        END IF
+
+!  record the row indices involved in super-element ne
+
+        k = HE_row_ptr( ne )
+        DO l = listvs, listve
+          HE_row( k ) = ISVGRP( l )
+          k = k + 1
+        END DO
+
+!  skip if the group contributes nothing to the Hessian
+
+        IF ( GXEQX( ig ) .OR. g2dash == 0.0_wp ) THEN 
+          HE_val( HE_val_ptr( ne ) : HE_val_ptr( ne ) + nsizee - 1 ) = 0.0_wp
+          CYCLE
+        END IF
+
+!  form the gradient of the ig-th group
+
+         GRAD_el( ISVGRP( listvs : listve ) ) = 0.0_wp
+
+!  consider any nonlinear elements for the group
+
+        DO iell = ISTADG( ig ), ISTADG( ig1 ) - 1
+          iel = IELING( iell )
+          k = INTVAR( iel ) ; l = ISTAEV( iel )
+          nvarel = ISTAEV( iel + 1 ) - l
+          scalee = ESCALE( iell )
+          IF ( INTREP( iel ) ) THEN
+
+!  the iel-th element has an internal representation
+
+            nin = INTVAR( iel + 1 ) - k
+            CALL RANGE( iel, .TRUE., GUVALS( k : k + nin - 1 ),                &
+                        H_el, nvarel, nin, ITYPEE( iel ), nin, nvarel )
+            DO i = 1, nvarel
+              j = IELVAR( l )
+              GRAD_el( j ) = GRAD_el( j ) + scalee * H_el( i )
+              l = l + 1
+            END DO
+          ELSE
+
+!  the iel-th element has no internal representation
+
+            DO i = 1, nvarel
+               j = IELVAR( l )
+               GRAD_el( j ) = GRAD_el( j ) + scalee * GUVALS( k )
+               k = k + 1 ; l = l + 1
+            END DO
+          END IF
+        END DO
+
+!  include the contribution from the linear element
+
+        DO k = ISTADA( ig ), ISTADA( ig1 ) - 1
+          j = ICNA( k )
+          GRAD_el( j ) = GRAD_el( j ) + A( k )
+        END DO
+
+!  the gradient is complete. Form the j-th column of the rank-one matrix
+
+        DO l = listvs, listve
+          jj = ISVGRP( l )
+          j = l - listvs + 1
+
+!  find the entry in row i of this column.
+
+          DO k = listvs, l
+             ii = ISVGRP( k )
+             i = k - listvs + 1
+             IF ( byrows ) THEN
+               ihi =  HE_val_ptr( ne ) - 1                                     &
+                        + nvarg * ( i - 1 ) - ( ( i - 1 ) * i ) / 2 + j
+             ELSE
+               ihi = HE_val_ptr( ne ) - 1 + i + ( j * ( j - 1 ) ) / 2
+             END IF
+             HE_val( ihi ) = GRAD_el( ii ) * GRAD_el( jj ) * g2dash
+             IF ( iprint >= 100 )  WRITE( out,                                 &
+               "( ' Row ', I6, ' column ', I6, ' used. Value = ', ES24.16 )" ) &
+                ii, jj, HE_val( ihi )
+          END DO
+        END DO
+      END DO
+
+!  reset the workspace array to zero
+
+      W_el( : maxsel ) = 0.0_wp
+
+! ---------------------------------------------------------
+!  add on the low rank first order terms for the I-th group
+! ---------------------------------------------------------
+
+      ne = 0
+      DO ig = 1, ng
+        ig1 = ig + 1
+
+!  once again, ignore linear groups
+
+        IF ( ISTADG( ig ) >= ISTADG( ig1 ) .AND. GXEQX( ig ) ) CYCLE
+
+!  the group is nonlinear
+
+        ne = ne + 1
+        IF ( iprint >= 100 ) WRITE( out,                                       &
+           "( ' Group ', I5, ' second-order terms ' )" ) ig
+        IF ( GXEQX( ig ) ) THEN
+          gdash = GSCALE( ig )
+        ELSE
+          gdash = GSCALE( ig ) * GVALS2( ig )
+          IF ( iprint >= 100 ) WRITE( out, * ) ' GVALS2(ig) ', GVALS2(IG)
+        END IF
+        IF ( gdash == 0.0_wp ) CYCLE
+
+!  map the problem variables to the elemental variables
+
+        nvarg = HE_row_ptr( ne + 1 ) - HE_row_ptr( ne )
+        DO i = HE_row_ptr( ne ), HE_row_ptr( ne + 1 ) - 1
+          IW_asmbl( HE_row( i ) ) = i + 1 - HE_row_ptr( ne )
+        END DO
+
+!  see if the group has any nonlinear elements
+
+        DO iell = ISTADG( ig ), ISTADG( ig1 ) - 1
+          iel = IELING( iell )
+          listvs = ISTAEV( iel )
+          listve = ISTAEV( iel + 1 ) - 1
+          nvarel = listve - listvs + 1
+          ielh = ISTADH( iel )
+          ihnext = ielh
+          scalee = ESCALE( iell )
+          DO l = listvs, listve
+            j = IW_asmbl( IELVAR( l ) )
+
+!  the iel-th element has an internal representation. Compute the j-th column 
+!  of the element Hessian matrix
+
+            IF ( INTREP( iel ) ) THEN
+
+!  compute the j-th column of the Hessian
+
+              W_el( l - listvs + 1 ) = 1.0_wp
+
+!  find the internal variables
+
+              nin = INTVAR( iel + 1 ) - INTVAR( iel )
+              CALL RANGE( iel, .FALSE., W_el, W_in, nvarel, nin,               &
+                          ITYPEE( iel ), nvarel, nin )
+
+!  multiply the internal variables by the element Hessian
+
+              H_in( : nin ) = 0.0_wp
+
+!  only the upper triangle of the element Hessian is stored
+
+              jcolst = ielh - 1
+              DO jcol = 1, nin
+                ijhess = jcolst
+                jcolst = jcolst + jcol
+                wki = W_in( jcol ) * gdash
+                DO irow = 1, nin
+                  IF ( irow <= jcol ) THEN
+                    ijhess = ijhess + 1
+                  ELSE
+                    ijhess = ijhess + irow - 1
+                  END IF
+                  H_in( irow ) = H_in( irow ) + wki * HUVALS( ijhess )
+                END DO
+              END DO
+
+!  scatter the product back onto the elemental variables
+
+              CALL RANGE( iel, .TRUE., H_in, H_el, nvarel, nin,                &
+                          ITYPEE( iel ), nin, nvarel )
+              W_el( l - listvs + 1 ) = 0.0_wp
+
+!  find the entry in row i of this column
+
+            END IF
+            DO k = listvs, l
+              i = IW_asmbl( IELVAR( k ) )
+
+!  only the upper triangle of the matrix is stored
+
+              IF ( i <= j ) THEN
+                ii = i ; jj = j
+              ELSE
+                ii = j ; jj = i
+              END IF
+
+!  obtain the appropriate storage location in H for the new entry
+
+              IF ( INTREP( iel ) ) THEN
+                 hesnew = scalee * H_el( k - listvs + 1 )
+              ELSE
+                 hesnew = scalee * HUVALS( ihnext ) * gdash
+              END IF
+              IF ( iprint >= 100 ) WRITE( out, "( ' Row ', I6, ' Column ',     &
+             & I6, ' used from element ', I6, ' value = ', ES24.16 )" )        &
+                ii, jj, iel, hesnew
+              IF ( byrows ) THEN
+                 ihi = HE_val_ptr( ne ) - 1 + nvarg * ( ii - 1 ) -             &
+                    ( ( ii - 1 ) * ii ) / 2 + jj
+              ELSE
+                 ihi = HE_val_ptr( ne ) - 1 + ii + ( jj * ( jj - 1 ) ) / 2
+              END IF
+              HE_val( ihi ) = HE_val( ihi ) + hesnew
+              IF ( k /= l .AND. ii == jj )                                     &
+                HE_val( ihi ) = HE_val( ihi ) + hesnew
+              ihnext = ihnext + 1
+            END DO
+          END DO
+        END DO
+      END DO
+
+! ----------------------------------------
+!  for debugging, print the nonzero values
+! ----------------------------------------
+
+      IF ( iprint >= 10 ) THEN
+        DO ig = 1, ne
+          WRITE( out, "( ' Super-element ', I10 )" ) ig
+          WRITE( out, "( ' Super-element variables     ', 8I7, /, ( 11I7 ) )") &
+             ( HE_row( i ), i = HE_row_ptr( ig ), HE_row_ptr( ig + 1 ) - 1 )
+          WRITE( out, "( ' Nonzeros   ', 6ES12.4, /, ( 7ES12.4 ) )" )          &
+              ( HE_val( i ), i = HE_val_ptr( ig ), HE_val_ptr( ig + 1 ) - 1 )
+        END DO
+      END IF
+      status = 0
+      RETURN
+
+!  unsuccessful returns
+
+! 610 CONTINUE
+!     status = 1
+!     RETURN
+
+!  unsuccessful returns
+
+  980 CONTINUE
+      WRITE( error, "( ' ** Message from -CUTEST_assemble_element_hessian-',   &
+     &    /, ' Allocation error (status = ', I0, ') for ', A )" )              &
+        alloc_status, bad_alloc
+      RETURN
+
+!  end of subroutine CUTEST_assemble_element_hessian
+
+      END SUBROUTINE CUTEST_assemble_element_hessian
+
+! -*-*- C U T E S T _ s i z e _ e l e m e n t _ h e s s i a n  SUBROUTINE  -*-*-
+
+      SUBROUTINE CUTEST_size_element_hessian( ng, ISTADG, ISTAGV, GXEQX, ne,   &
+                                              he_val_ne, he_row_ne, status )
+
+!  --------------------------------------------------------------------------
+!  compute the number of elements and the space required to store the Hessian 
+!  matrix of a problem initially written in Standard Input Format (SIF)
+
+!  The matrix is represented in "finite element format", i.e., 
+
+!           ne
+!      H = sum H_e, 
+!          e=1
+
+!  where each element H_i involves a small subset of the rows of H.
+!  H is stored as a list of the row indices involved in each element
+!  and the upper triangle of H_e (stored by rows or columns). 
+
+!  ne (integer) number of elements
+!  he_val_ne (integer) number of entries needed to store the real values of H. 
+!         Specifically, the sum of the number of entries in the upper triangle
+!         of each H_e
+!  he_row_ne (integer) number of entries needed to store the integer entries of
+!         H. Specifically, the sum of the row dimensions of each H_e
+!  ---------------------------------------------------------------------------
+
+!  History -
+!   fortran 77 version released in CUTEr as U/CDIMSE, November 25th 1994
+!   fortran 2003 version released in CUTEst, 26th November 2012
+
+!-----------------------------------------------
+!   D u m m y   A r g u m e n t s
+!-----------------------------------------------
+
+      INTEGER, INTENT( IN ) :: ng
+      INTEGER, INTENT( OUT ) :: ne, he_val_ne, he_row_ne, status
+      INTEGER, INTENT( IN  ), DIMENSION( ng + 1 ) :: ISTADG, ISTAGV
+      LOGICAL, INTENT( IN ), DIMENSION( ng  ) :: GXEQX
+
+!-----------------------------------------------
+!   L o c a l   V a r i a b l e s
+!-----------------------------------------------
+
+!  local variables
+
+      INTEGER :: ig, nvarg, ig1
+
+!  initilaize counts
+
+      ne = 0 ;  he_val_ne = 0 ; he_row_ne = 0
+
+!  loop over the groups
+
+      DO ig = 1, ng
+        ig1 = ig + 1
+
+!  only consider nonlinear groups
+
+        IF ( ISTADG( ig ) < ISTADG( ig1 ) .OR. .NOT. GXEQX( ig ) ) THEN
+          ne = ne + 1
+          nvarg = ISTAGV( ig1 ) - ISTAGV( ig )
+          he_row_ne = he_row_ne + nvarg
+          he_val_ne = he_val_ne + ( nvarg * ( nvarg + 1 ) ) / 2
+        END IF
+      END DO
+      status = 0
+
+      RETURN
+
+!  end of subroutine CUTEST_size_element_hessian
+
+      END SUBROUTINE CUTEST_size_element_hessian
+
 !-  C U T E S T _ h e s s i a n _ t i m e s _ v e c t o r  S U B R O U T I N E -
 
      SUBROUTINE CUTEST_hessian_times_vector(                                   &
-                      n, ng, nel, ntotel, nvrels, nvargp,  nfree, nvar1,       &
-                      nvar2, nnonnz, nbprod, alllin, IVAR, ISTAEV, ISTADH,     &
-                      INTVAR, IELING, IELVAR, ISWKSP, INONNZ, P, Q, GVALS2,    &
+                      n, ng, nel, ntotel, nvrels, nvargp, alllin,              &
+                      ISTAEV, ISTADH, INTVAR, IELING, IELVAR, P, Q, GVALS2,    &
                       GVALS3, GRJAC, GSCALE, ESCALE, HUVALS, lhuval, GXEQX,    &
-                      INTREP, densep, IGCOLJ, ISLGRP, ISVGRP, ISTAGV, IVALJR,  &
-                      ITYPEE, ISYMMH, ISTAJC, IUSED, LIST_elements,            &
-                      LINK_elem_uses_var, NZ_comp_w, AP, W_el, W_in, H_in,     &
-                      RANGE, skipg, KNDOFG )
+                      INTREP, IGCOLJ, ISLGRP, ITYPEE, ISYMMH, ISTAJC, AP,      &
+                      W_el, W_in, H_in, RANGE )
 
-!  ---------------------------------------------------------------------------
+!  ----------------------------------------------------------------------
 !  evaluate Q, the product of the hessian of a groups partially separable
 !  function with the vector P
-
-!  the nonzero components of P have indices IVAR(i), i = nvar1, ..., nvar2.
-!  The nonzero components of the product Q have indices INNONZ(i),
-!  i = 1, ..., nnonnz
-
-!  the elements of the array IUSED must be set to zero on entry; they will have
-!  been reset to zero on exit. 
-
-!  the components of ISWKSP must be less than nbprod on entry; on exit they 
-!  will be no larger than nbprod
-!  ---------------------------------------------------------------------------
+!  ----------------------------------------------------------------------
 
 !  History -
 !   fortran 77 version originally released in CUTE, September 23rd, 1991
 !   fortran 90 version originally released pre GALAHAD Version 1.0. Febrauary
 !     1st 1995 as HSPRD_hessian_times_vector as part of the HSPRD module
-!   update released with GALAHAD Version 2.0. February 16th 2005
+!   update released with GALAHAD Version 2.0. February 16th 2005 with
+!     sparse products removed
 !   fortran 2003 version released in CUTEst, 5th November 2012
 
 !-----------------------------------------------
 !   D u m m y   A r g u m e n t s
 !-----------------------------------------------
 
-     INTEGER, INTENT( IN    ) :: n, ng, nel, ntotel, nvrels, nfree
-     INTEGER, INTENT( IN    ) :: nvar1, nvar2, nbprod
-     INTEGER, INTENT( IN    ) :: nvargp, lhuval
-     INTEGER, INTENT( INOUT ) :: nnonnz
-     LOGICAL, INTENT( IN    ) :: alllin, densep, skipg
-     INTEGER, INTENT( IN    ), DIMENSION( n ) :: IVAR
+     INTEGER, INTENT( IN    ) :: n, ng, nel, ntotel, nvrels, nvargp, lhuval
+     LOGICAL, INTENT( IN    ) :: alllin
      INTEGER, INTENT( IN    ), DIMENSION( nel + 1 ) :: ISTAEV, ISTADH
      INTEGER, INTENT( IN    ), DIMENSION( nel + 1 ) :: INTVAR
      INTEGER, INTENT( IN    ), DIMENSION( ntotel  ) :: IELING
      INTEGER, INTENT( IN    ), DIMENSION( nvrels  ) :: IELVAR
      INTEGER, INTENT( IN    ), DIMENSION( nel     ) :: ITYPEE
-     INTEGER, INTENT( INOUT ), DIMENSION( ntotel ) :: ISWKSP
-     INTEGER, INTENT( INOUT ), DIMENSION( n ) :: INONNZ
      REAL ( KIND = wp ), INTENT( IN  ), DIMENSION( n ) :: P
      REAL ( KIND = wp ), INTENT( IN  ), DIMENSION( ng ) :: GVALS2
      REAL ( KIND = wp ), INTENT( IN  ), DIMENSION( ng ) :: GVALS3
@@ -2480,22 +3182,13 @@
      LOGICAL, INTENT( IN ), DIMENSION( nel ) :: INTREP
      INTEGER, INTENT( IN ), DIMENSION( : ) :: IGCOLJ
      INTEGER, INTENT( IN ), DIMENSION( : ) :: ISLGRP
-     INTEGER, INTENT( IN ), DIMENSION( : ) :: ISVGRP
-     INTEGER, INTENT( IN ), DIMENSION( : ) :: ISTAGV
-     INTEGER, INTENT( IN ), DIMENSION( : ) :: IVALJR
      INTEGER, INTENT( IN ), DIMENSION( : ) :: ISTAJC
-     INTEGER, INTENT( INOUT ), DIMENSION( : ) :: IUSED 
-     INTEGER, INTENT( IN ), DIMENSION( : ) :: LIST_elements
      INTEGER, INTENT( IN ), DIMENSION( : , : ) :: ISYMMH
 
-     INTEGER, INTENT( IN ), DIMENSION( : ) :: LINK_elem_uses_var
-     INTEGER, INTENT( OUT ), DIMENSION( : ) :: NZ_comp_w
      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( : ) :: AP
      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( : ) :: W_el
      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( : ) :: W_in
      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( : ) :: H_in
-
-     INTEGER, INTENT( IN ), OPTIONAL, DIMENSION( ng ) :: KNDOFG
 
 !-----------------------------------------------
 !   I n t e r f a c e   B l o c k s
@@ -2515,672 +3208,151 @@
 !   L o c a l   V a r i a b l e s
 !-----------------------------------------------
 
-     INTEGER :: i, iel, ig, ii, ipt, j, irow, jcol, ijhess, lthvar
-     INTEGER :: iell, nin, k, l, ll, nvarel, ielhst, nnz_comp_w
-     REAL ( KIND = wp ) :: pi, gi, smallest
+     INTEGER :: i, iel, ig, ii, irow, jcol, ijhess, lthvar
+     INTEGER :: iell, nin, k, l, ll, nvarel, ielhst
+     REAL ( KIND = wp ) :: pi, gi
      LOGICAL :: nullwk
 
-     smallest = TINY( one )
+!  =========================== rank-one terms ============================
 
-!  ======================= rank-one terms ==========================
+!  if the ig-th group is non-trivial, form the product of P with the sum of
+!  rank-one first order terms, A(trans) * GVALS3 * A. A is stored by both 
+!  rows and columns
 
-!  If the IG-th group is non-trivial, form the product of P with the
-!  sum of rank-one first order terms, A(trans) * GVALS3 * A. A is
-!  stored by both rows and columns. For maximum efficiency, the
-!  product is formed in different ways if P is sparse or dense
+!  initialize AP and Q as zero
 
-!  -----------------  Case 1. P is not sparse -----------------------
+     AP( : ng ) = 0.0_wp ; Q = 0.0_wp
 
-     IF ( densep ) THEN
-
-!  Initialize AP and Q as zero
-
-       AP( : ng ) = zero ; Q = zero
-
-!  Form the matrix-vector product AP = A * P, using the column-wise
+!  form the matrix-vector product AP = A * P, using the column-wise
 !  storage of A
 
-       DO j = nvar1, nvar2
-         i = IVAR( j )
-         pi = P( i )
+     DO i = 1, n
+       pi = P( i )
 !DIR$ IVDEP
-         DO k = ISTAJC( i ), ISTAJC( i + 1 ) - 1
-           AP( IGCOLJ( k ) ) = AP( IGCOLJ( k ) ) + pi * GRJAC( k )
-         END DO
+       DO k = ISTAJC( i ), ISTAJC( i + 1 ) - 1
+         AP( IGCOLJ( k ) ) = AP( IGCOLJ( k ) ) + pi * GRJAC( k )
        END DO
+     END DO
 
-!  Multiply W by the diagonal matrix GVALS3
+!  multiply W by the diagonal matrix GVALS3
 
-       IF ( skipg ) THEN
-         DO ig = 1, ng
-           IF ( KNDOFG( ig ) == 0 ) THEN
-             AP( ig ) = zero
-           ELSE
-             IF ( GXEQX( ig ) ) THEN
-               AP( ig ) = AP( ig ) * GSCALE( ig )
-             ELSE
-               AP( ig ) = AP( ig ) * GSCALE( ig ) * GVALS3( ig )
-             END IF
-           END IF
-         END DO
-       ELSE
-         WHERE ( GXEQX( : ng ) ) ; AP( : ng ) = AP( : ng ) * GSCALE( : ng )
-         ELSEWHERE ; AP( : ng ) = AP( : ng ) * GSCALE( : ng ) * GVALS3( : ng )
-         END WHERE
-       END IF
+     WHERE ( GXEQX( : ng ) ) 
+       AP( : ng ) = AP( : ng ) * GSCALE( : ng )
+     ELSEWHERE
+       AP( : ng ) = AP( : ng ) * GSCALE( : ng ) * GVALS3( : ng )
+     END WHERE
 
-!  Form the matrix-vector product Q = A(trans) * W, once again using the
+!  form the matrix-vector product Q = A(trans) * W, once again using the
 !  column-wise storage of A
 
-       nnonnz = 0
-       DO j = 1, nfree
-         i = IVAR( j )
-!        Q( i ) =                                                              &
-!          DOT_PRODUCT( AP( IGCOLJ( ISTAJC( i ) : ISTAJC( i + 1 ) - 1 ) ),     &
-!                       GRJAC ( ISTAJC( i ) : ISTAJC( i + 1 ) - 1 ) )
-         pi = zero
-         DO ii = ISTAJC( i ), ISTAJC( i + 1 ) - 1
-           pi = pi + AP( IGCOLJ( ii ) ) * GRJAC( ii )
-         END DO
-         Q( i ) = pi
+     DO i = 1, n
+!      Q( i ) =                                                              &
+!        DOT_PRODUCT( AP( IGCOLJ( ISTAJC( i ) : ISTAJC( i + 1 ) - 1 ) ),     &
+!                     GRJAC ( ISTAJC( i ) : ISTAJC( i + 1 ) - 1 ) )
+       pi = 0.0_wp
+       DO ii = ISTAJC( i ), ISTAJC( i + 1 ) - 1
+         pi = pi + AP( IGCOLJ( ii ) ) * GRJAC( ii )
        END DO
-     ELSE
-
-!  ------------------- Case 2. P is sparse --------------------------
-
-       nnz_comp_w = 0
-       Q( IVAR( : nfree ) ) = zero
-
-!  Form the matrix-vector product W = A * P, using the column-wise
-!  storage of A. Keep track of the nonzero components of W in NZ_comp_w.
-!  Only store components corresponding to non trivial groups
-
-       DO j = nvar1, nvar2
-         i = IVAR( j )
-         pi = P( i )
-!DIR$ IVDEP
-         DO k = ISTAJC( i ), ISTAJC( i + 1 ) - 1
-           ig = IGCOLJ( k )
-           IF ( IUSED( ig ) == 0 ) THEN
-             AP( ig ) = pi * GRJAC( k )
-             IUSED( ig ) = 1
-             nnz_comp_w = nnz_comp_w + 1
-             NZ_comp_w( nnz_comp_w ) = ig
-           ELSE
-             AP( ig ) = AP( ig ) + pi * GRJAC( k )
-           END IF
-         END DO
-       END DO
-
-!  Reset IUSED to zero
-
-       IUSED( NZ_comp_w( : nnz_comp_w ) ) = 0
-
-!  Form the matrix-vector product Q = A( TRANS ) * W, using the row-wise
-!  storage of A
-
-       nnonnz = 0
-       IF ( skipg ) THEN
-         DO j = 1, nnz_comp_w
-           ig = NZ_comp_w( j )
-           IF ( KNDOFG( ig ) == 0 ) CYCLE
-           IF ( .NOT. GXEQX( ig ) ) THEN
-
-!  If group ig is non trivial, there are contributions from its rank-one term
-
-             pi = GSCALE( ig ) * GVALS3( ig ) * AP( ig )
-!DIR$ IVDEP
-             DO k = ISTAGV( ig ), ISTAGV( ig + 1 ) - 1
-               l = ISVGRP( k )
-
-!  If Q has a nonzero in position L, store its index in INONNZ
-
-               IF ( IUSED( l ) == 0 ) THEN
-                 Q( l ) = pi * GRJAC( IVALJR( k ) )
-                 IUSED( l ) = 1
-                 nnonnz = nnonnz + 1
-                 INONNZ( nnonnz ) = l
-               ELSE
-                 Q( l ) = Q( l ) + pi * GRJAC( IVALJR( k ) )
-               END IF
-             END DO
-           END IF
-         END DO
-       ELSE
-         DO j = 1, nnz_comp_w
-           ig = NZ_comp_w( j )
-           IF ( .NOT. GXEQX( ig ) ) THEN
-
-!  If group ig is non trivial, there are contributions from its rank-one term
-
-             pi = GSCALE( ig ) * GVALS3( ig ) * AP( ig )
-!DIR$ IVDEP
-             DO k = ISTAGV( ig ), ISTAGV( ig + 1 ) - 1
-               l = ISVGRP( k )
-
-!  If Q has a nonzero in position L, store its index in INONNZ
-
-               IF ( IUSED( l ) == 0 ) THEN
-                 Q( l ) = pi * GRJAC( IVALJR( k ) )
-                 IUSED( l ) = 1
-                 nnonnz = nnonnz + 1
-                 INONNZ( nnonnz ) = l
-               ELSE
-                 Q( l ) = Q( l ) + pi * GRJAC( IVALJR( k ) )
-               END IF
-             END DO
-           END IF
-         END DO
-       END IF
-     END IF
+       Q( i ) = pi
+     END DO
 
      IF ( .NOT. alllin ) THEN
 
 !  ======================= second-order terms =======================
 
-!  Now consider the product of P with the second order terms (that is, the
-!  2nd derivatives of the elements). Again, for maximum efficiency, the
-!  product is formed in different ways if P is sparse or dense
+!  now consider the product of P with the second order terms (that is, the
+!  2nd derivatives of the elements)
 
-!  --------------------- Case 1. P is not sparse ---------------------
+       DO iell = 1, ntotel
+         ig = ISLGRP( iell )
+         iel = IELING( iell )
+         nvarel = ISTAEV( iel + 1 ) - ISTAEV( iel )
+         IF ( GXEQX( ig ) ) THEN
+           gi = GSCALE( ig ) * ESCALE( iell )
+         ELSE
+           gi = GSCALE( ig ) * ESCALE( iell ) * GVALS2( ig )
+         END IF
+         IF ( INTREP( iel ) ) THEN
 
-       IF ( densep ) THEN
-         DO iell = 1, ntotel
-           ig = ISLGRP( iell )
-           IF ( skipg ) THEN ; IF ( KNDOFG( ig ) == 0 ) CYCLE ; END IF
-           ISWKSP( iell ) = nbprod
-           iel = IELING( iell )
-           nvarel = ISTAEV( iel + 1 ) - ISTAEV( iel )
-           IF ( GXEQX( ig ) ) THEN
-             gi = GSCALE( ig ) * ESCALE( iell )
-           ELSE
-             gi = GSCALE( ig ) * ESCALE( iell ) * GVALS2( ig )
-           END IF
-           IF ( INTREP( iel ) ) THEN
-
-!  The IEL-th element Hessian has an internal representation. Copy the
+!  the iel-th element Hessian has an internal representation. Copy the
 !  elemental variables into W
 
-             nullwk = .TRUE.
-             ll = ISTAEV( iel )
+           nullwk = .TRUE.
+           ll = ISTAEV( iel )
 !DIR$ IVDEP
-             DO ii = 1, nvarel
-               pi = P( IELVAR( ll ) )
-               W_el( ii ) = pi
-               IF ( pi /= zero ) nullwk = .FALSE.
-               ll = ll + 1
-             END DO
-             IF ( nullwk ) CYCLE
+           DO ii = 1, nvarel
+             pi = P( IELVAR( ll ) )
+             W_el( ii ) = pi
+             IF ( pi /= 0.0_wp ) nullwk = .FALSE.
+             ll = ll + 1
+           END DO
+           IF ( nullwk ) CYCLE
 
-!  Find the internal variables, W_in
+!  find the internal variables, W_in
 
-             nin = INTVAR( iel + 1 ) - INTVAR( iel )
-             CALL RANGE ( iel, .FALSE., W_el, W_in, nvarel, nin,               &
-                          ITYPEE( iel ), nvarel, nin )
+           nin = INTVAR( iel + 1 ) - INTVAR( iel )
+           CALL RANGE( iel, .FALSE., W_el, W_in, nvarel, nin,                  &
+                       ITYPEE( iel ), nvarel, nin )
 
-!  Multiply the internal variables by the element Hessian and put the
+!  multiply the internal variables by the element Hessian and put the
 !  product in H_in. Consider the first column of the element Hessian
 
-             ielhst = ISTADH( iel )
-             pi = gi * W_in( 1 )
-             H_in( : nin ) = pi * HUVALS( ISYMMH( 1, : nin ) + ielhst )
+           ielhst = ISTADH( iel )
+           pi = gi * W_in( 1 )
+           H_in( : nin ) = pi * HUVALS( ISYMMH( 1, : nin ) + ielhst )
 
-!  Now consider the remaining columns of the element Hessian
+!  now consider the remaining columns of the element Hessian
 
-             DO jcol = 2, nin
-               pi = gi * W_in( jcol )
-               IF ( pi /= zero ) THEN
-                 H_in( : nin ) = H_in( : nin ) +                               &
-                   pi * HUVALS( ISYMMH( jcol, : nin )+ ielhst )
-               END IF
-             END DO
-
-!  Scatter the product back onto the elemental variables, W
-
-             CALL RANGE ( iel, .TRUE., H_in, W_el, nvarel, nin,                &
-                          ITYPEE( iel ), nin, nvarel )
-
-!  Add the scattered product to Q
-
-             ll = ISTAEV( iel )
-!DIR$ IVDEP
-             DO ii = 1, nvarel
-                l = IELVAR( ll )
-                Q( l ) = Q( l ) + W_el( ii )
-                ll = ll + 1
-             END DO
-           ELSE
-
-!  The IEL-th element Hessian has no internal representation
-
-             lthvar = ISTAEV( iel ) - 1
-             ielhst = ISTADH( iel )
-             DO jcol = 1, nvarel
-               pi = gi * P( IELVAR( lthvar + jcol ) )
-               IF ( pi /= zero ) THEN
-!DIR$ IVDEP  
-                 DO irow = 1, nvarel
-                   ijhess = ISYMMH( jcol, irow ) + ielhst
-                   l = IELVAR( lthvar + irow )
-                   Q( l ) = Q( l ) + pi * HUVALS( ijhess )
-                 END DO
-               END IF
-             END DO
-           END IF
-         END DO
-       ELSE
-
-!  -------------------- Case 2. P is sparse ------------------------
-
-         IF ( skipg ) THEN 
-           DO j = nvar1, nvar2
-
-!  Consider each nonzero component of P separately
-
-             i = IVAR( j )
-             ipt = LINK_elem_uses_var( i )
-             IF ( ipt >= 0 ) THEN
-
-!  The index of the I-th component lies in the IEL-th nonlinear element
-
-               iell = LIST_elements( i )
-  300          CONTINUE
-
-!  Check to ensure that the IEL-th element has not already been used
-
-               IF ( ISWKSP( iell ) < nbprod ) THEN
-                 ISWKSP( iell ) = nbprod
-                 ig = ISLGRP( iell )
-                 IF ( KNDOFG( ig ) /= 0 ) THEN
-                   iel = IELING( iell )
-                   nvarel = ISTAEV( iel + 1 ) - ISTAEV( iel )
-                   IF ( GXEQX( ig ) ) THEN
-                     gi = GSCALE( ig ) * ESCALE( iell )
-                   ELSE
-                     gi = GSCALE( ig ) * ESCALE( iell ) * GVALS2( ig )
-                   END IF
-                   IF ( INTREP( iel ) ) THEN
-
-!  The IEL-th element Hessian has an internal representation. Copy the
-!  elemental variables into W
-
-                     ll = ISTAEV( iel )
-                     W_el( : nvarel ) = P( IELVAR( ll : ll + nvarel - 1 ) )
-
-!  Find the internal variables
-
-                     nin = INTVAR( iel + 1 ) - INTVAR( iel )
-                     CALL RANGE ( iel, .FALSE., W_el, W_in, nvarel, nin,       &
-                                  ITYPEE( iel ), nvarel, nin )
-
-!  Multiply the internal variables by the element Hessian and put the
-!  product in W_in. Consider the first column of the element Hessian
-
-                     ielhst = ISTADH( iel )
-                     pi = gi * W_in( 1 )
-                     H_in( : nin ) = pi * HUVALS( ISYMMH( 1, : nin ) + ielhst )
-
-!  Now consider the remaining columns of the element Hessian
-
-                     DO jcol = 2, nin
-                       pi = gi * W_in( jcol )
-                       IF ( pi /= zero ) THEN
-                         H_in( : nin ) = H_in( : nin ) + pi *                  &
-                           HUVALS( ISYMMH( jcol, : nin ) + ielhst )
-                       END IF
-                     END DO
-
-!  Scatter the product back onto the elemental variables, W
-
-                     CALL RANGE ( iel, .TRUE., H_in, W_el, nvarel, nin,        &
-                                  ITYPEE( iel ), nin, nvarel )
-
-!  Add the scattered product to Q
-
-                     ll = ISTAEV( iel )
-!DIR$ IVDEP
-                     DO ii = 1, nvarel
-                       l = IELVAR( ll )
-
-!  If Q has a nonzero in position L, store its index in INONNZ
-
-                       IF ( ABS( W_el( ii ) ) > smallest ) THEN
-                         IF ( IUSED( l ) == 0 ) THEN
-                           Q( l ) = W_el( ii )
-                           IUSED( l ) = 1
-                           nnonnz = nnonnz + 1
-                           INONNZ( nnonnz ) = l
-                         ELSE
-                           Q( l ) = Q( l ) + W_el( ii )
-                         END IF
-                       END IF
-                       ll = ll + 1
-                     END DO
-                   ELSE
-
-!  The IEL-th element Hessian has no internal representation
-
-                     lthvar = ISTAEV( iel ) - 1
-                     ielhst = ISTADH( iel )
-                     DO jcol = 1, nvarel
-                       pi = gi * P( IELVAR( lthvar + jcol ) )
-                       IF ( pi /= zero ) THEN
-!DIR$ IVDEP        
-                         DO irow = 1, nvarel
-                           ijhess = ISYMMH( jcol, irow ) + ielhst
-
-!  If Q has a nonzero in position L, store its index in INONNZ
-
-                           IF ( ABS( HUVALS( ijhess ) ) > smallest ) THEN
-                             l = IELVAR( lthvar + irow )
-                             IF ( IUSED( l ) == 0 ) THEN
-                               Q( l ) = pi * HUVALS( ijhess )
-                               IUSED( l ) = 1
-                               nnonnz = nnonnz + 1
-                               INONNZ( nnonnz ) = l
-                             ELSE
-                                Q( l ) = Q( l ) + pi * HUVALS( ijhess )
-                             END IF
-                           END IF
-                         END DO
-                       END IF
-                     END DO
-                   END IF
-                 END IF
-               END IF
-
-!  Check to see if there are any further elements whose variables
-!  include the I-th variable
-
-               IF ( ipt > 0 ) THEN
-                 iell = LIST_elements( ipt )
-                 ipt = LINK_elem_uses_var( ipt )
-                 GO TO 300
-               END IF
+           DO jcol = 2, nin
+             pi = gi * W_in( jcol )
+             IF ( pi /= 0.0_wp ) THEN
+               H_in( : nin ) = H_in( : nin ) +                                 &
+                 pi * HUVALS( ISYMMH( jcol, : nin )+ ielhst )
              END IF
            END DO
-         ELSE
-           DO j = nvar1, nvar2
 
-!  Consider each nonzero component of P separately
+!  scatter the product back onto the elemental variables, W
 
-             i = IVAR( j )
-             ipt = LINK_elem_uses_var( i )
-             IF ( ipt >= 0 ) THEN
+           CALL RANGE( iel, .TRUE., H_in, W_el, nvarel, nin,                   &
+                       ITYPEE( iel ), nin, nvarel )
 
-!  The index of the I-th component lies in the IEL-th nonlinear element
+!  add the scattered product to Q
 
-               iell = LIST_elements( i )
-  310          CONTINUE
-
-!  Check to ensure that the IEL-th element has not already been used
-
-               IF ( ISWKSP( iell ) < nbprod ) THEN
-                 ISWKSP( iell ) = nbprod
-                 iel = IELING( iell )
-                 nvarel = ISTAEV( iel + 1 ) - ISTAEV( iel )
-                 ig = ISLGRP( iell )
-                 IF ( GXEQX( ig ) ) THEN
-                   gi = GSCALE( ig ) * ESCALE( iell )
-                 ELSE
-                   gi = GSCALE( ig ) * ESCALE( iell ) * GVALS2( ig )
-                 END IF
-                 IF ( INTREP( iel ) ) THEN
-
-!  The IEL-th element Hessian has an internal representation. Copy the
-!  elemental variables into W
-
-                   ll = ISTAEV( iel )
-                   W_el( : nvarel ) = P( IELVAR( ll : ll + nvarel - 1 ) )
-
-!  Find the internal variables
-
-                   nin = INTVAR( iel + 1 ) - INTVAR( iel )
-                   CALL RANGE ( iel, .FALSE., W_el, W_in, nvarel, nin,         &
-                                ITYPEE( iel ), nvarel, nin )
-
-!  Multiply the internal variables by the element Hessian and put the
-!  product in W_in. Consider the first column of the element Hessian
-
-                   ielhst = ISTADH( iel )
-                   pi = gi * W_in( 1 )
-                   H_in( : nin ) = pi * HUVALS( ISYMMH( 1, : nin ) + ielhst )
-
-!  Now consider the remaining columns of the element Hessian
-
-                   DO jcol = 2, nin
-                     pi = gi * W_in( jcol )
-                     IF ( pi /= zero ) THEN
-                       H_in( : nin ) = H_in( : nin ) + pi *                    &
-                         HUVALS( ISYMMH( jcol, : nin ) + ielhst )
-                     END IF
-                   END DO
-
-!  Scatter the product back onto the elemental variables, W
-
-                   CALL RANGE ( iel, .TRUE., H_in, W_el, nvarel, nin,          &
-                                ITYPEE( iel ), nin, nvarel )
-
-!  Add the scattered product to Q
-
-                   ll = ISTAEV( iel )
+           ll = ISTAEV( iel )
 !DIR$ IVDEP
-                   DO ii = 1, nvarel
-                     l = IELVAR( ll )
+           DO ii = 1, nvarel
+              l = IELVAR( ll )
+              Q( l ) = Q( l ) + W_el( ii )
+              ll = ll + 1
+           END DO
+         ELSE
 
-!  If Q has a nonzero in position L, store its index in INONNZ
+!  the iel-th element Hessian has no internal representation
 
-                     IF ( ABS( W_el( ii ) ) > smallest ) THEN
-                       IF ( IUSED( l ) == 0 ) THEN
-                         Q( l ) = W_el( ii )
-                         IUSED( l ) = 1
-                         nnonnz = nnonnz + 1
-                         INONNZ( nnonnz ) = l
-                       ELSE
-                         Q( l ) = Q( l ) + W_el( ii )
-                       END IF
-                     END IF
-                     ll = ll + 1
-                   END DO
-                 ELSE
-
-!  The IEL-th element Hessian has no internal representation
-
-                   lthvar = ISTAEV( iel ) - 1
-                   ielhst = ISTADH( iel )
-                   DO jcol = 1, nvarel
-                     pi = gi * P( IELVAR( lthvar + jcol ) )
-                     IF ( pi /= zero ) THEN
-!DIR$ IVDEP      
-                       DO irow = 1, nvarel
-                         ijhess = ISYMMH( jcol, irow ) + ielhst
-
-!  If Q has a nonzero in position L, store its index in INONNZ
-
-                         IF ( ABS( HUVALS( ijhess ) ) > smallest ) THEN
-                           l = IELVAR( lthvar + irow )
-                           IF ( IUSED( l ) == 0 ) THEN
-                             Q( l ) = pi * HUVALS( ijhess )
-                             IUSED( l ) = 1
-                             nnonnz = nnonnz + 1
-                             INONNZ( nnonnz ) = l
-                           ELSE
-                              Q( l ) = Q( l ) + pi * HUVALS( ijhess )
-                           END IF
-                         END IF
-                       END DO
-                     END IF
-                   END DO
-                 END IF
-               END IF
-
-!  Check to see if there are any further elements whose variables
-!  include the I-th variable
-
-               IF ( ipt > 0 ) THEN
-                 iell = LIST_elements( ipt )
-                 ipt = LINK_elem_uses_var( ipt )
-                 GO TO 310
-               END IF
+           lthvar = ISTAEV( iel ) - 1
+           ielhst = ISTADH( iel )
+           DO jcol = 1, nvarel
+             pi = gi * P( IELVAR( lthvar + jcol ) )
+             IF ( pi /= 0.0_wp ) THEN
+!DIR$ IVDEP  
+               DO irow = 1, nvarel
+                 ijhess = ISYMMH( jcol, irow ) + ielhst
+                 l = IELVAR( lthvar + irow )
+                 Q( l ) = Q( l ) + pi * HUVALS( ijhess )
+               END DO
              END IF
            END DO
          END IF
-       END IF
+       END DO
      END IF
 
 !  ==================== the product is complete =======================
 
-!  Reset IUSED to zero
-
-     IF ( .NOT. densep ) IUSED( INONNZ( : nnonnz ) ) = 0
      RETURN
 
 !  end of subroutine CUTEST_hessian_times_vector
 
      END SUBROUTINE CUTEST_hessian_times_vector
-
-!-*-  C U T E S T _ e x t e n d _ a r r a y _ r e a l  S U B R O U T I N E -*-
-
-     SUBROUTINE CUTEST_extend_array_real( ARRAY, old_length, used_length,      &
-                                          new_length, min_length, buffer,      &
-                                          status, alloc_status )
-
-!  ---------------------------------------------------------------------
-!  extend a real array so that its length is increaed from old_length to 
-!  as close to new_length as possible while keeping existing data intact
-!  ---------------------------------------------------------------------
-
-!  History -
-!   fortran 90 version released pre GALAHAD Version 1.0. February 7th 1995 as
-!     EXTEND_array_real as part of the GALAHAD module EXTEND
-!   fortran 2003 version released in CUTEst, 5th November 2012
-
-!-----------------------------------------------
-!   D u m m y   A r g u m e n t s
-!-----------------------------------------------
-
-     INTEGER, INTENT( IN ) :: old_length, buffer
-     INTEGER, INTENT( OUT ) :: status, alloc_status
-     INTEGER, INTENT( INOUT ) :: used_length, min_length, new_length
-     REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: ARRAY
-
-     INTEGER :: length
-     LOGICAL :: file_open
-     REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: DUMMY
-
-!  Make sure that the new length is larger than the old
-
-     IF ( new_length <= old_length ) new_length = 2 * old_length
-
-!  Ensure that the input data is consistent
-
-     used_length = MIN( used_length, old_length )
-     min_length = MAX( old_length + 1, MIN( min_length, new_length ) )
-
-!  If possible, allocate DUMMY to hold the old values of ARRAY
-
-     ALLOCATE( DUMMY( used_length ), STAT = alloc_status )
-
-!  If the allocation failed, resort to using an external unit
-
-     IF ( alloc_status /= 0 ) GO TO 100
-
-     DUMMY( : used_length ) = ARRAY( : used_length )
-
-!  Extend the length of ARRAY
-
-     DEALLOCATE( ARRAY )
-     length = new_length
-
-  10 CONTINUE
-     ALLOCATE( ARRAY( length ), STAT = alloc_status )
-
-!  If the allocation failed, reduce the new length and retry
-
-     IF ( alloc_status /= 0 ) THEN
-       length = length + ( length - min_length ) / 2
-
-!  If there is insufficient room for both ARRAY and DUMMY, use an external unit
-
-       IF ( length < min_length ) THEN
-
-!  Rewind the buffer i/o unit
-
-         INQUIRE( UNIT = buffer, OPENED = file_open )
-         IF ( file_open ) THEN
-           REWIND( UNIT = buffer )
-         ELSE
-           OPEN( UNIT = buffer )
-         END IF
-
-!  Copy the contents of ARRAY into the buffer i/o area
-
-         WRITE( UNIT = buffer, FMT = * ) DUMMY( : used_length )
-
-!  Extend the length of ARRAY
-
-         DEALLOCATE( DUMMY )
-         GO TO 110
-       END IF
-       GO TO 10
-     END IF
-
-!  Copy the contents of ARRAY back from the buffer i/o area
-
-       ARRAY( : used_length ) = DUMMY( : used_length )
-       DEALLOCATE( DUMMY )
-       new_length = length
-       GO TO 200
-
-!  Use an external unit for writing
-
- 100   CONTINUE
-
-!  Rewind the buffer i/o unit
-
-     INQUIRE( UNIT = buffer, OPENED = file_open )
-     IF ( file_open ) THEN
-       REWIND( UNIT = buffer )
-     ELSE
-       OPEN( UNIT = buffer )
-     END IF
-
-!  Copy the contents of ARRAY into the buffer i/o area
-
-     WRITE( UNIT = buffer, FMT = * ) ARRAY( : used_length )
-
-!  Extend the length of ARRAY
-
-     DEALLOCATE( ARRAY )
-
- 110 CONTINUE
-     ALLOCATE( ARRAY( new_length ), STAT = alloc_status )
-
-!  If the allocation failed, reduce the new length and retry
-
-     IF ( alloc_status /= 0 ) THEN
-       new_length = min_length + ( new_length - min_length ) / 2
-       IF ( new_length < min_length ) THEN
-          status = 12
-          RETURN
-       END IF
-       GO TO 110
-     END IF
-
-!  Copy the contents of ARRAY back from the buffer i/o area
-
-     REWIND( UNIT = buffer )
-     READ( UNIT = buffer, FMT = * ) ARRAY( : used_length )
-
-!  Successful exit
-
- 200 CONTINUE
-     status = 0
-     RETURN
-
-!  end of subroutine CUTEST_extend_array_real
-
-     END SUBROUTINE CUTEST_extend_array_real
 
 !-  C U T E S T _ e x t e n d _ a r r a y _ i n t e g e r  S U B R O U T I N E -
 
@@ -3211,26 +3383,26 @@
      LOGICAL :: file_open
      INTEGER, ALLOCATABLE, DIMENSION( : ) :: DUMMY
 
-!  Make sure that the new length is larger than the old
+!  make sure that the new length is larger than the old
 
      IF ( new_length <= old_length ) new_length = 2 * old_length
 
-!  Ensure that the input data is consistent
+!  ensure that the input data is consistent
 
      used_length = MIN( used_length, old_length )
      min_length = MAX( old_length + 1, MIN( min_length, new_length ) )
 
-!  If possible, allocate DUMMY to hold the old values of ARRAY
+!  if possible, allocate DUMMY to hold the old values of ARRAY
 
      ALLOCATE( DUMMY( used_length ), STAT = alloc_status )
 
-!  If the allocation failed, resort to using an external unit
+!  if the allocation failed, resort to using an external unit
 
      IF ( alloc_status /= 0 ) GO TO 100
 
      DUMMY( : used_length ) = ARRAY( : used_length )
 
-!  Extend the length of ARRAY
+!  extend the length of ARRAY
 
      DEALLOCATE( ARRAY )
      length = new_length
@@ -3238,16 +3410,16 @@
   10 CONTINUE
      ALLOCATE( ARRAY( length ), STAT = alloc_status )
 
-!  If the allocation failed, reduce the new length and retry
+!  if the allocation failed, reduce the new length and retry
 
      IF ( alloc_status /= 0 ) THEN
        length = length + ( length - min_length ) / 2
 
-!  If there is insufficient room for both ARRAY and DUMMY, use an external unit
+!  if there is insufficient room for both ARRAY and DUMMY, use an external unit
 
        IF ( length < min_length ) THEN
 
-!  Rewind the buffer i/o unit
+!  rewind the buffer i/o unit
 
          INQUIRE( UNIT = buffer, OPENED = file_open )
          IF ( file_open ) THEN
@@ -3256,11 +3428,11 @@
            OPEN( UNIT = buffer )
          END IF
 
-!  Copy the contents of ARRAY into the buffer i/o area
+!  copy the contents of ARRAY into the buffer i/o area
 
          WRITE( UNIT = buffer, FMT = * ) DUMMY( : used_length )
 
-!  Extend the length of ARRAY
+!  extend the length of ARRAY
 
          DEALLOCATE( DUMMY )
          GO TO 110
@@ -3268,18 +3440,18 @@
        GO TO 10
      END IF
 
-!  Copy the contents of ARRAY back from the buffer i/o area
+!  copy the contents of ARRAY back from the buffer i/o area
 
      ARRAY( : used_length ) = DUMMY( : used_length )
      DEALLOCATE( DUMMY )
      new_length = length
      GO TO 200
 
-!  Use an external unit for writing
+!  use an external unit for writing
 
  100 CONTINUE
 
-!  Rewind the buffer i/o unit
+!  rewind the buffer i/o unit
 
      INQUIRE( UNIT = buffer, OPENED = file_open )
      IF ( file_open ) THEN
@@ -3288,18 +3460,18 @@
        OPEN( UNIT = buffer )
      END IF
 
-!  Copy the contents of ARRAY into the buffer i/o area
+!  copy the contents of ARRAY into the buffer i/o area
 
      WRITE( UNIT = buffer, FMT = * ) ARRAY( : used_length )
 
-!  Extend the length of ARRAY
+!  extend the length of ARRAY
 
      DEALLOCATE( ARRAY )
 
  110 CONTINUE
      ALLOCATE( ARRAY( new_length ), STAT = alloc_status )
 
-!  If the allocation failed, reduce the new length and retry
+!  if the allocation failed, reduce the new length and retry
 
      IF ( alloc_status /= 0 ) THEN
        new_length = min_length + ( new_length - min_length ) / 2
@@ -3310,12 +3482,12 @@
        GO TO 110
      END IF
 
-!  Copy the contents of ARRAY back from the buffer i/o area
+!  copy the contents of ARRAY back from the buffer i/o area
 
      REWIND( UNIT = buffer )
      READ( UNIT = buffer, FMT = * ) ARRAY( : used_length )
 
-!  Successful exit
+!  successful exit
 
  200 CONTINUE
      status = 0
@@ -3324,6 +3496,227 @@
 !  end of subroutine CUTEST_extend_array_integer
 
      END SUBROUTINE CUTEST_extend_array_integer
+
+!-*-  C U T E S T _ e x t e n d _ a r r a y _ r e a l  S U B R O U T I N E -*-
+
+     SUBROUTINE CUTEST_extend_array_real( ARRAY, old_length, used_length,      &
+                                          new_length, min_length, buffer,      &
+                                          status, alloc_status )
+
+!  ---------------------------------------------------------------------
+!  extend a real array so that its length is increaed from old_length to 
+!  as close to new_length as possible while keeping existing data intact
+!  ---------------------------------------------------------------------
+
+!  History -
+!   fortran 90 version released pre GALAHAD Version 1.0. February 7th 1995 as
+!     EXTEND_array_real as part of the GALAHAD module EXTEND
+!   fortran 2003 version released in CUTEst, 5th November 2012
+
+!-----------------------------------------------
+!   D u m m y   A r g u m e n t s
+!-----------------------------------------------
+
+     INTEGER, INTENT( IN ) :: old_length, buffer
+     INTEGER, INTENT( OUT ) :: status, alloc_status
+     INTEGER, INTENT( INOUT ) :: used_length, min_length, new_length
+     REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: ARRAY
+
+     INTEGER :: length
+     LOGICAL :: file_open
+     REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: DUMMY
+
+!  make sure that the new length is larger than the old
+
+     IF ( new_length <= old_length ) new_length = 2 * old_length
+
+!  ensure that the input data is consistent
+
+     used_length = MIN( used_length, old_length )
+     min_length = MAX( old_length + 1, MIN( min_length, new_length ) )
+
+!  if possible, allocate DUMMY to hold the old values of ARRAY
+
+     ALLOCATE( DUMMY( used_length ), STAT = alloc_status )
+
+!  if the allocation failed, resort to using an external unit
+
+     IF ( alloc_status /= 0 ) GO TO 100
+
+     DUMMY( : used_length ) = ARRAY( : used_length )
+
+!  extend the length of ARRAY
+
+     DEALLOCATE( ARRAY )
+     length = new_length
+
+  10 CONTINUE
+     ALLOCATE( ARRAY( length ), STAT = alloc_status )
+
+!  if the allocation failed, reduce the new length and retry
+
+     IF ( alloc_status /= 0 ) THEN
+       length = length + ( length - min_length ) / 2
+
+!  if there is insufficient room for both ARRAY and DUMMY, use an external unit
+
+       IF ( length < min_length ) THEN
+
+!  rewind the buffer i/o unit
+
+         INQUIRE( UNIT = buffer, OPENED = file_open )
+         IF ( file_open ) THEN
+           REWIND( UNIT = buffer )
+         ELSE
+           OPEN( UNIT = buffer )
+         END IF
+
+!  copy the contents of ARRAY into the buffer i/o area
+
+         WRITE( UNIT = buffer, FMT = * ) DUMMY( : used_length )
+
+!  extend the length of ARRAY
+
+         DEALLOCATE( DUMMY )
+         GO TO 110
+       END IF
+       GO TO 10
+     END IF
+
+!  copy the contents of ARRAY back from the buffer i/o area
+
+       ARRAY( : used_length ) = DUMMY( : used_length )
+       DEALLOCATE( DUMMY )
+       new_length = length
+       GO TO 200
+
+!  use an external unit for writing
+
+ 100   CONTINUE
+
+!  rewind the buffer i/o unit
+
+     INQUIRE( UNIT = buffer, OPENED = file_open )
+     IF ( file_open ) THEN
+       REWIND( UNIT = buffer )
+     ELSE
+       OPEN( UNIT = buffer )
+     END IF
+
+!  copy the contents of ARRAY into the buffer i/o area
+
+     WRITE( UNIT = buffer, FMT = * ) ARRAY( : used_length )
+
+!  extend the length of ARRAY
+
+     DEALLOCATE( ARRAY )
+
+ 110 CONTINUE
+     ALLOCATE( ARRAY( new_length ), STAT = alloc_status )
+
+!  if the allocation failed, reduce the new length and retry
+
+     IF ( alloc_status /= 0 ) THEN
+       new_length = min_length + ( new_length - min_length ) / 2
+       IF ( new_length < min_length ) THEN
+          status = 12
+          RETURN
+       END IF
+       GO TO 110
+     END IF
+
+!  copy the contents of ARRAY back from the buffer i/o area
+
+     REWIND( UNIT = buffer )
+     READ( UNIT = buffer, FMT = * ) ARRAY( : used_length )
+
+!  successful exit
+
+ 200 CONTINUE
+     status = 0
+     RETURN
+
+!  end of subroutine CUTEST_extend_array_real
+
+     END SUBROUTINE CUTEST_extend_array_real
+
+! C U T E S T _ a l l o c a t e _ a r r a y _ i n t e g e r  S U B R O U T I N E
+
+     SUBROUTINE CUTEST_allocate_array_integer( ARRAY, new_length, alloc_status )
+
+!  -----------------------------------------------------------------------
+!  reallocate an integer array so that its length is at least new_length.
+!  If the array is lready allocated and of length at least new_length, the
+!  allocation will be skipped and new_length replaced by SIZE(ARRAY)
+!  -----------------------------------------------------------------------
+
+!  History -
+!   first released as fortran 2003 version in CUTEst, 26th November 2012
+
+!-----------------------------------------------
+!   D u m m y   A r g u m e n t s
+!-----------------------------------------------
+
+     INTEGER, INTENT( OUT ) :: alloc_status
+     INTEGER, INTENT( INOUT ) :: new_length
+     INTEGER, ALLOCATABLE, DIMENSION( : ) :: ARRAY
+
+     IF ( ALLOCATED( ARRAY ) ) THEN
+       IF ( SIZE( ARRAY ) < new_length ) THEN
+         DEALLOCATE( ARRAY, STAT = alloc_status )
+         IF ( alloc_status /= 0 ) RETURN
+       ELSE
+         new_length = SIZE( ARRAY )
+         alloc_status = 0
+         RETURN
+       END IF
+     END IF
+     ALLOCATE( ARRAY( new_length ), STAT = alloc_status )
+
+     RETURN
+
+!  end of subroutine CUTEST_allocate_array_integer
+
+     END SUBROUTINE CUTEST_allocate_array_integer
+
+! -  C U T E S T _ a l l o c a t e _ a r r a y _ r e a l  S U B R O U T I N E  -
+
+     SUBROUTINE CUTEST_allocate_array_real( ARRAY, new_length, alloc_status )
+
+!  -----------------------------------------------------------------------
+!  reallocate a real array so that its length is at least new_length.
+!  If the array is lready allocated and of length at least new_length, the
+!  allocation will be skipped and new_length replaced by SIZE(ARRAY)
+!  -----------------------------------------------------------------------
+
+!  History -
+!   first released as fortran 2003 version in CUTEst, 26th November 2012
+
+!-----------------------------------------------
+!   D u m m y   A r g u m e n t s
+!-----------------------------------------------
+
+     INTEGER, INTENT( OUT ) :: alloc_status
+     INTEGER, INTENT( INOUT ) :: new_length
+     REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: ARRAY
+
+     IF ( ALLOCATED( ARRAY ) ) THEN
+       IF ( SIZE( ARRAY ) < new_length ) THEN
+         DEALLOCATE( ARRAY, STAT = alloc_status )
+         IF ( alloc_status /= 0 ) RETURN
+       ELSE
+         new_length = SIZE( ARRAY )
+         alloc_status = 0
+         RETURN
+       END IF
+     END IF
+     ALLOCATE( ARRAY( new_length ), STAT = alloc_status )
+
+     RETURN
+
+!  end of subroutine CUTEST_allocate_array_real
+
+     END SUBROUTINE CUTEST_allocate_array_real
 
 !-*-*-*-*-*-*-*-  C U T E S T _ s y m m h  S U B R O U T I N E -*-*-*-*-*-*-*-*-
 
@@ -3412,7 +3805,7 @@
 
 !  compute the k-th pivot
 
-       apivot = - one
+       apivot = - 1.0_wp
        l2 = m * ( k - 1 ) ; l1 = l2
        DO j = k, n
          DO i = k, m
@@ -3467,6 +3860,1010 @@
 
      END SUBROUTINE CUTEST_gauss_elim
 
+! - C U T E S T _ a s s e m b l e _ e l e m e n t _ h e s s i a n  SUBROUTINE  -
+
+! SUBROUTINE CUTEST_assemble_element_hessian
+
+      SUBROUTINE ASMBE( n, ng, maxsel, ISTADH, lstadh, ICNA, licna,            &
+                        ISTADA, lstada, INTVAR, lntvar, IELVAR, lelvar,        &
+                        IELING, leling, ISTADG, lstadg, ISTAEV, lstaev,        &
+                        ISTAGV, lnstgv, ISVGRP, lnvgrp, IWK, liwk,             &
+                        A, la, GUVALS, lnguvl, HUVALS, lnhuvl, GVALS2,         &
+                        GVALS3, GSCALE, ESCALE, lescal, WK, lwk,               &
+                        gxeqx, lgxeqx, intrep, lintre, ITYPEE, litype,         &
+                        RANGE, ne, IRNHI, lirnhi, IPRNHI, HI,                  &
+                        lhi, IPRHI, BYROWS, iprint, iout, status )
+
+!  ********************************************************************
+
+!  Assemble the second derivative matrix of a groups partially
+!  separable function into finite-element format
+
+!  Nick Gould, November 25th 1994, for CGT Productions.
+
+!  ********************************************************************
+
+      INTEGER :: n, ng, maxsel, lirnhi, lhi, ne
+      INTEGER :: la, litype, iout, status, iprint
+      INTEGER :: lstadh, licna, lstada, lntvar, lelvar, leling
+      INTEGER :: lstadg, lstaev, lnstgv, lnvgrp, liwk
+      INTEGER :: lnguvl, lnhuvl, lescal, lwk, lgxeqx, lintre
+      LOGICAL :: byrows
+      INTEGER, DIMENSION( lstadh ) :: ISTADH
+      INTEGER, DIMENSION( licna ) :: ICNA 
+      INTEGER, DIMENSION( lstada ) :: ISTADA
+      INTEGER, DIMENSION( lntvar ) :: INTVAR
+      INTEGER, DIMENSION( lelvar ) :: IELVAR
+      INTEGER, DIMENSION( leling ) :: IELING
+      INTEGER, DIMENSION( lstadg ) :: ISTADG
+      INTEGER, DIMENSION( lstaev ) :: ISTAEV
+      INTEGER, DIMENSION( lnstgv ) :: ISTAGV
+      INTEGER, DIMENSION( lnvgrp ) :: ISVGRP
+      INTEGER, DIMENSION( lirnhi ) :: IRNHI 
+      INTEGER, DIMENSION( liwk ) :: IWK 
+      INTEGER, DIMENSION( ng + 1 ) :: IPRNHI
+      INTEGER, DIMENSION( ng + 1 ) :: IPRHI 
+      INTEGER, DIMENSION( litype ) :: ITYPEE
+      LOGICAL, DIMENSION( lgxeqx ) :: GXEQX
+      LOGICAL, DIMENSION( lintre ) :: INTREP
+      REAL ( KIND = wp ), DIMENSION( la ) :: A
+      REAL ( KIND = wp ), DIMENSION( ng ) :: GVALS2
+      REAL ( KIND = wp ), DIMENSION( ng ) :: GVALS3
+      REAL ( KIND = wp ), DIMENSION( lnguvl ) :: GUVALS
+      REAL ( KIND = wp ), DIMENSION( lnhuvl ) :: HUVALS
+      REAL ( KIND = wp ), DIMENSION( ng ) :: GSCALE
+      REAL ( KIND = wp ), DIMENSION( lescal ) :: ESCALE
+      REAL ( KIND = wp ), DIMENSION( lhi ) :: HI
+      REAL ( KIND = wp ), DIMENSION( lwk ) :: WK
+      EXTERNAL :: RANGE 
+
+!  local variables
+
+      INTEGER :: i, ii, j, ihi, jj, k, l, nn, ig, nnn, nin, iell, iel, ielh
+      INTEGER :: nvarel, ig1, listvs, listve, ihnext, nvarg, nsizee
+      INTEGER :: ijhess, irow, jcol, jcolst
+      REAL ( KIND = wp ) :: wki, hesnew, gdash,  g2dash, scalee
+
+! -------------------------------------------------------
+!  form the rank-one second order term for the i-th group
+! -------------------------------------------------------
+
+      ne = 0
+      IPRNHI( 1 ) = 1
+      IPRHI( 1 ) = 1
+      DO ig = 1, ng
+        IF ( iprint >= 100 ) WRITE( iout, 2070 ) ig
+        ig1 = ig + 1
+        IF ( GXEQX( ig ) ) THEN
+          g2dash = 0.0_wp
+        ELSE
+          g2dash = GSCALE( ig ) * GVALS3( ig )
+          IF ( iprint >= 100 ) WRITE( iout, * ) ' GVALS3(ig) ', GVALS3( ig )
+        END IF
+
+!  ignore linear groups
+
+        IF ( ISTADG( ig ) >= ISTADG( ig1 ) .AND. GXEQX( ig ) ) CYCLE
+
+!  the group is nonlinear
+
+        ne = ne + 1
+        listvs = ISTAGV( ig )
+        listve = ISTAGV( ig1 ) - 1
+        nvarg = listve - listvs + 1
+
+!  set the starting addresses for the integer and real arrays for group ig + 1
+
+        IPRNHI( ne + 1 ) = IPRNHI( ne ) + nvarg
+        IF ( IPRNHI( ne + 1 ) > lirnhi ) THEN
+          WRITE( iout, 2030 ) lirnhi
+          GO TO 610
+        END IF
+        nsizee = ( nvarg * ( nvarg + 1 ) ) / 2
+        IPRHI( ne + 1 ) = IPRHI( ne ) + nsizee
+        IF ( IPRHI( ne + 1 ) >= lhi ) THEN
+          WRITE( iout, 2040 ) lhi, IPRHI( ne + 1 )
+          GO TO 610
+        END IF
+
+!  record the row indices involved in super-element ne
+
+        IF ( GXEQX( ig ) .OR. g2dash == 0.0_wp ) THEN 
+          HI( IPRHI( ne : ne + nsizee ) ) = 0.0_wp
+          CYCLE
+        END IF
+        k = IPRNHI( ne )
+        DO l = listvs, listve
+          IRNHI( k ) = ISVGRP( l )
+          k = k + 1
+        END DO
+
+!  form the gradient of the ig-th group
+
+        WK( ISVGRP( listvs : listve ) ) = 0.0_wp
+
+!  consider any nonlinear elements for the group
+
+        DO iell = ISTADG( ig ), ISTADG( ig1 ) - 1
+          iel = IELING( iell )
+          k = INTVAR( iel ) ; l = ISTAEV( iel )
+          nvarel = ISTAEV( iel + 1 ) - l
+          scalee = ESCALE( iell )
+          IF ( INTREP( iel ) ) THEN
+
+!  the iel-th element has an internal representation
+
+            nin = INTVAR( iel + 1 ) - k
+            CALL RANGE( iel, .TRUE., GUVALS( k ), WK( n + 1 ),                 &
+                        nvarel, nin, ITYPEE( iel ), nin, nvarel )
+            DO i = 1, nvarel
+              j = IELVAR( l )
+              WK( j ) = WK( j ) + scalee * WK( n + i )
+              l = l + 1
+            END DO
+          ELSE
+
+!  the iel-th element has no internal representation
+
+            DO i = 1, nvarel
+               j = IELVAR( l )
+               WK( j ) = WK( j ) + scalee * GUVALS( k )
+               k = k + 1 ; l = l + 1
+            END DO
+          END IF
+        END DO
+
+!  include the contribution from the linear element
+
+        DO k = ISTADA( ig ), ISTADA( ig1 ) - 1
+          j = ICNA( k )
+          WK( j ) = WK( j ) + A( k )
+        END DO
+
+!  the gradient is complete. Form the j-th column of the rank-one matrix
+
+        DO l = listvs, listve
+          jj = ISVGRP( l )
+          j = l - listvs + 1
+
+!  find the entry in row i of this column.
+
+          DO k = listvs, l
+             ii = ISVGRP( k )
+             i = k - listvs + 1
+             IF ( byrows ) THEN
+               ihi =                                                           &
+                 IPRHI( ne ) - 1 + nvarg * ( i - 1 ) - ( ( i - 1 ) * i ) / 2 + j
+             ELSE
+               ihi = IPRHI( ne ) - 1 + i + ( j * ( j - 1 ) ) / 2
+             END IF
+             HI( ihi ) = WK( ii ) * WK( jj ) * g2dash
+             IF ( iprint >= 100 )  WRITE( iout, 2090 ) ii, jj, HI( ihi )
+          END DO
+        END DO
+      END DO
+
+!  reset the workspace array to zero
+
+      WK( : maxsel ) = 0.0_wp
+
+! ---------------------------------------------------------
+!  add on the low rank first order terms for the I-th group
+! ---------------------------------------------------------
+
+      ne = 0
+      DO ig = 1, ng
+        ig1 = ig + 1
+
+!  once again, ignore linear groups
+
+        IF ( ISTADG( ig ) >= ISTADG( ig1 ) .AND. GXEQX( ig ) ) CYCLE
+
+!  the group is nonlinear
+
+        ne = ne + 1
+        IF ( iprint >= 100 ) WRITE( iout, 2100 ) ig
+        IF ( GXEQX( ig ) ) THEN
+          gdash = GSCALE( ig )
+        ELSE
+          gdash = GSCALE( ig ) * GVALS2( ig )
+          IF ( iprint >= 100 )WRITE(6,*) ' GVALS2(IG) ', GVALS2(IG)
+        END IF
+        IF ( gdash == 0.0_wp ) CYCLE
+
+!  map the problem variables to the elemental variables
+
+        nvarg = IPRNHI( ne + 1 ) - IPRNHI( ne )
+        DO i = IPRNHI( ne ), IPRNHI( ne + 1 ) - 1
+          IWK( IRNHI( i ) ) = i + 1 - IPRNHI( ne )
+        END DO
+
+!  see if the group has any nonlinear elements
+
+        DO iell = ISTADG( ig ), ISTADG( ig1 ) - 1
+          iel = IELING( iell )
+          listvs = ISTAEV( iel )
+          listve = ISTAEV( iel + 1 ) - 1
+          nvarel = listve - listvs + 1
+          ielh = ISTADH( iel )
+          ihnext = ielh
+          scalee = ESCALE( iell )
+          DO l = listvs, listve
+            j = IWK( IELVAR( l ) )
+
+!  the iel-th element has an internal representation. Compute the j-th column 
+!  of the element Hessian matrix
+
+            IF ( INTREP( iel ) ) THEN
+
+!  compute the j-th column of the Hessian
+
+              WK( l - listvs + 1 ) = 1.0_wp
+
+!  find the internal variables
+
+              nin = INTVAR( iel + 1 ) - INTVAR( iel )
+              CALL RANGE ( iel, .FALSE., WK( 1 ), WK( maxsel + 1 ), nvarel,    &
+                           nin, ITYPEE( iel ), nvarel, nin )
+
+!  multiply the internal variables by the element Hessian
+
+              nn = maxsel + nin
+              WK( nn + 1 : nn + nin ) = 0.0_wp
+
+!  only the upper triangle of the element Hessian is stored
+
+              jcolst = ielh - 1
+              DO jcol = 1, nin
+                ijhess = jcolst
+                jcolst = jcolst + jcol
+                wki = WK( maxsel + jcol ) * gdash
+                DO irow = 1, nin
+                  IF ( irow <= jcol ) THEN
+                    ijhess = ijhess + 1
+                  ELSE
+                    ijhess = ijhess + irow - 1
+                  END IF
+                  WK( nn + irow ) = WK( nn + irow ) + wki * HUVALS( ijhess )
+                END DO
+              END DO
+
+!  scatter the product back onto the elemental variables
+
+              nnn = nn + nin
+              CALL RANGE ( iel, .TRUE., WK( nn + 1 ), WK( nnn + 1 ),           &
+                           nvarel, nin, ITYPEE( iel ), nin, nvarel )
+              WK( l - listvs + 1 ) = 0.0_wp
+
+!  find the entry in row i of this column
+
+            END IF
+            DO k = listvs, l
+              i = IWK( IELVAR( k ) )
+
+!  only the upper triangle of the matrix is stored
+
+              IF ( i <= j ) THEN
+                ii = i ; jj = j
+              ELSE
+                ii = j ; jj = i
+              END IF
+
+!  obtain the appropriate storage location in H for the new entry
+
+              IF ( INTREP( iel ) ) THEN
+                 hesnew = scalee * WK( nnn + k - listvs + 1 )
+              ELSE
+                 hesnew = scalee * HUVALS( ihnext ) * gdash
+              END IF
+              IF ( iprint >= 100 ) WRITE( iout, 2080 ) ii, jj, iel, hesnew
+              IF ( byrows ) THEN
+                 ihi = IPRHI( ne ) - 1 + nvarg * ( ii - 1 ) -                  &
+                    ( ( ii - 1 ) * ii ) / 2 + jj
+              ELSE
+                 ihi = IPRHI( ne ) - 1 + ii + ( jj * ( jj - 1 ) ) / 2
+              END IF
+              HI( ihi ) = HI( ihi ) + hesnew
+              IF ( k /= l .AND. ii == jj ) HI( ihi ) = HI( ihi ) + hesnew
+              ihnext = ihnext + 1
+            END DO
+          END DO
+        END DO
+      END DO
+
+! ----------------------------------------
+!  for debugging, print the nonzero values
+! ----------------------------------------
+
+      IF ( iprint >= 10 ) THEN
+        DO ig = 1, ne
+          WRITE( iout, 2000 ) ig
+          WRITE( iout, 2010 )                                                  &
+             ( IRNHI( i ), i = IPRNHI( ig ), IPRNHI( ig + 1 ) - 1 )
+          WRITE( iout, 2020 )                                                  &
+              ( HI( i ), i = IPRHI( ig ), IPRHI( ig + 1 ) - 1 )
+        END DO
+      END IF
+      status = 0
+      RETURN
+
+!  unsuccessful returns
+
+  610 CONTINUE
+      status = 1
+      RETURN
+
+!  non-executable statements
+
+ 2000 FORMAT( ' Super-element ', I10 )   
+ 2010 FORMAT( ' Super-element variables     ', 8I7, /, ( 11I7 ) )
+ 2020 FORMAT( ' Nonzeros   ', 1P, 6D12.4, /, ( 7D12.4 ) )
+ 2030 FORMAT( ' ** Array dimension lirnhi = ',I8,' too small in ASMBE.')
+ 2040 FORMAT( ' ** Array dimension lhi = ', I8,' too small in ASMBE. ',        &
+              'Increase to at least ', I8 )
+ 2070 FORMAT( ' Group ', I5, ' rank-one terms ' )
+ 2080 FORMAT( ' Row ', I6, ' Column ', I6, ' used from element ', I6,          &
+              ' value = ', 1P, D24.16 )
+ 2090 FORMAT( ' Row ', I6, ' column ', I6, ' used. Value = ',1P,D24.16)
+ 2100 FORMAT( ' Group ', I5, ' second-order terms ' )
+
+!  end of subroutine ASMBE
+
+      END SUBROUTINE ASMBE
+
+      SUBROUTINE CUTEST_assemble_hessian_old(                                  &
+                      n, ng, nel, ntotel, nvrels, nnza, maxsel, nvargp,        &
+                      nfree, IFREE, ISTADH, ICNA,                              &
+                      ISTADA, INTVAR, IELVAR, IELING, ISTADG, ISTAEV,          &
+                      ISTAGV, ISVGRP, A, GUVALS, lnguvl, HUVALS,               &
+                      lnhuvl, GVALS2, GVALS3, GSCALE, ESCALE, GXEQX,           &
+                      ITYPEE, INTREP, RANGE, iprint, error, out,               &
+                      buffer, use_band, no_zeros, fixed_structure, nsemib,     &
+                      status, alloc_status, bad_alloc, array_status,           &
+                      lh_row, lh_col, lh_val, H_row, H_col, H_val,             &
+                      LINK_col, POS_in_H, llink, lpos,                         &
+                      IW_asmbl, GRAD_el, W_el, W_in, H_el, H_in, skipg,        &
+                      nnzh, maxsbw, DIAG, OFFDIA, KNDOFG )
+
+!  Assemble the second derivative matrix of a groups partially separable
+!  function in either co-ordinate or band format
+
+!  History -
+!   ( based on Conn-Gould-Toint fortran 77 version LANCELOT A, ~1992 )
+!   fortran 90 version originally released pre GALAHAD Version 1.0. January
+!     25th 1995 as ASMBL_assemble_hessian as part of the ASMBL module
+!   update released with GALAHAD Version 2.0. February 16th 2005
+!   fortran 2003 version released in CUTEst, 5th November 2012
+
+!-----------------------------------------------
+!   D u m m y   A r g u m e n t s
+!-----------------------------------------------
+
+      INTEGER, INTENT( IN  ) :: n, nel, ng, maxsel, nsemib, nvargp, nnza
+      INTEGER, INTENT( IN  ) :: nvrels, ntotel, nfree, buffer
+      INTEGER, INTENT( IN  ) :: lnguvl, lnhuvl, iprint, error, out
+      INTEGER, INTENT( OUT ) :: status, alloc_status
+      LOGICAL, INTENT( IN  ) :: use_band, no_zeros, fixed_structure, skipg
+      LOGICAL, INTENT( INOUT ) :: array_status
+      CHARACTER ( LEN = 24 ) :: bad_alloc
+      INTEGER, INTENT( IN  ), DIMENSION( n       ) :: IFREE
+      INTEGER, INTENT( IN  ), DIMENSION( nnza    ) :: ICNA
+      INTEGER, INTENT( IN  ), DIMENSION( ng  + 1 ) :: ISTADA, ISTADG, ISTAGV
+      INTEGER, INTENT( IN  ), DIMENSION( nel + 1 ) :: INTVAR, ISTAEV, ISTADH
+      INTEGER, INTENT( IN  ), DIMENSION( nvrels  ) :: IELVAR
+      INTEGER, INTENT( IN  ), DIMENSION( ntotel  ) :: IELING
+      INTEGER, INTENT( IN  ), DIMENSION( nvargp  ) :: ISVGRP
+      INTEGER, INTENT( IN  ), DIMENSION( nel ) :: ITYPEE
+      REAL ( KIND = wp ), INTENT( IN  ), DIMENSION( nnza ) :: A
+      REAL ( KIND = wp ), INTENT( IN  ), DIMENSION( lnguvl ) :: GUVALS
+      REAL ( KIND = wp ), INTENT( IN  ), DIMENSION( lnhuvl ) :: HUVALS
+      REAL ( KIND = wp ), INTENT( IN  ), DIMENSION( ng ) :: GVALS2
+      REAL ( KIND = wp ), INTENT( IN  ), DIMENSION( ng ) :: GVALS3
+      REAL ( KIND = wp ), INTENT( IN  ), DIMENSION( ng ) :: GSCALE
+      REAL ( KIND = wp ), INTENT( IN  ), DIMENSION( ntotel ) :: ESCALE
+      LOGICAL, INTENT( IN ), DIMENSION( ng  ) :: GXEQX
+      LOGICAL, INTENT( IN ), DIMENSION( nel ) :: INTREP
+
+!---------------------------------------------------------------
+!   D u m m y   A r g u m e n t s   f o r   W o r k s p a c e 
+!--------------------------------------------------------------
+
+      INTEGER, INTENT( INOUT ) :: lh_row, lh_col, lh_val, llink, lpos
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: LINK_col
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: POS_in_H
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: H_row
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: H_col
+      REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: H_val
+
+      INTEGER, INTENT( OUT ), DIMENSION( : ) :: IW_asmbl
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( : ) :: GRAD_el
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( : ) :: W_el
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( : ) :: W_in
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( : ) :: H_el
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( : ) :: H_in
+
+!--------------------------------------------------
+!   O p t i o n a l   D u m m y   A r g u m e n t s
+!--------------------------------------------------
+
+      INTEGER, INTENT( OUT ), OPTIONAL :: maxsbw, nnzh
+      REAL ( KIND = wp ), INTENT( OUT ), OPTIONAL,                             &
+                                         DIMENSION( nfree ) :: DIAG
+      REAL ( KIND = wp ), INTENT( OUT ), OPTIONAL,                             &
+                                         DIMENSION( nsemib, nfree ) :: OFFDIA
+      INTEGER, INTENT( IN ), OPTIONAL, DIMENSION( ng ) :: KNDOFG
+
+!-----------------------------------------------
+!   I n t e r f a c e   B l o c k s
+!-----------------------------------------------
+
+      INTERFACE
+        SUBROUTINE RANGE( ielemn, transp, W1, W2, nelvar, ninvar, ieltyp,      &
+                          lw1, lw2 )
+        INTEGER, INTENT( IN ) :: ielemn, nelvar, ninvar, ieltyp, lw1, lw2
+        LOGICAL, INTENT( IN ) :: transp
+        REAL ( KIND = KIND( 1.0D+0 ) ), INTENT( IN  ), DIMENSION ( lw1 ) :: W1
+        REAL ( KIND = KIND( 1.0D+0 ) ), INTENT( OUT ), DIMENSION ( lw2 ) :: W2
+        END SUBROUTINE RANGE
+      END INTERFACE
+
+!-----------------------------------------------
+!   L o c a l   V a r i a b l e s
+!-----------------------------------------------
+
+      INTEGER :: i, ii, j, jj, k, ig, ip, l, newpt, nin, nlh, ulh, mlh
+      INTEGER :: iell, iel, ihnext, nvarel, ig1, listvs, listve
+      INTEGER :: ielh, inext, ijhess, irow, jcol, jcolst, istart
+      REAL ( KIND = wp ) :: wki, hesnew, gdash, g2dash, scalee
+      CHARACTER ( LEN = 2 ), DIMENSION( 36, 36 ) :: MATRIX
+!     CHARACTER ( LEN = 80 ) :: array
+
+!  if a band storage scheme is to be used, initialize the entries within the
+!  band as zero
+
+      IF ( use_band ) THEN
+        maxsbw = 0
+        DIAG = 0.0_wp ; OFFDIA = 0.0_wp
+
+!  if a co-ordinate scheme is to be used, allocate arrays to hold the link
+!  list which points to the row numbers  which are used in the columns of
+!  the assembled Hessian
+
+!  LINK_col( . ) gives the link list. The list for column J starts
+!                 in LINK_col( J ) and ends when LINK_col( K ) = - 1
+!  POS_in_H( . ) gives the position in H of the current link
+
+      ELSE
+        IF ( .NOT. array_status ) THEN
+          array_status = .TRUE.
+          llink = MIN( lh_row, lh_col, lh_val ) + nfree
+          lpos = MIN( lh_row, lh_col, lh_val ) + nfree
+        
+          CALL CUTEST_allocate_array( LINK_col, llink, alloc_status )
+          IF ( alloc_status /= 0 ) THEN
+            bad_alloc = 'LINK_col' ; GO TO 980 ; END IF
+        
+          CALL CUTEST_allocate_array( POS_in_H, lpos, alloc_status )
+          IF ( alloc_status /= 0 ) THEN
+            bad_alloc = 'POS_in_H' ; GO TO 980 ; END IF
+        
+          CALL CUTEST_allocate_array( H_row, lh_row, alloc_status )
+          IF ( alloc_status /= 0 ) THEN
+            bad_alloc = 'H_row' ; GO TO 980 ; END IF
+        
+          CALL CUTEST_allocate_array( H_col, lh_col, alloc_status )
+          IF ( alloc_status /= 0 ) THEN
+            bad_alloc = 'H_col' ; GO TO 980 ; END IF
+        
+          CALL CUTEST_allocate_array( H_val, lh_val, alloc_status )
+          IF ( alloc_status /= 0 ) THEN
+            bad_alloc = 'H_val' ; GO TO 980 ; END IF
+        ELSE
+          k = MIN( lh_row, lh_col, lh_val ) + nfree
+          IF ( llink < k ) THEN
+            DEALLOCATE( LINK_col ) ; llink = k
+            ALLOCATE( LINK_col( llink ), STAT = alloc_status )
+            IF ( alloc_status /= 0 ) THEN
+              bad_alloc = 'LINK_c'; GO TO 980 ; END IF
+          END IF
+        
+          k = MIN( lh_row, lh_col, lh_val ) + nfree
+          IF ( lpos < k ) THEN 
+            DEALLOCATE( POS_in_H ) ; lpos = k
+            ALLOCATE( POS_in_H( lpos ), STAT = alloc_status )
+            IF ( alloc_status /= 0 ) THEN 
+              bad_alloc = 'POS_in'; GO TO 980 ; END IF
+          END IF
+        END IF
+        LINK_col( : nfree ) = - 1 ; POS_in_H( : nfree ) = - 1
+        newpt = nfree
+
+!  make an initial allocation of the space required to hold the Hessian
+
+        nnzh = 0
+      END IF
+
+!  renumber the free variables so that they are variables 1 to nfree
+
+      IW_asmbl( : n ) = 0
+      DO i = 1, nfree
+        IW_asmbl( IFREE( i ) ) = i
+      END DO
+      IF ( iprint >= 10 ) WRITE( out, 2060 ) nfree, ( IFREE( i ), i = 1, nfree )
+
+!  ------------------------------------------------------
+!  Form the rank-one second order term for the I-th group
+!  ------------------------------------------------------
+
+      DO ig = 1, ng
+        IF ( skipg ) THEN
+          IF ( KNDOFG( ig ) == 0 ) CYCLE ; END IF
+        IF ( GXEQX( ig ) ) CYCLE
+        IF ( .NOT. fixed_structure .AND. GSCALE( ig ) == 0.0_wp ) CYCLE
+        IF ( iprint >= 100 ) WRITE( out, 2070 ) ig
+        g2dash = GSCALE( ig ) * GVALS3( ig )
+        IF ( iprint >= 100 ) WRITE( 6, * ) ' GVALS3( ig ) ', GVALS3( ig )
+        IF ( no_zeros .AND. g2dash == 0.0_wp ) CYCLE
+        ig1 = ig + 1
+        listvs = ISTAGV( ig )
+        listve = ISTAGV( ig1 ) - 1
+
+!  form the gradient of the ig-th group
+
+        GRAD_el( ISVGRP( listvs : listve ) ) = 0.0_wp
+
+!  consider any nonlinear elements for the group
+
+        DO iell = ISTADG( ig ), ISTADG( ig1 ) - 1
+          iel = IELING( iell )
+          k = INTVAR( iel )
+          l = ISTAEV( iel )
+          nvarel = ISTAEV( iel + 1 ) - l
+          scalee = ESCALE( iell )
+          IF ( INTREP( iel ) ) THEN
+
+!  the iel-th element has an internal representation
+
+            nin = INTVAR( iel + 1 ) - k
+            CALL RANGE( iel, .TRUE., GUVALS( k : k + nin - 1 ),                &
+                        H_el, nvarel, nin, ITYPEE( iel ), nin, nvarel )
+            DO i = 1, nvarel
+              j = IELVAR( l )
+              GRAD_el( j ) = GRAD_el( j ) + scalee * H_el( i )
+              l = l + 1
+            END DO
+          ELSE
+
+!  the iel-th element has no internal representation
+
+            DO i = 1, nvarel
+              j = IELVAR( l )
+              GRAD_el( j ) = GRAD_el( j ) + scalee * GUVALS( k )
+              k = k + 1
+              l = l + 1
+            END DO
+          END IF
+        END DO
+
+!  include the contribution from the linear element
+
+        DO k = ISTADA( ig ), ISTADA( ig1 ) - 1
+          j = ICNA( k )
+          GRAD_el( j ) = GRAD_el( j ) + A( k )
+        END DO
+
+!  the gradient is complete. Form the j-th column of the rank-one matrix
+
+        DO l = listvs, listve
+          jj = ISVGRP( l )
+          j = IW_asmbl( jj )
+          IF ( j == 0 ) CYCLE
+
+!  find the entry in row i of this column
+
+          DO k = listvs, listve
+            ii = ISVGRP( k )
+            i = IW_asmbl( ii )
+            IF ( i == 0 .OR. i > j ) CYCLE
+
+!  Skip all elements which lie outside a band of width nsemib
+
+            IF ( use_band ) maxsbw = MAX( maxsbw, j - i )
+            IF ( j - i > nsemib ) CYCLE
+            hesnew = GRAD_el( ii ) * GRAD_el( jj ) * g2dash
+            IF ( iprint >= 100 ) WRITE( out, 2090 ) i, j, hesnew
+            IF ( no_zeros .AND. hesnew == 0.0_wp ) CYCLE
+
+!  obtain the appropriate storage location in H for the new entry
+
+!  Case 1: band matrix storage scheme
+
+            IF ( use_band ) THEN
+
+!  the entry belongs on the diagonal
+
+              IF ( i == j ) THEN
+                DIAG( i ) = DIAG( i ) + hesnew
+
+!  the entry belongs off the diagonal
+
+              ELSE
+                OFFDIA( j - i, i ) = OFFDIA( j - i, i ) + hesnew
+              END IF
+
+!  Case 2: co-ordinate storage scheme
+
+            ELSE
+              istart = j
+ 150          CONTINUE
+              inext = LINK_col( istart )
+              IF ( inext == - 1 ) THEN
+
+!  the (i,j)-th location is empty. Place the new entry in this location and
+!  add another link to the list
+
+                nnzh = nnzh + 1
+                IF ( nnzh > lh_val .OR. nnzh > lh_row .OR. nnzh > lh_col ) THEN
+                  nlh = lh_row ; ulh = nnzh - 1 ; mlh = nnzh
+                  CALL CUTEST_extend_array( H_row, lh_row, ulh, nlh, mlh,      &
+                                            buffer, status, alloc_status )
+                  IF ( status /= 0 ) THEN
+                    bad_alloc = 'H_row' ; GO TO 980 ; END IF
+                  lh_row = nlh
+                  nlh = lh_col ; ulh = nnzh - 1 ; mlh = nnzh
+                  CALL CUTEST_extend_array( H_col, lh_col, ulh, nlh, mlh,      &
+                                            buffer, status, alloc_status )
+                  IF ( status /= 0 ) THEN
+                    bad_alloc = 'H_col' ; GO TO 980 ; END IF
+                  lh_col = nlh
+                  nlh = lh_val ; ulh = nnzh - 1 ; mlh = nnzh
+                  CALL CUTEST_extend_array( H_val, lh_val, ulh, nlh, mlh,      &
+                                            buffer, status, alloc_status )
+                  IF ( status /= 0 ) THEN
+                    bad_alloc = 'H' ; GO TO 980 ; END IF
+                  lh_val = nlh
+                END IF
+                H_row( nnzh ) = i ; H_col( nnzh ) = j ; H_val( nnzh ) = hesnew
+                IF ( newpt == llink ) THEN
+                  nlh = llink
+                  ulh = newpt; mlh = llink + 1
+                  CALL CUTEST_extend_array( LINK_col, llink, ulh, nlh, mlh,    &
+                                            buffer, status, alloc_status )
+                  IF ( status /= 0 ) THEN
+                    bad_alloc = 'LINK_col' ; GO TO 980 ; END IF
+                  llink = nlh
+                  nlh = lpos
+                  ulh = newpt; mlh = lpos + 1
+                  CALL CUTEST_extend_array( POS_in_H, lpos, ulh, nlh, mlh,     &
+                                            buffer, status, alloc_status )
+                  IF ( status /= 0 ) THEN
+                    bad_alloc = 'POS_in_H' ; GO TO 980 ; END IF
+                  lpos = nlh
+                END IF
+                newpt = newpt + 1
+                LINK_col( istart ) = newpt
+                POS_in_H( istart ) = nnzh
+                LINK_col( newpt  ) = - 1
+                POS_in_H( newpt ) = - 1
+              ELSE
+
+!  continue searching the linked list for an entry in row I, column J
+
+                IF ( H_row( POS_in_H( istart ) ) == i ) THEN
+                  ip = POS_in_H( istart )
+                  H_val( ip ) = H_val( ip ) + hesnew
+                ELSE
+                  istart = inext
+                  GO TO 150
+                END IF
+              END IF
+            END IF
+          END DO
+        END DO
+      END DO
+
+!  reset the workspace array to zero
+
+      W_el( : maxsel ) = 0.0_wp
+
+! --------------------------------------------------------
+! Add on the low rank first order terms for the I-th group
+! --------------------------------------------------------
+
+      DO ig = 1, ng
+        IF ( skipg ) THEN
+          IF ( KNDOFG( ig ) == 0 ) CYCLE ; END IF
+        IF ( .NOT. fixed_structure .AND. GSCALE( ig ) == 0.0_wp ) CYCLE
+        IF ( iprint >= 100 ) WRITE( out, 2100 ) ig
+        IF ( GXEQX( ig ) ) THEN
+          gdash = GSCALE( ig )
+        ELSE
+          gdash = GSCALE( ig ) * GVALS2( ig )
+          IF ( iprint >= 100 ) WRITE( 6, * ) ' GVALS2( ig )', GVALS2( ig )
+          IF ( no_zeros .AND. gdash == 0.0_wp ) CYCLE
+        END IF
+        ig1 = ig + 1
+
+!  see if the group has any nonlinear elements
+
+        DO iell = ISTADG( ig ), ISTADG( ig1 ) - 1
+          iel = IELING( iell )
+          listvs = ISTAEV( iel )
+          listve = ISTAEV( iel + 1 ) - 1
+          nvarel = listve - listvs + 1
+          ielh = ISTADH( iel )
+          ihnext = ielh
+          scalee = ESCALE( iell )
+          DO l = listvs, listve
+            j = IW_asmbl( IELVAR( l ) )
+            IF ( j /= 0 ) THEN
+
+!  the iel-th element has an internal representation. Compute the j-th column
+!  of the element Hessian matrix
+
+              IF ( INTREP( iel ) ) THEN
+
+!  compute the j-th column of the Hessian
+
+                W_el( l - listvs + 1 ) = 1.0_wp
+
+!  find the internal variables
+
+                nin = INTVAR( iel + 1 ) - INTVAR( iel )
+                CALL RANGE( iel, .FALSE., W_el, W_in, nvarel, nin,             &
+                            ITYPEE( iel ), nvarel, nin )
+
+!  multiply the internal variables by the element Hessian
+
+                H_in( : nin ) = 0.0_wp
+
+!  only the upper triangle of the element Hessian is stored
+
+                jcolst = ielh - 1
+                DO jcol = 1, nin
+                  ijhess = jcolst
+                  jcolst = jcolst + jcol
+                  wki = W_in( jcol ) * gdash
+                  DO irow = 1, nin
+                    IF ( irow <= jcol ) THEN
+                      ijhess = ijhess + 1
+                    ELSE
+                      ijhess = ijhess + irow - 1
+                    END IF
+                    H_in( irow ) = H_in( irow ) + wki * HUVALS( ijhess )
+                  END DO
+                END DO
+
+!  scatter the product back onto the elemental variables
+
+                CALL RANGE( iel, .TRUE., H_in, H_el, nvarel, nin,              &
+                            ITYPEE( iel ), nin, nvarel )
+                W_el( l - listvs + 1 ) = 0.0_wp
+              END IF
+
+!  find the entry in row i of this column
+
+              DO k = listvs, l
+                i = IW_asmbl( IELVAR( k ) )
+
+!  skip all elements which lie outside a band of width nsemib
+
+                IF ( use_band .AND. i /= 0 ) maxsbw = MAX( maxsbw, ABS( j - i ))
+                IF ( ABS( i - j ) <= nsemib .AND. i /= 0 ) THEN
+
+!  only the upper triangle of the matrix is stored
+
+                  IF ( i <= j ) THEN
+                    ii = i
+                    jj = j
+                  ELSE
+                    ii = j
+                    jj = i
+                  END IF
+
+!  obtain the appropriate storage location in H for the new entry
+
+                  IF ( INTREP( iel ) ) THEN
+                    hesnew = scalee * H_el( k - listvs + 1 )
+                  ELSE
+                    hesnew = scalee * HUVALS( ihnext ) * gdash
+                  END IF
+                  IF ( iprint >= 100 ) WRITE( 6, 2080 ) ii, jj, iel, hesnew
+
+!  Case 1: band matrix storage scheme
+
+                  IF ( use_band ) THEN
+
+!  The entry belongs on the diagonal
+
+                    IF ( ii == jj ) THEN
+                      DIAG( ii ) = DIAG( ii ) + hesnew
+                      IF ( k /= l ) DIAG( ii ) = DIAG( ii ) + hesnew
+
+!  the entry belongs off the diagonal
+
+                    ELSE
+                      OFFDIA( jj - ii, ii ) = OFFDIA( jj - ii, ii ) + hesnew
+                    END IF
+
+!  Case 2: co-ordinate storage scheme
+
+                  ELSE
+                    IF ( .NOT. no_zeros .OR. hesnew /= 0.0_wp ) THEN
+                      istart = jj
+  230                 CONTINUE
+                      inext = LINK_col( istart )
+                      IF ( inext == - 1 ) THEN
+
+!  the (i,j)-th location is empty. Place the new entry in this location
+!  and add another link to the list
+
+                        nnzh = nnzh + 1
+                        
+                        IF ( nnzh > lh_val .OR.                                &
+                             nnzh > lh_row .OR. nnzh > lh_col ) THEN
+                          nlh = lh_row ; ulh = nnzh - 1; mlh = nnzh
+                          CALL CUTEST_extend_array( H_row, lh_row, ulh, nlh,   &
+                                                    mlh, buffer, status,       &
+                                                    alloc_status )
+                          IF ( status /= 0 ) THEN
+                             bad_alloc = 'H_row' ; GO TO 980 ; END IF
+                          lh_row = nlh
+                          nlh = lh_col ; ulh = nnzh - 1; mlh = nnzh
+                          CALL CUTEST_extend_array( H_col, lh_col, ulh, nlh,   &
+                                                    mlh, buffer, status,       &
+                                                    alloc_status )
+                          IF ( status /= 0 ) THEN
+                             bad_alloc = 'H_col' ; GO TO 980 ; END IF
+                          lh_col = nlh
+                          nlh = lh_val ; ulh = nnzh - 1 ; mlh = nnzh
+                          CALL CUTEST_extend_array( H_val, lh_val, ulh, nlh,   &
+                                                    mlh, buffer, status,       &
+                                                    alloc_status )
+                          IF ( status /= 0 ) THEN
+                             bad_alloc = 'H' ; GO TO 980 ; END IF
+                          lh_val = nlh
+                        END IF   
+                        H_row( nnzh ) = ii ; H_col( nnzh ) = jj
+                        H_val( nnzh ) = hesnew
+                        IF ( k /= l .AND. ii == jj )                           &
+                          H_val( nnzh ) = hesnew + hesnew
+                        IF ( newpt == llink ) THEN
+                          nlh = llink
+                          ulh = newpt; mlh = llink + 1
+                          CALL CUTEST_extend_array( LINK_col, llink, ulh, nlh, &
+                                                    mlh, buffer, status,       &
+                                                    alloc_status )
+                          IF ( status /= 0 ) THEN
+                            bad_alloc = 'LINK_col' ; GO TO 980 ; END IF
+                          llink = nlh
+                          nlh = lpos
+                          ulh = newpt; mlh = lpos + 1
+                          CALL CUTEST_extend_array( POS_in_H, lpos, ulh, nlh,  &
+                                                    mlh, buffer, status,       &
+                                                    alloc_status )
+                          IF ( status /= 0 ) THEN
+                            bad_alloc = 'POS_in_H' ; GO TO 980 ; END IF
+                          lpos = nlh
+                        END IF
+                        newpt = newpt + 1
+                        LINK_col( istart ) = newpt
+                        POS_in_H( istart ) = nnzh
+                        LINK_col( newpt  ) = - 1
+                        POS_in_H( newpt ) = - 1
+                      ELSE
+
+!  continue searching the linked list for an entry in row I, column J
+
+                        IF ( H_row( POS_in_H( istart ) ) == ii ) THEN
+                          ip = POS_in_H( istart )
+                          H_val( ip ) = H_val( ip ) + hesnew
+                          IF( k /= l .AND. ii == jj )                          &
+                            H_val( ip ) = H_val( ip ) + hesnew
+                        ELSE
+                          istart = inext
+                          GO TO 230
+                        END IF
+                      END IF
+                    END IF
+                  END IF
+                END IF
+                ihnext = ihnext + 1
+              END DO
+            ELSE
+              ihnext = ihnext + l - listvs + 1
+            END IF
+          END DO
+        END DO
+      END DO
+
+!  ---------------------------------------
+!  For debugging, print the nonzero values
+!  ---------------------------------------
+
+      IF ( iprint >= 10 ) THEN
+        IF ( .NOT. use_band )                                                  &
+          WRITE( out, 2000 ) ( H_row( i ), H_col( i ), H_val( i ), i = 1, nnzh )
+
+!  for debugging, print the nonzero pattern of the matrix
+
+        IF ( nfree <= 36 ) THEN
+          MATRIX( : nfree, : nfree ) = '  '
+          IF ( use_band ) THEN
+            DO i = 1, nfree
+              IF ( DIAG( i ) /= 0.0_wp ) MATRIX( i, i ) = ' *'
+              DO j = 1, MIN( nsemib, nfree - i )
+                IF ( OFFDIA( j, i ) /= 0.0_wp ) THEN
+                   MATRIX( i + j, i ) = ' *'
+                   MATRIX( i, i + j ) = ' *'
+                END IF
+              END DO
+            END DO
+          ELSE
+            DO i = 1, nnzh
+              IF ( H_row( i ) > nfree ) THEN
+                WRITE( out,                                                    &
+                  "( ' Entry out of bounds in CUTEST_assemble_hessian',        &
+                 &   ' row number = ', I0 )" ) H_row( i )
+!               STOP
+              END IF
+              IF ( H_col( i ) > nfree ) THEN
+                WRITE( out,                                                    &
+                  "( ' Entry out of bounds in CUTEST_assemble_hessian',        &
+                 &   ' col number = ', I0 )" ) H_col( i )
+!               STOP
+              END IF
+              MATRIX( H_row( i ), H_col( i ) ) = ' *'
+              MATRIX( H_col( i ), H_row( i ) ) = ' *'
+            END DO
+          END IF
+          WRITE( out, 2040 ) ( i, i = 1, nfree )
+          DO i = 1, nfree
+            WRITE( out, 2050 ) i, ( MATRIX( i, j ), j = 1, nfree )
+          END DO
+        END IF
+      END IF
+
+!  successful return
+
+      status = 0
+      RETURN
+
+!  unsuccessful returns
+
+  980 CONTINUE
+      WRITE( error, "( ' ** Message from -CUTEST_assemble_hessian-',           &
+     &    /, ' Allocation error (status = ', I0, ') for ', A )" )              &
+        alloc_status, bad_alloc
+      RETURN
+
+!  non-executable statements
+
+ 2000 FORMAT( '    Row  Column    Value        Row  Column    Value ', /       &
+              '    ---  ------    -----        ---  ------    ----- ', /       &
+              ( 2I6, ES24.16, 2I6, ES24.16 ) )
+ 2040 FORMAT( /, 5X, 36I2 )
+ 2050 FORMAT( I3, 2X, 36A2 )
+ 2060 FORMAT( /, I6, ' free variables. They are ', 8I5, /, ( 14I5 ) )
+ 2070 FORMAT( ' Group ', I5, ' rank-one terms ' )
+ 2080 FORMAT( ' Row ', I6, ' Column ', I6, ' used from element ', I6,          &
+              ' value = ', ES24.16 )
+ 2090 FORMAT( ' Row ', I6, ' column ', I6, ' used. Value = ', ES24.16 )
+ 2100 FORMAT( ' Group ', I5, ' second-order terms ' )
+
+!  end of subroutine CUTEST_assemble_hessian_old
+
+     END SUBROUTINE CUTEST_assemble_hessian_old
+
 !  end of module CUTEST
 
     END MODULE CUTEST
+
+
+
+
+
+
+
+
+

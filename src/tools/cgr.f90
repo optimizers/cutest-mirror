@@ -9,7 +9,7 @@
 !   fortran 77 version originally released in CUTE, November 1991
 !   fortran 2003 version released in CUTEst, 20th November 2012
 
-      SUBROUTINE CGR( data, status, n, m, X, grlagf, Y, G, jtrans,             &
+      SUBROUTINE CGR( data, status, n, m, X, Y, grlagf, G, jtrans,             &
                       lcjac1, lcjac2, CJAC )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
@@ -151,8 +151,8 @@
         DO ig = 1, data%ng
           ig1 = ig + 1
           icon = data%KNDOFC( ig )
-          istrgv = data%IWORK( data%lstagv + ig )
-          iendgv = data%IWORK( data%lstagv + ig1 ) - 1
+          istrgv = data%ISTAGV( ig )
+          iendgv = data%ISTAGV( ig1 ) - 1
           nelow = data%ISTADG( ig )
           nelup = data%ISTADG( ig1 ) - 1
           nontrv = .NOT. data%GXEQX( ig )
@@ -173,8 +173,7 @@
 !  this is the first gradient evaluation or the group has nonlinear elements
 
           IF ( data%firstg .OR. nelow <= nelup ) THEN
-            data%WRK( data%IWORK( data%lsvgrp + istrgv :                       &
-                                  data%lsvgrp + iendgv ) ) = 0.0_wp
+            data%W_ws( data%ISVGRP( istrgv : iendgv ) ) = 0.0_wp
 
 !  loop over the group's nonlinear elements
 
@@ -189,13 +188,13 @@
 !  the iel-th element has an internal representation
 
                 nin = data%INTVAR( iel + 1 ) - k
-                CALL RANGE ( iel, .TRUE., data%FUVALS( k ),                    &
-                             data%WRK( n + 1 ), nvarel, nin,                   &
-                             data%ITYPEE( iel ), nin, nvarel )
+                CALL RANGE( iel, .TRUE., data%FUVALS( k ),                     &
+                            data%W_el, nvarel, nin, data%ITYPEE( iel ),        &
+                            nin, nvarel )
 !DIR$ IVDEP
                 DO i = 1, nvarel
                   j = data%IELVAR( l )
-                  data%WRK( j ) = data%WRK( j ) + scalee * data%WRK( n + i )
+                  data%W_ws( j ) = data%W_ws( j ) + scalee * data%W_el( i )
                    l = l + 1
                 END DO
               ELSE
@@ -205,7 +204,7 @@
 !DIR$ IVDEP
                 DO i = 1, nvarel
                   j = data%IELVAR( l )
-                  data%WRK( j ) = data%WRK( j ) + scalee * data%FUVALS( k )
+                  data%W_ws( j ) = data%W_ws( j ) + scalee * data%FUVALS( k )
                   k = k + 1 ; l = l + 1
                 END DO
               END IF
@@ -216,42 +215,42 @@
 !DIR$ IVDEP
             DO k = data%ISTADA( ig ), data%ISTADA( ig1 ) - 1
               j = data%ICNA( k )
-              data%WRK( j ) = data%WRK( j ) + data%A( k )
+              data%W_ws( j ) = data%W_ws( j ) + data%A( k )
             END DO
 
 !  allocate a gradient
 
 !DIR$ IVDEP
             DO i = istrgv, iendgv
-              ll = data%IWORK( data%lsvgrp + i )
+              ll = data%ISVGRP( i )
 
 !  the group belongs to the objective function
 
               IF ( icon == 0 ) THEN
-                G( ll ) = G( ll ) + gi * data%WRK( ll )
+                G( ll ) = G( ll ) + gi * data%W_ws( ll )
 
 !  the group defines a constraint
 
               ELSE
                 IF ( jtrans ) THEN
-                  CJAC( ll, icon ) =   gi * data%WRK( ll )
+                  CJAC( ll, icon ) =   gi * data%W_ws( ll )
                 ELSE
-                  CJAC( icon, ll ) =   gi * data%WRK( ll )
+                  CJAC( icon, ll ) =   gi * data%W_ws( ll )
                 END IF
-                IF ( grlagf ) G( ll ) = G( ll ) + gii * data%WRK( ll )
+                IF ( grlagf ) G( ll ) = G( ll ) + gii * data%W_ws( ll )
               END IF
 
 !  if the group is non-trivial, also store the nonzero entries of the
 !  gradient of the function in GRJAC
 
               IF ( nontrv ) THEN
-                jj = data%IWORK( data%lstajc + ll )
-                data%FUVALS( data%lgrjac + jj ) = data%WRK( ll )
+                jj = data%ISTAJC( ll )
+                data%FUVALS( data%lgrjac + jj ) = data%W_ws( ll )
 
 !  increment the address for the next nonzero in the column of the Jacobian 
 !  for variable ll
 
-                data%IWORK( data%lstajc + ll ) = jj + 1
+                data%ISTAJC( ll ) = jj + 1
               END IF
             END DO
 
@@ -289,9 +288,8 @@
             IF ( nontrv ) THEN
 !DIR$ IVDEP
               DO i = istrgv, iendgv
-                ll = data%IWORK( data%lsvgrp + i )
-                data%IWORK( data%lstajc + ll )                                 &
-                  = data%IWORK( data%lstajc + ll ) + 1
+                ll = data%ISVGRP( i )
+                data%ISTAJC( ll ) = data%ISTAJC( ll ) + 1
               END DO
             END IF
           END IF
@@ -301,9 +299,9 @@
 !  their values on entry
 
         DO i = n, 2, - 1
-           data%IWORK( data%lstajc + i ) = data%IWORK( data%lstajc + i - 1 )
+          data%ISTAJC( i ) = data%ISTAJC( i - 1 )
         END DO
-        data%IWORK( data%lstajc + 1 ) = 1
+        data%ISTAJC( 1 ) = 1
       ELSE
 
 !  compute the gradient value
@@ -323,8 +321,8 @@
 !                    data%ITYPEE, data%lintre, &
 !                    data%ISTAEV, data%lstaev, data%IELVAR, &
 !                    data%lelvar, data%INTVAR, data%lntvar, &
-!                    data%IWORK( data%lsvgrp + 1 ), &
-!                    data%lnvgrp, data%IWORK( data%lstajc + 1 ), data%lnstjc, &
+!                    data%ISVGRP( 1 ), &
+!                    data%lnvgrp, data%ISTAJC( 1 ), data%lnstjc, &
 !                    data%IWORK( data%lstagv + 1 ), &
 !                    data%lnstgv, data%A, data%la, &
 !                    data%GVALS(  : , 2 ), data%lgvals, &

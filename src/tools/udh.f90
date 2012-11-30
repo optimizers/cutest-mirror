@@ -162,25 +162,46 @@
 
 !  assemble the Hessian; use every variable
 
-      DO i = 1, n
-        data%IVAR( i ) = i
-      END DO
+!     DO i = 1, n
+!       data%IVAR( i ) = i
+!     END DO
 
       CALL CUTEST_assemble_hessian(                                            &
              n, data%ng, data%nel, data%ntotel, data%nvrels, data%nnza,        &
-             data%maxsel, data%nvargp, n, data%IVAR, data%ISTADH,              &
+             data%maxsel, data%nvargp, data%ISTADH,                            &
              data%ICNA, data%ISTADA, data%INTVAR, data%IELVAR, data%IELING,    &
              data%ISTADG, data%ISTAEV, data%ISTAGV, data%ISVGRP, data%A,       &
              data%FUVALS, data%lnguvl, data%FUVALS, data%lnhuvl,               &
              data%GVALS( : , 2 ), data%GVALS( :  , 3 ), data%GSCALE,           &
              data%ESCALE, data%GXEQX, data%ITYPEE, data%INTREP, RANGE,         &
-             0, data%out, data%out, data%io_buffer, .FALSE.,                   &
-             .FALSE., .FALSE., 0, status, alloc_status, bad_alloc,             &
-             data%assemble_data, data%lirnh, data%ljcnh, data%lh,              &
+             0, data%out, data%out, data%io_buffer, .TRUE., .FALSE.,           &
+             n, status, alloc_status, bad_alloc,                               &
+             data%array_status, data%lh_row, data%lh_col, data%lh_val,         &
              data%H_row, data%H_col, data%H_val,                               &
              data%LINK_col, data%POS_in_H, data%llink, data%lpos,              &
-             data%IW_asmbl, data%W_ws, data%W_el, data%W_in, data%H_el,        &
-             data%H_in, data%skipg, nnzh = nnzh )
+             data%W_ws, data%W_el, data%W_in, data%H_el, data%H_in,            &
+             nnzh = nnzh )
+
+
+!!$      CALL CUTEST_assemble_hessian_old(                                        &
+!!$             n, data%ng, data%nel, data%ntotel, data%nvrels, data%nnza,        &
+!!$             data%maxsel, data%nvargp, n, data%IVAR( : n ), data%ISTADH,            &
+!!$             data%ICNA, data%ISTADA, data%INTVAR, data%IELVAR, data%IELING,    &
+!!$             data%ISTADG, data%ISTAEV, data%ISTAGV, data%ISVGRP, data%A,       &
+!!$             data%FUVALS, data%lnguvl, data%FUVALS, data%lnhuvl,               &
+!!$             data%GVALS( : , 2 ), data%GVALS( :  , 3 ), data%GSCALE,           &
+!!$             data%ESCALE, data%GXEQX, data%ITYPEE, data%INTREP, RANGE,         &
+!!$             101, data%out, data%out, data%io_buffer, .FALSE., .FALSE., .FALSE., &
+!!$             0, status, alloc_status, bad_alloc,                               &
+!!$             data%array_status, data%lh_row, data%lh_col, data%lh_val,         &
+!!$             data%H_row, data%H_col, data%H_val,                               &
+!!$             data%LINK_col, data%POS_in_H, data%llink, data%lpos,              &
+!!$             data%IW_asmbl, &
+!!$             data%W_ws, data%W_el, data%W_in, data%H_el, data%H_in,            &
+!!$             .FALSE., nnzh = nnzh )
+
+
+
 !            maxsbw = data%maxsbw, DIAG = data%DIAG, OFFDIA = data%OFFDIA,     &
 !            KNDOFG = data%KNDOFG )   
 

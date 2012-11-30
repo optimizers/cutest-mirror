@@ -1,42 +1,50 @@
-! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE CCFSG( data, status, n, m, X, C, nnzj, lcjac, CJAC,           &
-                        INDVAR, INDFUN, grad )
-      USE CUTEST
-      TYPE ( CUTEST_data_type ) :: data
-      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: n, m, nnzj, lcjac
-      INTEGER, INTENT( OUT ) :: status
-      LOGICAL :: grad
-      INTEGER :: INDVAR( lcjac ), INDFUN( lcjac )
-      REAL ( KIND = wp ) :: X( n ), C( m ), CJAC ( lcjac )
+! THIS VERSION: CUTEST 1.0 - 28/11/2012 AT 08:20 GMT.
 
+!-*-*-*-*-*-*-*-  C U T E S T    C C F S G    S U B R O U T I N E  -*-*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal authors: Ingrid Bongartz and Nick Gould
+
+!  History -
+!   fortran 77 version originally released in CUTE, April 1992
+!   fortran 2003 version released in CUTEst, 28th November 2012
+
+      SUBROUTINE CCFSG( data, status, n, m, X, C, nnzj, lj, J_val,             &
+                        J_var, J_fun, grad )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
+      INTEGER, INTENT( IN ) :: n, m, lj
+      INTEGER, INTENT( OUT ) :: nnzj, status
+      LOGICAL, INTENT( IN ) :: grad
+      INTEGER, INTENT( OUT ), DIMENSION( lj ) :: J_var, J_fun
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( m ) :: C
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lj ) :: J_val
+
+!  ----------------------------------------------------------------------
 !  Compute the values of the constraint functions and their gradients
 !  for constraints initially written in Standard Input Format (SIF).
-!  The Jacobian must be stored in a sparse format.
-! (Subroutine CCFG performs the same calculations for a dense Jacobian.)
+!  The Jacobian will be stored in a sparse co-ordinate format.
+!  (Subroutine CCFG performs the same calculations for a dense Jacobian.)
 
-!  CJAC  is an array which gives the values of the nonzeros of the
-!        general constraint functions evaluated at X and V.
-!        The i-th entry of CJAC gives the value of the derivative
-!        with respect to variable INDVAR(i) of constraint function 
-!        INDFUN(i) (i.e., INDFUN(i) = j > 0 indicates the j-th
+!  J_val  is an array which gives the values of the nonzeros of the
+!        general constraint functions evaluated at X and Y.
+!        The i-th entry of J_val gives the value of the derivative
+!        with respect to variable J_var(i) of constraint function 
+!        J_fun(i) (i.e., J_fun(i) = j > 0 indicates the j-th
 !        general constraint function).
+!  ----------------------------------------------------------------------
 
-!  Based on the subroutines cfn.f and csgr.f by Nick Gould, which are
-!  in turn based on the subroutine SBMIN by Conn, Gould and Toint.
-
-!  Ingrid Bongartz
-!  April 1992.
-
-!  local variables.
+!  local variables
 
       INTEGER :: i, j, iel, k, ig, ii, ig1, l, ll, icon, icnt
-      INTEGER :: nin, nvarel, nelow, nelup, istrgv, iendgv
-      INTEGER :: llo, llwrk, ifstat, igstat
-      LOGICAL :: NONTRV
+      INTEGER :: nin, nvarel, nelow, nelup, istrgv, iendgv, ifstat, igstat
+      REAL ( KIND = wp ) :: ftt, gi, scalee
       EXTERNAL :: RANGE 
-      REAL ( KIND = wp ) :: ftt, one, zero, gi, scalee
-      PARAMETER ( zero = 0.0_wp, one = 1.0_wp )
 
       IF ( data%numcon == 0 ) RETURN
 
@@ -88,7 +96,7 @@
 !  compute the group argument values ft
 
       DO ig = 1, data%ng
-        ftt = zero
+        ftt = 0.0_wp
 
 !  Consider only those groups in the constraints
 
@@ -112,7 +120,7 @@
 
 !  record derivatives of trivial groups
 
-          IF ( data%GXEQX( ig ) ) data%GVALS( ig, 2 ) = one 
+          IF ( data%GXEQX( ig ) ) data%GVALS( ig, 2 ) = 1.0_wp
         END IF
         data%FT( ig ) = ftt
       END DO
@@ -123,7 +131,7 @@
 
       IF ( data%altriv ) THEN
         data%GVALS( : data%ng, 1 ) = data%FT( : data%ng )
-        data%GVALS( : data%ng, 2 ) = one
+        data%GVALS( : data%ng, 2 ) = 1.0_wp
       ELSE
 
 !  evaluate the group function values. Evaluate groups belonging to the first 
@@ -171,7 +179,7 @@
 !  compute the gradient values.  Initialize the Jacobian as zero
 
          nnzj = 0 
-         CJAC( : lcjac ) = zero
+         J_val( : lj ) = 0.0_wp
 
 !  consider the ig-th group
 
@@ -182,18 +190,16 @@
 
            IF ( icon == 0 .OR. icon > m ) CYCLE
            ig1 = ig + 1
-           istrgv = data%IWORK( data%lstagv + ig )
-           iendgv = data%IWORK( data%lstagv + ig1 ) - 1
+           istrgv = data%ISTAGV( ig )
+           iendgv = data%ISTAGV( ig1 ) - 1
            nelow = data%ISTADG( ig )
            nelup = data%ISTADG( ig1 ) - 1
-           nontrv = .NOT. data%GXEQX( ig )
 
 !  compute the first derivative of the group
 
            gi = data%GSCALE( ig )
-           IF ( nontrv ) gi = gi  * data%GVALS( ig, 2 )
-             data%WRK( data%IWORK( data%lsvgrp + istrgv :                      &
-                                   data%lsvgrp + iendgv ) ) = zero
+           IF ( .NOT. data%GXEQX( ig ) ) gi = gi  * data%GVALS( ig, 2 )
+             data%W_ws( data%ISVGRP( istrgv : iendgv ) ) = 0.0_wp
 
 !  the group has nonlinear elements
 
@@ -207,28 +213,27 @@
                l = data%ISTAEV( iel )
                nvarel = data%ISTAEV( iel + 1 ) - l
                scalee = data%ESCALE( ii )
-               IF ( data%INTREP( iel ) ) THEN
 
 !  the iel-th element has an internal representation
 
+               IF ( data%INTREP( iel ) ) THEN
                  nin = data%INTVAR( iel + 1 ) - k
-                 CALL RANGE( iel, .TRUE., data%FUVALS( k ),                    &
-                             data%WRK( n + 1 ), nvarel, nin,                   &
-                             data%ITYPEE( iel ), nin, nvarel )
+                 CALL RANGE( iel, .TRUE., data%FUVALS( k ), data%W_el,         &
+                             nvarel, nin, data%ITYPEE( iel ), nin, nvarel )
 !DIR$ IVDEP
                  DO i = 1, nvarel
                    j = data%IELVAR( l )
-                   data%WRK( j ) = data%WRK( j ) + scalee * data%WRK( n + i )
+                   data%W_ws( j ) = data%W_ws( j ) + scalee * data%W_el( i )
                    l = l + 1
                  END DO
-               ELSE
 
 !  the iel-th element has no internal representation
 
+               ELSE
 !DIR$ IVDEP
                  DO i = 1, nvarel
                    j = data%IELVAR( l )
-                   data%WRK( j ) = data%WRK( j ) + scalee * data%FUVALS( k )
+                   data%W_ws( j ) = data%W_ws( j ) + scalee * data%FUVALS( k )
                    k = k + 1 ; l = l + 1
                  END DO
                END IF
@@ -238,24 +243,24 @@
 
 !DIR$ IVDEP
              DO k = data%ISTADA( ig ), data%ISTADA( ig1 ) - 1
-                j = data%ICNA( k )
-                data%WRK( j ) = data%WRK( j ) + data%A( k )
+               j = data%ICNA( k )
+               data%W_ws( j ) = data%W_ws( j ) + data%A( k )
              END DO
 
 !  allocate a gradient
 
 !DIR$ IVDEP
              DO i = istrgv, iendgv
-               ll = data%IWORK( data%lsvgrp + i )
+               ll = data%ISVGRP( i )
 
 !  include contributions from the first n variables only
 
                IF ( ll <= n ) THEN
                  nnzj = nnzj + 1
-                 IF ( nnzj <= lcjac ) THEN
-                   CJAC ( nnzj ) = gi * data%WRK( ll )
-                   INDFUN( nnzj ) = icon
-                   INDVAR( nnzj ) = ll
+                 IF ( nnzj <= lj ) THEN
+                   J_val ( nnzj ) = gi * data%W_ws( ll )
+                   J_fun( nnzj ) = icon
+                   J_var( nnzj ) = ll
                  END IF
                END IF
              END DO
@@ -269,23 +274,23 @@
 !DIR$ IVDEP
              DO k = data%ISTADA( ig ),data%ISTADA( ig1 ) - 1
                j = data%ICNA( k )
-               data%WRK( j ) = data%WRK( j ) + data%A( k )
+               data%W_ws( j ) = data%W_ws( j ) + data%A( k )
              END DO
 
 !  allocate a gradient
 
 !DIR$ IVDEP
              DO i = istrgv, iendgv
-               ll = data%IWORK( data%lsvgrp + i )
+               ll = data%ISVGRP( i )
 
 !  include contributions from the first n variables only
 
                IF ( ll <= n ) THEN
                  nnzj = nnzj + 1
-                 IF ( nnzj <= lcjac ) THEN
-                   CJAC ( nnzj ) = gi * data%WRK( ll )
-                   INDFUN( nnzj ) = icon
-                   INDVAR( nnzj ) = ll
+                 IF ( nnzj <= lj ) THEN
+                   J_val ( nnzj ) = gi * data%W_ws( ll )
+                   J_fun( nnzj ) = icon
+                   J_var( nnzj ) = ll
                  END IF
                END IF
              END DO
@@ -294,8 +299,10 @@
 
 !  verify that the Jacobian can fit in the allotted space
 
-         IF ( nnzj > lcjac ) THEN
-           IF ( data%out > 0 ) WRITE( data%out, 2000 ) nnzj - lcjac 
+         IF ( nnzj > lj ) THEN
+           IF ( data%out > 0 ) WRITE( data%out,                                &
+             "( /,  ' ** SUBROUTINE CCFSG: array length lj too small', /,      &
+            &   ' -- Increase the parameter lj to at least ', I0 )" ) nnzj
            status = 2 ; RETURN
          END IF
       END IF
@@ -314,12 +321,6 @@
         "( ' ** SUBROUTINE CCFSG: error flag raised during SIF evaluation' )" )
       status = 3
       RETURN
-
-!  non-executable statements
-
- 2000 FORMAT( /  ' ** SUBROUTINE CCFSG: array length lcjac too small.'         &
-              /  ' -- Increase the parameter lcjac by at least ', I0,          &
-                 ' and restart' )
 
 !  end of subroutine CSCFG
 

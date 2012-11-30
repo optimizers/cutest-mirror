@@ -1,20 +1,27 @@
-! ( Last modified on 23 Dec 2000 at 22:01:38 )
+! THIS VERSION: CUTEST 1.0 - 28/11/2012 AT 08:40 GMT.
+
+!-*-*-*-*-*-*-  C U T E S T    C D I M S J    S U B R O U T I N E  -*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 77 version originally released in CUTEr, April 1999
+!   fortran 2003 version released in CUTEst, 28th November 2012
+
       SUBROUTINE CDIMSJ( data, status, nnzj )
       USE CUTEST
-      TYPE ( CUTEST_data_type ) :: data
-      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER, INTENT( OUT ) :: status
-      INTEGER :: nnzj
 
-!  Compute the space required to store the Jacobian matrix of the 
-!  constraints/objective function of a problem initially written in 
-!  Standard Input Format (SIF).
+!  dummy arguments
 
-!  Based on the minimization subroutine data%laNCELOT/SBMIN
-!  by Conn, Gould and Toint.
+      TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
+      INTEGER, INTENT( OUT ) :: nnzj, status
 
-!  Nick Gould, for CGT productions,
-!  August 1999.
+!  --------------------------------------------------------------
+!  compute the space required to store the Jacobian matrix of the 
+!  constraints/objective function of a problem initially written 
+!  in Standard Input Format (SIF)
+!  --------------------------------------------------------------
 
 !  local variables
 
@@ -27,8 +34,8 @@
 !  allow space for constraint groups
 
       DO ig = 1, data%ng
-        IF ( data%KNDOFC( ig ) /= 0 ) nnzj = nnzj +                           &
-             data%IWORK( data%lstagv + ig + 1 ) - data%IWORK( data%lstagv + ig )
+        IF ( data%KNDOFC( ig ) /= 0 )                                         &
+          nnzj = nnzj + data%ISTAGV( ig + 1 ) - data%ISTAGV( ig )
       END DO
 
 !  add space for the (dense) gradient of the objective function

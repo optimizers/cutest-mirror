@@ -1,37 +1,46 @@
-! ( Last modified on 23 Dec 2000 at 22:01:38 )
+! THIS VERSION: CUTEST 1.0 - 28/11/2012 AT 08:00 GMT.
+
+!-*-*-*-*-*-*-*-  C U T E S T    C O F G    S U B R O U T I N E  -*-*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal authors: Ingrid Bongartz and Nick Gould
+
+!  History -
+!   fortran 77 version originally released in CUTE, April 1992
+!   fortran 2003 version released in CUTEst, 28th November 2012
+
       SUBROUTINE COFG( data, status, n, X, f, G, grad )
       USE CUTEST
-      TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: n
+
+!  dummy arguments
+
+      TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
+      INTEGER, INTENT( IN ) :: n
       INTEGER, INTENT( OUT ) :: status
-      REAL ( KIND = wp ) :: f
-      REAL ( KIND = wp ) :: X( n ), G( n )
-      LOGICAL :: grad
+      REAL ( KIND = wp ), INTENT( OUT ) :: f
+      LOGICAL, INTENT( IN ) :: grad
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: G
 
-!  Compute the value of the objective function and its gradient
-!  for a function initially written in Standard Input Format (SIF).
+!  ---------------------------------------------------------------
+!  compute the value of the objective function and its gradient
+!  for a function initially written in Standard Input Format (SIF)
 
-!  G     is an array which gives the value of the gradient of
-!        the objective function evaluated at X.
-!        G(i) gives the partial derivative of the objective
-!        function with respect to variable X(i).
+!  G is an array which gives the value of the gradient of the
+!    objective function evaluated at X. G(i) gives the partial 
+!    derivative of the objective function wrt variable X(i)
+!  ---------------------------------------------------------------
 
-!  Based on the subroutines cfn.f and cgr.f by Nick Gould, which are
-!  in turn based on the subroutine SBMIN by Conn, Gould and Toint.
-
-!  Ingrid Bongartz 
-!  April 1992.
-
-!  local variables.
+!  local variables
 
       INTEGER :: i, j, iel, k, ig, ii, ig1, l, ll, icon, icnt, ifstat, igstat
       INTEGER :: nin, nvarel, nelow, nelup, istrgv, iendgv
       EXTERNAL :: RANGE 
       REAL ( KIND = wp ) :: ftt, gi, scalee
 
-!  must identify which elements are included in objective function.
-!  Use logical work vector to keep track of elements already included
+!  identify which elements are included in objective function. Use LOGIC
+!  to keep track of elements already included
 
       data%LOGIC( : data%nel ) = .FALSE.
 
@@ -212,8 +221,8 @@
 
           IF ( icon > 0 ) CYCLE
           ig1 = ig + 1
-          istrgv = data%IWORK( data%lstagv + ig )
-          iendgv = data%IWORK( data%lstagv + ig1 ) - 1
+          istrgv = data%ISTAGV( ig )
+          iendgv = data%ISTAGV( ig1 ) - 1
           nelow = data%ISTADG( ig )
           nelup = data%ISTADG( ig1 ) - 1
 
@@ -225,8 +234,7 @@
 !  the group has nonlinear elements
 
           IF ( nelow <= nelup ) THEN
-            data%WRK( data%IWORK( data%lsvgrp + istrgv :                       &
-                                  data%lsvgrp + iendgv ) ) = 0.0_wp
+            data%W_ws( data%ISVGRP( istrgv : iendgv ) ) = 0.0_wp
 
 !  loop over the group's nonlinear elements
 
@@ -241,13 +249,12 @@
 !  the iel-th element has an internal representation
 
                 nin = data%INTVAR( iel + 1 ) - k
-                CALL RANGE ( iel, .TRUE., data%FUVALS( k ),                    &
-                             data%WRK( n + 1 ), nvarel, nin,                   &
-                             data%ITYPEE( iel ), nin, nvarel )
+                CALL RANGE( iel, .TRUE., data%FUVALS( k ), data%W_el,          &
+                            nvarel, nin, data%ITYPEE( iel ), nin, nvarel )
 !DIR$ IVDEP
                 DO i = 1, nvarel
                   j = data%IELVAR( l )
-                  data%WRK( j ) = data%WRK( j ) + scalee * data%WRK( n + i )
+                  data%W_ws( j ) = data%W_ws( j ) + scalee * data%W_el( i )
                   l = l + 1
                 END DO
               ELSE
@@ -257,7 +264,7 @@
 !DIR$ IVDEP
                 DO i = 1, nvarel
                   j = data%IELVAR( l )
-                  data%WRK( j ) = data%WRK( j ) + scalee * data%FUVALS( k )
+                  data%W_ws( j ) = data%W_ws( j ) + scalee * data%FUVALS( k )
                    k = k + 1 ; l = l + 1
                 END DO
               END IF
@@ -268,18 +275,18 @@
 !DIR$ IVDEP
             DO k = data%ISTADA( ig ), data%ISTADA( ig1 ) - 1
              j = data%ICNA( k )
-             data%WRK( j ) = data%WRK( j ) + data%A( k )
+             data%W_ws( j ) = data%W_ws( j ) + data%A( k )
             END DO
 
 !  allocate a gradient
 
 !DIR$ IVDEP
             DO i = istrgv, iendgv
-              ll = data%IWORK( data%lsvgrp + i )
+              ll = data%ISVGRP( i )
 
 !  include the contributions from only the first n variables
 
-              IF ( ll <= n ) G( ll ) = G( ll ) + gi * data%WRK( ll )
+              IF ( ll <= n ) G( ll ) = G( ll ) + gi * data%W_ws( ll )
             END DO
 
 !  the group has only linear elements
@@ -299,7 +306,7 @@
             END DO
           END IF
         END DO
-      ENDIF
+      END IF
 
 !  update the counters for the report tool
 

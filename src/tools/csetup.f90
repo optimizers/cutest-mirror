@@ -40,7 +40,7 @@
       CHARACTER ( LEN = 10 ) :: chtemp
       CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
       REAL ( KIND = wp ) :: atemp
-      REAL ( KIND = wp ), PARAMETER :: zero = 0.0_wp
+      INTEGER, PARAMETER :: lmin = 10000
       REAL ( KIND = wp ), DIMENSION( 2 ) :: OBFBND
       EXTERNAL :: RANGE
 
@@ -244,7 +244,7 @@
         bad_alloc = 'data%DGRAD' ; GO TO 910
       END IF
 
-      ALLOCATE( data%Q( n ), STAT = alloc_status )
+      ALLOCATE( data%G_temp( n ), STAT = alloc_status )
       IF ( alloc_status /= 0 ) THEN
         bad_alloc = 'data%Q' ; GO TO 910
       END IF
@@ -264,6 +264,11 @@
       ALLOCATE( data%GXEQX( data%ngng ), STAT = alloc_status )
       IF ( alloc_status /= 0 ) THEN
         bad_alloc = 'data%GXEQX' ; GO TO 910
+      END IF
+
+      ALLOCATE( data%LOGIC( data%nel ), STAT = alloc_status )
+      IF ( alloc_status /= 0 ) THEN
+        bad_alloc = 'data%LOGIC' ; GO TO 910
       END IF
 
 !  allocate character workspace
@@ -293,6 +298,14 @@
       data%lvscal = n
       data%lepvlu = data%nepvlu
       data%lgpvlu = data%ngpvlu
+
+!  assign initial guesses for allocatable array lengths
+
+      data%llink_min = lmin
+      data%lh_row = lmin
+      data%lh_col = lmin
+      data%lh_val = lmin
+      data%llink_min = lmin
 
 !     data%lstadg = MAX( 1, data%ng1 )
 !     data%lstada = MAX( 1, data%ng1 )
@@ -524,7 +537,7 @@
               data%GXEQX( i ) .AND. data%ISTADG( i ) >= data%ISTADG( i + 1 )
             IF ( data%KNDOFC( i ) == 2 ) THEN
               EQUATN( m ) = .TRUE.
-              C_l( m ) = zero ; C_u( m ) = zero
+              C_l( m ) = 0.0_wp ; C_u( m ) = 0.0_wp
             ELSE
               EQUATN( m ) = .FALSE.
               C_l( m ) = data%GVALS( i, 1 ) ; C_u( m ) = data%FT( i )
@@ -813,6 +826,8 @@
       data%ntotel = data%ISTADG( data%ng + 1 ) - 1
       data%nvrels = data%ISTAEV( data%nel + 1 ) - 1
       data%nnza = data%ISTADA( data%ng + 1 ) - 1
+!     data%skipg = COUNT( data%KNDOFC == 0 ) > 0
+      data%skipg = .FALSE.
 
       CALL CUTEST_initialize_workspace(                                        &
              data%n, data%ng, data%nel,                                        &
@@ -821,7 +836,7 @@
              data%INTVAR, data%ISTADH, data%ICNA, data%ISTADA, data%ITYPEE,    &
              data%GXEQX, data%INTREP, data%alllin, data%altriv, .FALSE.,       &
              .FALSE., data%lfxi, data%lgxi, data%lhxi,                         &
-             data%lggfx, data%ldx, data%lnguvl, data%lnhuvl,                   &
+             data%lggfx, data%ldx, data%lgrjac, data%lnguvl, data%lnhuvl,      &
              data%ntotin, data%ntype, data%nsets, data%maxsel,                 &
              RANGE, 0, out, data%io_buffer,                                    &
 !  workspace
@@ -834,7 +849,8 @@
              data%ISET, data%ISVSET, data%INVSET, data%LIST_elements,          &
              data%ISYMMH, data%IW_asmbl, data%NZ_comp_w, data%W_ws,            &
              data%W_el, data%W_in, data%H_el, data%H_in,                       &
-             status, alloc_status, bad_alloc, data%skipg, KNDOFG = data%KNDOFC )
+             status, alloc_status, bad_alloc, data%array_status, data%skipg,   &
+             KNDOFG = data%KNDOFC )
 
 !     CALL INITW( n, data%ng, data%nel, data%IELING, data%leling,              &
 !         data%ISTADG, data%lstadg, data%IELVAR, data%lelvar, data%ISTAEV,     &

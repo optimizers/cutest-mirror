@@ -2,15 +2,13 @@
 
 !- C U T E S T  t e s t _ u n c o n s t r a i n e d _ t o o l s  P R O G R A M -
 
-    PROGRAM CUTEST_test_unconstrained_tools
+    PROGRAM CUTER_test_unconstrained_tools
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
 !  Principal author: Nick Gould
 
 !  History -
 !   fortran 2003 version released November 2012
-
-      USE CUTEST
 
 !--------------------
 !   P r e c i s i o n
@@ -24,15 +22,14 @@
 
       INTEGER, PARAMETER :: input = 55
       INTEGER, PARAMETER :: out = 6
-      INTEGER, PARAMETER :: buffer = 77
       REAL ( KIND = wp ), PARAMETER :: one = 1.0_wp
 
 !--------------------------------
 !   L o c a l   V a r i a b l e s
 !--------------------------------
 
-      INTEGER :: i, n, HE_nel, HE_val_ne, HE_row_ne, status, alloc_stat
-      INTEGER :: l_h2_1, l_h, lhe_ptr, H_ne, lhe_val, lhe_row, maxsbw
+      INTEGER :: i, n, HE_nel, HE_val_ne, HE_row_ne, alloc_stat
+      INTEGER :: l_h2_1, l_h, lhe_ptr, H_ne, lhe_val, lhe_row
       REAL ( KIND = wp ) :: f
       LOGICAL :: grad, byrows, goth
       CHARACTER ( len = 10 ) ::  p_name
@@ -44,7 +41,6 @@
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : , : ) :: H2_val, H_band
       CHARACTER ( len = 10 ), ALLOCATABLE, DIMENSION( : ) :: X_names
 !     REAL :: CPU( 2 ), CALLS( 4 )
-      TYPE ( CUTEST_data_type ) :: data
 
 !  open the problem data file
 
@@ -53,7 +49,7 @@
 !  allocate basic arrays
 
       WRITE( out, "( ' Call UDIMEN ' )" )
-      CALL UDIMEN( input, status, n )
+      CALL UDIMEN( input, n )
       WRITE( out, "( ' * n = ', I0 )" ) n
       l_h2_1 = n
       ALLOCATE( X( n ), X_l( n ), X_u( n ), G( n ), VECTOR( n ), RESULT( n ),  &
@@ -65,90 +61,76 @@
 !  set up SIF data
 
       WRITE( out, "( ' Call USETUP ' )" )
-      CALL USETUP( data, status, input, out, buffer, n, X, X_l, X_u )
-      IF ( status /= 0 ) GO to 900
+      CALL USETUP( input, out, n, X, X_l, X_u, n )
       CALL WRITE_X( out, n, X, X_l, X_u )
-
-!X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
 
 !  obtain variable and problem names
 
       WRITE( out, "( ' Call UNAMES' )" )
-      CALL UNAMES( data, status, n, p_name, X_names )
-      IF ( status /= 0 ) GO to 900
+      CALL UNAMES( n, p_name, X_names )
       CALL WRITE_p_name( out, p_name )
       CALL WRITE_X_names( out, n, X_names )
 
 !  obtain problem name
 
       WRITE( out, "( ' Call PBNAME' )" )
-      CALL PBNAME( data, status, p_name )
-      IF ( status /= 0 ) GO to 900
+      CALL PBNAME( n, p_name )
       CALL WRITE_p_name( out, p_name )
 
 !  obtain variable names
 
       WRITE( out, "( ' Call VARNAMES' )" )
-      CALL VARNAMES( data, status, n, X_names )
-      IF ( status /= 0 ) GO to 900
+      CALL VARNAMES( n, X_names )
       CALL WRITE_X_names( out, n, X_names )
 
 !  obtain variable types
 
       WRITE( out, "( ' Call UVARTY' )" )
-      CALL UVARTY( data, status, n, X_type )
-      IF ( status /= 0 ) GO to 900
+      CALL UVARTY( n, X_type )
       CALL WRITE_X_type( out, n, X_type )
 
 !  compute the objective function value
 
       WRITE( out, "( ' Call UFN' )" )
-      CALL UFN( data, status, n, X, f )
-      IF ( status /= 0 ) GO to 900
+      CALL UFN( n, X, f )
       CALL WRITE_f( out, f )
 
 !  compute the gradient value
 
       WRITE( out, "( ' Call UGR' )" )
-      CALL UGR( data, status, n, X, G )
-      IF ( status /= 0 ) GO to 900
+      CALL UGR( n, X, G )
       CALL WRITE_G( out, n, G )
 
 !  compute the objective function and gradient values
 
       grad = .TRUE.
       WRITE( out, "( ' Call UOFG with grad = .TRUE.' )" )
-      CALL UOFG( data, status, n, X, f, G, grad )
-      IF ( status /= 0 ) GO to 900
+      CALL UOFG( n, X, f, G, grad )
       WRITE( out, "( ' * f = ', ES12.4 )" ) f
 
       grad = .FALSE.
       WRITE( out, "( ' Call UOFG with grad = .FALSE.' )" )
-      CALL UOFG( data, status, n, X, f, G, grad )
-      IF ( status /= 0 ) GO to 900
+      CALL UOFG( n, X, f, G, grad )
       CALL WRITE_f( out, f )
       CALL WRITE_G( out, n, G )
 
 !  compute the dense Hessian value
 
       WRITE( out, "( ' Call UDH' )" )
-      CALL UDH( data, status, n, X, l_h2_1, H2_val )
-      IF ( status /= 0 ) GO to 900
+      CALL UDH( n, X, l_h2_1, H2_val )
       CALL WRITE_H_dense( out, n, l_h2_1, H2_val )
 
 !  compute the gradient and dense Hessian values
 
       WRITE( out, "( ' Call UGRDH' )" )
-      CALL UGRDH( data, status, n, X, G, l_h2_1, H2_val )
-      IF ( status /= 0 ) GO to 900
+      CALL UGRDH( n, X, G, l_h2_1, H2_val )
       CALL WRITE_G( out, n, G )
       CALL WRITE_H_dense( out, n, l_h2_1, H2_val )
 
 !  compute the number of nonzeros in the sparse Hessian
 
       WRITE( out, "( ' Call UDIMSH' )" )
-      CALL UDIMSH( data, status, H_ne )
-      IF ( status /= 0 ) GO to 900
+      CALL UDIMSH( H_ne )
       WRITE( out, "( ' * H_ne = ', I0 )" ) H_ne
 
       l_h = H_ne
@@ -158,23 +140,20 @@
 !  compute the sparse Hessian value
 
       WRITE( out, "( ' Call USH' )" )
-      CALL USH( data, status, n, X, H_ne, l_h, H_val, H_row, H_col )
-      IF ( status /= 0 ) GO to 900
+      CALL USH( n, X, H_ne, l_h, H_val, H_row, H_col )
       CALL WRITE_H_sparse( out, H_ne, l_h, H_val, H_row, H_col )
 
 !  compute the gradient and sparse Hessian values
 
       WRITE( out, "( ' Call UGRSH' )" )
-      CALL UGRSH( data, status, n, X, G, H_ne, l_h, H_val, H_row, H_col )
-      IF ( status /= 0 ) GO to 900
+      CALL UGRSH( n, X, G, H_ne, l_h, H_val, H_row, H_col )
       CALL WRITE_G( out, n, G )
       CALL WRITE_H_sparse( out, H_ne, l_h, H_val, H_row, H_col )
 
 !  compute the number of nonzeros in the element Hessian
 
       WRITE( out, "( ' Call UDIMSE' )" )
-      CALL UDIMSE( data, status, HE_nel, HE_val_ne, HE_row_ne )
-      IF ( status /= 0 ) GO to 900
+      CALL UDIMSE( HE_nel, HE_val_ne, HE_row_ne )
       WRITE( out, "( ' * H_nel = ', I0, ' HE_val_ne = ', I0,                   &
      &                 ' HE_row_ne = ', I0 )" ) HE_nel, HE_val_ne, HE_row_ne
 
@@ -189,16 +168,14 @@
 
       byrows = .FALSE.
       WRITE( out, "( ' Call UEH with byrows = .FALSE.' )" )
-      CALL UEH( data, status, n, X, HE_nel, lhe_ptr, HE_row_ptr,               &
-                HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val, byrows )
-      IF ( status /= 0 ) GO to 900
+      CALL UEH( n, X, HE_nel, HE_row, lhe_row, lhe_ptr, HE_row_ptr,            &
+                HE_val, lhe_val, HE_val_ptr, byrows )
       CALL WRITE_H_element( out, HE_nel, lhe_ptr, HE_row_ptr,                  &
                             HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val )
       byrows = .TRUE.
       WRITE( out, "( ' Call UEH with byrows = .TRUE.' )" )
-      CALL UEH( data, status, n, X, HE_nel, lhe_ptr, HE_row_ptr,               &
-                HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val, byrows )
-      IF ( status /= 0 ) GO to 900
+      CALL UEH( n, X, HE_nel, HE_row, lhe_row, lhe_ptr, HE_row_ptr,            &
+                HE_val, lhe_val, HE_val_ptr, byrows )
       CALL WRITE_H_element( out, HE_nel, lhe_ptr, HE_row_ptr,                  &
                             HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val )
 
@@ -206,17 +183,15 @@
 
       byrows = .FALSE.
       WRITE( out, "( ' Call UGREH with byrows = .FALSE' )" )
-      CALL UGREH( data, status, n, X, G, HE_nel, lhe_ptr, HE_row_ptr,          &
-                  HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val, byrows )
-      IF ( status /= 0 ) GO to 900
+      CALL UGREH( n, X, G, HE_nel, HE_row, lhe_row, lhe_ptr, HE_row_ptr,       &
+                  HE_val, lhe_val, HE_val_ptr, byrows )
       CALL WRITE_G( out, n, G )
       CALL WRITE_H_element( out, HE_nel, lhe_ptr, HE_row_ptr,                  &
                             HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val )
       byrows = .TRUE.
       WRITE( out, "( ' Call UGREH with byrows = .TRUE.' )" )
-      CALL UGREH( data, status, n, X, G, HE_nel, lhe_ptr, HE_row_ptr,          &
-                  HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val, byrows )
-      IF ( status /= 0 ) GO to 900
+      CALL UGREH( n, X, G, HE_nel, HE_row, lhe_row, lhe_ptr, HE_row_ptr,       &
+                  HE_val, lhe_val, HE_val_ptr, byrows )
       CALL WRITE_G( out, n, G )
       CALL WRITE_H_element( out, HE_nel, lhe_ptr, HE_row_ptr,                  &
                             HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val )
@@ -226,13 +201,11 @@
       VECTOR = one
       goth = .FALSE.
       WRITE( out, "( ' Call UPROD with goth = .FALSE.' )" )
-      CALL UPROD( data, status, n, goth, X, VECTOR, RESULT )
-      IF ( status /= 0 ) GO to 900
+      CALL UPROD( n, goth, X, VECTOR, RESULT )
       CALL WRITE_RESULT( out, n, VECTOR, RESULT )
       goth = .TRUE.
       WRITE( out, "( ' Call UPROD with goth = .TRUE.' )" )
-      CALL UPROD( data, status, n, goth, X, VECTOR, RESULT )
-      IF ( status /= 0 ) GO to 900
+      CALL UPROD( n, goth, X, VECTOR, RESULT )
       CALL WRITE_RESULT( out, n, VECTOR, RESULT )
 
 !  compute a band of the Hessian
@@ -244,14 +217,12 @@
 
       goth = .FALSE.
       WRITE( out, "( ' Call UBANDH with goth = .FALSE.' )" )
-      CALL UBANDH( data, status, n, X, nsemib, H_band, lbandh, maxsbw )
-      IF ( status /= 0 ) GO to 900
-      CALL WRITE_H_BAND( out, n, lbandh, H_band, nsemib, maxsbw )
+      CALL UBANDH( n, goth, X, nsemib, H_band, lbandh )
+      CALL WRITE_H_BAND( out, n, lbandh, H_band, nsemib )
       goth = .TRUE.
       WRITE( out, "( ' Call UBANDH with goth = .TRUE.' )" )
-      CALL UBANDH( data, status, n, X, nsemib, H_band, lbandh, maxsbw )
-      IF ( status /= 0 ) GO to 900
-      CALL WRITE_H_BAND( out, n, lbandh, H_band, nsemib, maxsbw )
+      CALL UBANDH( n, goth, X, nsemib, H_band, lbandh )
+      CALL WRITE_H_BAND( out, n, lbandh, H_band, nsemib )
 
 !  terminal exit
 
@@ -265,11 +236,6 @@
       STOP
 
 !  error exits
-
- 900  CONTINUE
-      WRITE( out, "( ' error status = ', I0 )" ) status
-      CLOSE( INPUT  )
-      STOP
 
  990  CONTINUE
       WRITE( out, "( ' Allocation error, status = ', I0 )" ) alloc_stat
@@ -413,12 +379,11 @@
       END DO
       END SUBROUTINE WRITE_RESULT
 
-      SUBROUTINE WRITE_H_BAND( out, n, lbandh, H_band, nsemib, maxsbw )
-      INTEGER :: n, lbandh, maxsbw, out
+      SUBROUTINE WRITE_H_BAND( out, n, lbandh, H_band, nsemib )
+      INTEGER :: n, lbandh, out
       REAL ( KIND = wp ), DIMENSION( 0 : lbandh, n ):: H_band
       INTEGER :: i, j
       WRITE( out, "( ' * H(band)' )" )
-!     WRITE( out, "( ' * H(band) has max seemibandwidth ', I0 )" ) maxsbw
       WRITE( out, "( ' *       i   band', I7, 4I12 )" ) ( j, j = 0, nsemib )
       DO i = 1, n
         WRITE( out, "( ' * ', I7, 6X, 5ES12.4 )" )                             &
@@ -426,4 +391,4 @@
       END DO
       END SUBROUTINE WRITE_H_BAND
 
-    END PROGRAM CUTEST_test_unconstrained_tools
+    END PROGRAM CUTER_test_unconstrained_tools
