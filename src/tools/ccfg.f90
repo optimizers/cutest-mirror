@@ -9,8 +9,8 @@
 !   fortran 77 version originally released in CUTE, April 1992
 !   fortran 2003 version released in CUTEst, 21st November 2012
 
-      SUBROUTINE CCFG( data, status, n, m, X, C, jtrans, lcjac1, lcjac2,       &
-                       CJAC, grad )
+      SUBROUTINE CCFG( data, status, n, m, X, C, jtrans,                       &
+                       lcjac1, lcjac2, CJAC, grad )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
@@ -220,8 +220,8 @@
 
           IF ( icon == 0 .OR. icon > m ) CYCLE
           ig1 = ig + 1
-          istrgv = data%IWORK( data%lstagv + ig )
-          iendgv = data%IWORK( data%lstagv + ig1 ) - 1
+          istrgv = data%ISTAGV( ig )
+          iendgv = data%ISTAGV( ig1 ) - 1
           nelow = data%ISTADG( ig ) ; nelup = data%ISTADG( ig1 ) - 1
 
 !  compute the first derivative of the group
@@ -232,8 +232,7 @@
 !  the group has nonlinear elements
 
           IF ( nelow <= nelup ) THEN
-            data%WRK( data%IWORK( data%lsvgrp + istrgv :                       &
-                                  data%lsvgrp + iendgv ) ) = 0.0_wp
+            data%W_ws( data%ISVGRP( istrgv : iendgv ) ) = 0.0_wp
 
 !  loop over the group's nonlinear elements
 
@@ -247,13 +246,12 @@
 
               IF ( data%INTREP( iel ) ) THEN
                 nin = data%INTVAR( iel + 1 ) - k
-                CALL RANGE( iel, .TRUE., data%FUVALS( k ),                &
-                            data%WRK( n + 1 ), nvarel, nin,               &
-                            data%ITYPEE( iel ), nin, nvarel )
+                CALL RANGE( iel, .TRUE., data%FUVALS( k ), data%W_el,          &
+                            nvarel, nin, data%ITYPEE( iel ), nin, nvarel )
 !DIR$ IVDEP
                 DO i = 1, nvarel
                   j = data%IELVAR( l )
-                  data%WRK( j ) = data%WRK( j ) + scalee * data%WRK( n + i )
+                  data%W_ws( j ) = data%W_ws( j ) + scalee * data%W_el( i )
                   l = l + 1
                 END DO
 
@@ -263,7 +261,7 @@
 !DIR$ IVDEP
                 DO i = 1, nvarel
                   j = data%IELVAR( l )
-                  data%WRK( j ) = data%WRK( j ) + scalee * data%FUVALS( k )
+                  data%W_ws( j ) = data%W_ws( j ) + scalee * data%FUVALS( k )
                   k = k + 1 ; l = l + 1
                 END DO
               END IF
@@ -274,22 +272,22 @@
 !DIR$ IVDEP
             DO k = data%ISTADA( ig ), data%ISTADA( ig1 ) - 1
               j = data%ICNA( k )
-              data%WRK( j ) = data%WRK( j ) + data%A( k )
+              data%W_ws( j ) = data%W_ws( j ) + data%A( k )
             END DO
 
 !  allocate a gradient
 
 !DIR$ IVDEP
             DO i = istrgv, iendgv
-              ll = data%IWORK( data%lsvgrp + i )
+              ll = data%ISVGRP( i )
 
 !  include contributions from the first n variables only
 
               IF ( ll <= n ) THEN
                 IF ( jtrans ) THEN
-                  CJAC( ll, icon ) = gi * data%WRK( ll )
+                  CJAC( ll, icon ) = gi * data%W_ws( ll )
                 ELSE
-                  CJAC( icon, ll ) = gi * data%WRK( ll )
+                  CJAC( icon, ll ) = gi * data%W_ws( ll )
                 END IF
               END IF
             END DO

@@ -10,7 +10,7 @@
 !  History -
 !   fortran 2003 version released November 2012
 
-      USE CUTEST
+!     USE CUTEST
 
 !--------------------
 !   P r e c i s i o n
@@ -24,14 +24,13 @@
 
       INTEGER, PARAMETER :: input = 55
       INTEGER, PARAMETER :: out = 6
-      INTEGER, PARAMETER :: buffer = 77 
       REAL ( KIND = wp ), PARAMETER :: one = 1.0_wp
 
 !--------------------------------
 !   L o c a l   V a r i a b l e s
 !--------------------------------
 
-      INTEGER :: n, m, H_ne, HE_nel, HE_val_ne, HE_row_ne, J_ne, Ji_ne, status
+      INTEGER :: n, m, H_ne, HE_nel, HE_val_ne, HE_row_ne, J_ne, Ji_ne
       INTEGER :: l_h2_1, l_h, lhe_ptr, lhe_val, lhe_row, alloc_stat
       REAL ( KIND = wp ) :: f, ci
       LOGICAL :: grad, byrows, goth, efirst, lfirst, nvfrst, grlagf, jtrans
@@ -48,7 +47,6 @@
       LOGICAL, ALLOCATABLE, DIMENSION( : ) :: EQUATION, LINEAR
       CHARACTER ( len = 10 ), ALLOCATABLE, DIMENSION( : ) :: X_names, C_names
 !     REAL :: CPU( 2 ), CALLS( 4 )
-      TYPE ( CUTEST_data_type ) :: data
 
 !  open the problem data file
 
@@ -57,7 +55,7 @@
 !  allocate basic arrays
 
       WRITE( out, "( ' CALL CDIMEN ' )" )
-      CALL CDIMEN( input, status, n, m )
+      CALL CDIMEN( input, n, m )
       WRITE( out, "( ' * n = ', I0, ', m = ', I0 )" ) n, m
       l_h2_1 = n
       ALLOCATE( X( n ), X_l( n ), X_u( n ), G( n ), VECTOR( n ), Ji( n ),      &
@@ -76,9 +74,8 @@
 
       efirst = .TRUE. ; lfirst = .TRUE. ; nvfrst = .TRUE.
       WRITE( out, "( ' CALL CSETUP ' )" )
-      CALL CSETUP( data, status, input, out, buffer, n, m, X, X_l, X_u,        &
-                   EQUATION, LINEAR, Y, C_l, C_u, efirst, lfirst, nvfrst )
-      IF ( status /= 0 ) GO to 900
+      CALL CSETUP( input, out, n, m, X, X_l, X_u, n,                           &
+                   EQUATION, LINEAR, Y, C_l, C_u, m, efirst, lfirst, nvfrst )
       CALL WRITE_X( out, n, X, X_l, X_u )
       CALL WRITE_Y( out, m, Y, C_l, C_u, EQUATION, LINEAR )
 
@@ -87,8 +84,7 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
 !  obtain variable and problem names
 
       WRITE( out, "( ' CALL CNAMES' )" )
-      CALL CNAMES( data, status, n, m, p_name, X_names, C_names )
-      IF ( status /= 0 ) GO to 900
+      CALL CNAMES( n, m, p_name, X_names, C_names )
       CALL WRITE_p_name( out, p_name )
       CALL WRITE_X_names( out, n, X_names )
       CALL WRITE_C_names( out, m, C_names )
@@ -96,22 +92,19 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
 !  obtain constraint names
 
       WRITE( out, "( ' Call CONNAMES' )" )
-      CALL CONNAMES( data, status, m, C_names )
-      IF ( status /= 0 ) GO to 900
+      CALL CONNAMES( m, C_names )
       CALL WRITE_C_names( out, m, C_names )
 
 !  obtain variable types
 
       WRITE( out, "( ' CALL CVARTY' )" )
-      CALL CVARTY( data, status, n, X_type )
-      IF ( status /= 0 ) GO to 900
+      CALL CVARTY( n, X_type )
       CALL WRITE_X_type( out, n, X_type )
 
 !  compute the objective function value
 
       WRITE( out, "( ' CALL CFN' )" )
-      CALL CFN( data, status, n, m, X, f, C )
-      IF ( status /= 0 ) GO to 900
+      CALL CFN( n, m, X, f, m, C )
       CALL WRITE_f( out, f )
       CALL WRITE_C( out, m, C )
 
@@ -119,30 +112,22 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
 
       grlagf = .TRUE. ; jtrans = .TRUE.
       WRITE( out, "( ' CALL CGR with grlagf = .TRUE. and jtrans = .TRUE.' )" )
-      CALL CGR( data, status, n, m, X, Y, grlagf, G, jtrans,                   &
-                l_j2_1, l_j2_2, J2_val )
-      IF ( status /= 0 ) GO to 900
+      CALL CGR( n, m, X, grlagf, m, Y, G, jtrans, l_j2_1, l_j2_2, J2_val )
       CALL WRITE_G( out, n, G )
       CALL WRITE_JT_dense( out, n, m, l_j2_1, l_j2_2, J2_val )
       grlagf = .TRUE. ; jtrans = .FALSE.
       WRITE( out, "( ' CALL CGR with grlagf = .TRUE. and jtrans = .FALSE.' )" )
-      CALL CGR( data, status, n, m, X, Y, grlagf, G, jtrans,                   &
-                l_j2_1, l_j2_2, J2_val )
-      IF ( status /= 0 ) GO to 900
+      CALL CGR( n, m, X, grlagf, m, Y, G, jtrans, l_j2_1, l_j2_2, J2_val )
       CALL WRITE_G( out, n, G )
       CALL WRITE_J_dense( out, n, m, l_j2_1, l_j2_2, J2_val )
       grlagf = .FALSE. ; jtrans = .TRUE.
       WRITE( out, "( ' CALL CGR with grlagf = .FALSE. and jtrans = .TRUE.' )" )
-      CALL CGR( data, status, n, m, X, Y, grlagf, G, jtrans,                   &
-                l_j2_1, l_j2_2, J2_val )
-      IF ( status /= 0 ) GO to 900
+      CALL CGR( n, m, X, grlagf, m, Y, G, jtrans, l_j2_1, l_j2_2, J2_val )
       CALL WRITE_G( out, n, G )
       CALL WRITE_JT_dense( out, n, m, l_j2_1, l_j2_2, J2_val )
       grlagf = .FALSE. ; jtrans = .FALSE.
       WRITE( out, "( ' CALL CGR with grlagf = .FALSE. and jtrans = .FALSE.' )" )
-      CALL CGR( data, status, n, m, X, Y, grlagf, G, jtrans,                   &
-                l_j2_1, l_j2_2, J2_val )
-      IF ( status /= 0 ) GO to 900
+      CALL CGR( n, m, X, grlagf, m, Y, G, jtrans, l_j2_1, l_j2_2, J2_val )
       CALL WRITE_G( out, n, G )
       CALL WRITE_J_dense( out, n, m, l_j2_1, l_j2_2, J2_val )
 
@@ -150,21 +135,18 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
 
       grad = .TRUE.
       WRITE( out, "( ' CALL COFG with grad = .TRUE.' )" )
-      CALL COFG( data, status, n, X, f, G, grad )
-      IF ( status /= 0 ) GO to 900
+      CALL COFG( n, X, f, G, grad )
       CALL WRITE_f( out, f )
       CALL WRITE_G( out, n, G )
       grad = .FALSE.
       WRITE( out, "( ' CALL COFG with grad = .FALSE.' )" )
-      CALL COFG( data, status, n, X, f, G, grad )
-      IF ( status /= 0 ) GO to 900
+      CALL COFG( n, X, f, G, grad )
       CALL WRITE_f( out, f )
 
 !  compute the number of nonzeros in the sparse Jacobian
 
       WRITE( out, "( ' CALL CDIMSJ' )" )
-      CALL CDIMSJ( data, status, J_ne )
-      IF ( status /= 0 ) GO to 900
+      CALL CDIMSJ( J_ne )
       WRITE( out, "( ' * J_ne = ', I0 )" ) J_ne
 
       l_j = J_ne
@@ -175,76 +157,56 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
 
       grlagf = .TRUE.
       WRITE( out, "( ' CALL CSGR with grlagf = .TRUE.' )" )
-      CALL CSGR( data, status, n, m, X, Y, grlagf,                             &
-                 J_ne, l_j, J_val, J_var, J_fun )
-      IF ( status /= 0 ) GO to 900
+      CALL CSGR( n, m, grlagf, m, Y, X, J_ne, l_j, J_val, J_var, J_fun )
       CALL WRITE_J_sparse( out, J_ne, l_j, J_val, J_fun, J_var )
       grlagf = .FALSE.
       WRITE( out, "( ' CALL CSGR with grlagf = .FALSE.' )" )
-      CALL CSGR( data, status, n, m, X, Y, grlagf,                             &
-                 J_ne, l_j, J_val, J_var, J_fun )
-      IF ( status /= 0 ) GO to 900
+      CALL CSGR( n, m, grlagf, m, Y, X, J_ne, l_j, J_val, J_var, J_fun )
       CALL WRITE_J_sparse( out, J_ne, l_j, J_val, J_fun, J_var )
 
 !  compute the constraint and dense Jacobian values
 
       grad = .TRUE. ; jtrans = .TRUE.
       WRITE( out, "( ' CALL CCFG with grad = .TRUE. and jtrans = .TRUE.' )" )
-      CALL CCFG( data, status, n, m, X, C, jtrans,                             &
-                 l_j2_1, l_j2_2, J2_val, grad )
-      IF ( status /= 0 ) GO to 900
+      CALL CCFG( n, m, X, m, C, jtrans, l_j2_1, l_j2_2, J2_val, grad )
       CALL WRITE_C( out, m, C )
       CALL WRITE_JT_dense( out, n, m, l_j2_1, l_j2_2, J2_val )
       grad = .TRUE. ; jtrans = .FALSE.
       WRITE( out, "( ' CALL CCFG with grad = .TRUE. and jtrans = .FALSE.' )" )
-      CALL CCFG( data, status, n, m, X, C, jtrans,                             &
-                 l_j2_1, l_j2_2, J2_val, grad )
-      IF ( status /= 0 ) GO to 900
+      CALL CCFG( n, m, X, m, C, jtrans, l_j2_1, l_j2_2, J2_val, grad )
       CALL WRITE_C( out, m, C )
       CALL WRITE_J_dense( out, n, m, l_j2_1, l_j2_2, J2_val )
       grad = .FALSE. ; jtrans = .TRUE.
       WRITE( out, "( ' CALL CCFG with grad = .FALSE. and jtrans = .TRUE.' )" )
-      CALL CCFG( data, status, n, m, X, C, jtrans,                             &
-                 l_j2_1, l_j2_2, J2_val, grad )
-      IF ( status /= 0 ) GO to 900
+      CALL CCFG( n, m, X, m, C, jtrans, l_j2_1, l_j2_2, J2_val, grad )
       CALL WRITE_C( out, m, C )
       grad = .FALSE. ; jtrans = .FALSE.
       WRITE( out, "( ' CALL CCFG with grad = .FALSE. and jtrans = .FALSE.' )" )
-      CALL CCFG( data, status, n, m, X, C, jtrans,                             &
-                 l_j2_1, l_j2_2, J2_val, grad )
-      IF ( status /= 0 ) GO to 900
+      CALL CCFG( n, m, X, m, C, jtrans, l_j2_1, l_j2_2, J2_val, grad )
       CALL WRITE_C( out, m, C )
 
 !  compute the constraint and sparse Jacobian values ....
 
       grad = .TRUE.
       WRITE( out, "( ' CALL CSCFG with grad = .TRUE.' )" )
-      CALL CSCFG( data, status, n, m, X, C, J_ne, l_j, J_val, J_var, J_fun,    &
-                  grad )
-      IF ( status /= 0 ) GO to 900
+      CALL CSCFG( n, m, X, m, C, J_ne, l_j, J_val, J_var, J_fun, grad )
       CALL WRITE_C( out, m, C )
       CALL WRITE_J_sparse( out, J_ne, l_j, J_val, J_fun, J_var )
       grad = .FALSE.
       WRITE( out, "( ' CALL CSCFG with grad = .FALSE.' )" )
-      CALL CSCFG( data, status, n, m, X, C, J_ne, l_j, J_val, J_var, J_fun,    &
-                  grad )
-      IF ( status /= 0 ) GO to 900
+      CALL CSCFG( n, m, X, m, C, J_ne, l_j, J_val, J_var, J_fun, grad )
       CALL WRITE_C( out, m, C )
 
 !  ... and its current version
 
       grad = .TRUE.
       WRITE( out, "( ' CALL CCFSG with grad = .TRUE.' )" )
-      CALL CCFSG( data, status, n, m, X, C, J_ne, l_j, J_val, J_var, J_fun,    &
-                  grad )
-      IF ( status /= 0 ) GO to 900
+      CALL CCFSG( n, m, X, m, C, J_ne, l_j, J_val, J_var, J_fun, grad )
       CALL WRITE_C( out, m, C )
       CALL WRITE_J_sparse( out, J_ne, l_j, J_val, J_fun, J_var )
       grad = .FALSE.
       WRITE( out, "( ' CALL CCFSG with grad = .FALSE.' )" )
-      CALL CCFSG( data, status, n, m, X, C, J_ne, l_j, J_val, J_var, J_fun,    &
-                  grad )
-      IF ( status /= 0 ) GO to 900
+      CALL CCFSG( n, m, X, m, C, J_ne, l_j, J_val, J_var, J_fun, grad )
       CALL WRITE_C( out, m, C )
 
 !  compute an individual constraint and its dense gradient
@@ -252,100 +214,86 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
       icon = 1
       grad = .TRUE.
       WRITE( out, "( ' CALL CCIFG with grad = .TRUE.' )" )
-      CALL CCIFG( data, status, n, icon, X, ci, Ji, grad )
-      IF ( status /= 0 ) GO to 900
+      CALL CCIFG( n, icon, X, ci, Ji, grad )
       CALL WRITE_CI( out, icon, ci )
       CALL WRITE_JI( out, n, icon, Ji )
       grad = .FALSE.
       WRITE( out, "( ' CALL CCIFG with grad = .FALSE.' )" )
-      CALL CCIFG( data, status, n, icon, X, ci, Ji, grad )
-      IF ( status /= 0 ) GO to 900
+      CALL CCIFG( n, icon, X, ci, Ji, grad )
       CALL WRITE_CI( out, icon, ci )
 
 !  compute an individual constraint and its sparse gradient ....
 
       grad = .TRUE.
       WRITE( out, "( ' CALL CSCIFG with grad = .TRUE.' )" )
-      CALL CSCIFG( data, status, n, icon, X, ci, Ji_ne, n, Ji, J_var, grad )
-      IF ( status /= 0 ) GO to 900
+      CALL CSCIFG( n, icon, X, ci, Ji_ne, n, Ji, J_var, grad )
       CALL WRITE_CI( out, icon, ci )
       CALL WRITE_SJI( out, icon, Ji_ne, n, Ji, J_var )
       grad = .FALSE.
       WRITE( out, "( ' CALL CSCIFG with grad = .FALSE.' )" )
-      CALL CSCIFG( data, status, n, icon, X, ci, Ji_ne, n, Ji, J_var, grad )
-      IF ( status /= 0 ) GO to 900
+      CALL CSCIFG( n, icon, X, ci, Ji_ne, n, Ji, J_var, grad )
       CALL WRITE_CI( out, icon, ci )
 
 !  ... and its current version
 
       grad = .TRUE.
       WRITE( out, "( ' CALL CCIFSG with grad = .TRUE.' )" )
-      CALL CCIFSG( data, status, n, icon, X, ci, Ji_ne, n, Ji, J_var, grad )
-      IF ( status /= 0 ) GO to 900
+      CALL CCIFSG( n, icon, X, ci, Ji_ne, n, Ji, J_var, grad )
       CALL WRITE_CI( out, icon, ci )
       CALL WRITE_SJI( out, icon, Ji_ne, n, Ji, J_var )
       grad = .FALSE.
       WRITE( out, "( ' CALL CCIFSG with grad = .FALSE.' )" )
-      CALL CCIFSG( data, status, n, icon, X, ci, Ji_ne, n, Ji, J_var, grad )
-      IF ( status /= 0 ) GO to 900
+      CALL CCIFSG( n, icon, X, ci, Ji_ne, n, Ji, J_var, grad )
       CALL WRITE_CI( out, icon, ci )
 
 !  compute the dense Hessian value
 
       WRITE( out, "( ' CALL CDH' )" )
-      CALL CDH( data, status, n, m, X, Y, l_h2_1, H2_val )
-      IF ( status /= 0 ) GO to 900
+      CALL CDH( n, m, X, m, Y, l_h2_1, H2_val )
       CALL WRITE_H_dense( out, n, l_h2_1, H2_val )
 
 !  compute the dense Hessian value of the objective or a constraint
 
       iprob = 0
       WRITE( out, "( ' CALL CIDH for objective' )" )
-      CALL CIDH( data, status, n, X, iprob, l_h2_1, H2_val )
-      IF ( status /= 0 ) GO to 900
+      CALL CIDH( n, X, iprob, l_h2_1, H2_val )
       CALL WRITE_H_dense( out, n, l_h2_1, H2_val )
       iprob = 1
       WRITE( out, "( ' CALL CIDH for a constraint' )" )
-      CALL CIDH( data, status, n, X, iprob, l_h2_1, H2_val )
-      IF ( status /= 0 ) GO to 900
+      CALL CIDH( n, X, iprob, l_h2_1, H2_val )
       CALL WRITE_H_dense( out, n, l_h2_1, H2_val )
 
 !  compute the gradient and dense Hessian values
 
       grlagf = .TRUE. ; jtrans = .TRUE.
       WRITE( out, "( ' CALL CGRDH with grlagf = .TRUE. and jtrans = .TRUE.' )" )
-      CALL CGRDH( data, status, n, m, X, Y, grlagf, G, jtrans,                &
+      CALL CGRDH( n, m, X, grlagf, m, Y, G, jtrans,                            &
                   l_j2_1, l_j2_2, J2_val, l_h2_1, H2_val )
-      IF ( status /= 0 ) GO to 900
       CALL WRITE_G( out, n, G )
       CALL WRITE_H_dense( out, n, l_h2_1, H2_val )
       grlagf = .TRUE. ; jtrans = .FALSE.
       WRITE( out, "( ' CALL CGRDH with grlagf = .TRUE. and jtrans = .FALSE.' )")
-      CALL CGRDH( data, status, n, m, X, Y, grlagf, G, jtrans,                &
+      CALL CGRDH( n, m, X, grlagf, m, Y, G, jtrans,                            &
                   l_j2_1, l_j2_2, J2_val, l_h2_1, H2_val )
-      IF ( status /= 0 ) GO to 900
       CALL WRITE_G( out, n, G )
       CALL WRITE_H_dense( out, n, l_h2_1, H2_val )
       grlagf = .FALSE. ; jtrans = .TRUE.
       WRITE( out, "( ' CALL CGRDH with grlagf = .FALSE. and jtrans = .TRUE.' )")
-      CALL CGRDH( data, status, n, m, X, Y, grlagf, G, jtrans,                &
+      CALL CGRDH( n, m, X, grlagf, m, Y, G, jtrans,                            &
                   l_j2_1, l_j2_2, J2_val, l_h2_1, H2_val )
-      IF ( status /= 0 ) GO to 900
       CALL WRITE_G( out, n, G )
       CALL WRITE_H_dense( out, n, l_h2_1, H2_val )
       grlagf = .FALSE. ; jtrans = .FALSE.
       WRITE( out, "( ' CALL CGRDH with grlagf = .FALSE. and jtrans = .FALSE.')")
-      CALL CGRDH( data, status, n, m, X, Y, grlagf, G, jtrans,                &
+      CALL CGRDH( n, m, X, grlagf, m, Y, G, jtrans,                            &
                   l_j2_1, l_j2_2, J2_val, l_h2_1, H2_val )
-      IF ( status /= 0 ) GO to 900
       CALL WRITE_G( out, n, G )
       CALL WRITE_H_dense( out, n, l_h2_1, H2_val )
 
 !  compute the number of nonzeros in the sparse Hessian
 
       WRITE( out, "( ' CALL CDIMSH' )" )
-      CALL CDIMSH( data, status, H_ne )
-      IF ( status /= 0 ) GO to 900
+      CALL CDIMSH( H_ne )
       WRITE( out, "( ' * H_ne = ', I0 )" ) H_ne
 
       l_h = H_ne
@@ -355,52 +303,45 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
 !  compute the sparse Hessian value
 
       WRITE( out, "( ' CALL CSH' )" )
-      CALL CSH( data, status, n, m, X, Y, H_ne, l_h, H_val, H_row, H_col )
-      IF ( status /= 0 ) GO to 900
+      CALL CSH( n, m, X, m, Y, H_ne, l_h, H_val, H_row, H_col )
       CALL WRITE_H_sparse( out, H_ne, l_h, H_val, H_row, H_col )
 
 !  compute the sparse Hessian value without the objective
 
       WRITE( out, "( ' CALL CSH1' )" )
-      CALL CSH1( data, status, n, m, X, Y, H_ne, l_h, H_val, H_row, H_col )
-      IF ( status /= 0 ) GO to 900
+      CALL CSH1( n, m, X, m, Y, H_ne, l_h, H_val, H_row, H_col )
       CALL WRITE_H_sparse( out, H_ne, l_h, H_val, H_row, H_col )
 
 !  compute the sparse Hessian value of the objective or a constraint
 
       iprob = 0
       WRITE( out, "( ' CALL CISH for objective' )" )
-      CALL CISH( data, status, n, X, iprob, H_ne, l_h, H_val, H_row, H_col )
-      IF ( status /= 0 ) GO to 900
+      CALL CISH( n, X, iprob, H_ne, l_h, H_val, H_row, H_col )
       CALL WRITE_H_sparse( out, H_ne, l_h, H_val, H_row, H_col )
       iprob = 1
       WRITE( out, "( ' CALL CISH for a constraint' )" )
-      CALL CISH( data, status, n, X, iprob, H_ne, l_h, H_val, H_row, H_col )
-      IF ( status /= 0 ) GO to 900
+      CALL CISH( n, X, iprob, H_ne, l_h, H_val, H_row, H_col )
       CALL WRITE_H_sparse( out, H_ne, l_h, H_val, H_row, H_col )
 
 !  compute the gradient and sparse Hessian values
 
       grlagf = .TRUE.
       WRITE( out, "( ' CALL CSGRSH with grlagf = .TRUE.' )" )
-      CALL CSGRSH( data, status, n, m, X, Y, grlagf, J_ne, l_j, J_val,         &
+      CALL CSGRSH( n, m, X, grlagf, m, Y, J_ne, l_j, J_val,         &
                    J_var, J_fun, H_ne, l_h, H_val, H_row, H_col )
-      IF ( status /= 0 ) GO to 900
       CALL WRITE_J_sparse( out, J_ne, l_j, J_val, J_fun, J_var )
       CALL WRITE_H_sparse( out, H_ne, l_h, H_val, H_row, H_col )
       grlagf = .FALSE.
       WRITE( out, "( ' CALL CSGRSH with grlagf = .FALSE.' )" )
-      CALL CSGRSH( data, status, n, m, X, Y, grlagf, J_ne, l_j, J_val,         &
+      CALL CSGRSH( n, m, X, grlagf, m, Y, J_ne, l_j, J_val,         &
                    J_var, J_fun, H_ne, l_h, H_val, H_row, H_col )
-      IF ( status /= 0 ) GO to 900
       CALL WRITE_J_sparse( out, J_ne, l_j, J_val, J_fun, J_var )
       CALL WRITE_H_sparse( out, H_ne, l_h, H_val, H_row, H_col )
 
 !  compute the number of nonzeros in the element Hessian
 
       WRITE( out, "( ' CALL CDIMSE' )" )
-      CALL CDIMSE( data, status, HE_nel, HE_val_ne, HE_row_ne )
-      IF ( status /= 0 ) GO to 900
+      CALL CDIMSE( HE_nel, HE_val_ne, HE_row_ne )
       WRITE( out, "( ' * H_nel = ', I0, ' HE_val_ne = ', I0,                   &
      &                 ' HE_row_ne = ', I0 )" ) HE_nel, HE_val_ne, HE_row_ne
 
@@ -415,16 +356,14 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
 
       byrows = .FALSE.
       WRITE( out, "( ' CALL CEH with byrows = .FALSE.' )" )
-      CALL CEH( data, status, n, m, X, Y, HE_nel, lhe_ptr, HE_row_ptr,         &
-                HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val, byrows )
-      IF ( status /= 0 ) GO to 900
+      CALL CEH( n, m, X, m, Y, HE_nel, HE_row, lhe_row, lhe_ptr, HE_row_ptr,   &
+                HE_val, lhe_val, HE_val_ptr, byrows )
       CALL WRITE_H_element( out, HE_nel, lhe_ptr, HE_row_ptr,                  &
                             HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val )
       byrows = .TRUE.
       WRITE( out, "( ' CALL CEH with byrows = .TRUE.' )" )
-      CALL CEH( data, status, n, m, X, Y, HE_nel, lhe_ptr, HE_row_ptr,         &
-                HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val, byrows )
-      IF ( status /= 0 ) GO to 900
+      CALL CEH( n, m, X, m, Y, HE_nel, HE_row, lhe_row, lhe_ptr, HE_row_ptr,   &
+                HE_val, lhe_val, HE_val_ptr, byrows )
       CALL WRITE_H_element( out, HE_nel, lhe_ptr, HE_row_ptr,                  &
                             HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val )
 
@@ -432,37 +371,33 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
 
       grlagf = .TRUE. ; byrows = .TRUE.
       WRITE( out, "( ' CALL CSGREH with grlagf = .TRUE. and byrows = .TRUE.')" )
-      CALL CSGREH( data, status, n, m, X, Y, grlagf, J_ne, l_j,                &
-                   J_val, J_var, J_fun, HE_nel, lhe_ptr, HE_row_ptr,           &
-                   HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val, byrows )
-      IF ( status /= 0 ) GO to 900
+      CALL CSGREH( n, m, X, grlagf, m, Y, J_ne, l_j, J_val, J_var, J_fun,      &
+                   HE_nel, HE_row, lhe_row, lhe_ptr, HE_row_ptr, HE_val,       &
+                   lhe_val, HE_val_ptr, byrows )
       CALL WRITE_J_sparse( out, J_ne, l_j, J_val, J_fun, J_var )
       CALL WRITE_H_element( out, HE_nel, lhe_ptr, HE_row_ptr,                  &
                             HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val )
       grlagf = .TRUE. ; byrows = .FALSE.
       WRITE( out, "(' CALL CSGREH with grlagf = .TRUE. and byrows = .FALSE.')" )
-      CALL CSGREH( data, status, n, m, X, Y, grlagf, J_ne, l_j,                &
-                   J_val, J_var, J_fun, HE_nel, lhe_ptr, HE_row_ptr,           &
-                   HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val, byrows )
-      IF ( status /= 0 ) GO to 900
+      CALL CSGREH( n, m, X, grlagf, m, Y, J_ne, l_j, J_val, J_var, J_fun,      &
+                   HE_nel, HE_row, lhe_row, lhe_ptr, HE_row_ptr, HE_val,       &
+                   lhe_val, HE_val_ptr, byrows )
       CALL WRITE_J_sparse( out, J_ne, l_j, J_val, J_fun, J_var )
       CALL WRITE_H_element( out, HE_nel, lhe_ptr, HE_row_ptr,                  &
                             HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val )
       grlagf = .FALSE. ; byrows = .TRUE.
       WRITE( out, "( ' CALL CSGREH with grlagf = .FALSE. and byrows = .TRUE.')")
-      CALL CSGREH( data, status, n, m, X, Y, grlagf, J_ne, l_j,                &
-                   J_val, J_var, J_fun, HE_nel, lhe_ptr, HE_row_ptr,           &
-                   HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val, byrows )
-      IF ( status /= 0 ) GO to 900
+      CALL CSGREH( n, m, X, grlagf, m, Y, J_ne, l_j, J_val, J_var, J_fun,      &
+                   HE_nel, HE_row, lhe_row, lhe_ptr, HE_row_ptr, HE_val,       &
+                   lhe_val, HE_val_ptr, byrows )
       CALL WRITE_J_sparse( out, J_ne, l_j, J_val, J_fun, J_var )
       CALL WRITE_H_element( out, HE_nel, lhe_ptr, HE_row_ptr,                  &
                             HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val )
       grlagf = .FALSE. ; byrows = .FALSE.
       WRITE( out, "(' CALL CSGREH with grlagf = .FALSE. and byrows = .FALSE.')")
-      CALL CSGREH( data, status, n, m, X, Y, grlagf, J_ne, l_j,                &
-                   J_val, J_var, J_fun, HE_nel, lhe_ptr, HE_row_ptr,           &
-                   HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val, byrows )
-      IF ( status /= 0 ) GO to 900
+      CALL CSGREH( n, m, X, grlagf, m, Y, J_ne, l_j, J_val, J_var, J_fun,      &
+                   HE_nel, HE_row, lhe_row, lhe_ptr, HE_row_ptr, HE_val,       &
+                   lhe_val, HE_val_ptr, byrows )
       CALL WRITE_J_sparse( out, J_ne, l_j, J_val, J_fun, J_var )
       CALL WRITE_H_element( out, HE_nel, lhe_ptr, HE_row_ptr,                  &
                             HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val )
@@ -472,13 +407,11 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
       VECTOR = one
       goth = .FALSE.
       WRITE( out, "( ' Call CPROD with goth = .FALSE.' )" )
-      CALL CPROD( data, status, n, m, goth, X, Y, VECTOR, RESULT )
-      IF ( status /= 0 ) GO to 900
+      CALL CPROD( n, m, goth, X, m, Y, VECTOR, RESULT )
       CALL WRITE_RESULT( out, n, VECTOR, RESULT )
       goth = .TRUE.
       WRITE( out, "( ' Call CPROD with goth = .TRUE.' )" )
-      CALL CPROD( data, status, n, m, goth, X, Y, VECTOR, RESULT )
-      IF ( status /= 0 ) GO to 900
+      CALL CPROD( n, m, goth, X, m, Y, VECTOR, RESULT )
       CALL WRITE_RESULT( out, n, VECTOR, RESULT )
 
 !  compute a Hessian-vector product ignoring the objective
@@ -486,13 +419,11 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
       VECTOR = one
       goth = .FALSE.
       WRITE( out, "( ' Call CPROD1 with goth = .FALSE.' )" )
-      CALL CPROD1( data, status, n, m, goth, X, Y, VECTOR, RESULT )
-      IF ( status /= 0 ) GO to 900
+      CALL CPROD1( n, m, goth, X, m, Y, VECTOR, RESULT )
       CALL WRITE_RESULT( out, n, VECTOR, RESULT )
       goth = .TRUE.
       WRITE( out, "( ' Call CPROD1 with goth = .TRUE.' )" )
-      CALL CPROD1( data, status, n, m, goth, X, Y, VECTOR, RESULT )
-      IF ( status /= 0 ) GO to 900
+      CALL CPROD1( n, m, goth, X, m, Y, VECTOR, RESULT )
       CALL WRITE_RESULT( out, n, VECTOR, RESULT )
 
 !  terminal exit
@@ -508,11 +439,6 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
       STOP
 
 !  error exits
-
- 900  CONTINUE
-      WRITE( out, "( ' error status = ', I0 )" ) status
-      CLOSE( INPUT  )
-      STOP
 
  990  CONTINUE
       WRITE( out, "( ' Allocation error, status = ', I0 )" ) alloc_stat

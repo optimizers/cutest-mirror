@@ -1,37 +1,44 @@
-! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE UPROD( data, status, n, goth, X, P, RESULT )
+! THIS VERSION: CUTEST 1.0 - 28/11/2012 AT 14:15 GMT.
+
+!-*-*-*-*-*-*-*-  C U T E S T    U P R O D   S U B R O U T I N E  -*-*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal authors: Ingrid Bongartz and Nick Gould
+
+!  History -
+!   fortran 77 version originally released in CUTE, July 1991
+!   fortran 2003 version released in CUTEst, 28th November 2012
+
+      SUBROUTINE UPROD( data, status, n, goth, X, VECTOR, RESULT )
       USE CUTEST
-      TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: n
+
+!  dummy arguments
+
+      TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
+      INTEGER, INTENT( IN ) :: n
       INTEGER, INTENT( OUT ) :: status
-      LOGICAL :: goth
-      REAL ( KIND = wp ) :: X( n ), P( n ), RESULT( n )
+      LOGICAL, INTENT( IN ) :: goth
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X, VECTOR
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: RESULT
 
-!  Compute the matrix-vector product between the Hessian matrix
-!  of a group partially separable function and a given vector P.
+!  ------------------------------------------------------------------
+!  compute the matrix-vector product between the Hessian matrix of
+!  a group partially separable function and a given vector VECTOR.
 !  The result is placed in RESULT. If goth is .TRUE. the second
-!  derivatives are assumed to have already been computed. If
-!  the user is unsure, set goth = .FALSE. the first time a product
-!  is required with the Hessian evaluated at X. X is not used if
-!  goth = .TRUE.
+!  derivatives are assumed to have already been computed. If the user 
+!  is unsure, set goth = .FALSE. the first time a product is required
+!  with the Hessian evaluated at X. X is not used if  goth = .TRUE.
+!  ------------------------------------------------------------------
 
-!  Based on the minimization subroutine data%laNCELOT/SBMIN
-!  by Conn, Gould and Toint.
+!  local variables
 
-!  Nick Gould, for CGT productions.
-!  July, 1991.
-
-!  integer variables from the PRFCTS common block.
-
-!  Local variables
-
-      INTEGER :: i, ig, j, nn, nbprod, nnonnz, ifstat, igstat
-      INTEGER :: lnwk, lnwkb, lnwkc, lwkb, lwkc
+      INTEGER :: i, ig, j, ifstat, igstat
+!     INTEGER :: lnwk, lnwkb, lnwkc, lwkb, lwkc, nn, nnonnz, nbprod
       REAL ( KIND = wp ) :: ftt
       EXTERNAL :: RANGE 
 
-!  There are non-trivial group functions.
+!  there are non-trivial group functions
 
       IF ( .NOT. goth ) THEN
          DO i = 1, MAX( data%nel, data%ng )
@@ -129,10 +136,10 @@
 
 !  ensure that the product involves all components of P
 
-      DO i = 1, n
-        data%IVAR( i ) = i
-        data%IWORK( data%lnnonz + i ) = i
-      END DO
+!     DO i = 1, n
+!       data%IVAR( i ) = i
+!       data%IWORK( data%lnnonz + i ) = i
+!     END DO
 
 !  initialize RESULT as the zero vector
 
@@ -141,41 +148,59 @@
 !  define the real work space needed for HSPRD. Ensure that there is 
 !  sufficient space
 
-      nn = data%ninvar + n
-      lnwk = MAX( data%ng, data%maxsel )
-      lnwkb = data%maxsin
-      lnwkc = data%maxsin
-      lwkb = lnwk
-      lwkc = lwkb + lnwkb
+!     nn = data%ninvar + n
+!     lnwk = MAX( data%ng, data%maxsel )
+!     lnwkb = data%maxsin
+!     lnwkc = data%maxsin
+!     lwkb = lnwk
+!     lwkc = lwkb + lnwkb
 
 !  evaluate the product
 
-      CALL DHSPRD( n, nn, data%ng, data%ntotel, n, 1, n, nbprod, data%nel == 0, &
-          data%IVAR( 1 ), data%ISTAEV( 1 ), data%lstaev, &
-          data%ISTADH( 1 ), data%lstadh, data%INTVAR( 1 ), &
-          data%lntvar, data%IELING( 1 ), data%leling, data%IELVAR( 1 ), &
-          data%lelvar, data%IWORK( data%lstajc + 1 ), data%lnstjc, data%IWORK( data%lselts + 1 ), &
-          data%lnelts, data%IWORK( data%lsptrs + 1 ), data%lnptrs, data%IWORK( data%lgcolj + 1 ),  &
-          data%lngclj, data%IWORK( data%lslgrp + 1 ), data%lnlgrp, data%IWORK( data%lswksp + 1 ),  &
-          data%lnwksp, data%IWORK( data%lsvgrp + 1 ), data%lnvgrp, data%IWORK( data%lstagv + 1 ), &
-          data%lnstgv, data%IWORK( data%lvaljr + 1 ), data%lnvljr, data%ITYPEE( 1 ),  &
-          data%lintre, nnonnz, data%IWORK( data%lnnonz + 1 ), data%lnnnon, &
-          data%IWORK( data%liused + 1 ), data%lniuse, data%IWORK( data%lnonz2 + 1 ), &
-          data%lnnno2, data%IWORK( data%lsymmh + 1 ), data%maxsin, P, RESULT, &
-          data%GVALS( : , 2 ), data%GVALS( : , 3 ), &
-          data%FUVALS( data%lgrjac + 1 ), data%lngrjc, data%GSCALE( 1 ), &
-          data%ESCALE( 1 ), data%lescal, data%FUVALS, data%lnhuvl, &
-          data%WRK( 1 ), lnwk, data%WRK( lwkb + 1 ), &
-          lnwkb, data%WRK( lwkc + 1 ), lnwkc, &
-          data%GXEQX( 1 ), data%lgxeqx, data%INTREP( 1 ), &
-          data%lintre, .TRUE., RANGE )
+      CALL CUTEST_hessian_times_vector(                                        &
+          data%n, data%ng, data%nel, data%ntotel, data%nvrels, data%nvargp,    &
+          data%alllin, data%ISTAEV, data%ISTADH,                               &
+          data%INTVAR, data%IELING, data%IELVAR, VECTOR, RESULT,               &
+          data%GVALS( : , 2 ) , data%GVALS( : , 3 ),                           &
+          data%FUVALS( data%lgrjac + 1 ),                                      &
+          data%GSCALE, data%ESCALE, data%FUVALS( : data%lnhuvl ),              &
+          data%lnhuvl, data%GXEQX, data%INTREP, data%IGCOLJ,                   &
+          data%ISLGRP, data%ITYPEE, data%ISYMMH, data%ISTAJC,                  &
+          data%W_ws, data%W_el, data%W_in, data%H_in, RANGE )
+
+!!$      CALL DHSPRD( n, nn, data%ng, data%ntotel, &
+!!$          n, 1, n, nbprod, data%nel == 0, &
+!!$          data%IVAR( 1 ), data%ISTAEV( 1 ), data%lstaev, &
+!!$          data%ISTADH( 1 ), data%lstadh, data%INTVAR( 1 ), &
+!!$          data%lntvar, data%IELING( 1 ), data%leling, data%IELVAR( 1 ), &
+!!$          data%lelvar, data%IWORK( data%lstajc + 1 ),&
+!!$          data%lnstjc, data%IWORK( data%lselts + 1 ), &
+!!$          data%lnelts, data%IWORK( data%lsptrs + 1 ), &
+!!$          data%lnptrs, data%IWORK( data%lgcolj + 1 ),  &
+!!$          data%lngclj, data%IWORK( data%lslgrp + 1 ), &
+!!$          data%lnlgrp, data%IWORK( data%lswksp + 1 ),  &
+!!$          data%lnwksp, data%IWORK( data%lsvgrp + 1 ), &
+!!$          data%lnvgrp, data%IWORK( data%lstagv + 1 ), &
+!!$          data%lnstgv, data%IWORK( data%lvaljr + 1 ), &
+!!$          data%lnvljr, data%ITYPEE( 1 ),  &
+!!$          data%lintre, nnonnz, &
+!!$          data%IWORK( data%lnnonz + 1 ), data%lnnnon, &
+!!$          data%IWORK( data%liused + 1 ), data%lniuse, &
+!!$          data%IWORK( data%lnonz2 + 1 ), &
+!!$          data%lnnno2, data%IWORK( data%lsymmh + 1 ), data%maxsin, &
+!!$          P, RESULT, &
+!!$          data%GVALS( : , 2 ), data%GVALS( : , 3 ), &
+!!$          data%FUVALS( data%lgrjac + 1 ), data%lngrjc, data%GSCALE( 1 ), &
+!!$          data%ESCALE( 1 ), data%lescal, data%FUVALS, data%lnhuvl, &
+!!$          data%WRK( 1 ), lnwk, data%WRK( lwkb + 1 ), &
+!!$          lnwkb, data%WRK( lwkc + 1 ), lnwkc, &
+!!$          data%GXEQX( 1 ), data%lgxeqx, data%INTREP( 1 ), &
+!!$          data%lintre, .TRUE., RANGE )
 
 !  update the counters for the report tool
 
       data%nhvpr = data%nhvpr + 1
-      IF ( .NOT. GOTH ) THEN
-         data%nc2oh = data%nc2oh + 1
-      END IF
+      IF ( .NOT. goth ) data%nc2oh = data%nc2oh + 1
       status = 0
       RETURN
 

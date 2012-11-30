@@ -1,35 +1,46 @@
-! ( Last modified on 10 Sepc 2004 at 17:01:38 )
-      SUBROUTINE CCIFSG( data, status, n, icon, X, ci, nnzgci, lgci, GCI,    &
-                         INDVAR, grad )
+! THIS VERSION: CUTEST 1.0 - 28/11/2012 AT 10:15 GMT.
+
+!-*-*-*-*-*-*-  C U T E S T    C C I F S G    S U B R O U T I N E  -*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal authors: Ingrid Bongartz and Nick Gould
+
+!   replaced obsolete subroutine CSCIFG in CUTEr, September 1994
+!   fortran 2003 version released in CUTEst, 28th November 2012
+
+      SUBROUTINE CCIFSG( data, status, n, icon, X, ci,                         &
+                         nnzgci, lgci, GCI_val, GCI_var, grad )
       USE CUTEST
-      TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: n, icon, nnzgci, lgci
-      INTEGER, INTENT( OUT ) :: status
-      LOGICAL :: grad
-      INTEGER :: INDVAR( lgci )
-      REAL ( KIND = wp ) :: ci
-      REAL ( KIND = wp ) :: X( n ), GCI( lgci )
 
-!  Evaluate constraint function icon and possibly its gradient,
+!  dummy arguments
+
+      TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
+      INTEGER, INTENT( IN ) :: n, icon, lgci
+      INTEGER, INTENT( OUT ) :: status, nnzgci
+      LOGICAL, INTENT( IN ) :: grad
+      INTEGER, INTENT( OUT ), DIMENSION( lgci ) :: GCI_var
+      REAL ( KIND = wp ), INTENT( OUT ) :: ci
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lgci ) :: GCI_val
+
+!  ---------------------------------------------------------------------
+!  evaluate constraint function icon and possibly its gradient,
 !  for constraints initially written in Standard Input Format (SIF).
-!  The constraint gradient is stored as a sparse vector in array GCI.
-!  The j-th entry of GCI gives the value of the partial derivative
-!  of constraint icon with respect to variable INDVAR( j ).
-!  The number of nonzeros in vector GCI is given by NNZGCI.
-! (Subroutine CCIFG performs the same calculations for a dense
-!  constraint gradient vector.)
-
-!  Ingrid Bongartz
-!  September 1994.
+!  The constraint gradient is stored as a sparse vector in array GCI_val.
+!  The j-th entry of GCI_val gives the value of the partial derivative
+!  of constraint icon with respect to variable GCI_var(j).
+!  The number of nonzeros in vector GCI_val is given by nnzgci.
+!  (Subroutine CCIFG performs the same calculations for a dense
+!   constraint gradient vector.)
+!  ---------------------------------------------------------------------
 
 !  local variables
 
       INTEGER :: i, j, iel, k, ig, ii, ig1, l, ll, neling
       INTEGER :: nin, nvarel, nelow, nelup, istrgv, iendgv, ifstat, igstat
       EXTERNAL :: RANGE 
-      REAL ( KIND = wp ) :: ftt, one, gi, scalee
-      PARAMETER ( zero = 0.0_wp, one = 1.0_wp )
+      REAL ( KIND = wp ) :: ftt, gi, scalee
 
 !  return if there are no constraints
 
@@ -101,7 +112,7 @@
 
       IF ( data%GXEQX( ig ) ) THEN
         data%GVALS( ig, 1 ) = data%FT( ig )
-        data%GVALS( ig, 2 ) = one
+        data%GVALS( ig, 2 ) = 1.0_wp
 
 !  Otherwise, evaluate group IG.
 
@@ -145,20 +156,19 @@
 !  compute the gradient values. Initialize the gradient vector as zero
 
         nnzgci = 0 
-        GCI( : lgci ) = 0.0_wp
+        GCI_val( : lgci ) = 0.0_wp
 
 !  consider only group ig
 
         ig1 = ig + 1
-        istrgv = data%IWORK( data%lstagv + ig )
-        iendgv = data%IWORK( data%lstagv + ig1 ) - 1
+        istrgv = data%ISTAGV( ig )
+        iendgv = data%ISTAGV( ig1 ) - 1
 
 !  compute the first derivative of the group
 
         gi = data%GSCALE( ig )
         IF ( .NOT. data%GXEQX( ig ) ) gi = gi  * data%GVALS( ig, 2 )
-        data%WRK( data%IWORK( data%lsvgrp + istrgv :                           &
-                              data%lsvgrp + iendgv ) ) = 0.0_wp
+        data%W_ws( data%ISVGRP( istrgv : iendgv ) ) = 0.0_wp
 
 !  the group has nonlinear elements
 
@@ -177,13 +187,12 @@
 !  the iel-th element has an internal representation
 
               nin = data%INTVAR( iel + 1 ) - k
-              CALL RANGE( iel, .TRUE., data%FUVALS( k ),                       &
-                          data%WRK( n + 1 ), nvarel, nin,                      &
-                          data%ITYPEE( iel ), nin, nvarel )
+              CALL RANGE( iel, .TRUE., data%FUVALS( k ), data%W_el,            &
+                          nvarel, nin, data%ITYPEE( iel ), nin, nvarel )
 !DIR$ IVDEP
               DO i = 1, nvarel
                 j = data%IELVAR( l )
-                data%WRK( j ) = data%WRK( j ) + scalee * data%WRK( n + i )
+                data%W_ws( j ) = data%W_ws( j ) + scalee * data%W_el( i )
                 l = l + 1
               END DO
             ELSE
@@ -193,7 +202,7 @@
 !DIR$ IVDEP
               DO i = 1, nvarel
                 j = data%IELVAR( l )
-                data%WRK( j ) = data%WRK( j ) + scalee * data%FUVALS( k )
+                data%W_ws( j ) = data%W_ws( j ) + scalee * data%FUVALS( k )
                 k = k + 1 ; l = l + 1
               END DO
             END IF
@@ -204,21 +213,21 @@
 !DIR$ IVDEP
           DO k = data%ISTADA( ig ), data%ISTADA( ig1 ) - 1
                j = data%ICNA( k )
-               data%WRK( j ) = data%WRK( j ) + data%A( k )
+               data%W_ws( j ) = data%W_ws( j ) + data%A( k )
           END DO
 
 !  allocate a gradient
 
 !DIR$ IVDEP
           DO i = istrgv, iendgv
-            ll = data%IWORK( data%lsvgrp + i )
+            ll = data%ISVGRP( i )
 
 !  include contributions from the first n variables only
 
             IF ( ll <= n ) THEN
               nnzgci = nnzgci + 1
-              GCI ( nnzgci ) = gi * data%WRK( ll )
-              INDVAR( nnzgci ) = ll
+              GCI_val ( nnzgci ) = gi * data%W_ws( ll )
+              GCI_var( nnzgci ) = ll
             END IF
           END DO 
 
@@ -231,21 +240,21 @@
 !DIR$ IVDEP
           DO k = data%ISTADA( ig ),data%ISTADA( ig1 ) - 1
             j = data%ICNA( k )
-            data%WRK( j ) = data%WRK( j ) + data%A( k )
+            data%W_ws( j ) = data%W_ws( j ) + data%A( k )
           END DO
 
 !  allocate a gradient
 
 !DIR$ IVDEP
           DO i = istrgv, iendgv
-            ll = data%IWORK( data%lsvgrp + i )
+            ll = data%ISVGRP( i )
 
 !  include contributions from the first n variables only
 
             IF ( ll <= n ) THEN
               nnzgci = nnzgci + 1
-              GCI ( nnzgci ) = gi * data%WRK( ll )
-              INDVAR( nnzgci ) = ll
+              GCI_val ( nnzgci ) = gi * data%W_ws( ll )
+              GCI_var( nnzgci ) = ll
             END IF
           END DO
         END IF
@@ -254,7 +263,7 @@
 !  update the counters for the report tool
 
       data%nc2cf = data%nc2cf + 1
-      IF ( GRAD ) data%nc2cg = data%nc2cg + 1
+      IF ( grad ) data%nc2cg = data%nc2cg + 1
       status = 0
       RETURN
 

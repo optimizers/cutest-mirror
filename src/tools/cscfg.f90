@@ -9,21 +9,21 @@
 !   replaced in CUTEr, December 1990, by subroutine CCFSG
 !   fortran 2003 version released in CUTEst, 22nd November 2012
 
-      SUBROUTINE CSCFG( data, status, n, m, X, C, nnzj, lcjac, CJAC,           &
-                        INDVAR, INDFUN, grad )
+      SUBROUTINE CSCFG( data, status, n, m, X, C,                              &
+                        nnzj, lj, J_val, J_var, J_fun, grad )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
 !  dummy arguments
 
       TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
-      INTEGER, INTENT( IN ) :: n, m, lcjac
+      INTEGER, INTENT( IN ) :: n, m, lj
       INTEGER, INTENT( OUT ) :: status, nnzj
       LOGICAL, INTENT( IN ) :: grad
-      INTEGER, INTENT( OUT ), DIMENSION( lcjac ) :: INDVAR, INDFUN
+      INTEGER, INTENT( OUT ), DIMENSION( lj ) :: J_var, J_fun
       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
-      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( m ) :: C
-      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lcjac ) :: CJAC
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( m ) :: C
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lj ) :: J_val
 
 !  *********************************************************************
 !  *                                                                   *
@@ -31,10 +31,13 @@
 !  *                                                                   *
 !  *********************************************************************
 
-      IF ( data%out > 0 ) WRITE( data%out, "( ' ** SUBROUTINE CSCIFG: this ',  &
-    &  'tool is obsolete! Please use CCFSG instead.' )" )
-      CALL CCFSG( data, status, n, m, X, C, nnzj, lcjac, CJAC, INDVAR, INDFUN, &
-                  grad )
+      IF ( data%out > 0 ) WRITE( data%out, "( ' ** SUBROUTINE CSCFG: this ',   &
+    &  'tool is obsolete!  Please use CCFSG instead.' )" )
+
+!  call the replacement
+
+      CALL CCFSG( data, status, n, m, X, C, nnzj,                              &
+                  lj, J_val, J_var, J_fun, grad )
       RETURN
 
 !  end of subroutine CSCFG

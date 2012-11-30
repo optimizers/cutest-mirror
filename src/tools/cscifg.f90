@@ -9,8 +9,8 @@
 !   replaced in CUTEr, December 1990, by subroutine CCIFSG
 !   fortran 2003 version released in CUTEst, 22nd November 2012
 
-      SUBROUTINE CSCIFG( data, status, n, icon, X, ci, nnzgci, lgci, GCI,      &
-                         INDVAR, grad )
+      SUBROUTINE CSCIFG( data, status, n, icon, X, ci,                         &
+                         nnzgci, lgci, GCI_val, GCI_var, grad )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
@@ -20,10 +20,10 @@
       INTEGER, INTENT( IN ) :: n, icon, lgci
       INTEGER, INTENT( OUT ) :: status, nnzgci
       LOGICAL, INTENT( IN ) :: grad
-      INTEGER, INTENT( OUT ), DIMENSION( lgci ) :: INDVAR
+      INTEGER, INTENT( OUT ), DIMENSION( lgci ) :: GCI_var
       REAL ( KIND = wp ), INTENT( OUT ) :: ci
       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
-      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lgci ) :: GCI
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lgci ) :: GCI_val
 
 !  *********************************************************************
 !  *                                                                   *
@@ -32,9 +32,10 @@
 !  *********************************************************************
 
       IF ( data%out > 0 ) WRITE( data%out, "( ' ** SUBROUTINE CSCIFG: this ',  &
-    &  'tool is obsolete! Please use CCIFSG instead.' )" )
-      CALL CCIFSG( data, status, n, icon, X, ci, nnzgci, lgci, GCI,            &
-                   INDVAR, grad )
+    &  'tool is obsolete!  Please use CCIFSG instead.' )" )
+
+      CALL CCIFSG( data, status, n, icon, X, ci,                               &
+                   nnzgci, lgci, GCI_val, GCI_var, grad )
       RETURN
 
 !  end of subroutine CSCIFG

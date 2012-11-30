@@ -57,8 +57,9 @@ CSEDS = $(CUTEST)/seds/cutersize.sed
 
 #  compilation agenda
 
-BASICS = $(LCS)(cutest.o) $(LCS)(initw.o) $(LCS)(asmbe.o) $(LCS)(asmbl.o) \
-         $(LCS)(elgrd.o) $(LCS)(hsprd.o) $(LCS)(pbname.o) $(LCS)(varnames.o) 
+#BASICS = $(LCS)(cutest.o) $(LCS)(initw.o) $(LCS)(asmbe.o) $(LCS)(asmbl.o) \
+#         $(LCS)(elgrd.o) $(LCS)(hsprd.o) $(LCS)(pbname.o) $(LCS)(varnames.o) 
+BASICS = $(LCS)(cutest.o) $(LCS)(pbname.o) $(LCS)(varnames.o) 
 
 UCUTESTS = $(LCS)(usetup.o) $(LCS)(udimen.o) $(LCS)(udimse.o) $(LCS)(udimsh.o) \
            $(LCS)(unames.o) $(LCS)(uvarty.o) $(LCS)(ufn.o) $(LCS)(ugr.o) \
@@ -75,8 +76,9 @@ CCUTESTS = $(LCS)(csetup.o) $(LCS)(cdimen.o) $(LCS)(cdimse.o) $(LCS)(cdimsh.o) \
            $(LCS)(csgr.o) $(LCS)(csgreh.o) $(LCS)(csgrsh.o) $(LCS)(cprod.o) \
            $(LCS)(cprod1.o) $(LCS)(creprt.o) $(LCS)(connames.o)
 
-BASICD = $(LCD)(cutest.o) $(LCD)(initw.o) $(LCD)(asmbe.o) $(LCD)(asmbl.o) \
-         $(LCD)(elgrd.o) $(LCD)(hsprd.o) $(LCD)(pbname.o) $(LCD)(varnames.o) 
+#BASICD = $(LCD)(cutest.o) $(LCD)(initw.o) $(LCD)(asmbe.o) $(LCD)(asmbl.o) \
+#         $(LCD)(elgrd.o) $(LCD)(hsprd.o) $(LCD)(pbname.o) $(LCD)(varnames.o) 
+BASICD = $(LCD)(cutest.o) $(LCD)(pbname.o) $(LCD)(varnames.o) 
 
 UCUTESTD = $(LCD)(usetup.o) $(LCD)(udimen.o) $(LCD)(udimse.o) $(LCD)(udimsh.o) \
            $(LCD)(unames.o) $(LCD)(uvarty.o) $(LCD)(ufn.o) $(LCD)(ugr.o) \
@@ -131,7 +133,7 @@ cutest_constrained_silent: cutest_silent_$(PRECIS)
 cutest_constrained_silent_single: $(BASICS) $(CCUTESTS)
 cutest_constrained_silent_double: $(BASICD) $(CCUTESTD)
 
-cutest_constrained: cutest_unconstrained_$(PRECIS)
+cutest_constrained: cutest_constrained_$(PRECIS)
 	@printf ' %-21s\n' "CUTEST: unconstrained tools packages \
           ($(PRECIS) $(SUCC)" 
 cutest_constrained_single: $(BASICS) $(CCUTESTS)

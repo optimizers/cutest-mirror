@@ -1,28 +1,38 @@
-! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE CPROD1( data, status, n, m, goth, X, Y, P, RESULT )
+! THIS VERSION: CUTEST 1.0 - 28/11/2012 AT 14:25 GMT.
+
+!-*-*-*-*-*-*-  C U T E S T    C P R O D 1   S U B R O U T I N E  -*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal authors: Ingrid Bongartz and Nick Gould
+
+!  History -
+!   fortran 77 version originally released in CUTE, November 1991
+!   fortran 2003 version released in CUTEst, 28th November 2012
+
+      SUBROUTINE CPROD1( data, status, n, m, goth, X, Y, VECTOR, RESULT )
       USE CUTEST
-      TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: n, m
+
+!  dummy arguments
+
+      TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
+      INTEGER, INTENT( IN ) :: n, m
       INTEGER, INTENT( OUT ) :: status
-      LOGICAL :: goth
-      REAL ( KIND = wp ) :: X( n ), Y( m ), P( n ), RESULT( n )
+      LOGICAL, INTENT( IN ) :: goth
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X, VECTOR
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( m ) :: Y
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: RESULT
 
-!  Compute the matrix-vector product between the Hessian matrix
-!  of the constraint part of the Lagrangian function for the problem and
-!    a given vector P. The result is placed in RESULT. If GOTH is .TRUE. 
-!  the second derivatives are assumed to have already been computed. If
-!  the user is unsure, set GOTH = .FALSE. the first time a product
-!  is required with the Hessian evaluated at X and V. X and V are
-!  not used if GOTH = .TRUE.
+!  -------------------------------------------------------------------------
+!  Compute the matrix-vector product between the Hessian matrix of the
+!  constraint part of the Lagrangian function for the problem and a given
+!  vector VECTOR. The result is placed in RESULT. If goth is .TRUE. the
+!  second derivatives are assumed to have already been computed. If the user
+!  is unsure, set GOTH = .FALSE. the first time a product is required with
+!  the Hessian evaluated at X and Y. X and Y are not used if goth = .TRUE.
+!  -------------------------------------------------------------------------
 
-!  Based on the minimization subroutine data%laNCELOT/SBMIN
-!  by Conn, Gould and Toint.
-
-!  Nick Gould, for CGT productions.
-!  November, 1991.
-
-!  Local variables
+!  local variables
 
       INTEGER :: i, ig, j, ifstat, igstat
       REAL ( KIND = wp ) :: ftt
@@ -94,10 +104,10 @@
 !  define the real work space needed for ELGRD. Ensure that there is 
 !  sufficient space
 
-         IF ( data%lwk2 < data%ng ) THEN
-           IF ( data%out > 0 ) WRITE( data%out, 2000 )
-           status = 2 ; RETURN
-         END IF
+!        IF ( data%lwk2 < data%ng ) THEN
+!          IF ( data%out > 0 ) WRITE( data%out, 2000 )
+!          status = 2 ; RETURN
+!        END IF
 
 !  change the group weightings to include the contributions from the
 !  Lagrange multipliers
@@ -171,10 +181,10 @@
 
 !  ensure that the product involves all components of P
 
-      DO i = 1, n
-        data%IVAR( i ) = i
+!     DO i = 1, n
+!       data%IVAR( i ) = i
 !       data%IWORK( data%lnnonz + i ) = i
-      END DO
+!     END DO
 
 !  initialize RESULT as the zero vector
 
@@ -195,31 +205,25 @@
       IF ( data%numcon > 0 ) THEN
         CALL CUTEST_hessian_times_vector(                                      &
           data%n, data%ng, data%nel, data%ntotel, data%nvrels, data%nvargp,    &
-          n, 1, n, data%nnonnz, data%nbprod, data%alllin,                      &
-          data%IVAR, data%ISTAEV, data%ISTADH, data%INTVAR, data%IELING,       &
-          data%IELVAR, data%ISWKSP( : data%ntotel ), data%INNONZ( : n ),       &
-          data%P, data%Q, data%GVALS( : , 2 ) , data%GVALS( : , 3 ),           &
-          data%GRJAC, data%GSCALE_used,                                        &
-          data%ESCALE, data%FUVALS( : data%lnhuvl ),                           &
-          data%lnhuvl, data%GXEQX, data%INTREP, .TRUE., data%IGCOLJ,           &
-          data%ISLGRP, data%ISVGRP, data%ISTAGV, data%IVALJR, data%ITYPEE,     &
-          data%ISYMMH, data%ISTAJC, data%IUSED, data%LIST_elements,            &
-          data%LINK_elem_uses_var, data%NZ_comp_w, data%W_ws, data%W_el,       &
-          data%W_in, data%H_in, RANGE, data%skipg, data%KNDOFC )
+          data%alllin, data%ISTAEV, data%ISTADH,                               &
+          data%INTVAR, data%IELING, data%IELVAR, VECTOR, RESULT,               &
+          data%GVALS( : , 2 ) , data%GVALS( : , 3 ),                           &
+          data%FUVALS( data%lgrjac + 1 ),                                      &
+          data%GSCALE_used, data%ESCALE, data%FUVALS( : data%lnhuvl ),         &
+          data%lnhuvl, data%GXEQX, data%INTREP, data%IGCOLJ,                   &
+          data%ISLGRP, data%ITYPEE, data%ISYMMH, data%ISTAJC,                  &
+          data%W_ws, data%W_el, data%W_in, data%H_in, RANGE )
       ELSE
         CALL CUTEST_hessian_times_vector(                                      &
           data%n, data%ng, data%nel, data%ntotel, data%nvrels, data%nvargp,    &
-          n, 1, n, data%nnonnz, data%nbprod, data%alllin,                      &
-          data%IVAR, data%ISTAEV, data%ISTADH, data%INTVAR, data%IELING,       &
-          data%IELVAR, data%ISWKSP( : data%ntotel ), data%INNONZ( : n ),       &
-          data%P, data%Q, data%GVALS( : , 2 ) , data%GVALS( : , 3 ),           &
-          data%GRJAC, data%GSCALE,                                             &
-          data%ESCALE, data%FUVALS( : data%lnhuvl ),                           &
-          data%lnhuvl, data%GXEQX, data%INTREP, .TRUE., data%IGCOLJ,           &
-          data%ISLGRP, data%ISVGRP, data%ISTAGV, data%IVALJR, data%ITYPEE,     &
-          data%ISYMMH, data%ISTAJC, data%IUSED, data%LIST_elements,            &
-          data%LINK_elem_uses_var, data%NZ_comp_w, data%W_ws, data%W_el,       &
-          data%W_in, data%H_in, RANGE, data%skipg, data%KNDOFC )
+          data%alllin, data%ISTAEV, data%ISTADH,                               &
+          data%INTVAR, data%IELING, data%IELVAR, VECTOR, RESULT,               &
+          data%GVALS( : , 2 ) , data%GVALS( : , 3 ),                           &
+          data%FUVALS( data%lgrjac + 1 ),                                      &
+          data%GSCALE, data%ESCALE, data%FUVALS( : data%lnhuvl ),              &
+          data%lnhuvl, data%GXEQX, data%INTREP, data%IGCOLJ,                   &
+          data%ISLGRP, data%ITYPEE, data%ISYMMH, data%ISTAJC,                  &
+          data%W_ws, data%W_el, data%W_in, data%H_in, RANGE )
       END IF
 
 !      IF ( data%numcon > 0 ) THEN
@@ -284,7 +288,7 @@
 
 !  non-executable statements
 
- 2000 FORMAT( ' ** SUBROUTINE CPROD1: Increase the size of WK ' )
+!2000 FORMAT( ' ** SUBROUTINE CPROD1: Increase the size of WK ' )
 
 !  end of subroutine CPROD1
 

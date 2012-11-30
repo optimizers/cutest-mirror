@@ -29,20 +29,13 @@
 !  locations BAND( j, i ), where j = 0 for the diagonal and j > 0 for
 !  the j-th subdiagonal entry, j = 1, ..., MIN( semibandwidth, n - i ) 
 !  and semibandwidth is the requested semi-bandwidth. max_semibandwidth 
-!  gives the full extent of the true band within semibandwidth, i.e, 
-!  all entries between the bands of semi-bandwidths max_semibandwidth + 1 
-!  and semibandwidth are zero
+!  gives the true semibandwidth, i.e, all entries outside the band with
+!  this semibandwidth are zero
 !  -----------------------------------------------------------------------
 
-!  Based on the minimization subroutine data%laNCELOT/SBMIN
-!  by Conn, Gould and Toint.
+!  local variables
 
-!  Nick Gould, for CGT productions.
-!  August 1993.
-
-!  Local variables
-
-      INTEGER :: i, ig, j, nsemiw, inform, nnzh, ifstat, igstat, alloc_status
+      INTEGER :: i, ig, j, nsemiw, ifstat, igstat, alloc_status
 !     INTEGER :: IRNH(   1 ), ICNH(   1 )
       REAL ( KIND = wp ) :: ftt
       CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
@@ -52,8 +45,8 @@
 
       nsemiw = MAX( 0, MIN( semibandwidth, n - 1 ) )
       IF ( lbandh < nsemiw ) THEN
-         IF ( data%out > 0 ) WRITE( data%out, 2020 )
-         status = 2 ; RETURN
+        IF ( data%out > 0 ) WRITE( data%out, 2020 )
+        status = 2 ; RETURN
       END IF
 
 !  there are non-trivial group functions
@@ -187,26 +180,26 @@
 
 !  assemble the Hessian; use every variable
 
-      DO i = 1, n
-        data%IVAR( i ) = i
-      END DO
+!      DO i = 1, n
+!        data%IVAR( i ) = i
+!      END DO
 
       CALL CUTEST_assemble_hessian(                                            &
              n, data%ng, data%nel, data%ntotel, data%nvrels, data%nnza,        &
-             data%maxsel, data%nvargp, n, data%IVAR, data%ISTADH,              &
+             data%maxsel, data%nvargp, data%ISTADH,                            &
              data%ICNA, data%ISTADA, data%INTVAR, data%IELVAR, data%IELING,    &
              data%ISTADG, data%ISTAEV, data%ISTAGV, data%ISVGRP, data%A,       &
              data%FUVALS, data%lnguvl, data%FUVALS, data%lnhuvl,               &
              data%GVALS( : , 2 ), data%GVALS( :  , 3 ), data%GSCALE,           &
              data%ESCALE, data%GXEQX, data%ITYPEE, data%INTREP, RANGE,         &
-             0, data%out, data%out, data%io_buffer, .TRUE.,                    &
-             .FALSE., .FALSE., nsemiw, status, alloc_status, bad_alloc,        &
-             data%assemble_data, data%lirnh, data%ljcnh, data%lh,              &
+             0, data%out, data%out, data%io_buffer, .FALSE., .TRUE.,           &
+             nsemiw, status, alloc_status, bad_alloc,                          &
+             data%array_status, data%lh_row, data%lh_col, data%lh_val,         &
              data%H_row, data%H_col, data%H_val,                               &
              data%LINK_col, data%POS_in_H, data%llink, data%lpos,              &
-             data%IW_asmbl, data%W_ws, data%W_el, data%W_in, data%H_el,        &
-             data%H_in, data%skipg, maxsbw = max_semibandwidth,                &
-             DIAG = H_band( 0, : n ), OFFDIA = H_band( 1 : nsemiw, n  ) )
+             data%W_ws, data%W_el, data%W_in, data%H_el, data%H_in,            &
+             maxsbw = max_semibandwidth,                                       &
+             DIAG = H_band( 0, : n ), OFFDIA = H_band( 1 : nsemiw, : n  ) )
 !            DIAG = data%DIAG, OFFDIA = data%OFFDIA )
 
 !  check for errors in the assembly
@@ -266,7 +259,7 @@
 
 !  non-executable statements
 
- 2000 FORMAT( ' ** SUBROUTINE UBANDH: Increase the size of WK' )
+!2000 FORMAT( ' ** SUBROUTINE UBANDH: Increase the size of WK' )
  2020 FORMAT( ' ** SUBROUTINE UBANDH: array dimension lbandh should be',      &
               ' larger than semibandwidth' )
 

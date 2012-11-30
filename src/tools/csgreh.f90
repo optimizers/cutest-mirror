@@ -1,66 +1,75 @@
-! ( Last modified on 23 Dec 2000 at 22:01:38 )
-      SUBROUTINE CSGREH( data, status, n, m, X, GRLAGF, Y, nnzj, lcjac,        &
-                         CJAC, INDVAR, INDFUN, ne, IRNHI, lirnhi, le,          &
-                         IPRNHI, HI, lhi, IPRHI, BYROWS )
+! THIS VERSION: CUTEST 1.0 - 27/11/2012 AT 16:15 GMT.
+
+!-*-*-*-*-*-*-  C U T E S T    C S G R E H    S U B R O U T I N E  -*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 77 version originally released in CUTEr, November 1994
+!   fortran 2003 version released in CUTEst, 27th November 2012
+
+      SUBROUTINE CSGREH( data, status, n, m, X, Y, grlagf, nnzj, lj,           &
+                         J_val, J_var, J_fun, ne, lhe_ptr, HE_row_ptr,         &
+                         HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val, byrows )
       USE CUTEST
-      TYPE ( CUTEST_data_type ) :: data
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: n, m, nnzj, ne, lcjac, le, lirnhi, lhi 
-      INTEGER, INTENT( OUT ) :: status
-      LOGICAL :: GRLAGF, BYROWS
-      INTEGER :: INDVAR( LCJAC), INDFUN( lcjac )
-      INTEGER :: IRNHI ( lirnhi )
-      INTEGER :: IPRNHI( le ), IPRHI ( le )
-      REAL ( KIND = wp ) :: X( n ), Y( m ), HI( lhi ), CJAC( lcjac )
 
-!  Compute the Jacobian matrix for an optimization problem
-!  initially written in Standard Input Format (SIF).
-!  Also compute the Hessian matrix of the Lagrangian function of
-!  the problem.
+!  dummy arguments
 
-!  The Jacobian is represented in "co-ordinate" format.
-!  The Hessian is represented in "finite element format", i.e., 
+      TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
+      INTEGER, INTENT( IN ) :: n, m, lj, lhe_ptr, lhe_row, lhe_val
+      INTEGER, INTENT( OUT ) :: ne, nnzj, status
+      LOGICAL, INTENT( IN ) :: grlagf, byrows
+      INTEGER, INTENT( OUT ), DIMENSION( lj ) :: J_var, J_fun
+      INTEGER, INTENT( OUT ), DIMENSION( lhe_ptr ) :: HE_row_ptr, HE_val_ptr
+      INTEGER, INTENT( OUT ), DIMENSION( lhe_row ) :: HE_row
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( m ) :: Y
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lj ) :: J_val
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lhe_val ) :: HE_val
+
+!  ----------------------------------------------------------------------------
+!  compute the constraint Jacobian in co-ordinate format and Hessian matrix 
+!  of the Lagrangian function of a problem initially written in Standard 
+!  Input Format (SIF)
+
+!  the Hessian matrix is represented in "finite element format", i.e., 
 
 !           ne
-!      H = sum H_i, 
-!          i=1
+!      H = sum H_e, 
+!          e=1
 
-!  where each element H_i involves a small subset of the rows of H.
-!  H is stored as a list of the row indices involved in each element
-!  and the upper triangle of H_i (stored by rows or columns). 
-!  Specifically,
+!  where each element H_i involves a small subset of the rows of H. H is stored
+!  as a list of the row indices involved in each element and the upper triangle
+!  of H_e (stored by rows or columns). Specifically,
 
 !  ne (integer) number of elements
-!  IRNHI (integer array) a list of the row indices involved which each
-!          element. Those for element i directly proceed those for 
-!          element i + 1, i = 1, ..., NE-1
-!  IPRNHI (integer array) pointers to the position in IRNHI of the first 
-!          row index in each element. IPRNHI(NE + 1) points to the first 
+!  HE_row (integer array) a list of the row indices involved which each
+!          element. Those for element e directly proceed those for 
+!          element e + 1, e = 1, ..., ne-1
+!  HE_row_ptr (integer array) pointers to the position in HE_row of the first 
+!          row index in each element. HE_row_ptr(ne+1) points to the first 
 !          empty location in IRPNHI
-!  HI (real array) a list of the nonzeros in the upper triangle of
-!          H_i, stored by rows, or by columns, for each element. Those 
-!          for element i directly proceed those for element, i + 1, 
-!          i = 1, ..., NE-1
-!  IPRHI (integer array) pointers to the position in HI of the first 
-!          nonzero in each element. IPRHI(NE + 1) points to the first 
-!          empty location in HI
-!  BYROWS (logical) must be set .TRUE. if the upper triangle of each H_i 
-!          is to be stored by rows, and .FALSE. if it is to be stored
-!          by columns.
-
-!  Based on the minimization subroutine data%laNCELOT/SBMIN
-!  by Conn, Gould and Toint.
-
-!  Nick Gould, for CGT productions,
-!  November 1994.
+!  HE_val (real array) a list of the nonzeros in the upper triangle of
+!          H_e, stored by rows, or by columns, for each element. Those 
+!          for element i directly proceed those for element, e + 1, 
+!          e = 1, ..., ne-1
+!  HE_val_ptr (integer array) pointers to the position in HE_val of the first 
+!          nonzero in each element. HE_val_ptr(ne+1) points to the first 
+!          empty location in HE_val
+!  byrows (logical) must be set .TRUE. if the upper triangle of each H_e is
+!          to be stored by rows, and .FALSE. if it is to be stored by columns
+!  ----------------------------------------------------------------------------
 
 !  Local variables
 
-      INTEGER :: i, j, iel, k, ig, ii, ig1, l, jj, ll, liwkh, icon, lgtemp
-      INTEGER :: nin, nvarel, nelow, nelup, istrgv, inform, iendgv
-      INTEGER :: ifstat, igstat
+      INTEGER :: i, j, iel, k, ig, ii, ig1, l, jj, ll, icon
+      INTEGER :: nin, nvarel, nelow, nelup, istrgv, iendgv
+      INTEGER :: lhe_row_int, lhe_val_int, ifstat, igstat, alloc_status
       LOGICAL :: nontrv
       REAL ( KIND = wp ) :: ftt, gi, scalee, gii
+      CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
       EXTERNAL :: RANGE
 
 !  there are non-trivial group functions
@@ -128,10 +137,10 @@
 !  define the real work space needed for ELGRD. Ensure that there is 
 !  sufficient space
 
-      IF ( data%lwk2 < data%ng ) THEN
-        IF ( data%out > 0 ) WRITE( data%out, 2000 )
-        status = 2 ; RETURN
-      END IF
+!     IF ( data%lwk2 < data%ng ) THEN
+!       IF ( data%out > 0 ) WRITE( data%out, 2000 )
+!       status = 2 ; RETURN
+!     END IF
 
 !  change the group weightings to include the contributions from the
 !  Lagrange multipliers
@@ -150,18 +159,15 @@
 !  function as zero
 
          nnzj = 0
-         lgtemp = n + data%maxsel
-         DO j = 1, n
-           data%WRK( lgtemp + j ) = 0.0_wp
-         END DO
+         data%G_temp( : n ) = 0.0_wp
 
 !  consider the IG-th group
 
          DO ig = 1, data%ng
            ig1 = ig + 1
            icon = data%KNDOFC( ig )
-           istrgv = data%IWORK( data%lstagv + ig )
-           iendgv = data%IWORK( data%lstagv + ig1 ) - 1
+           istrgv = data%ISTAGV( ig )
+           iendgv = data%ISTAGV( ig1 ) - 1
            nelow = data%ISTADG( ig )
            nelup = data%ISTADG( ig1 ) - 1
            nontrv = .NOT. data%GXEQX( ig )
@@ -174,8 +180,7 @@
              gi = gi  * data%GVALS( ig, 2 )
              gii = gii * data%GVALS( ig, 2 )
            END IF
-           data%WRK( data%IWORK( data%lsvgrp + istrgv :                        &
-                                 data%lsvgrp + iendgv ) ) = 0.0_wp
+           data%W_ws( data%ISVGRP( istrgv : iendgv ) ) = 0.0_wp
 
 !  This is the first gradient evaluation or the group has nonlinear
 !  elements.
@@ -195,13 +200,12 @@
 !  the IEL-th element has an internal representation
 
                  nin = data%INTVAR( iel + 1 ) - k
-                 CALL RANGE ( iel, .TRUE., data%FUVALS( k ),                   &
-                              data%WRK( n + 1 ), nvarel, nin,                  &
-                              data%ITYPEE( iel ), nin, nvarel )
+                 CALL RANGE( iel, .TRUE., data%FUVALS( k ), data%W_el,         &
+                             nvarel, nin, data%ITYPEE( iel ), nin, nvarel )
 !DIR$ IVDEP
                  DO i = 1, nvarel
                    j = data%IELVAR( l )
-                   data%WRK( j ) = data%WRK( j ) + scalee * data%WRK( n + i )
+                   data%W_ws( j ) = data%W_ws( j ) + scalee * data%W_el( i )
                    l = l + 1
                  END DO
                ELSE
@@ -211,7 +215,7 @@
 !DIR$ IVDEP
                  DO i = 1, nvarel
                    j = data%IELVAR( l )
-                   data%WRK( j ) = data%WRK( j ) + scalee * data%FUVALS( k )
+                   data%W_ws( j ) = data%W_ws( j ) + scalee * data%FUVALS( k )
                     k = k + 1 ; l = l + 1
                  END DO
                END IF
@@ -222,45 +226,44 @@
 !DIR$ IVDEP
              DO k = data%ISTADA( ig ), data%ISTADA( ig1 ) - 1
                j = data%ICNA( k )
-               data%WRK( j ) = data%WRK( j ) + data%A( k )
+               data%W_ws( j ) = data%W_ws( j ) + data%A( k )
              END DO
 
 !  allocate a gradient
 
 !DIR$ IVDEP
              DO i = istrgv, iendgv
-               ll = data%IWORK( data%lsvgrp + i )
+               ll = data%ISVGRP( i )
 
 !  the group belongs to the objective function
 
                IF ( icon == 0 ) THEN
-                 data%WRK( lgtemp + ll )                                       &
-                   = data%WRK( lgtemp + ll ) + gi * data%WRK( ll )
+                 data%G_temp( ll ) = data%G_temp( ll ) + gi * data%W_ws( ll )
 
 !  the group defines a constraint
 
                ELSE
                  nnzj = nnzj + 1
-                 IF ( nnzj <= lcjac ) THEN
-                   CJAC ( nnzj ) = gi * data%WRK( ll )
-                   INDFUN( nnzj ) = icon
-                   INDVAR( nnzj ) = ll
+                 IF ( nnzj <= lj ) THEN
+                   J_val ( nnzj ) = gi * data%W_ws( ll )
+                   J_fun( nnzj ) = icon
+                   J_var( nnzj ) = ll
                  END IF
-                 IF ( GRLAGF ) data%WRK( lgtemp + ll )                         &
-                   = data%WRK( lgtemp + ll ) + gii * data%WRK( ll )
+                 IF ( grlagf )                                                 &
+                   data%G_temp( ll ) = data%G_temp( ll ) + gii * data%W_ws( ll )
                END IF
 
 !  if the group is non-trivial, also store the nonzero entries of the
 !  gradient of the function in GRJAC.
 
                IF ( nontrv ) THEN
-                 jj = data%IWORK( data%lstajc + ll )
-                 data%FUVALS( data%lgrjac + jj ) = data%WRK( ll )
+                 jj = data%ISTAJC( ll )
+                 data%FUVALS( data%lgrjac + jj ) = data%W_ws( ll )
 
 !  increment the address for the next nonzero in the column of
 !  the jacobian for variable ll
 
-                 data%IWORK( data%lstajc + ll ) = jj + 1
+                 data%ISTAJC( ll ) = jj + 1
                END IF
              END DO
 
@@ -273,40 +276,39 @@
 !DIR$ IVDEP
              DO k = data%ISTADA( ig ),data%ISTADA( ig1 ) - 1
                j = data%ICNA( k )
-               data%WRK( j ) = data%WRK( j ) + data%A( k )
+               data%W_ws( j ) = data%W_ws( j ) + data%A( k )
              END DO
 
 !  Allocate a gradient.
 
 !DIR$ IVDEP
              DO i = istrgv, iendgv
-               ll = data%IWORK( data%lsvgrp + i )
+               ll = data%ISVGRP( i )
 
 !  the group belongs to the objective function
 
                IF ( icon == 0 ) THEN
-                 data%WRK( lgtemp + ll )                                       &
-                   = data%WRK( lgtemp + ll ) + gi * data%WRK( ll )
+                 data%G_temp( ll ) = data%G_temp( ll ) + gi * data%W_ws( ll )
 
 !  the group defines a constraint
 
                ELSE
                  nnzj = nnzj + 1
-                 IF ( nnzj <= lcjac ) THEN
-                   CJAC ( nnzj ) = gi * data%WRK( ll )
-                   INDFUN( nnzj ) = icon
-                   INDVAR( nnzj ) = ll
+                 IF ( nnzj <= lj ) THEN
+                   J_val ( nnzj ) = gi * data%W_ws( ll )
+                   J_fun( nnzj ) = icon
+                   J_var( nnzj ) = ll
                  END IF
-                 IF ( GRLAGF ) data%WRK( lgtemp + ll )                        &
-                   = data%WRK( lgtemp + ll ) + gii * data%WRK( ll )
+                 IF ( grlagf )                                                &
+                   data%G_temp( ll ) = data%G_temp( ll ) + gii * data%W_ws( ll )
                END IF
 
 !  increment the address for the next nonzero in the column of the Jacobian 
 !  for variable ll
 
                IF ( nontrv ) THEN
-                 jj = data%IWORK( data%lstajc + ll )
-                 data%IWORK( data%lstajc + ll ) = jj + 1
+                 jj = data%ISTAJC( ll )
+                 data%ISTAJC( ll ) = jj + 1
                END IF
              END DO
            END IF
@@ -316,18 +318,18 @@
 !  their values on entry
 
          DO i = n, 2, - 1
-           data%IWORK( data%lstajc + i ) = data%IWORK( data%lstajc + i - 1 )
+           data%ISTAJC( i ) = data%ISTAJC( i - 1 )
          END DO
-         data%IWORK( data%lstajc + 1 ) = 1
+         data%ISTAJC( 1 ) = 1
 
 !  transfer the gradient of the objective function to the sparse storage scheme
 
         DO i = 1, n
           nnzj = nnzj + 1
-          IF ( nnzj <= lcjac ) THEN
-            CJAC ( nnzj ) = data%WRK( lgtemp + i )
-            INDFUN( nnzj ) = 0
-            INDVAR( nnzj ) = i
+          IF ( nnzj <= lj ) THEN
+            J_val ( nnzj ) = data%G_temp( i )
+            J_fun( nnzj ) = 0
+            J_var( nnzj ) = i
           END IF
         END DO
       ELSE
@@ -349,16 +351,16 @@
 !                      data%ITYPEE( 1 ), data%lintre, &
 !                      data%ISTAEV( 1 ), data%lstaev, data%IELVAR( 1 ), &
 !                      data%lelvar, data%INTVAR( 1 ), data%lntvar, &
-!                      data%IWORK( data%lsvgrp + 1 ), &
-!                      data%lnvgrp, data%IWORK( data%lstajc + 1 ), data%lnstjc,&
-!                      data%IWORK( data%lstagv + 1 ), data%lnstgv, &
+!                      data%ISVGRP( 1 ), &
+!                      data%lnvgrp, data%ISTAJC( 1 ), data%lnstjc,&
+!                      data%ISTAGV( 1 ), data%lnstgv, &
 !                      data%A( 1 ), data%la, &
 !                      data%GVALS( : , 2 ), data%lgvals, &
 !                      data%FUVALS, data%lnguvl, data%FUVALS( data%lggfx + 1 ),&
 !                      data%GSCALE( 1 ), data%lgscal, &
 !                      data%ESCALE( 1 ), data%lescal, &
 !                      data%FUVALS( data%lgrjac + 1 ), &
-!                      data%lngrjc, data%WRK( 1 ), data%WRK( n + 1 ), &
+!                      data%lngrjc, data%W_ws( 1 ), data%W_el( 1 ), &
 !                      data%maxsel, &
 !                      data%GXEQX( 1 ), data%lgxeqx, &
 !                      data%INTREP( 1 ), data%lintre, RANGE )
@@ -368,10 +370,10 @@
          nnzj = 0
          DO i = 1, n
            nnzj = nnzj + 1
-           IF ( nnzj <= lcjac ) THEN
-             CJAC ( nnzj ) = data%FUVALS( data%lggfx + i )
-             INDFUN( nnzj ) = 0
-             INDVAR( nnzj ) = i
+           IF ( nnzj <= lj ) THEN
+             J_val ( nnzj ) = data%FUVALS( data%lggfx + i )
+             J_fun( nnzj ) = 0
+             J_var( nnzj ) = i
            END IF
          END DO
       END IF
@@ -379,85 +381,154 @@
 
 !  verify that the Jacobian can fit in the alloted space
 
-      IF ( nnzj > lcjac ) THEN
-         IF ( data%out > 0 ) WRITE( data%out, 2030 ) nnzj - lcjac 
-         status = 2 ; RETURN
+      IF ( nnzj > lj ) THEN
+        IF ( data%out > 0 ) WRITE( data%out,                                   &
+          "( /, ' ** SUBROUTINE CSGREH: array length lj too small.',           &
+         &    /, ' -- Increase the parameter lj to at least ', I0 )" ) nnzj
+        status = 2 ; RETURN
       END IF
 
 !  define the real work space needed for ASMBE. Ensure that there is 
 !  sufficient space
 
-      IF ( data%numcon > 0 ) THEN
-         IF ( data%lwk2 < n + 3 * data%maxsel + data%ng ) THEN
-            IF ( data%out > 0 ) WRITE( data%out, 2000 )
-            status = 2 ; RETURN
-         END IF
-      ELSE
-         IF ( data%lwk2 < n + 3 * data%maxsel ) THEN
-            IF ( data%out > 0 ) WRITE( data%out, 2000 )
-            status = 2 ; RETURN
-         END IF
-      END IF
+!     IF ( data%numcon > 0 ) THEN
+!        IF ( data%lwk2 < n + 3 * data%maxsel + data%ng ) THEN
+!           IF ( data%out > 0 ) WRITE( data%out, 2000 )
+!           status = 2 ; RETURN
+!        END IF
+!     ELSE
+!        IF ( data%lwk2 < n + 3 * data%maxsel ) THEN
+!           IF ( data%out > 0 ) WRITE( data%out, 2000 )
+!           status = 2 ; RETURN
+!        END IF
+ !    END IF
 
 !  define the integer work space needed for ASMBE.  Ensure that there is 
 !  sufficient space
 
-      liwkh = data%liwk2 - n
+!     liwkh = data%liwk2 - n
 
 !  assemble the Hessian
 
+      lhe_row_int = lhe_row ; lhe_val_int = lhe_val
       IF ( data%numcon > 0 ) THEN
-      CALL ASMBE( n, data%ng, data%maxsel,  &
-                      data%ISTADH( 1 ), data%lstadh, &
-                      data%ICNA( 1 ), data%licna, &
-                      data%ISTADA( 1 ), data%lstada, &
-                      data%INTVAR( 1 ), data%lntvar, &
-                      data%IELVAR( 1 ), data%lelvar, &
-                      data%IELING( 1 ), data%leling, &
-                      data%ISTADG( 1 ), data%lstadg, &
-                      data%ISTAEV( 1 ), data%lstaev, &
-                      data%IWORK( data%lstagv + 1 ), data%lnstgv, &
-                      data%IWORK( data%lsvgrp + 1 ), data%lnvgrp, &
-                      data%IWORK( liwkh + 1 ), data%liwk2 - liwkh, &
-                      data%A( 1 ), data%la, data%FUVALS, &
-                      data%lnguvl, data%FUVALS, data%lnhuvl, &
-                      data%GVALS( : , 2 ), data%GVALS( : , 3 ), &
-                      data%WRK( 1 ), data%ESCALE( 1 ), data%lescal, &
-                      data%WRK( data%ng + 1 ), data%lwk2 - data%ng, &
-                      data%GXEQX( 1 ), data%lgxeqx, data%INTREP( 1 ), &
-                      data%lintre, data%ITYPEE( 1 ), data%lintre, RANGE, ne,  &
-                      IRNHI, lirnhi, IPRNHI, HI, lhi, IPRHI, &
-                      BYROWS, 1, data%out, inform )
+        CALL CUTEST_assemble_element_hessian(                                  &
+                        n, data%ng, data%nel,data% ntotel, data%nvrels,        &
+                        data%nnza, data%maxsel, data%nvargp,                   &
+                        data%lnguvl, data%lnhuvl, data%ISTADH, data%ICNA,      &
+                        data%ISTADA, data%INTVAR, data%IELVAR,                 &
+                        data%IELING, data%ISTADG, data%ISTAEV,                 &
+                        data%ISTAGV, data%ISVGRP, data%ITYPEE,                 &
+                        data%A, data%FUVALS, data%FUVALS,                      &
+                        data%GVALS( : , 2 ), data%GVALS( : , 3 ),              &
+                        data%GSCALE_used, data%ESCALE,                         &
+                        data%GXEQX, data%INTREP,                               &
+                        data%IW_asmbl, data%W_ws, data%W_el, data%W_in,        &
+                        data%H_el, data%H_in, RANGE, ne, lhe_row_int,          &
+                        lhe_val_int, data%H_row, HE_row_ptr, data%H_val,       &
+                        HE_val_ptr, byrows, 0, data%out, data%out,             &
+                        data%io_buffer, alloc_status, bad_alloc, status )
       ELSE
-      CALL ASMBE( n, data%ng, data%maxsel,  &
-                      data%ISTADH( 1 ), data%lstadh, &
-                      data%ICNA( 1 ), data%licna, &
-                      data%ISTADA( 1 ), data%lstada, &
-                      data%INTVAR( 1 ), data%lntvar, &
-                      data%IELVAR( 1 ), data%lelvar, &
-                      data%IELING( 1 ), data%leling, &
-                      data%ISTADG( 1 ), data%lstadg, &
-                      data%ISTAEV( 1 ), data%lstaev, &
-                      data%IWORK( data%lstagv + 1 ), data%lnstgv, &
-                      data%IWORK( data%lsvgrp + 1 ), data%lnvgrp, &
-                      data%IWORK( liwkh + 1 ), data%liwk2 - liwkh, &
-                      data%A( 1 ), data%la, data%FUVALS, &
-                      data%lnguvl, data%FUVALS, data%lnhuvl, &
-                      data%GVALS( : , 2 ), data%GVALS( : , 3 ), &
-                      data%GSCALE( 1 ), data%ESCALE( 1 ), data%lescal, &
-                      data%WRK( 1 ), data%lwk2 - data%ng, &
-                      data%GXEQX( 1 ), data%lgxeqx, data%INTREP( 1 ), &
-                      data%lintre, data%ITYPEE( 1 ), data%lintre, RANGE, ne,  &
-                      IRNHI, lirnhi, IPRNHI, HI, lhi, IPRHI, &
-                      BYROWS, 1, data%out, inform )
+        CALL CUTEST_assemble_element_hessian(                                  &
+                        n, data%ng, data%nel,data% ntotel, data%nvrels,        &
+                        data%nnza, data%maxsel, data%nvargp,                   &
+                        data%lnguvl, data%lnhuvl, data%ISTADH, data%ICNA,      &
+                        data%ISTADA, data%INTVAR, data%IELVAR,                 &
+                        data%IELING, data%ISTADG, data%ISTAEV,                 &
+                        data%ISTAGV, data%ISVGRP, data%ITYPEE,                 &
+                        data%A, data%FUVALS, data%FUVALS,                      &
+                        data%GVALS( : , 2 ), data%GVALS( : , 3 ),              &
+                        data%GSCALE, data%ESCALE, data%GXEQX, data%INTREP,     &
+                        data%IW_asmbl, data%W_ws, data%W_el, data%W_in,        &
+                        data%H_el, data%H_in, RANGE, ne, lhe_row_int,          &
+                        lhe_val_int, data%H_row, HE_row_ptr, data%H_val,       &
+                        HE_val_ptr, byrows, 0, data%out, data%out,             &
+                        data%io_buffer, alloc_status, bad_alloc, status )
+      END IF 
+
+!  check for errors in the assembly
+
+      IF ( status > 0 ) RETURN
+
+!  check that HE_row and HE_val are large enough
+
+      IF ( lhe_row < HE_row_ptr( ne + 1 ) - 1 ) THEN
+        IF ( data%out > 0 ) WRITE( data%out, "( ' ** SUBROUTINE UEH: ',        &
+       &  'Increase the dimension of HE_row to ',  I0 )" )                     &
+             HE_row_ptr( ne + 1 ) - 1 
+        status = 2 ; RETURN
       END IF
+
+      IF ( lhe_val < HE_val_ptr( ne + 1 ) - 1 ) THEN
+        IF ( data%out > 0 ) WRITE( data%out, "( ' ** SUBROUTINE UEH: ',        &
+       &  'Increase the dimension of HE_val to ',  I0 )" )                     &
+             HE_val_ptr( ne + 1 ) - 1 
+        status = 2 ; RETURN
+      END IF
+
+!  record the element Hessian
+
+      HE_row( : HE_row_ptr( ne + 1 ) - 1 )                                     &
+         = data%H_row( : HE_row_ptr( ne + 1 ) - 1 )
+      HE_val( : HE_val_ptr( ne + 1 ) - 1 )                                     &
+         = data%H_val( : HE_val_ptr( ne + 1 ) - 1 )
+
+!  assemble the Hessian
+
+!      IF ( data%numcon > 0 ) THEN
+!      CALL ASMBE( n, data%ng, data%maxsel,  &
+!                      data%ISTADH( 1 ), data%lstadh, &
+!                      data%ICNA( 1 ), data%licna, &
+!                      data%ISTADA( 1 ), data%lstada, &
+!                      data%INTVAR( 1 ), data%lntvar, &
+!                      data%IELVAR( 1 ), data%lelvar, &
+!                      data%IELING( 1 ), data%leling, &
+!                      data%ISTADG( 1 ), data%lstadg, &
+!                      data%ISTAEV( 1 ), data%lstaev, &
+!                      data%ISTAGV( 1 ), data%lnstgv, &
+!                      data%ISVGRP( 1 ), data%lnvgrp, &
+!                      data%IWORK( liwkh + 1 ), data%liwk2 - liwkh, &
+!                      data%A( 1 ), data%la, data%FUVALS, &
+!                      data%lnguvl, data%FUVALS, data%lnhuvl, &
+!                      data%GVALS( : , 2 ), data%GVALS( : , 3 ), &
+!                      data%W_ws( 1 ), data%ESCALE( 1 ), data%lescal, &
+!                      data%W_ws( data%ng + 1 ), data%lwk2 - data%ng, &
+!                      data%GXEQX( 1 ), data%lgxeqx, data%INTREP( 1 ), &
+!                      data%lintre, data%ITYPEE( 1 ), data%lintre, RANGE, ne,  &
+!                      HE_row, lhe_row, HE_row_ptr, &
+!                      HE_val, lhe_val, HE_val_ptr, &
+!                      BYROWS, 1, data%out, inform )
+!      ELSE
+!      CALL ASMBE( n, data%ng, data%maxsel,  &
+!                      data%ISTADH( 1 ), data%lstadh, &
+!                      data%ICNA( 1 ), data%licna, &
+!                      data%ISTADA( 1 ), data%lstada, &
+!                      data%INTVAR( 1 ), data%lntvar, &
+!                      data%IELVAR( 1 ), data%lelvar, &
+!                      data%IELING( 1 ), data%leling, &
+!                      data%ISTADG( 1 ), data%lstadg, &
+!                      data%ISTAEV( 1 ), data%lstaev, &
+!                      data%ISTAGV( 1 ), data%lnstgv, &
+!                      data%ISVGRP( 1 ), data%lnvgrp, &
+!                      data%IWORK( liwkh + 1 ), data%liwk2 - liwkh, &
+!                      data%A( 1 ), data%la, data%FUVALS, &
+!                      data%lnguvl, data%FUVALS, data%lnhuvl, &
+!                      data%GVALS( : , 2 ), data%GVALS( : , 3 ), &
+!                      data%GSCALE( 1 ), data%ESCALE( 1 ), data%lescal, &
+!                      data%W_ws( 1 ), data%lwk2 - data%ng, &
+!                      data%GXEQX( 1 ), data%lgxeqx, data%INTREP( 1 ), &
+!                      data%lintre, data%ITYPEE( 1 ), data%lintre, RANGE, ne,  &
+!                      HE_row, lhe_row, HE_row_ptr, &
+!                      HE_val, lhe_val, HE_val_ptr, &
+!                      BYROWS, 1, data%out, inform )
+!      END IF
 
 !  check that there is room for the elements
 
-      IF ( inform > 0 ) THEN
-        IF ( data%out > 0 ) WRITE( data%out, 2020 )
-        status = 2 ; RETURN
-      END IF
+!     IF ( inform > 0 ) THEN
+!       IF ( data%out > 0 ) WRITE( data%out, 2020 )
+!       status = 2 ; RETURN
+!     END IF
 
 !  update the counters for the report tool
 
@@ -478,12 +549,9 @@
 
 !  non-executable statements
 
- 2000 FORMAT( ' ** SUBROUTINE CSGREH: Increase the size of WK' )
- 2020 FORMAT( ' ** SUBROUTINE CSGREH: Increase the size of',                   &
-              ' IPNRHI, IPRHI, IRNHI or HI' )
- 2030 FORMAT( /, ' ** SUBROUTINE CSGREH: array length lcjac too small.',       &
-              /, ' -- Increase the parameter lcjac by at least ', I0,          &
-                 ' and restart.' )
+!2000 FORMAT( ' ** SUBROUTINE CSGREH: Increase the size of WK' )
+!2020 FORMAT( ' ** SUBROUTINE CSGREH: Increase the size of',                   &
+!             ' HE_row_ptr, HE_val_ptr, HE_row or HE_val' )
 
 !  end of subroutine CSGREH
 

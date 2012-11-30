@@ -579,6 +579,7 @@ echo 'LAPACK = '$LAPACK                                            >> $MAKEFILE
 #echo 'WSMP = '$WSMP                                               >> $MAKEFILE
 #echo 'PLPLOT = '$PLPLOT                                           >> $MAKEFILE
 #echo 'CUTERUSED = '$CUTERUSED                                     >> $MAKEFILE
+echo 'CUTERUSED = '                                                >> $MAKEFILE
 echo ' '                                                           >> $MAKEFILE
 echo '#  Shell used'                                               >> $MAKEFILE
 echo ' '                                                           >> $MAKEFILE
