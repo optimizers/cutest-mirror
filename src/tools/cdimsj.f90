@@ -9,12 +9,12 @@
 !   fortran 77 version originally released in CUTEr, April 1999
 !   fortran 2003 version released in CUTEst, 28th November 2012
 
-      SUBROUTINE CDIMSJ( data, status, nnzj )
+      SUBROUTINE CUTEST_cdimsj( data, status, nnzj )
       USE CUTEST
 
 !  dummy arguments
 
-      TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
+      TYPE ( CUTEST_data_type ), INTENT( IN ) :: data
       INTEGER, INTENT( OUT ) :: nnzj, status
 
 !  --------------------------------------------------------------
@@ -40,10 +40,10 @@
 
 !  add space for the (dense) gradient of the objective function
 
-      nnzj = nnzj + data%numvar
+      nnzj = nnzj + data%n
       status = 0
       RETURN
 
-!  end of sunroutine CDIMSJ
+!  end of sunroutine CUTEST_cdimsj
 
-      END SUBROUTINE CDIMSJ
+      END SUBROUTINE CUTEST_cdimsj

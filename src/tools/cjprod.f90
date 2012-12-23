@@ -9,14 +9,15 @@
 !   fortran 77 version originally released in CUTEr, June 2003
 !   fortran 2003 version released in CUTEst, 28th November 2012
 
-      SUBROUTINE CJPROD( data, status, n, m, gotj, jtrans, X,                  &
-                         VECTOR, lvector, RESULT, lresult )
+      SUBROUTINE CUTEST_cjprod( data, work, status, n, m, gotj, jtrans, X,           &
+                                VECTOR, lvector, RESULT, lresult )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
 !  dummy arguments
 
-      TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
+      TYPE ( CUTEST_data_type ), INTENT( IN ) :: data
+      TYPE ( CUTEST_work_type ), INTENT( INOUT ) :: work
       INTEGER, INTENT( IN ) :: n, m, lvector, lresult
       INTEGER, INTENT( OUT ) :: status
       LOGICAL, INTENT( IN ) :: gotj, jtrans
@@ -62,14 +63,14 @@
 
       IF ( .NOT. gotj ) THEN
          DO i = 1, MAX( data%nel, data%ng )
-           data%ICALCF( i ) = i
+           work%ICALCF( i ) = i
          END DO
 
 !  evaluate the element function values
 
-        CALL ELFUN( data%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,        &
+        CALL ELFUN( work%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,        &
                     data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,        &
-                    data%ISTEP, data%ICALCF, data%ltypee, data%lstaev,         &
+                    data%ISTEP, work%ICALCF, data%ltypee, data%lstaev,         &
                     data%lelvar, data%lntvar, data%lstadh, data%lstep,         &
                     data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,        &
                     1, ifstat )
@@ -77,9 +78,9 @@
 
 !  evaluate the element function values
 
-        CALL ELFUN( data%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,        &
+        CALL ELFUN( work%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,        &
                     data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,        &
-                    data%ISTEP, data%ICALCF, data%ltypee, data%lstaev,         &
+                    data%ISTEP, work%ICALCF, data%ltypee, data%lstaev,         &
                     data%lelvar, data%lntvar, data%lstadh, data%lstep,         &
                     data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,        &
                     3, ifstat )
@@ -99,32 +100,25 @@
 !  include the contributions from the nonlinear elements
 
           DO j = data%ISTADG( ig ), data%ISTADG( ig + 1 ) - 1
-            ftt = ftt + data%ESCALE( j ) * data%FUVALS( data%IELING( J ) )
+            ftt = ftt + data%ESCALE( j ) * work%FUVALS( data%IELING( J ) )
           END DO
-          data%FT( ig ) = ftt
+          work%FT( ig ) = ftt
 
 !  record the derivatives of trivial groups
 
-          IF ( data%GXEQX( ig ) ) data%GVALS( ig, 2 ) = 1.0_wp
+          IF ( data%GXEQX( ig ) ) work%GVALS( ig, 2 ) = 1.0_wp
         END DO
 
 !  evaluate the group derivative values
 
         IF ( .NOT. data%altriv ) THEN
-          CALL GROUP( data%GVALS, data%ng, data%FT, data%GPVALU, data%ng,      &
-                      data%ITYPEG, data%ISTGP, data%ICALCF, data%ltypeg,       &
+          CALL GROUP( work%GVALS, data%ng, work%FT, data%GPVALU, data%ng,      &
+                      data%ITYPEG, data%ISTGP, work%ICALCF, data%ltypeg,       &
                       data%lstgp, data%lcalcf, data%lcalcg, data%lgpvlu,       &
                       .TRUE., igstat )
          IF ( igstat /= 0 ) GO TO 930
         END IF
       END IF
-
-!  ensure that there is sufficient space
-
-!     IF ( data%lwk2 < n ) THEN
-!       IF ( data%out > 0 ) WRITE( data%out, 2000 )
-!       status = 2 ; RETURN
-!     END IF
 
 !  form the product result = J(transpose) vector
 
@@ -146,7 +140,7 @@
             IF ( data%GXEQX( ig ) ) THEN
               prod = VECTOR( icon ) * data%GSCALE( ig )
             ELSE
-              prod = VECTOR( icon ) * data%GSCALE( ig ) * data%GVALS( ig, 2 )
+              prod = VECTOR( icon ) * data%GSCALE( ig ) * work%GVALS( ig, 2 )
             END IF
 
 !  loop over the group's nonlinear elements
@@ -162,12 +156,12 @@
 !  the iel-th element has an internal representation
 
                 nin = data%INTVAR( iel + 1 ) - k
-                CALL RANGE( iel, .TRUE., data%FUVALS( k ), data%W_el,          &
+                CALL RANGE( iel, .TRUE., work%FUVALS( k ), work%W_el,          &
                             nvarel, nin, data%ITYPEE( iel ), nin, nvarel )
 !DIR$ IVDEP
                 DO i = 1, nvarel
                   j = data%IELVAR( l )
-                  RESULT( j ) = RESULT( j ) + scalee * data%W_el( i )
+                  RESULT( j ) = RESULT( j ) + scalee * work%W_el( i )
                   l = l + 1
                 END DO
               ELSE
@@ -177,7 +171,7 @@
 !DIR$ IVDEP
                 DO i = 1, nvarel
                   j = data%IELVAR( l )
-                  RESULT( j ) = RESULT( j ) + scalee * data%FUVALS( k )
+                  RESULT( j ) = RESULT( j ) + scalee * work%FUVALS( k )
                   k = k + 1 ; l = l + 1
                  END DO
               END IF
@@ -220,12 +214,12 @@
 !  the iel-th element has an internal representation
 
                 nin = data%INTVAR( iel + 1 ) - k
-                CALL RANGE( iel, .TRUE., data%FUVALS( k ), data%W_el,          &
+                CALL RANGE( iel, .TRUE., work%FUVALS( k ), work%W_el,          &
                             nvarel, nin, data%ITYPEE( iel ), nin, nvarel )
 !DIR$ IVDEP
                 DO i = 1, nvarel
                   prod = prod                                                  &
-                    + VECTOR( data%IELVAR( l ) ) * scalee * data%W_el( i )
+                    + VECTOR( data%IELVAR( l ) ) * scalee * work%W_el( i )
                   l = l + 1
                 END DO
               ELSE
@@ -235,7 +229,7 @@
 !DIR$ IVDEP
                 DO i = 1, nvarel
                   prod = prod                                                  &
-                    + VECTOR( data%IELVAR( l ) ) * scalee * data%FUVALS( k )
+                    + VECTOR( data%IELVAR( l ) ) * scalee * work%FUVALS( k )
                   k = k + 1 ; l = l + 1
                 END DO
               END IF
@@ -253,7 +247,7 @@
             IF ( data%GXEQX( ig ) ) THEN
               RESULT( icon ) = prod * data%GSCALE( ig )
             ELSE
-              RESULT( icon ) = prod * data%GSCALE( ig ) * data%GVALS( ig, 2 )
+              RESULT( icon ) = prod * data%GSCALE( ig ) * work%GVALS( ig, 2 )
             END IF
           END IF
         END DO
@@ -262,8 +256,8 @@
 !  update the counters for the report tool
 
       IF ( .NOT. gotj ) THEN
-        data%nc2og = data%nc2og + 1
-        data%nc2cg = data%nc2cg + data%pnc
+        work%nc2og = work%nc2og + 1
+        work%nc2cg = work%nc2cg + work%pnc
       END IF
       status = 0
       RETURN
@@ -276,10 +270,6 @@
       status = 3
       RETURN
 
-! Non-executable statements.
+!  end of subroutine CUTEST_cjprod
 
-!2000 FORMAT( ' ** SUBROUTINE CJPROD: Increase the size of WK' )
-
-!  end of subroutine CJPROD
-
-      END SUBROUTINE CJPROD
+      END SUBROUTINE CUTEST_cjprod

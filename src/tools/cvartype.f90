@@ -1,6 +1,6 @@
-! THIS VERSION: CUTEST 1.0 - 20/11/2012 AT 13:25 GMT.
+! THIS VERSION: CUTEST 1.0 - 20/11/2012 AT 13:15 GMT.
 
-!-*-*-*-*-*-*-  C U T E S T    U V A R T Y    S U B R O U T I N E  -*-*-*-*-*-
+!-*-*-*-*-*-  C U T E S T    C V A R T Y P E    S U B R O U T I N E  -*-*-*-*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
 !  Principal author: Nick Gould
@@ -9,7 +9,7 @@
 !   fortran 77 version originally released in CUTEr, December 1999
 !   fortran 2003 version released in CUTEst, 20th November 2012
 
-      SUBROUTINE UVARTY( data, status, n, X_type )
+      SUBROUTINE CUTEST_cvartype( data, status, n, X_type )
       USE CUTEST
 
 !  dummy arguments
@@ -20,7 +20,7 @@
       INTEGER, INTENT( OUT ), DIMENSION( n ) :: X_type
 
 !  --------------------------------------------------------------
-!  Determine the type (continuous, 0-1, integer) of each variable
+!  determine the type (continuous, 0-1, integer) of each variable
 !  --------------------------------------------------------------
 
 !  set the type of each variable (0 = continuous, 1 = 0-1, 2 = integer)
@@ -29,6 +29,6 @@
       status = 0
       RETURN
 
-!  end of subroutine UVARTY
+!  end of subroutine CUTEST_cvartype
 
-      END SUBROUTINE UVARTY
+      END SUBROUTINE CUTEST_cvartype

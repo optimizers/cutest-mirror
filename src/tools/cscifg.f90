@@ -9,14 +9,15 @@
 !   replaced in CUTEr, December 1990, by subroutine CCIFSG
 !   fortran 2003 version released in CUTEst, 22nd November 2012
 
-      SUBROUTINE CSCIFG( data, status, n, icon, X, ci,                         &
-                         nnzgci, lgci, GCI_val, GCI_var, grad )
+      SUBROUTINE CUTEST_cscifg( data, work, status, n, icon, X, ci,                  &
+                                nnzgci, lgci, GCI_val, GCI_var, grad )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
 !  dummy arguments
 
-      TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
+      TYPE ( CUTEST_data_type ), INTENT( IN ) :: data
+      TYPE ( CUTEST_work_type ), INTENT( INOUT ) :: work
       INTEGER, INTENT( IN ) :: n, icon, lgci
       INTEGER, INTENT( OUT ) :: status, nnzgci
       LOGICAL, INTENT( IN ) :: grad
@@ -34,11 +35,11 @@
       IF ( data%out > 0 ) WRITE( data%out, "( ' ** SUBROUTINE CSCIFG: this ',  &
     &  'tool is obsolete!  Please use CCIFSG instead.' )" )
 
-      CALL CCIFSG( data, status, n, icon, X, ci,                               &
-                   nnzgci, lgci, GCI_val, GCI_var, grad )
+      CALL CUTEST_ccifsg( data, work, status, n, icon, X, ci,                        &
+                          nnzgci, lgci, GCI_val, GCI_var, grad )
       RETURN
 
-!  end of subroutine CSCIFG
+!  end of subroutine CUTEST_cscifg
 
-      END SUBROUTINE CSCIFG
+      END SUBROUTINE CUTEST_cscifg
 

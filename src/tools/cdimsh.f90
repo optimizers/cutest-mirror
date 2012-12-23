@@ -9,13 +9,14 @@
 !   fortran 77 version originally released in CUTEr, August 1999
 !   fortran 2003 version released in CUTEst, 24th November 2012
 
-      SUBROUTINE CDIMSH( data, status, nnzh )
+      SUBROUTINE CUTEST_cdimsh( data, work, status, nnzh )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
 !  dummy arguments
 
-      TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
+      TYPE ( CUTEST_data_type ), INTENT( IN ) :: data
+      TYPE ( CUTEST_work_type ), INTENT( INOUT ) :: work
       INTEGER, INTENT( OUT ) :: status, nnzh
 
 !  ------------------------------------------------------------------------
@@ -24,7 +25,7 @@
 
 !  NB. CSETUP must have been called first
 
-!  The upper triangle of the Hessian is stored in coordinate form,
+!  the upper triangle of the Hessian is stored in coordinate form,
 !  i.e., the entry H_val(i) has row index H_row(i) for i = 1, ...., nnzh.
 
 !  ------------------------------------------------------------------------
@@ -42,12 +43,12 @@
                       data%nvargp, data%IELVAR, data%IELING,                   &
                       data%ISTADG, data%ISTAEV, data%ISTAGV, data%ISVGRP,      &
                       data%GXEQX, data%out, data%io_buffer, status,            &
-                      alloc_status, bad_alloc, lirnh, data%H_row,              &
-                      data%LINK_col, data%POS_in_H, data%llink, data%lpos,     &
+                      alloc_status, bad_alloc, lirnh, work%H_row,              &
+                      work%LINK_col, work%POS_in_H, work%llink, work%lpos,     &
                       nnzh )
 
       RETURN
 
-!  end of subroutine CDIMSH
+!  end of subroutine CUTEST_cdimsh
 
-      END SUBROUTINE CDIMSH
+      END SUBROUTINE CUTEST_cdimsh

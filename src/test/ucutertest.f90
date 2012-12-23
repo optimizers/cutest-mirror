@@ -106,13 +106,13 @@
       grad = .TRUE.
       WRITE( out, "( ' Call UOFG with grad = .TRUE.' )" )
       CALL UOFG( n, X, f, G, grad )
-      WRITE( out, "( ' * f = ', ES12.4 )" ) f
+      CALL WRITE_f( out, f )
+      CALL WRITE_G( out, n, G )
 
       grad = .FALSE.
       WRITE( out, "( ' Call UOFG with grad = .FALSE.' )" )
       CALL UOFG( n, X, f, G, grad )
       CALL WRITE_f( out, f )
-      CALL WRITE_G( out, n, G )
 
 !  compute the dense Hessian value
 

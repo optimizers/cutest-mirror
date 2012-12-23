@@ -9,7 +9,7 @@
 !   fortran 77 version originally released in CUTEr, 26th August 1999
 !   fortran 2003 version released in CUTEst, 19th November 2012
 
-      SUBROUTINE UDIMEN( input, status, n )
+      SUBROUTINE CUTEST_udimen( input, status, n )
 
 !  dummy arguments
 
@@ -17,7 +17,7 @@
       INTEGER, INTENT( OUT ) :: status, n
 
 !  --------------------------------------------------------------------------
-!  Compute the basic array dimension for the unconstrained optimization tools
+!  compute the basic array dimension for the unconstrained optimization tools
 !  --------------------------------------------------------------------------
 
       REWIND input
@@ -26,6 +26,6 @@
       status = 0
       RETURN
 
-!  End of subroutine UDIMEN
+!  End of subroutine CUTEST_udimen
 
-      END SUBROUTINE UDIMEN
+      END SUBROUTINE CUTEST_udimen

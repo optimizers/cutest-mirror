@@ -102,6 +102,8 @@ run_test_cutest: run_test_cutest_unconstrained run_test_cutest_constrained
 run_test_cutest_unconstrained: utools test_cutest_unconstrained
 	echo " Exhaustive test of unconstrained tools"
 	$(SED) -f $(SEDS) ../test/utest.f90 > $(OBJ)/utest.f90
+	echo "$(FORTRAN) $(RUNFFLAGS) $(SPECIAL) -o run_test \
+            $(U_TEST) utest.f90 -L$(OBJ) $(LIBS)"
 	cd $(OBJ) ; $(FORTRAN) $(RUNFFLAGS) $(SPECIAL) -o run_test \
             $(U_TEST) utest.f90 -L$(OBJ) $(LIBS)
 #	- $(OBJ)/run_test

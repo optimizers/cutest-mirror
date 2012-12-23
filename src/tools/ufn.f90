@@ -1,6 +1,6 @@
-! THIS VERSION: CUTEST 1.0 - 20/11/2012 AT 13:40 GMT.
+! THIS VERSION: CUTEST 1.0 - 23/12/2012 AT 15:15 GMT.
 
-!-*-*-*-*-*-*-*-  C U T E S T    U F N    S U B R O U T I N E  -*-*-*-*-*-*-*-
+!-*-*-  C U T E S T    U F N _ t h r e a d s a f e  S U B R O U T I N E  -*-*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
 !  Principal author: Nick Gould
@@ -9,13 +9,14 @@
 !   fortran 77 version originally released in CUTE, July 1991
 !   fortran 2003 version released in CUTEst, 20th November 2012
 
-      SUBROUTINE UFN ( data, status, n, X, f )
+      SUBROUTINE CUTEST_ufn_threadsafe( data, work, status, n, X, f )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
 !  dummy arguments
 
-      TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
+      TYPE ( CUTEST_data_type ), INTENT( IN ) :: data
+      TYPE ( CUTEST_work_type ), INTENT( INOUT ) :: work
       INTEGER, INTENT( IN ) :: n
       INTEGER, INTENT( OUT ) :: status
       REAL ( KIND = wp ), INTENT( OUT ) :: f
@@ -34,19 +35,19 @@
 
 !  increment the counter for calls to the objective function value
 
-      data%nc2of = data%nc2of + 1
+      work%nc2of = work%nc2of + 1
 
 !  there are non-trivial group functions.
 
       DO i = 1, MAX( data%nel, data%ng )
-        data%ICALCF( i ) = i
+        work%ICALCF( i ) = i
       END DO
 
 !  evaluate the element function values.
 
-      CALL ELFUN( data%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,          &
+      CALL ELFUN( work%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,          &
                   data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,          &
-                  data%ISTEP, data%ICALCF, data%ltypee, data%lstaev,           &
+                  data%ISTEP, work%ICALCF, data%ltypee, data%lstaev,           &
                   data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
                   data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,          &
                   1, ifstat )
@@ -66,9 +67,9 @@
 !  include the contributions from the nonlinear elements
 
         DO j = data%ISTADG( ig ), data%ISTADG( ig + 1 ) - 1
-          ftt = ftt + data%ESCALE( j ) * data%FUVALS( data%IELING( j ) )
+          ftt = ftt + data%ESCALE( j ) * work%FUVALS( data%IELING( j ) )
         END DO
-        data%FT( ig ) = ftt
+        work%FT( ig ) = ftt
       END DO
 
 !  compute the group function values
@@ -76,24 +77,24 @@
 !  all group functions are trivial
 
       IF ( data%altriv ) THEN
-        f = DOT_PRODUCT( data%GSCALE( : data%ng ), data%FT( : data%ng ) )
-        data%GVALS( : data%ng, 1 ) = data%FT( : data%ng )
-        data%GVALS( : data%ng, 2 ) = one
+        f = DOT_PRODUCT( data%GSCALE( : data%ng ), work%FT( : data%ng ) )
+        work%GVALS( : data%ng, 1 ) = work%FT( : data%ng )
+        work%GVALS( : data%ng, 2 ) = one
 
 !  evaluate the group function values
 
       ELSE
-        CALL GROUP( data%GVALS, data%ng, data%FT, data%GPVALU, data%ng,        &
-                    data%ITYPEG, data%ISTGP, data%ICALCF, data%ltypeg,         &
+        CALL GROUP( work%GVALS, data%ng, work%FT, data%GPVALU, data%ng,        &
+                    data%ITYPEG, data%ISTGP, work%ICALCF, data%ltypeg,         &
                     data%lstgp, data%lcalcf, data%lcalcg, data%lgpvlu,         &
                     .FALSE., igstat )
         IF ( igstat /= 0 ) GO TO 930
         f = zero
         DO ig = 1, data%ng
           IF ( data%GXEQX( ig ) ) THEN
-            f = f + data%GSCALE( ig ) * data%FT( ig )
+            f = f + data%GSCALE( ig ) * work%FT( ig )
           ELSE
-            f = f + data%GSCALE( ig ) * data%GVALS( ig, 1 )
+            f = f + data%GSCALE( ig ) * work%GVALS( ig, 1 )
           END IF
         END DO
       END IF
@@ -108,6 +109,72 @@
       status = 3
       RETURN
 
-!  end of subroutine UFN
+!  end of subroutine CUTEST_ufn_threadsafe
 
-      END SUBROUTINE UFN
+      END SUBROUTINE CUTEST_ufn_threadsafe
+
+!-*-*-*-*-*-*-*-  C U T E S T    U F N    S U B R O U T I N E  -*-*-*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 22nd December 2012
+
+      SUBROUTINE CUTEST_ufn( status, n, X, f )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n
+      INTEGER, INTENT( OUT ) :: status
+      REAL ( KIND = wp ), INTENT( OUT ) :: f
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+
+!  ----------------------------------------------------------
+!  Compute the value of a groups partially separable function
+!  initially written in Standard Input Format (SIF)
+!  ----------------------------------------------------------
+
+      CALL CUTEST_ufn_threadsafe( CUTEST_data_global,                          &
+                                  CUTEST_work_global( 1 ),                     &
+                                  status, n, X, f )
+      RETURN
+
+!  end of subroutine CUTEST_ufn
+
+      END SUBROUTINE CUTEST_ufn
+
+!-*-*-*-  C U T E S T    U F N _ t h r e a d e d   S U B R O U T I N E  -*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 22nd December 2012
+
+      SUBROUTINE CUTEST_ufn_threaded( status, n, X, f, thread )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, thread
+      INTEGER, INTENT( OUT ) :: status
+      REAL ( KIND = wp ), INTENT( OUT ) :: f
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+
+!  ----------------------------------------------------------
+!  Compute the value of a groups partially separable function
+!  initially written in Standard Input Format (SIF)
+!  ----------------------------------------------------------
+
+      CALL CUTEST_ufn_threadsafe( CUTEST_data_global,                          &
+                                  CUTEST_work_global( thread ),                &
+                                  status, n, X, f )
+      RETURN
+
+!  end of subroutine CUTEST_ufn_threaded
+
+      END SUBROUTINE CUTEST_ufn_threaded

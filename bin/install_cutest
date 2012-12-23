@@ -368,8 +368,8 @@ VERSION=${MCH}.${OS}.${CMP}
 
 CORRECT_SUBSET="false"
 NEWCC="false"
-PLPLOTUSED="unused"
-PLPLOT=""
+#PLPLOTUSED="unused"
+#PLPLOT=""
 
 if [[ -e $CUTEST/versions/$VERSION ]]; then
 
@@ -389,7 +389,7 @@ if [[ -e $CUTEST/versions/$VERSION ]]; then
     fi    
 fi
 
-echo $CMP
+#echo $CMP
 
 while [ $CORRECT_SUBSET == "false" ]; do 
    echo ' Select subset of CUTEST packages to be installed'
