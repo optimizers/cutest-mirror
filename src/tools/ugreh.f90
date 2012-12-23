@@ -9,14 +9,15 @@
 !   fortran 77 version originally released in CUTEr, November 1994
 !   fortran 2003 version released in CUTEst, 27th November 2012
 
-      SUBROUTINE UGREH( data, status, n, X, G, ne, lhe_ptr, HE_row_ptr,        &
+      SUBROUTINE CUTEST_ugreh( data, work, status, n, X, G, ne, lhe_ptr, HE_row_ptr, &
                         HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val, byrows )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
 !  dummy arguments
 
-      TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
+      TYPE ( CUTEST_data_type ), INTENT( IN ) :: data
+      TYPE ( CUTEST_work_type ), INTENT( INOUT ) :: work
       INTEGER, INTENT( IN ) :: n, lhe_ptr, lhe_row, lhe_val
       INTEGER, INTENT( OUT ) :: ne, status
       LOGICAL, INTENT( IN ) :: byrows
@@ -69,14 +70,14 @@
 !  there are non-trivial group functions
 
       DO i = 1, MAX( data%nel, data%ng )
-        data%ICALCF( i ) = i
+        work%ICALCF( i ) = i
       END DO
 
 !  evaluate the element function values
 
-      CALL ELFUN( data%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,          &
+      CALL ELFUN( work%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,          &
                   data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,          &
-                  data%ISTEP, data%ICALCF, data%ltypee, data%lstaev,           &
+                  data%ISTEP, work%ICALCF, data%ltypee, data%lstaev,           &
                   data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
                   data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,          &
                   1, ifstat )
@@ -84,9 +85,9 @@
 
 !  evaluate the element function gradients and Hessians
 
-      CALL ELFUN( data%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,          &
+      CALL ELFUN( work%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,          &
                   data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,          &
-                  data%ISTEP, data%ICALCF, data%ltypee, data%lstaev,           &
+                  data%ISTEP, work%ICALCF, data%ltypee, data%lstaev,           &
                   data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
                   data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,          &
                   3, ifstat )
@@ -106,23 +107,23 @@
 !  include the contributions from the nonlinear elements.
 
         DO j = data%ISTADG( ig ), data%ISTADG( ig + 1 ) - 1
-          ftt = ftt + data%ESCALE( j ) * data%FUVALS( data%IELING( j ) )
+          ftt = ftt + data%ESCALE( j ) * work%FUVALS( data%IELING( j ) )
         END DO
-        data%FT( ig ) = ftt
+        work%FT( ig ) = ftt
 
 !  record the derivatives of trivial groups
 
         IF ( data%GXEQX( ig ) ) THEN
-          data%GVALS( ig, 2 ) = 1.0_wp
-          data%GVALS( ig, 3 ) = 0.0_wp
+          work%GVALS( ig, 2 ) = 1.0_wp
+          work%GVALS( ig, 3 ) = 0.0_wp
         END IF
       END DO
 
 !  evaluate the group derivative values
 
       IF ( .NOT. data%altriv ) THEN
-        CALL GROUP( data%GVALS, data%ng, data%FT, data%GPVALU, data%ng,        &
-                    data%ITYPEG, data%ISTGP, data%ICALCF, data%ltypeg,         &
+        CALL GROUP( work%GVALS, data%ng, work%FT, data%GPVALU, data%ng,        &
+                    data%ITYPEG, data%ISTGP, work%ICALCF, data%ltypeg,         &
                     data%lstgp, data%lcalcf, data%lcalcg, data%lgpvlu,         &
                     .TRUE., igstat )
         IF ( igstat /= 0 ) GO TO 930
@@ -130,70 +131,38 @@
 
 !  compute the gradient value
 
-!      CALL ELGRD( n, data%ng, data%firstg, data%ICNA( 1 ), data%licna, &
-!                   data%ISTADA( 1 ), data%lstada, data%IELING( 1 ), &
-!                   data%leling, data%ISTADG( 1 ), data%lstadg, &
-!                   data%ITYPEE( 1 ), data%lintre, &
-!                   data%ISTAEV( 1 ), data%lstaev, data%IELVAR( 1 ), &
-!                   data%lelvar, data%INTVAR( 1 ), data%lntvar, &
-!                   data%IWORK( data%lsvgrp + 1 ), &
-!                   data%lnvgrp, data%IWORK( data%lstajc + 1 ), data%lnstjc, &
-!                   data%IWORK( data%lstagv + 1 ), data%lnstgv, &
-!                   data%A( 1 ), data%la, &
-!                   data%GVALS( : , 2 ), data%lgvals, &
-!                   data%FUVALS, data%lnguvl, data%FUVALS( data%lggfx + 1 ), &
-!                   data%GSCALE( 1 ), data%lgscal, &
-!                   data%ESCALE( 1 ), data%lescal, &
-!                   data%FUVALS( data%lgrjac + 1 ), &
-!                   data%lngrjc, data%WRK( 1 ), data%WRK( n + 1 ), data%maxsel,&
-!                   data%GXEQX( 1 ), data%lgxeqx, &
-!                   data%INTREP( 1 ), data%lintre, RANGE )
-
       CALL CUTEST_form_gradients( n, data%ng, data%nel, data%ntotel,           &
-             data%nvrels, data%nnza, data%nvargp, data%firstg, data%ICNA,      &
+             data%nvrels, data%nnza, data%nvargp, work%firstg, data%ICNA,      &
              data%ISTADA, data%IELING, data%ISTADG, data%ISTAEV,               &
-             data%IELVAR, data%INTVAR, data%A, data%GVALS( : , 2 ),            &
-             data%FUVALS, data%lnguvl, data%FUVALS( data%lggfx + 1 ),          &
-             data%GSCALE, data%ESCALE, data%FUVALS( data%lgrjac + 1 ),         &
+             data%IELVAR, data%INTVAR, data%A, work%GVALS( : , 2 ),            &
+             work%FUVALS, data%lnguvl, work%FUVALS( data%lggfx + 1 ),          &
+             data%GSCALE, data%ESCALE, work%FUVALS( data%lgrjac + 1 ),         &
              data%GXEQX, data%INTREP, data%ISVGRP, data%ISTAGV, data%ITYPEE,   &
-             data%ISTAJC, data%W_ws, data%W_el, RANGE )
-      data%firstg = .FALSE.
+             work%ISTAJC, work%W_ws, work%W_el, RANGE )
+      work%firstg = .FALSE.
 
 !  store the gradient value
 
       DO i = 1, n
-        G( i ) = data%FUVALS( data%lggfx + i )
+        G( i ) = work%FUVALS( data%lggfx + i )
       END DO
-
-!  define the real work space needed for ASMBE. Ensure that there is 
-!  sufficient space
-
-!     IF ( data%lwk2 < n + 3 * data%maxsel ) THEN
-!        IF ( data%out > 0 ) WRITE( data%out, 2000 )
-!        status = 2 ; RETURN
-!     END IF
-
-!  define the integer work space needed for ASMBE. Ensure that there is 
-!  sufficient space
-
- !    liwkh = data%liwk2 - n
 
 !  assemble the Hessian
 
       lhe_row_int = lhe_row ; lhe_val_int = lhe_val
       CALL CUTEST_assemble_element_hessian(                                    &
-                        n, data%ng, data%nel,data% ntotel, data%nvrels,        &
+                        data%ng, data%nel,data% ntotel, data%nvrels,           &
                         data%nnza, data%maxsel, data%nvargp,                   &
                         data%lnguvl, data%lnhuvl, data%ISTADH, data%ICNA,      &
                         data%ISTADA, data%INTVAR, data%IELVAR,                 &
                         data%IELING, data%ISTADG, data%ISTAEV,                 &
                         data%ISTAGV, data%ISVGRP, data%ITYPEE,                 &
-                        data%A, data%FUVALS, data%FUVALS,                      &
-                        data%GVALS( : , 2 ), data%GVALS( : , 3 ),              &
+                        data%A, work%FUVALS, work%FUVALS,                      &
+                        work%GVALS( : , 2 ), work%GVALS( : , 3 ),              &
                         data%GSCALE, data%ESCALE, data%GXEQX, data%INTREP,     &
-                        data%IW_asmbl, data%W_ws, data%W_el, data%W_in,        &
-                        data%H_el, data%H_in, RANGE, ne, lhe_row_int,          &
-                        lhe_val_int, data%H_row, HE_row_ptr, data%H_val,       &
+                        work%ISWKSP, work%W_ws, work%W_el, work%W_in,          &
+                        work%H_el, work%H_in, RANGE, ne, lhe_row_int,          &
+                        lhe_val_int, work%H_row, HE_row_ptr, work%H_val,       &
                         HE_val_ptr, byrows, 0, data%out, data%out,             &
                         data%io_buffer, alloc_status, bad_alloc, status )
 
@@ -204,14 +173,14 @@
 !  check that HE_row and HE_val are large enough
 
       IF ( lhe_row < HE_row_ptr( ne + 1 ) - 1 ) THEN
-        IF ( data%out > 0 ) WRITE( data%out, "( ' ** SUBROUTINE UEH: ',        &
+        IF ( data%out > 0 ) WRITE( data%out, "( ' ** SUBROUTINE UGREH: ',      &
        &  'Increase the dimension of HE_row to ',  I0 )" )                     &
              HE_row_ptr( ne + 1 ) - 1 
         status = 2 ; RETURN
       END IF
 
       IF ( lhe_val < HE_val_ptr( ne + 1 ) - 1 ) THEN
-        IF ( data%out > 0 ) WRITE( data%out, "( ' ** SUBROUTINE UEH: ',        &
+        IF ( data%out > 0 ) WRITE( data%out, "( ' ** SUBROUTINE UGREH: ',      &
        &  'Increase the dimension of HE_val to ',  I0 )" )                     &
              HE_val_ptr( ne + 1 ) - 1 
         status = 2 ; RETURN
@@ -220,43 +189,14 @@
 !  record the element Hessian
 
       HE_row( : HE_row_ptr( ne + 1 ) - 1 )                                     &
-         = data%H_row( : HE_row_ptr( ne + 1 ) - 1 )
+         = work%H_row( : HE_row_ptr( ne + 1 ) - 1 )
       HE_val( : HE_val_ptr( ne + 1 ) - 1 )                                     &
-         = data%H_val( : HE_val_ptr( ne + 1 ) - 1 )
-
-!      CALL ASMBE( n, data%ng, data%maxsel,  &
-!                   data%ISTADH( 1 ), data%lstadh, &
-!                   data%ICNA( 1 ), data%licna, &
-!                   data%ISTADA( 1 ), data%lstada, &
-!                   data%INTVAR( 1 ), data%lntvar, &
-!                   data%IELVAR( 1 ), data%lelvar, &
-!                   data%IELING( 1 ), data%leling, &
-!                   data%ISTADG( 1 ), data%lstadg, &
-!                   data%ISTAEV( 1 ), data%lstaev, &
-!                   data%IWORK( data%lstagv + 1 ), data%lnstgv, &
-!                   data%IWORK( data%lsvgrp + 1 ), data%lnvgrp, &
-!                   data%IWORK( liwkh + 1 ), data%liwk2 - liwkh, &
-!                   data%A( 1 ), data%la, data%FUVALS, data%lnguvl, &
-!                   data%FUVALS, data%lnhuvl, &
-!                   data%GVALS( : , 2 ), data%GVALS( : , 3 ), &
-!                   data%GSCALE( 1 ), data%ESCALE( 1 ), data%lescal, &
-!                   data%WRK( 1 ), data%lwk2 - data%ng, &
-!                   data%GXEQX( 1 ), data%lgxeqx, data%INTREP( 1 ), &
-!                   data%lintre, data%ITYPEE( 1 ), data%lintre, RANGE, ne, &
-!                   HE_row, lhe_row, HE_row_ptr, HE_val, lhe_val, HE_val_ptr, &
-!                   byrows, 1, data%out, inform )
-
-!  check that there is room for the elements
-
-!     IF ( inform > 0 ) THEN
-!        IF ( data%out > 0 ) WRITE( data%out, 2020 )
-!        status = 2 ; RETURN
-!     END IF
+         = work%H_val( : HE_val_ptr( ne + 1 ) - 1 )
 
 !  update the counters for the report tool
 
-      data%nc2og = data%nc2og + 1
-      data%nc2oh = data%nc2oh + 1
+      work%nc2og = work%nc2og + 1
+      work%nc2oh = work%nc2oh + 1
       status = 0
       RETURN
 
@@ -268,12 +208,6 @@
       status = 3
       RETURN
 
-!  non-executable statements
+!  end of subroutine CUTEST_ugreh
 
-!2000 FORMAT( ' ** SUBROUTINE UGREH: Increase the size of WK ' )
-!2020 FORMAT( ' ** SUBROUTINE UGREH: Increase the size of',                    &
-!             ' HE_row_ptr, HE_val_ptr, HE_row or HE_val ' )
-
-!  end of subroutine UGREH
-
-      END SUBROUTINE UGREH
+      END SUBROUTINE CUTEST_ugreh

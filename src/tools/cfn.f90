@@ -9,13 +9,14 @@
 !   fortran 77 version originally released in CUTE, October 1991
 !   fortran 2003 version released in CUTEst, 20th November 2012
 
-      SUBROUTINE CFN( data, status, n, m, X, f, C )
+      SUBROUTINE CUTEST_cfn( data, work, status, n, m, X, f, C )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
 !  dummy arguments
 
-      TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
+      TYPE ( CUTEST_data_type ), INTENT( IN ) :: data
+      TYPE ( CUTEST_work_type ), INTENT( INOUT ) :: work
       INTEGER, INTENT( IN ) :: n, m
       INTEGER, INTENT( OUT ) :: status
       REAL ( KIND = wp ), INTENT( OUT ) :: f
@@ -35,14 +36,14 @@
 !  there are non-trivial group functions
 
       DO i = 1, MAX( data%nel, data%ng )
-        data%ICALCF( i ) = i
+        work%ICALCF( i ) = i
       END DO
 
 !  evaluate the element function values
 
-      CALL ELFUN( data%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,          &
+      CALL ELFUN( work%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,          &
                   data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,          &
-                  data%ISTEP, data%ICALCF, data%ltypee, data%lstaev,           &
+                  data%ISTEP, work%ICALCF, data%ltypee, data%lstaev,           &
                   data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
                   data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,          &
                   1, ifstat )
@@ -62,9 +63,9 @@
 !  include the contributions from the nonlinear elements
 
         DO j = data%ISTADG( ig ), data%ISTADG( ig + 1 ) - 1
-          ftt = ftt + data%ESCALE( j ) * data%FUVALS( data%IELING( j ) )
+          ftt = ftt + data%ESCALE( j ) * work%FUVALS( data%IELING( j ) )
         END DO
-        data%FT( ig ) = ftt
+        work%FT( ig ) = ftt
       END DO
 
 !  compute the group function values
@@ -72,14 +73,14 @@
 !  all group functions are trivial
 
       IF ( data%altriv ) THEN
-        data%GVALS( : data%ng, 1 ) = data%FT( : data%ng )
-        data%GVALS( : data%ng, 2 ) = 1.0_wp
+        work%GVALS( : data%ng, 1 ) = work%FT( : data%ng )
+        work%GVALS( : data%ng, 2 ) = 1.0_wp
 
 !  evaluate the group function values
 
       ELSE
-        CALL GROUP( data%GVALS, data%ng, data%FT, data%GPVALU, data%ng,        &
-                    data%ITYPEG, data%ISTGP, data%ICALCF, data%ltypeg,         &
+        CALL GROUP( work%GVALS, data%ng, work%FT, data%GPVALU, data%ng,        &
+                    data%ITYPEG, data%ISTGP, work%ICALCF, data%ltypeg,         &
                     data%lstgp, data%lcalcf, data%lcalcg, data%lgpvlu,         &
                     .FALSE., igstat )
         IF ( igstat /= 0 ) GO TO 930
@@ -92,15 +93,15 @@
         DO ig = 1, data%ng
           IF ( data%KNDOFC( ig ) == 0 ) THEN
             IF ( data%GXEQX( ig ) ) THEN
-              f = f + data%GSCALE( ig ) * data%FT( ig )
+              f = f + data%GSCALE( ig ) * work%FT( ig )
             ELSE
-              f = f + data%GSCALE( ig ) * data%GVALS( ig, 1 )
+              f = f + data%GSCALE( ig ) * work%GVALS( ig, 1 )
             END IF
           ELSE
             IF ( data%GXEQX( ig ) ) THEN
-              C( data%KNDOFC( ig ) ) = data%GSCALE( ig ) * data%FT( ig )
+              C( data%KNDOFC( ig ) ) = data%GSCALE( ig ) * work%FT( ig )
             ELSE
-               C( data%KNDOFC( ig ) ) = data%GSCALE( ig ) * data%GVALS( ig, 1 )
+               C( data%KNDOFC( ig ) ) = data%GSCALE( ig ) * work%GVALS( ig, 1 )
             END IF
           END IF
         END DO
@@ -110,17 +111,17 @@
 
         DO ig = 1, data%ng
           IF ( data%GXEQX( ig ) ) THEN
-            f = f + data%GSCALE( ig ) * data%FT( ig )
+            f = f + data%GSCALE( ig ) * work%FT( ig )
           ELSE
-            f = f + data%GSCALE( ig ) * data%GVALS( ig, 1 )
+            f = f + data%GSCALE( ig ) * work%GVALS( ig, 1 )
           END IF
         END DO
       END IF
 
 !  Update the counters for the report tool.
 
-      data%nc2of = data%nc2of + 1
-      data%nc2cf = data%nc2cf + data%pnc
+      work%nc2of = work%nc2of + 1
+      work%nc2cf = work%nc2cf + work%pnc
       status = 0
       RETURN
 
@@ -132,6 +133,6 @@
       status = 3
       RETURN
 
-!  end of subroutine CFN
+!  end of subroutine CUTEST_cfn
 
-      END SUBROUTINE CFN
+      END SUBROUTINE CUTEST_cfn

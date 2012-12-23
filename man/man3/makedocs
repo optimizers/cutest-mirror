@@ -1,0 +1,75 @@
+#!/bin/csh
+
+foreach pack ( cutest_ccfg cutest_ccfsg cutest_ccifg cutest_ccifsg cutest_cdh \
+               cutest_cdimen cutest_cdimse cutest_cdimsh cutest_cdimsj \
+               cutest_ceh cutest_cfn cutest_cgr cutest_cgrdh cutest_chcprod \
+               cutest_chprod cutest_cidh cutest_cish cutest_cjprod \
+               cutest_cnames cutest_cofg cutest_connames cutest_creport \
+               cutest_cscfg cutest_cscifg cutest_csetup cutest_csgr \
+               cutest_csgreh cutest_csgrsh cutest_csh cutest_cshc \
+               cutest_cvartype cutest_probname cutest_ubandh cutest_udh \
+               cutest_udimen cutest_udimse cutest_udimsh cutest_ueh \
+               cutest_ufn cutest_ugr cutest_ugrdh cutest_ugreh cutest_ugrsh \
+               cutest_uhprod cutest_unames cutest_uofg cutest_ureport \
+               cutest_usetup cutest_ush cutest_uvartype cutest_varnames )
+#foreach pack ( cutest_ccfg )
+#foreach pack ( cutest_ccfsg )
+#foreach pack ( cutest_ccifg )
+#foreach pack ( cutest_ccifsg )
+#foreach pack ( cutest_cdh )
+#foreach pack ( cutest_cdimen )
+#foreach pack ( cutest_cdimse )
+#foreach pack ( cutest_cdimsh )
+#foreach pack ( cutest_cdimsj )
+#foreach pack ( cutest_ceh )
+#foreach pack ( cutest_cfn )
+#foreach pack ( cutest_cgr )
+#foreach pack ( cutest_cgrdh )
+#foreach pack ( cutest_chcprod )
+#foreach pack ( cutest_chprod )
+#foreach pack ( cutest_cidh )
+#foreach pack ( cutest_cish )
+#foreach pack ( cutest_cjprod )
+#foreach pack ( cutest_cnames )
+#foreach pack ( cutest_cofg )
+#foreach pack ( cutest_connames )
+#foreach pack ( cutest_creport )
+#foreach pack ( cutest_cscfg )
+#foreach pack ( cutest_cscifg )
+#foreach pack ( cutest_csetup )
+#foreach pack ( cutest_csgr )
+#foreach pack ( cutest_csgreh )
+#foreach pack ( cutest_csgrsh )
+#foreach pack ( cutest_csh )
+#foreach pack ( cutest_cshc )
+#foreach pack ( cutest_cvartype )
+#foreach pack ( cutest_probname )
+#foreach pack ( cutest_ubandh )
+#foreach pack ( cutest_udh )
+#foreach pack ( cutest_udimen )
+#foreach pack ( cutest_udimse )
+#foreach pack ( cutest_udimsh )
+#foreach pack ( cutest_ueh )
+#foreach pack ( cutest_ufn )
+#foreach pack ( cutest_ugr )
+#foreach pack ( cutest_ugrdh )
+#foreach pack ( cutest_ugreh )
+#foreach pack ( cutest_ugrsh )
+#foreach pack ( cutest_uhprod )
+#foreach pack ( cutest_unames )
+#foreach pack ( cutest_uofg )
+#foreach pack ( cutest_ureport )
+#foreach pack ( cutest_usetup )
+#foreach pack ( cutest_ush )
+#foreach pack ( cutest_uvartype )
+#foreach pack ( cutest_varnames )
+  echo "    " $pack
+  echo "      .. making pdf"
+  pdfroff -e -m man $pack.3 > ../../doc/pdf/$pack.pdf
+  echo "      .. making html"
+  groff -e -m man -T html -P "-Istem $pack-" -P "-i150" $pack.3 \
+    > /numerical/nimg/fortran/cutest.svn/doc/html/$pack.html
+  mv *.png /numerical/nimg/fortran/cutest.svn/doc/html
+end
+
+

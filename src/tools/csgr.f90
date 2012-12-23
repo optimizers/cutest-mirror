@@ -9,14 +9,15 @@
 !   fortran 77 version originally released in CUTE, November 1991
 !   fortran 2003 version released in CUTEst, 28th November 2012
 
-      SUBROUTINE CSGR( data, status, n, m, X, Y, grlagf,                       &
-                       nnzj, lj, J_val, J_var, J_fun )
+      SUBROUTINE CUTEST_csgr( data, work, status, n, m, X, Y, grlagf,                &
+                              nnzj, lj, J_val, J_var, J_fun )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
 !  dummy arguments
 
-      TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
+      TYPE ( CUTEST_data_type ), INTENT( IN ) :: data
+      TYPE ( CUTEST_work_type ), INTENT( INOUT ) :: work
       INTEGER, INTENT( IN ) :: n, m, lj
       INTEGER, INTENT( OUT ) :: nnzj, status
       LOGICAL, INTENT( IN ) :: grlagf
@@ -52,14 +53,14 @@
 !  there are non-trivial group functions
 
       DO i = 1, MAX( data%nel, data%ng )
-        data%ICALCF( i ) = i
+        work%ICALCF( i ) = i
       END DO
 
 !  evaluate the element function values
 
-      CALL ELFUN( data%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,          &
+      CALL ELFUN( work%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,          &
                   data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,          &
-                  data%ISTEP, data%ICALCF, data%ltypee, data%lstaev,           &
+                  data%ISTEP, work%ICALCF, data%ltypee, data%lstaev,           &
                   data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
                   data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,          &
                   1, ifstat )
@@ -67,9 +68,9 @@
 
 !  evaluate the element function gradient values
 
-      CALL ELFUN( data%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,          &
+      CALL ELFUN( work%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,          &
                   data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,          &
-                  data%ISTEP, data%ICALCF, data%ltypee, data%lstaev,           &
+                  data%ISTEP, work%ICALCF, data%ltypee, data%lstaev,           &
                   data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
                   data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,          &
                   2, ifstat )
@@ -89,20 +90,20 @@
 !  include the contributions from the nonlinear elements
 
         DO j = data%ISTADG( ig ), data%ISTADG( ig + 1 ) - 1
-          ftt = ftt + data%ESCALE( j ) * data%FUVALS( data%IELING( j ) )
+          ftt = ftt + data%ESCALE( j ) * work%FUVALS( data%IELING( j ) )
         END DO
-        data%FT( ig ) = ftt
+        work%FT( ig ) = ftt
 
 !  record the derivatives of trivial groups
 
-        IF ( data%GXEQX( ig ) ) data%GVALS( ig, 2 ) = 1.0_wp
+        IF ( data%GXEQX( ig ) ) work%GVALS( ig, 2 ) = 1.0_wp
       END DO
 
 !  evaluate the group derivative values
 
       IF ( .NOT. data%altriv ) THEN
-        CALL GROUP( data%GVALS, data%ng, data%FT, data%GPVALU, data%ng,        &
-                    data%ITYPEG, data%ISTGP, data%ICALCF, data%ltypeg,         &
+        CALL GROUP( work%GVALS, data%ng, work%FT, data%GPVALU, data%ng,        &
+                    data%ITYPEG, data%ISTGP, work%ICALCF, data%ltypeg,         &
                     data%lstgp, data%lcalcf, data%lcalcg, data%lgpvlu,         &
                     .TRUE., igstat )
         IF ( igstat /= 0 ) GO TO 930
@@ -113,7 +114,7 @@
 
       nnzj = 0
       IF ( data%numcon > 0 ) THEN
-        data%G_temp( : n ) = 0.0_wp
+        work%G_temp( : n ) = 0.0_wp
 
 !  consider the ig-th group
 
@@ -135,14 +136,14 @@
             IF ( grlagf ) gii = gi * Y( data%KNDOFC( ig ) )
           END IF
           IF ( nontrv ) THEN
-            gi = gi * data%GVALS( ig, 2 )
-            IF ( grlagf ) gii = gii * data%GVALS( ig, 2 )
+            gi = gi * work%GVALS( ig, 2 )
+            IF ( grlagf ) gii = gii * work%GVALS( ig, 2 )
           END IF
-          data%W_ws( data%ISVGRP( istrgv : iendgv ) ) = 0.0_wp
+          work%W_ws( data%ISVGRP( istrgv : iendgv ) ) = 0.0_wp
 
 !  this is the first gradient evaluation or the group has nonlinear elements
 
-          IF ( data%firstg .OR. nelow <= nelup ) THEN
+          IF ( work%firstg .OR. nelow <= nelup ) THEN
 
 !  loop over the group's nonlinear elements
 
@@ -157,12 +158,12 @@
 !  the iel-th element has an internal representation
 
                 nin = data%INTVAR( iel + 1 ) - k
-                CALL RANGE( iel, .TRUE., data%FUVALS( k ), data%W_el,          &
+                CALL RANGE( iel, .TRUE., work%FUVALS( k ), work%W_el,          &
                             nvarel, nin, data%ITYPEE( iel ), nin, nvarel )
 !DIR$ IVDEP
                 DO i = 1, nvarel
                   j = data%IELVAR( l )
-                  data%W_ws( j ) = data%W_ws( j ) + scalee * data%W_el( i )
+                  work%W_ws( j ) = work%W_ws( j ) + scalee * work%W_el( i )
                   l = l + 1
                 END DO
               ELSE
@@ -172,7 +173,7 @@
 !DIR$ IVDEP
                 DO i = 1, nvarel
                   j = data%IELVAR( l )
-                  data%W_ws( j ) = data%W_ws( j ) + scalee * data%FUVALS( k )
+                  work%W_ws( j ) = work%W_ws( j ) + scalee * work%FUVALS( k )
                   k = k + 1 ; l = l + 1
                 END DO
               END IF
@@ -183,7 +184,7 @@
 !DIR$ IVDEP
             DO k = data%ISTADA( ig ), data%ISTADA( ig1 ) - 1
               j = data%ICNA( k )
-              data%W_ws( j ) = data%W_ws( j ) + data%A( k )
+              work%W_ws( j ) = work%W_ws( j ) + data%A( k )
             END DO
 
 !  allocate a gradient
@@ -195,32 +196,32 @@
 !  the group belongs to the objective function
 
               IF ( icon == 0 ) THEN
-                data%G_temp( ll ) = data%G_temp( ll ) + gi * data%W_ws( ll )
+                work%G_temp( ll ) = work%G_temp( ll ) + gi * work%W_ws( ll )
 
 !  the group defines a constraint
 
               ELSE
                 nnzj = nnzj + 1
                 IF ( nnzj <= lj ) THEN
-                   J_val ( nnzj ) = gi * data%W_ws( ll )
+                   J_val ( nnzj ) = gi * work%W_ws( ll )
                    J_fun( nnzj ) = icon
                    J_var( nnzj ) = ll
                 END IF
                 IF ( grlagf )                                                  &
-                  data%G_temp( ll ) = data%G_temp( ll ) + gii * data%W_ws( ll )
+                  work%G_temp( ll ) = work%G_temp( ll ) + gii * work%W_ws( ll )
               END IF
 
 !  if the group is non-trivial, also store the nonzero entries of the
 !  gradient of the function in GRJAC
 
               IF ( nontrv ) THEN
-                jj = data%ISTAJC( ll )
-                data%FUVALS( data%lgrjac + jj ) = data%W_ws( ll )
+                jj = work%ISTAJC( ll )
+                work%FUVALS( data%lgrjac + jj ) = work%W_ws( ll )
 
 !  increment the address for the next nonzero in the column of the Jacobian 
 !  for variable ll
 
-                data%ISTAJC( ll ) = jj + 1
+                work%ISTAJC( ll ) = jj + 1
               END IF
             END DO
 
@@ -233,7 +234,7 @@
 !DIR$ IVDEP
             DO k = data%ISTADA( ig ),data%ISTADA( ig1 ) - 1
               j = data%ICNA( k )
-              data%W_ws( j ) = data%W_ws( j ) + data%A( k )
+              work%W_ws( j ) = work%W_ws( j ) + data%A( k )
             END DO
 
 !  allocate a gradient
@@ -245,27 +246,27 @@
 !  the group belongs to the objective function
 
               IF ( icon == 0 ) THEN
-                data%G_temp( ll ) = data%G_temp( ll ) +  gi * data%W_ws( ll )
+                work%G_temp( ll ) = work%G_temp( ll ) +  gi * work%W_ws( ll )
 
 !  the group defines a constraint
 
                ELSE
                  nnzj = nnzj + 1
                  IF ( nnzj <= lj ) THEN
-                   J_val ( nnzj ) = gi * data%W_ws( ll )
+                   J_val ( nnzj ) = gi * work%W_ws( ll )
                    J_fun( nnzj ) = icon
                    J_var( nnzj ) = ll
                  END IF
                  IF ( grlagf )                                                 &
-                   data%G_temp( ll ) = data%G_temp( ll ) + gii * data%W_ws( ll )
+                   work%G_temp( ll ) = work%G_temp( ll ) + gii * work%W_ws( ll )
                END IF
 
 !  increment the address for the next nonzero in the column of the Jacobian 
 !  for variable ll
 
                IF ( nontrv ) THEN
-                 jj = data%ISTAJC( ll )
-                 data%ISTAJC( ll ) = jj + 1
+                 jj = work%ISTAJC( ll )
+                 work%ISTAJC( ll ) = jj + 1
                END IF
             END DO
           END IF
@@ -275,16 +276,16 @@
 !  their values on entry
 
         DO i = n, 2, - 1
-          data%ISTAJC( i ) = data%ISTAJC( i - 1 )
+          work%ISTAJC( i ) = work%ISTAJC( i - 1 )
         END DO
-        data%ISTAJC( 1 ) = 1
+        work%ISTAJC( 1 ) = 1
 
 !  transfer the gradient of the objective function to the sparse storage scheme
 
         DO i = 1, n
           nnzj = nnzj + 1
           IF ( nnzj <= lj ) THEN
-            J_val ( nnzj ) = data%G_temp( i )
+            J_val ( nnzj ) = work%G_temp( i )
             J_fun( nnzj ) = 0
             J_var( nnzj ) = i
           END IF
@@ -294,46 +295,26 @@
 
       ELSE
         CALL CUTEST_form_gradients( n, data%ng, data%nel, data%ntotel,         &
-               data%nvrels, data%nnza, data%nvargp, data%firstg, data%ICNA,    &
+               data%nvrels, data%nnza, data%nvargp, work%firstg, data%ICNA,    &
                data%ISTADA, data%IELING, data%ISTADG, data%ISTAEV,             &
-               data%IELVAR, data%INTVAR, data%A, data%GVALS( : , 2 ),          &
-               data%FUVALS, data%lnguvl, data%FUVALS( data%lggfx + 1 ),        &
-               data%GSCALE, data%ESCALE, data%FUVALS( data%lgrjac + 1 ),       &
+               data%IELVAR, data%INTVAR, data%A, work%GVALS( : , 2 ),          &
+               work%FUVALS, data%lnguvl, work%FUVALS( data%lggfx + 1 ),        &
+               data%GSCALE, data%ESCALE, work%FUVALS( data%lgrjac + 1 ),       &
                data%GXEQX, data%INTREP, data%ISVGRP, data%ISTAGV, data%ITYPEE, &
-               data%ISTAJC, data%W_ws, data%W_el, RANGE )
-
-!        CALL ELGRD( n, data%ng, data%firstg, data%ICNA( 1 ), data%licna, &
-!                    data%ISTADA( 1 ), data%lstada, data%IELING( 1 ), &
-!                    data%leling, data%ISTADG( 1 ), data%lstadg, &
-!                    data%ITYPEE( 1 ), data%lintre, &
-!                    data%ISTAEV( 1 ), data%lstaev, data%IELVAR( 1 ), &
-!                    data%lelvar, data%INTVAR( 1 ), data%lntvar, &
-!                    data%ISVGRP( 1 ), &
-!                    data%lnvgrp, data%ISTAJC( 1 ), data%lnstjc, &
-!                    data%ISTAGV( 1 ), data%lnstgv, &
-!                    data%A( 1 ), data%la, &
-!                    data%GVALS( : , 2 ), data%lgvals, &
-!                    data%FUVALS, data%lnguvl, data%FUVALS( data%lggfx + 1 ), &
-!                    data%GSCALE( 1 ), data%lgscal, &
-!                    data%ESCALE( 1 ), data%lescal, &
-!                    data%FUVALS( data%lgrjac + 1 ), &
-!                    data%lngrjc, data%W_ws( 1 ), data%W_el( 1 ), &
-!                    data%maxsel, &
-!                    data%GXEQX( 1 ), data%lgxeqx, &
-!                    data%INTREP( 1 ), data%lintre, RANGE )
+               work%ISTAJC, work%W_ws, work%W_el, RANGE )
 
 !  transfer the gradient of the objective function to the sparse storage scheme
 
         DO i = 1, n
           nnzj = nnzj + 1
           IF ( nnzj <= lj ) THEN
-            J_val ( nnzj ) = data%FUVALS( data%lggfx + i )
+            J_val ( nnzj ) = work%FUVALS( data%lggfx + i )
             J_fun( nnzj ) = 0
             J_var( nnzj ) = i
           END IF
         END DO
       END IF
-      data%firstg = .FALSE.
+      work%firstg = .FALSE.
 
 !  verify that the Jacobian can fit in the alloted space
 
@@ -346,8 +327,8 @@
 
 !  update the counters for the report tool
 
-      data%nc2og = data%nc2og + 1
-      data%nc2cg = data%nc2cg + data%pnc
+      work%nc2og = work%nc2og + 1
+      work%nc2cg = work%nc2cg + work%pnc
       status = 0
       RETURN
 
@@ -359,6 +340,6 @@
       status = 3
       RETURN
 
-!  end of subroutine CSGR
+!  end of subroutine CUTEST_csgr
 
-      END SUBROUTINE CSGR
+      END SUBROUTINE CUTEST_csgr

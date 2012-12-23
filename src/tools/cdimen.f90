@@ -9,7 +9,7 @@
 !   fortran 77 version originally released in CUTEr, September 1999
 !   fortran 2003 version released in CUTEst, 19th November 2012
 
-      SUBROUTINE CDIMEN( input, status, n, m )
+      SUBROUTINE CUTEST_cdimen( input, status, n, m )
 
 !  dummy arguments
 
@@ -22,7 +22,7 @@
 
 !  local variables
 
-      INTEGER :: ialgor, i, idummy, iend, j, ng, ng1, nel1, nel, nslack, nobjgr
+      INTEGER :: ialgor, i, iend, j, ng, ng1, nel1, nel
       INTEGER, DIMENSION( 10 ) :: IARRAY
       CHARACTER ( LEN = 8 ) :: pname
 
@@ -36,34 +36,34 @@
       READ( input, "( I2, A8 )" ) ialgor, pname
       IF ( ialgor < 2 ) THEN
         m = 0
-      ELSE
 
 !  set useful integer values
 
+      ELSE
         ng1 = ng + 1
         nel1 = nel + 1
 
 !  print out problem data. input the number of variables, groups, elements and 
-!  the identity of the objective function group
+!  the identity of the objective function group (i = nslack, j = nobjgr)
 
-        IF ( ialgor == 2 ) READ( input, "( 2I8 )" ) nslack, nobjgr
+        IF ( ialgor == 2 ) READ( input, "( 2I8 )" ) i, j
 
 !  input the starting addresses of the elements in each group, of the 
 !  parameters used for each group and of the nonzeros of the linear element 
 !  in each group
 
-        READ( input, "( ( 10I8 ) )" ) ( idummy, i = 1, ng1 )
-        READ( input, "( ( 10I8 ) )" ) ( idummy, i = 1, ng1 )
-        READ( input, "( ( 10I8 ) )" ) ( idummy, i = 1, ng1 )
+        READ( input, "( ( 10I8 ) )" ) ( iend, i = 1, ng1 )
+        READ( input, "( ( 10I8 ) )" ) ( iend, i = 1, ng1 )
+        READ( input, "( ( 10I8 ) )" ) ( iend, i = 1, ng1 )
 
 !  Input the starting addresses of the variables and parameters in each element
 
-        READ( input, "( ( 10I8 ) )" ) ( idummy, i = 1, nel1 )
-        READ( input, "( ( 10I8 ) )" ) ( idummy, i = 1, nel1 )
+        READ( input, "( ( 10I8 ) )" ) ( iend, i = 1, nel1 )
+        READ( input, "( ( 10I8 ) )" ) ( iend, i = 1, nel1 )
 
 !  input the group type of each group
 
-        READ( input, "( ( 10I8 ) )" ) ( idummy, i = 1, ng )
+        READ( input, "( ( 10I8 ) )" ) ( iend, i = 1, ng )
 
 !  count the number of constraint groups
 
@@ -81,6 +81,6 @@
       status = 0
       RETURN
 
-!  End of subroutine CDIMEN
+!  End of subroutine CUTEST_cdimen
 
-      END SUBROUTINE CDIMEN
+      END SUBROUTINE CUTEST_cdimen

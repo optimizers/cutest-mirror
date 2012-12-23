@@ -9,7 +9,7 @@
 !   fortran 77 version originally released in CUTEr, November 1994
 !   fortran 2003 version released in CUTEst, 26th November 2012
 
-      SUBROUTINE CDIMSE( data, status, ne, he_val_ne, he_row_ne )
+      SUBROUTINE CUTEST_cdimse( data, status, ne, he_val_ne, he_row_ne )
       USE CUTEST
 
 !  dummy arguments
@@ -49,6 +49,6 @@
                                         status )
       RETURN
 
-!  end of subroutine CDIMSE
+!  end of subroutine CUTEST_cdimse
 
-      END SUBROUTINE CDIMSE
+      END SUBROUTINE CUTEST_cdimse

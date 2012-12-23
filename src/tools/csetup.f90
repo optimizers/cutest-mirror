@@ -9,15 +9,17 @@
 !   fortran 77 version originally released in CUTE, 30th October, 1991
 !   fortran 2003 version released in CUTEst, 4th November 2012
 
-      SUBROUTINE CSETUP( data, status, input, out, buffer, n, m, X, X_l, X_u,  &
-                         EQUATN, LINEAR, Y, C_l, C_u, efirst, lfirst, nvfrst )
+      SUBROUTINE CUTEST_csetup( data, work, status, input, out, io_buffer,           &
+                                n, m, X, X_l, X_u, Y, C_l, C_u,                &
+                                EQUATN, LINEAR, efirst, lfirst, nvfrst )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
 !  dummy arguments
 
       TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
-      INTEGER, INTENT( IN ) :: input, out, buffer
+      TYPE ( CUTEST_work_type ), INTENT( INOUT ) :: work
+      INTEGER, INTENT( IN ) :: input, out, io_buffer
       INTEGER, INTENT( INOUT ) :: n, m
       INTEGER, INTENT( OUT ) :: status
       LOGICAL, INTENT( IN ) :: efirst, lfirst, nvfrst
@@ -37,7 +39,6 @@
       LOGICAL :: debug, ltemp
       CHARACTER ( LEN = 8 ) :: pname
       CHARACTER ( LEN = 10 ) :: ctemp
-      CHARACTER ( LEN = 10 ) :: chtemp
       CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
       REAL ( KIND = wp ) :: atemp
       INTEGER, PARAMETER :: lmin = 10000
@@ -46,14 +47,14 @@
 
       CALL CPU_TIME( data%sutime )
       data%out = out
-      data%io_buffer = buffer
+      data%io_buffer = io_buffer
       debug = .FALSE.
       debug = debug .AND. out > 0
 
 !  input the problem dimensions
 
-      READ( input, 1001 ) data%n, data%ng, data%nel, data%ntotel, data%nvrels, &
-         data%nnza, data%ngpvlu, data%nepvlu, neltyp, ngrtyp
+      READ( input, "( 10I8 )" ) data%n, data%ng, data%nel, data%ntotel,        &
+        data%nvrels, data%nnza, data%ngpvlu, data%nepvlu, neltyp, ngrtyp
       n = data%n
       IF ( n <= 0 ) THEN
         CLOSE( input )
@@ -87,7 +88,7 @@
 
 !  input the problem type
 
-      READ( input, 1000 ) ialgor, pname
+      READ( input, "( I2, A8 )" ) ialgor, pname
 
 !  set useful integer values
 
@@ -167,9 +168,9 @@
         bad_alloc = 'data%IVAR' ; GO TO 910
       END IF
 
-      ALLOCATE( data%ICALCF( MAX( data%nel, data%ng ) ), STAT = alloc_status )
+      ALLOCATE( work%ICALCF( MAX( data%nel, data%ng ) ), STAT = alloc_status )
       IF ( alloc_status /= 0 ) THEN
-        bad_alloc = 'data%ICALCF' ; GO TO 910
+        bad_alloc = 'work%ICALCF' ; GO TO 910
       END IF
 
       ALLOCATE( data%ITYPEV( n ), STAT = alloc_status )
@@ -219,9 +220,9 @@
         bad_alloc = 'data%GSCALE' ; GO TO 910
       END IF
 
-      ALLOCATE( data%GSCALE_used( data%ng ), STAT = alloc_status )
+      ALLOCATE( work%GSCALE_used( data%ng ), STAT = alloc_status )
       IF ( alloc_status /= 0 ) THEN
-        bad_alloc = 'data%GSCALE_used' ; GO TO 910
+        bad_alloc = 'work%GSCALE_used' ; GO TO 910
       END IF
 
       ALLOCATE( data%VSCALE( n ), STAT = alloc_status )
@@ -229,29 +230,19 @@
         bad_alloc = 'data%VSCALE' ; GO TO 910
       END IF
 
-      ALLOCATE( data%GVALS( data%ng, 3 ), STAT = alloc_status )
+      ALLOCATE( work%GVALS( data%ng, 3 ), STAT = alloc_status )
       IF ( alloc_status /= 0 ) THEN
-        bad_alloc = 'data%GVALS' ; GO TO 910
+        bad_alloc = 'work%GVALS' ; GO TO 910
       END IF
 
-      ALLOCATE( data%XT( n ), STAT = alloc_status )
-      IF ( alloc_status /= 0 ) THEN
-        bad_alloc = 'data%XT' ; GO TO 910
-      END IF
-
-      ALLOCATE( data%DGRAD( n ), STAT = alloc_status )
-      IF ( alloc_status /= 0 ) THEN
-        bad_alloc = 'data%DGRAD' ; GO TO 910
-      END IF
-
-      ALLOCATE( data%G_temp( n ), STAT = alloc_status )
+      ALLOCATE( work%G_temp( n ), STAT = alloc_status )
       IF ( alloc_status /= 0 ) THEN
         bad_alloc = 'data%Q' ; GO TO 910
       END IF
 
-      ALLOCATE( data%FT( data%ng ), STAT = alloc_status )
+      ALLOCATE( work%FT( data%ng ), STAT = alloc_status )
       IF ( alloc_status /= 0 ) THEN
-        bad_alloc = 'data%FT' ; GO TO 910
+        bad_alloc = 'work%FT' ; GO TO 910
       END IF
 
 !  allocate logical workspace
@@ -266,9 +257,9 @@
         bad_alloc = 'data%GXEQX' ; GO TO 910
       END IF
 
-      ALLOCATE( data%LOGIC( data%nel ), STAT = alloc_status )
+      ALLOCATE( work%LOGIC( data%nel ), STAT = alloc_status )
       IF ( alloc_status /= 0 ) THEN
-        bad_alloc = 'data%LOGIC' ; GO TO 910
+        bad_alloc = 'work%LOGIC' ; GO TO 910
       END IF
 
 !  allocate character workspace
@@ -301,55 +292,13 @@
 
 !  assign initial guesses for allocatable array lengths
 
-      data%llink_min = lmin
-      data%lh_row = lmin
-      data%lh_col = lmin
-      data%lh_val = lmin
-      data%llink_min = lmin
-
-!     data%lstadg = MAX( 1, data%ng1 )
-!     data%lstada = MAX( 1, data%ng1 )
-!     data%lstaev = MAX( 1, data%nel1 )
-!     data%lkndof = MAX( 1, data%ng )
-!     data%leling = MAX( 1, data%ntotel )
-!     data%lelvar = MAX( 1, data%nvrels )
-!     data%licna = MAX( 1, data%nnza )
-!     data%lstadh = MAX( 1, data%nel1 )
-!     data%lntvar = MAX( 1, data%nel1 )
-!     data%lcalcf = MAX( 1, data%nel, data%ng )
-!     data%lcalcg = MAX( 1, data%ng )
-!     data%la = MAX( 1, data%nnza )
-!     data%lb = MAX( 1, data%ng )
-!     data%lu = MAX( 1, data%ng )
-!     data%lescal = MAX( 1, data%ntotel )
-!     data%lgscal = MAX( 1, data%ng )
-!     data%lvscal = MAX( 1, n )
-!     data%lft = MAX( 1, data%ng )
-!     data%lgvals = MAX( 1, data%ng )
-!     data%lintre = MAX( 1, data%nel )
-!     data%lgxeqx = MAX( 1, data%ngng )
-!     data%lgpvlu = MAX( 1, data%ngpvlu )
-!     data%lepvlu = MAX( 1, data%nepvlu )
-!     LSTGP = MAX( 1, data%ng1 )
-!     LSTEP = MAX( 1, data%nel1 )
-!     LTYPEG = MAX( 1, data%ng )
-!     LTYPEE = MAX( 1, data%nel )
-!     LIVAR = MAX( 1, n )
-!     LBL = MAX( 1, n )
-!     LBU = MAX( 1, n )
-!     LX = MAX( 1, n )
-!     LXT = MAX( 1, n )
-!     LDGRAD = MAX( 1, n )
-!     LQ = MAX( 1, n )
+      work%lh_row = lmin
+      work%lh_col = lmin
+      work%lh_val = lmin
 
 !  print out problem data. input the number of variables, groups, elements and 
 !  the identity of the objective function group
 
-!     IF ( ialgor == 2 ) THEN
-!       READ( input, 1002 ) nslack, data%nobjgr
-!     ELSE
-!       nslack = 0
-!     END IF
       IF ( debug ) WRITE( out, 1100 ) pname, n, data%ng, data%nel
       data%pname = pname // '  '
 
@@ -434,13 +383,13 @@
 !  use GVALS and FT as temporary storage for the constraint bounds
 
          READ( input, 1020 ) ( X_l( i ), i = 1, n ),                           &
-           ( data%GVALS( i, 1 ), i = 1, data%ng )
+           ( work%GVALS( i, 1 ), i = 1, data%ng )
          IF ( debug ) WRITE( out, 1120 ) 'X_l    ',                            &
-           ( X_l( i ), i = 1, n ), ( data%GVALS( i, 1 ), i = 1, data%ng )
+           ( X_l( i ), i = 1, n ), ( work%GVALS( i, 1 ), i = 1, data%ng )
          READ( input, 1020 ) ( X_u( i ), i = 1, n ),                           &
-           ( data%FT( i ), i = 1, data%ng )
+           ( work%FT( i ), i = 1, data%ng )
          IF ( debug ) WRITE( out, 1120 ) 'X_u    ',                            &
-           ( X_u( i ), i = 1, n ), ( data%FT( i ), i = 1, data%ng )
+           ( X_u( i ), i = 1, n ), ( work%FT( i ), i = 1, data%ng )
       END IF
 
 !   input the starting point for the minimization
@@ -511,8 +460,8 @@
 
 !  dummy input for the names given to the element and group types
 
-      READ( input, 1040 ) ( chtemp, i = 1, neltyp )
-      READ( input, 1040 ) ( chtemp, i = 1, ngrtyp )
+      READ( input, 1040 ) ( ctemp, i = 1, neltyp )
+      READ( input, 1040 ) ( ctemp, i = 1, ngrtyp )
 
 !  input the type of each variable.
 
@@ -540,7 +489,7 @@
               C_l( m ) = 0.0_wp ; C_u( m ) = 0.0_wp
             ELSE
               EQUATN( m ) = .FALSE.
-              C_l( m ) = data%GVALS( i, 1 ) ; C_u( m ) = data%FT( i )
+              C_l( m ) = work%GVALS( i, 1 ) ; C_u( m ) = work%FT( i )
             END IF
           END IF
           data%KNDOFC( i ) = m
@@ -575,7 +524,6 @@
         IF ( out > 0 ) WRITE( out, 2000 ) 'LINEAR', m
         status = 2 ; RETURN
       END IF
-      data%numvar = n
       data%numcon = m
 
       IF ( nvfrst ) THEN
@@ -821,100 +769,26 @@
 
 !  allocate and initialize workspace
 
-      data%firstg = .TRUE.
+      work%firstg = .TRUE.
 
       data%ntotel = data%ISTADG( data%ng + 1 ) - 1
       data%nvrels = data%ISTAEV( data%nel + 1 ) - 1
       data%nnza = data%ISTADA( data%ng + 1 ) - 1
-!     data%skipg = COUNT( data%KNDOFC == 0 ) > 0
-      data%skipg = .FALSE.
 
       CALL CUTEST_initialize_workspace(                                        &
-             data%n, data%ng, data%nel,                                        &
-             data%ntotel, data%nvrels, data%nnza, data%n,                      &
+             data%n, data%ng, data%nel, data%ntotel, data%nvrels, data%nnza,   &
              data%nvargp, data%IELING, data%ISTADG, data%IELVAR, data%ISTAEV,  &
-             data%INTVAR, data%ISTADH, data%ICNA, data%ISTADA, data%ITYPEE,    &
-             data%GXEQX, data%INTREP, data%alllin, data%altriv, .FALSE.,       &
-             .FALSE., data%lfxi, data%lgxi, data%lhxi,                         &
-             data%lggfx, data%ldx, data%lgrjac, data%lnguvl, data%lnhuvl,      &
-             data%ntotin, data%ntype, data%nsets, data%maxsel,                 &
-             RANGE, 0, out, data%io_buffer,                                    &
-!  workspace
-             data%lwtran, data%litran, data%lwtran_min, data%litran_min,       &
-             data%l_link_e_u_v, data%llink_min, data%FUVALS, data%lfuval,      &
-             data%ITRANS, data%LINK_elem_uses_var, data%WTRANS,                &
-             data%ISYMMD, data%ISWKSP, data%ISTAJC, data%ISTAGV,               &
-             data%ISVGRP, data%ISLGRP, data%IGCOLJ, data%IVALJR,               &
-             data%IUSED, data%ITYPER, data%ISSWTR, data%ISSITR,                &
-             data%ISET, data%ISVSET, data%INVSET, data%LIST_elements,          &
-             data%ISYMMH, data%IW_asmbl, data%NZ_comp_w, data%W_ws,            &
-             data%W_el, data%W_in, data%H_el, data%H_in,                       &
-             status, alloc_status, bad_alloc, data%array_status, data%skipg,   &
-             KNDOFG = data%KNDOFC )
-
-!     CALL INITW( n, data%ng, data%nel, data%IELING, data%leling,              &
-!         data%ISTADG, data%lstadg, data%IELVAR, data%lelvar, data%ISTAEV,     &
-!         data%lstaev, data%INTVAR, data%lntvar, data%ISTADH, data%lstadh,     &
-!         data%ICNA, data%licna, data%ISTADA, data%lstada, data%ITYPEE,        &
-!         data%lintre, data%GXEQX, data%lgxeqx, data%INTREP, data%lintre,      &
-!         lfuval, data%altriv, .TRUE., fdgrad, data%lfxi, LGXI, LHXI, LGGFX,   &
-!         data%ldx, data%lgrjac, data%lqgrad, data%lbreak, data%lp, data%lxcp, &
-!         data%lx0, data%lgx0, data%ldeltx, data%lbnd, data%lwkstr,            &
-!         data%lsptrs, data%lselts, data%lindex, data%lswksp, data%lstagv,     &
-!         data%lstajc, data%liused, data%lfreec, data%lnnonz, data%lnonz2,     &
-!         data%lsymmd, data%lsymmh, data%lslgrp, data%lsvgrp, data%lgcolj,     &
-!         data%lvaljr, data%lsend,  data%lnptrs, data%lnelts, data%lnndex,     &
-!         data%lnwksp, data%lnstgv, data%lnstjc, data%lniuse,  data%lnfrec,    &
-!         data%lnnnon, data%lnnno2, data%lnsymd, data%lnsymh, data%lnlgrp,     &
-!         data%lnvgrp, data%lngclj, data%lnvljr, data%lnqgrd, data%lnbrak,     &
-!         data%lnp, data%lnbnd, data%lnfxi,  data%lngxi,  data%lnguvl,         &
-!         data%lnhxi,  data%lnhuvl, data%lnggfx, data%lndx, data%lngrjc,       &
-!         data%liwk2, data%lwk2, data%maxsin, data%ninvar, data%ntype,         &
-!         data%nsets, data%maxsel, data%lstype, data%lsswtr, data%lssiwt,      &
-!         data%lsiwtr, data%lswtra, data%lntype, data%lnswtr, data%lnsiwt,     &
-!         data%lniwtr, data%lnwtra, data%lsiset, data%lssvse, data%lniset,     &
-!         data%lnsvse, RANGE, data%IWORK(IWRK + 1), liwork, data%WRK, lwork,   &
-!         iprint, out, status )
+             data%INTVAR, data%ISTADH, data%ICNA, data%ISTADA,                 &
+             data%GXEQX, data%alllin, data%altriv, data%lfxi,                  &
+             data%lgxi, data%lhxi, data%lggfx, data%ldx, data%lgrjac,          &
+             data%lnguvl, data%lnhuvl, data%ntotin, data%maxsel, RANGE, 0,     &
+             out, data%io_buffer, data%l_link_e_u_v, work%FUVALS, data%lfuval, &
+             data%LINK_elem_uses_var, work%ISWKSP, work%ISTAJC, data%ISTAGV,   &
+             data%ISVGRP, data%ISLGRP, data%IGCOLJ, data%ISYMMH, work%W_ws,    &
+             work%W_el, work%W_in, work%H_el, work%H_in,                       &
+             status, alloc_status, bad_alloc, work%array_status )
       IF ( status /= 0 ) RETURN
 
-!  shift the starting addresses for the real workspace relative to WRK
-
-!     data%lqgrad = data%lqgrad + WRK
-!     data%lbreak = data%lbreak + WRK
-!     data%lp = data%lp + WRK
-!     data%lxcp = data%lxcp + WRK
-!     data%lx0 = data%lx0 + WRK
-!     data%lgx0 = data%lgx0 + WRK
-!     data%ldeltx = data%ldeltx + WRK
-!     data%lbnd = data%lbnd + WRK
-!     data%lswtra = data%lswtra + WRK
-!     data%lwkstr = data%lwkstr + WRK
-
-!  shift the starting addresses for the integer workspace relative to IWRK
-
-!     data%lsptrs = data%lsptrs + IWRK
-!     data%lselts = data%lselts + IWRK
-!     data%lindex = data%lindex + IWRK
-!     data%lswksp = data%lswksp + IWRK
-!     data%lstagv = data%lstagv + IWRK
-!     data%lstajc = data%lstajc + IWRK
-!     data%liused = data%liused + IWRK
-!     data%lfreec = data%lfreec + IWRK
-!     data%lnnonz = data%lnnonz + IWRK
-!     data%lnonz2 = data%lnonz2 + IWRK
-!     data%lsymmd = data%lsymmd + IWRK
-!     data%lsymmh = data%lsymmh + IWRK
-!     data%lslgrp = data%lslgrp + IWRK
-!     data%lsvgrp = data%lsvgrp + IWRK
-!     data%lgcolj = data%lgcolj + IWRK
-!     data%lvaljr = data%lvaljr + IWRK
-!     data%lstype = data%lstype + IWRK
-!     data%lsswtr = data%lsswtr + IWRK
-!     data%lssiwt = data%lssiwt + IWRK
-!     data%lsiwtr = data%lsiwtr + IWRK
-!     data%lsiset = data%lsiset + IWRK
-!     data%lssvse = data%lssvse + IWRK
-!     data%lsend = data%lsend + IWRK
       IF ( .NOT. ( efirst .OR. lfirst ) .OR. m == 0 ) GO TO 340
 
 !  record which group is associated with each constraint
@@ -942,7 +816,6 @@
         DO 120 i = 1, m
           IF ( i > mend ) GO TO 130
           ig = data%IWORK( i )
-!         WRITE(6,*) ' group ', ig, ' type ', i, ' equal? ', EQUATN( i )
           IF ( .NOT. LINEAR( i ) ) THEN
 
 !  constraint i is nonlinear. Now, run backwards through the constraints until 
@@ -950,9 +823,7 @@
 
             DO j = mend, i, - 1
               jg = data%IWORK( j )
-!             write(6,*) ' group ', jg, ' type ', j, ' linear? ', LINEAR( j )
               IF ( LINEAR( j ) ) THEN
-!               write(6,*) ' swaping constraints ', i, ' and ', j
                  mend = j - 1
 
 !  interchange the data for constraints i and j
@@ -987,8 +858,6 @@
           DO 220 i = 1, mlin
             IF ( i > mend ) GO TO 230
             ig = data%IWORK( i )
-!              write(6,*) ' group ', ig, ' type ', i, ' equation? ',           &
-!                           EQUATN( i )
             IF ( .NOT. EQUATN( i ) ) THEN
 
 !  constraint i is an inequality. Now, run backwards through the constraints 
@@ -996,10 +865,7 @@
 
               DO j = mend, i, - 1
                 jg = data%IWORK( j )
-!               write(6,*) ' group ', jg, ' type ', j, ' equation? ', EQUATN( j)
                 IF ( EQUATN( j ) ) THEN
-!                 write(6,*) ' swaping constraints ', i,                       &
-!                            ' and ', j
                   mend = j - 1
 
 !  interchange the data for constraints i and j
@@ -1032,7 +898,6 @@
           DO 250 i = mlin + 1, m
             IF ( i > mend ) GO TO 260
             ig = data%IWORK( i )
-!           WRITE( 6, * ) ' group ', ig, ' type ', i, ' equation? ', EQUATN( i )
             IF ( .NOT. EQUATN( i ) ) THEN
 
 !  constraint i is an inequality. Now, run backwards through the constraints 
@@ -1040,9 +905,7 @@
 
               DO j = mend, i, - 1
                 jg = data%IWORK( j )
-!               write(6,*) ' group ', jg, ' type ', j, ' equation? ', EQUATN( j)
                 IF ( EQUATN( j ) ) THEN
-!                 write(6,*) ' swaping constraints ', i, ' and ', j
                   mend = j - 1
 
 !  interchange the data for constraints i and j
@@ -1078,7 +941,6 @@
           DO 320 i = 1, m
             IF ( i > mend ) GO TO 330
             ig = data%IWORK( i )
-!              WRITE(6,*) ' group ', ig, ' type ', i, ' equation? ', EQUATN( i )
             IF ( .NOT. EQUATN( i ) ) THEN
 
 !  constraint i is an inequality. Now, run backwards through the constraints 
@@ -1086,10 +948,7 @@
 
               DO j = mend, i, - 1
                 jg = data%IWORK( j )
-!               write(6,*) ' group ', jg, ' type ', j,                         &
-!                          ' equation? ', EQUATN( j )
                 IF ( EQUATN( j ) ) THEN
-!                 write(6,*) ' swaping constraints ', i,' and ', j
                   mend = j - 1
 
 !  interchange the data for constraints i and j
@@ -1120,14 +979,14 @@
 !  initialize the performance counters and variables
 
  340  CONTINUE
-      data%nc2of = 0
-      data%nc2og = 0
-      data%nc2oh = 0
-      data%nc2cf = 0
-      data%nc2cg = 0
-      data%nc2ch = 0
-      data%nhvpr = 0
-      data%pnc = m
+      work%nc2of = 0
+      work%nc2og = 0
+      work%nc2oh = 0
+      work%nc2cf = 0
+      work%nc2cg = 0
+      work%nc2ch = 0
+      work%nhvpr = 0
+      work%pnc = m
 
       CALL CPU_TIME( data%sttime )
       data%sutime = data%sttime - data%sutime
@@ -1144,9 +1003,6 @@
 
 !  non-executable statements
 
- 1000 FORMAT( I2, A8 )
- 1001 FORMAT( 10I8 )
-!1002 FORMAT( 2I8 )
  1010 FORMAT( ( 10I8 ) )
  1020 FORMAT( ( 1P, 4D16.8 ) )
  1030 FORMAT( ( 72L1 ) )
@@ -1161,6 +1017,6 @@
  2000 FORMAT( /, ' ** SUBROUTINE CSETUP: array length ', A, ' too small.', /, &
               ' -- Increase the dimension to at least ', I0, ' and restart.' )
 
-!  End of subroutine CSETUP
+!  End of subroutine CUTEST_csetup
 
-      END SUBROUTINE CSETUP
+      END SUBROUTINE CUTEST_csetup

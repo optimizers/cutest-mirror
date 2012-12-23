@@ -9,12 +9,12 @@
 !   fortran 77 version originally released in CUTEr, August 2005
 !   fortran 2003 version released in CUTEst, 19th November 2012
 
-      SUBROUTINE CONNAMES( data, status, m, CNAME )
+      SUBROUTINE CUTEST_connames( data, status, m, CNAME )
       USE CUTEST
 
 !  dummy arguments
 
-      TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
+      TYPE ( CUTEST_data_type ), INTENT( IN ) :: data
       INTEGER, INTENT( IN ) :: m
       INTEGER, INTENT( OUT ) :: status
       CHARACTER ( LEN = 10 ), INTENT( OUT ), DIMENSION( m ) :: CNAME
@@ -36,6 +36,6 @@
       status = 0
       RETURN
 
-!  end of subroutine CONNAMES
+!  end of subroutine CUTEST_connames
 
-      END SUBROUTINE CONNAMES
+      END SUBROUTINE CUTEST_connames

@@ -9,14 +9,15 @@
 !   replaced in CUTEr, December 1990, by subroutine CCFSG
 !   fortran 2003 version released in CUTEst, 22nd November 2012
 
-      SUBROUTINE CSCFG( data, status, n, m, X, C,                              &
-                        nnzj, lj, J_val, J_var, J_fun, grad )
+      SUBROUTINE CUTEST_cscfg( data, work, status, n, m, X, C,                       &
+                               nnzj, lj, J_val, J_var, J_fun, grad )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
 !  dummy arguments
 
-      TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
+      TYPE ( CUTEST_data_type ), INTENT( IN ) :: data
+      TYPE ( CUTEST_work_type ), INTENT( INOUT ) :: work
       INTEGER, INTENT( IN ) :: n, m, lj
       INTEGER, INTENT( OUT ) :: status, nnzj
       LOGICAL, INTENT( IN ) :: grad
@@ -36,11 +37,11 @@
 
 !  call the replacement
 
-      CALL CCFSG( data, status, n, m, X, C, nnzj,                              &
-                  lj, J_val, J_var, J_fun, grad )
+      CALL CUTEST_ccfsg( data, work, status, n, m, X, C, nnzj,                       &
+                         lj, J_val, J_var, J_fun, grad )
       RETURN
 
-!  end of subroutine CSCFG
+!  end of subroutine CUTEST_cscfg
 
-      END SUBROUTINE CSCFG
+      END SUBROUTINE CUTEST_cscfg
 

@@ -9,14 +9,15 @@
 !   fortran 77 version originally released in CUTE, April 1992
 !   fortran 2003 version released in CUTEst, 28th November 2012
 
-      SUBROUTINE CCFSG( data, status, n, m, X, C, nnzj, lj, J_val,             &
-                        J_var, J_fun, grad )
+      SUBROUTINE CUTEST_ccfsg( data, work, status, n, m, X, C,                       &
+                               nnzj, lj, J_val, J_var, J_fun, grad )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
 !  dummy arguments
 
-      TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
+      TYPE ( CUTEST_data_type ), INTENT( IN ) :: data
+      TYPE ( CUTEST_work_type ), INTENT( INOUT ) :: work
       INTEGER, INTENT( IN ) :: n, m, lj
       INTEGER, INTENT( OUT ) :: nnzj, status
       LOGICAL, INTENT( IN ) :: grad
@@ -51,7 +52,7 @@
 !  identify which elements are included in constraints. Use logical work 
 !  vector to keep track of elements already included
 
-      data%LOGIC( : data%nel ) = .FALSE.
+      work%LOGIC( : data%nel ) = .FALSE.
 
 !  now identify elements in first m constraint groups
 
@@ -63,10 +64,10 @@
           nelup = data%ISTADG( ig + 1 ) - 1
           DO ii = nelow, nelup
             iel = data%IELING( ii )
-            IF ( .NOT. data%LOGIC( iel ) ) THEN
-              data%LOGIC( iel ) = .TRUE.
+            IF ( .NOT. work%LOGIC( iel ) ) THEN
+              work%LOGIC( iel ) = .TRUE.
               icnt = icnt + 1
-              data%ICALCF( icnt ) = iel
+              work%ICALCF( icnt ) = iel
             END IF
           END DO
         END IF
@@ -74,9 +75,9 @@
 
 !  evaluate the element function values
 
-      CALL ELFUN( data%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,          &
+      CALL ELFUN( work%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,          &
                   data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,          &
-                  data%ISTEP, data%ICALCF, data%ltypee, data%lstaev,           &
+                  data%ISTEP, work%ICALCF, data%ltypee, data%lstaev,           &
                   data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
                   data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,          &
                   1, ifstat )
@@ -85,9 +86,9 @@
 !  evaluate the element function derivatives
 
       IF ( GRAD )                                                              &
-        CALL ELFUN( data%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,        &
+        CALL ELFUN( work%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,        &
                     data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,        &
-                    data%ISTEP, data%ICALCF, data%ltypee, data%lstaev,         &
+                    data%ISTEP, work%ICALCF, data%ltypee, data%lstaev,         &
                     data%lelvar, data%lntvar, data%lstadh, data%lstep,         &
                     data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,        &
                     2, ifstat )
@@ -115,14 +116,14 @@
 !  include the contributions from the nonlinear elements
 
           DO i = data%ISTADG( ig ), data%ISTADG( ig + 1 ) - 1
-            ftt = ftt + data%ESCALE( i ) * data%FUVALS( data%IELING( i ) )
+            ftt = ftt + data%ESCALE( i ) * work%FUVALS( data%IELING( i ) )
           END DO
 
 !  record derivatives of trivial groups
 
-          IF ( data%GXEQX( ig ) ) data%GVALS( ig, 2 ) = 1.0_wp
+          IF ( data%GXEQX( ig ) ) work%GVALS( ig, 2 ) = 1.0_wp
         END IF
-        data%FT( ig ) = ftt
+        work%FT( ig ) = ftt
       END DO
 
 !  compute the group function values
@@ -130,8 +131,8 @@
 !  all group functions are trivial
 
       IF ( data%altriv ) THEN
-        data%GVALS( : data%ng, 1 ) = data%FT( : data%ng )
-        data%GVALS( : data%ng, 2 ) = 1.0_wp
+        work%GVALS( : data%ng, 1 ) = work%FT( : data%ng )
+        work%GVALS( : data%ng, 2 ) = 1.0_wp
       ELSE
 
 !  evaluate the group function values. Evaluate groups belonging to the first 
@@ -142,11 +143,11 @@
           icon = data%KNDOFC( ig )
           IF ( icon > 0 .AND. icon <= m ) THEN
             icnt = icnt + 1
-            data%ICALCF( icnt ) = ig
+            work%ICALCF( icnt ) = ig
           END IF 
         END DO
-        CALL GROUP( data%GVALS, data%ng, data%FT, data%GPVALU, data%ng,        &
-                    data%ITYPEG, data%ISTGP, data%ICALCF, data%ltypeg,         &
+        CALL GROUP( work%GVALS, data%ng, work%FT, data%GPVALU, data%ng,        &
+                    data%ITYPEG, data%ISTGP, work%ICALCF, data%ltypeg,         &
                     data%lstgp, data%lcalcf, data%lcalcg, data%lgpvlu,         &
                     .FALSE., igstat )
         IF ( igstat /= 0 ) GO TO 930
@@ -158,9 +159,9 @@
         i = data%KNDOFC( ig )
         IF ( i > 0 .AND. i <= m ) THEN
           IF ( data%GXEQX( ig ) ) THEN
-            C( i ) = data%GSCALE( ig ) * data%FT( ig )
+            C( i ) = data%GSCALE( ig ) * work%FT( ig )
           ELSE 
-            C( i ) = data%GSCALE( ig ) * data%GVALS( ig, 1 )
+            C( i ) = data%GSCALE( ig ) * work%GVALS( ig, 1 )
           END IF
         END IF
       END DO
@@ -169,8 +170,8 @@
 
       IF ( grad ) THEN
         IF ( .NOT. data%altriv ) THEN
-          CALL GROUP( data%GVALS, data%ng, data%FT, data%GPVALU, data%ng,      &
-                      data%ITYPEG, data%ISTGP, data%ICALCF, data%ltypeg,       &
+          CALL GROUP( work%GVALS, data%ng, work%FT, data%GPVALU, data%ng,      &
+                      data%ITYPEG, data%ISTGP, work%ICALCF, data%ltypeg,       &
                       data%lstgp, data%lcalcf, data%lcalcg, data%lgpvlu,       &
                       .TRUE., igstat )
           IF ( igstat /= 0 ) GO TO 930
@@ -198,8 +199,8 @@
 !  compute the first derivative of the group
 
            gi = data%GSCALE( ig )
-           IF ( .NOT. data%GXEQX( ig ) ) gi = gi  * data%GVALS( ig, 2 )
-             data%W_ws( data%ISVGRP( istrgv : iendgv ) ) = 0.0_wp
+           IF ( .NOT. data%GXEQX( ig ) ) gi = gi  * work%GVALS( ig, 2 )
+             work%W_ws( data%ISVGRP( istrgv : iendgv ) ) = 0.0_wp
 
 !  the group has nonlinear elements
 
@@ -218,12 +219,12 @@
 
                IF ( data%INTREP( iel ) ) THEN
                  nin = data%INTVAR( iel + 1 ) - k
-                 CALL RANGE( iel, .TRUE., data%FUVALS( k ), data%W_el,         &
+                 CALL RANGE( iel, .TRUE., work%FUVALS( k ), work%W_el,         &
                              nvarel, nin, data%ITYPEE( iel ), nin, nvarel )
 !DIR$ IVDEP
                  DO i = 1, nvarel
                    j = data%IELVAR( l )
-                   data%W_ws( j ) = data%W_ws( j ) + scalee * data%W_el( i )
+                   work%W_ws( j ) = work%W_ws( j ) + scalee * work%W_el( i )
                    l = l + 1
                  END DO
 
@@ -233,7 +234,7 @@
 !DIR$ IVDEP
                  DO i = 1, nvarel
                    j = data%IELVAR( l )
-                   data%W_ws( j ) = data%W_ws( j ) + scalee * data%FUVALS( k )
+                   work%W_ws( j ) = work%W_ws( j ) + scalee * work%FUVALS( k )
                    k = k + 1 ; l = l + 1
                  END DO
                END IF
@@ -244,7 +245,7 @@
 !DIR$ IVDEP
              DO k = data%ISTADA( ig ), data%ISTADA( ig1 ) - 1
                j = data%ICNA( k )
-               data%W_ws( j ) = data%W_ws( j ) + data%A( k )
+               work%W_ws( j ) = work%W_ws( j ) + data%A( k )
              END DO
 
 !  allocate a gradient
@@ -258,7 +259,7 @@
                IF ( ll <= n ) THEN
                  nnzj = nnzj + 1
                  IF ( nnzj <= lj ) THEN
-                   J_val ( nnzj ) = gi * data%W_ws( ll )
+                   J_val ( nnzj ) = gi * work%W_ws( ll )
                    J_fun( nnzj ) = icon
                    J_var( nnzj ) = ll
                  END IF
@@ -274,7 +275,7 @@
 !DIR$ IVDEP
              DO k = data%ISTADA( ig ),data%ISTADA( ig1 ) - 1
                j = data%ICNA( k )
-               data%W_ws( j ) = data%W_ws( j ) + data%A( k )
+               work%W_ws( j ) = work%W_ws( j ) + data%A( k )
              END DO
 
 !  allocate a gradient
@@ -288,7 +289,7 @@
                IF ( ll <= n ) THEN
                  nnzj = nnzj + 1
                  IF ( nnzj <= lj ) THEN
-                   J_val ( nnzj ) = gi * data%W_ws( ll )
+                   J_val ( nnzj ) = gi * work%W_ws( ll )
                    J_fun( nnzj ) = icon
                    J_var( nnzj ) = ll
                  END IF
@@ -309,8 +310,8 @@
 
 !  Update the counters for the report tool.
 
-      data%nc2cf = data%nc2cf + data%pnc
-      IF ( grad ) data%nc2cg = data%nc2cg + data%pnc
+      work%nc2cf = work%nc2cf + work%pnc
+      IF ( grad ) work%nc2cg = work%nc2cg + work%pnc
       status = 0
       RETURN
 
@@ -322,7 +323,7 @@
       status = 3
       RETURN
 
-!  end of subroutine CSCFG
+!  end of subroutine CUTEST_cscfg
 
-      END SUBROUTINE CCFSG
+      END SUBROUTINE CUTEST_ccfsg
 

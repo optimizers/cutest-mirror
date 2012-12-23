@@ -9,12 +9,12 @@
 !   fortran 77 version originally released in CUTE, September 1992
 !   fortran 2003 version released in CUTEst, 19th November 2012
 
-      SUBROUTINE CNAMES( data, status, n, m, pname, VNAME, CNAME )
+      SUBROUTINE CUTEST_cnames( data, status, n, m, pname, VNAME, CNAME )
       USE CUTEST
 
 !  dummy arguments
 
-      TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
+      TYPE ( CUTEST_data_type ), INTENT( IN ) :: data
       INTEGER, INTENT( IN ) :: n, m
       INTEGER, INTENT( OUT ) :: status
       CHARACTER ( LEN = 10 ), INTENT( OUT ) :: pname
@@ -22,7 +22,7 @@
       CHARACTER ( LEN = 10 ), INTENT( OUT ), DIMENSION( m ) :: CNAME
 
 !  ----------------------------------------------------------------------
-!  Obtain the names of the problem, its variables and general constraints
+!  obtain the names of the problem, its variables and general constraints
 !  ----------------------------------------------------------------------
 
 !  local variables
@@ -48,6 +48,6 @@
       status = 0
       RETURN
 
-!  end of subroutine CNAMES
+!  end of subroutine CUTEST_cnames
 
-      END SUBROUTINE CNAMES
+      END SUBROUTINE CUTEST_cnames

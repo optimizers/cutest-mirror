@@ -1,6 +1,6 @@
-! THIS VERSION: CUTEST 1.0 - 04/11/2012 AT 12:30 GMT.
+! THIS VERSION: CUTEST 1.0 - 23/12/2012 AT 15:10 GMT.
 
-!-*-*-*-*-*-*-  C U T E S T    U S E T U P    S U B R O U T I N E  -*-*-*-*-*-
+!-*-  C U T E S T    U S E T U P _ t h r e a d s a f e  S U B R O U T I N E  -*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
 !  Principal author: Nick Gould
@@ -9,14 +9,16 @@
 !   fortran 77 version originally released in CUTE, 30th October, 1991
 !   fortran 2003 version released in CUTEst, 4th November 2012
 
-      SUBROUTINE USETUP( data, status, input, out, buffer, n, X, X_l, X_u )
+      SUBROUTINE CUTEST_usetup_threadsafe( data, work, status, input, out,     &
+                                           io_buffer, n, X, X_l, X_u )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
 !  dummy arguments
 
       TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
-      INTEGER, INTENT( IN ) :: input, out, buffer
+      TYPE ( CUTEST_work_type ), INTENT( INOUT ) :: work
+      INTEGER, INTENT( IN ) :: input, out, io_buffer
       INTEGER, INTENT( INOUT ) :: n
       INTEGER, INTENT( OUT ) :: status
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: X, X_l, X_u
@@ -27,8 +29,7 @@
 
 !  local variables
 
-      INTEGER :: i, ialgor
-      INTEGER :: alloc_status
+      INTEGER :: i, ialgor, neltyp, ngrtyp, alloc_status
       LOGICAL :: debug
       INTEGER, PARAMETER :: lmin = 10000
       REAL ( KIND = wp ), DIMENSION( 2 ) :: OBFBND
@@ -39,14 +40,14 @@
 
       CALL CPU_TIME( data%sutime )
       data%out = out
-      data%io_buffer = buffer
+      data%io_buffer = io_buffer
       debug = .FALSE.
       debug = debug .AND. out > 0
 
 !  input the problem dimensions
 
-      READ( input, 1001 ) data%n, data%ng, data%nel, data%ntotel, data%nvrels, &
-                          data%nnza, data%ngpvlu, data%nepvlu, neltyp, ngrtyp
+      READ( input, "( 10I8 )" ) data%n, data%ng, data%nel, data%ntotel,        &
+        data%nvrels, data%nnza, data%ngpvlu, data%nepvlu, neltyp, ngrtyp
       n = data%n
       IF ( n <= 0 ) THEN
         CLOSE( input )
@@ -80,7 +81,7 @@
 
 !  input the problem type
 
-      READ( input, 1000 ) ialgor, pname
+      READ( input, "( I2, A8 )" ) ialgor, pname
 
 !  set useful integer values
 
@@ -160,9 +161,9 @@
         bad_alloc = 'data%IVAR' ; GO TO 910
       END IF
 
-      ALLOCATE( data%ICALCF( MAX( data%nel, data%ng ) ), STAT = alloc_status )
+      ALLOCATE( work%ICALCF( MAX( data%nel, data%ng ) ), STAT = alloc_status )
       IF ( alloc_status /= 0 ) THEN
-        bad_alloc = 'data%ICALCF' ; GO TO 910
+        bad_alloc = 'work%ICALCF' ; GO TO 910
       END IF
 
       ALLOCATE( data%ITYPEV( n ), STAT = alloc_status )
@@ -212,9 +213,9 @@
         bad_alloc = 'data%GSCALE' ; GO TO 910
       END IF
 
-      ALLOCATE( data%GSCALE_used( data%ng ), STAT = alloc_status )
+      ALLOCATE( work%GSCALE_used( data%ng ), STAT = alloc_status )
       IF ( alloc_status /= 0 ) THEN
-        bad_alloc = 'data%GSCALE_used' ; GO TO 910
+        bad_alloc = 'work%GSCALE_used' ; GO TO 910
       END IF
 
       ALLOCATE( data%VSCALE( n ), STAT = alloc_status )
@@ -222,24 +223,14 @@
         bad_alloc = 'data%VSCALE' ; GO TO 910
       END IF
 
-      ALLOCATE( data%GVALS( data%ng, 3 ), STAT = alloc_status )
+      ALLOCATE( work%GVALS( data%ng, 3 ), STAT = alloc_status )
       IF ( alloc_status /= 0 ) THEN
-        bad_alloc = 'data%GVALS' ; GO TO 910
+        bad_alloc = 'work%GVALS' ; GO TO 910
       END IF
 
-      ALLOCATE( data%XT( n ), STAT = alloc_status )
+      ALLOCATE( work%FT( data%ng ), STAT = alloc_status )
       IF ( alloc_status /= 0 ) THEN
-        bad_alloc = 'data%XT' ; GO TO 910
-      END IF
-
-      ALLOCATE( data%DGRAD( n ), STAT = alloc_status )
-      IF ( alloc_status /= 0 ) THEN
-        bad_alloc = 'data%DGRAD' ; GO TO 910
-      END IF
-
-      ALLOCATE( data%FT( data%ng ), STAT = alloc_status )
-      IF ( alloc_status /= 0 ) THEN
-        bad_alloc = 'data%FT' ; GO TO 910
+        bad_alloc = 'work%FT' ; GO TO 910
       END IF
 
 !  allocate logical workspace
@@ -284,53 +275,13 @@
 
 !  assign initial guesses for allocatable array lengths
 
-      data%llink_min = lmin
-      data%lh_row = lmin
-      data%lh_col = lmin
-      data%lh_val = lmin
-      data%llink_min = lmin
-
-!     data%lstadg = MAX( 1, data%ng1 )
-!     data%lstada = MAX( 1, data%ng1 )
-!     data%lkndof = MAX( 1, data%ng )
-!     data%leling = MAX( 1, data%ntotel )
-!     data%licna = MAX( 1, data%nnza )
-!     data%lstadh = MAX( 1, data%nel1 )
-!     data%lntvar = MAX( 1, data%nel1 )
-!     data%lcalcf = MAX( 1, data%nel, data%ng )
-!     data%lcalcg = MAX( 1, data%ng )
-!     data%la = MAX( 1, data%nnza )
-!     data%lb = MAX( 1, data%ng )
-!     data%lu = MAX( 1, data%ng )
-!     data%lescal = MAX( 1, data%ntotel )
-!     data%lgscal = MAX( 1, data%ng )
-!     data%lvscal = MAX( 1, n )
-!     data%lft = MAX( 1, data%ng )
-!     data%lgvals = MAX( 1, data%ng )
-!     data%lintre = MAX( 1, data%nel )
-!     data%lgxeqx = MAX( 1, data%ngng )
-!     data%lgpvlu = MAX( 1, data%ngpvlu )
-!     data%lepvlu = MAX( 1, data%nepvlu )
-!     LSTGP = MAX( 1, data%ng1 )
-!     LSTEP = MAX( 1, data%nel1 )
-!     LTYPEG = MAX( 1, data%ng )
-!     LTYPEE = MAX( 1, data%nel )
-!     LIVAR = MAX( 1, n )
-!     LBL = MAX( 1, n )
-!     LBU = MAX( 1, n )
-!     LX = MAX( 1, n )
-!     LXT = MAX( 1, n )
-!     LDGRAD = MAX( 1, n )
-!     LQ = MAX( 1, n )
+      work%lh_row = lmin
+      work%lh_col = lmin
+      work%lh_val = lmin
 
 !  print out problem data. input the number of variables, groups, elements and 
 !  the identity of the objective function group
 
-!     IF ( ialgor == 2 ) THEN
-!       READ( input, 1002 ) nslack, data%nobjgr
-!     ELSE
-!       nslack = 0
-!     END IF
       IF ( debug ) WRITE( out, 1100 ) pname, n, data%ng, data%nel
       data%pname = pname // '  '
 
@@ -428,13 +379,13 @@
 !  use GVALS and FT as temporary storage for the constraint bounds
 
         READ( input, 1020 ) ( X_l( i ), i = 1, n ),                            &
-          ( data%GVALS( i, 1 ), i = 1, data%ng )
+          ( work%GVALS( i, 1 ), i = 1, data%ng )
         IF ( debug ) WRITE( out, 1120 ) 'X_l    ',                             &
-          ( X_l( i ), i = 1, n ), ( data%GVALS( i, 1 ), i = 1, data%ng )
+          ( X_l( i ), i = 1, n ), ( work%GVALS( i, 1 ), i = 1, data%ng )
         READ( input, 1020 ) ( X_u( i ), i = 1, n ),                            &
-          ( data%FT( i ), i = 1, data%ng )
+          ( work%FT( i ), i = 1, data%ng )
         IF ( debug ) WRITE( out, 1120 ) 'X_u    ',                             &
-          ( X_u( i ), i = 1, n ), ( data%FT( i ), i = 1, data%ng )
+          ( X_u( i ), i = 1, n ), ( work%FT( i ), i = 1, data%ng )
       END IF
       READ( input, 1020 ) ( X( i ), i = 1, n )
       IF ( debug ) WRITE( out, 1120 ) 'X     ', ( X( i ), i = 1, n )
@@ -509,114 +460,38 @@
       READ( input, 1010 ) ( data%ITYPEV( i ), i = 1, n )
       CLOSE( input )
 
-      data%numvar = n
-
-!  partition the workspace arrays data%FUVALS, IWK and WK. Initialize certain 
+!  partition the workspace arrays work%FUVALS, IWK and WK. Initialize certain 
 !  portions of IWK
 
-      data%firstg = .TRUE.
+      work%firstg = .TRUE.
       data%ntotel = data%ISTADG( data%ng + 1 ) - 1
       data%nvrels = data%ISTAEV( data%nel + 1 ) - 1
       data%nnza = data%ISTADA( data%ng + 1 ) - 1
-      data%skipg = .FALSE.
 
       CALL CUTEST_initialize_workspace(                                        &
-             data%n, data%ng, data%nel,                                        &
-             data%ntotel, data%nvrels, data%nnza, data%n,                      &
+             data%n, data%ng, data%nel, data%ntotel, data%nvrels, data%nnza,   &
              data%nvargp, data%IELING, data%ISTADG, data%IELVAR, data%ISTAEV,  &
-             data%INTVAR, data%ISTADH, data%ICNA, data%ISTADA, data%ITYPEE,    &
-             data%GXEQX, data%INTREP, data%alllin, data%altriv, .FALSE.,       &
-             .FALSE., data%lfxi, data%lgxi, data%lhxi,                         &
-             data%lggfx, data%ldx, data%lgrjac, data%lnguvl, data%lnhuvl,      &
-             data%ntotin, data%ntype, data%nsets, data%maxsel,                 &
-             RANGE, 0, out, data%io_buffer,                                    &
-!  workspace
-             data%lwtran, data%litran, data%lwtran_min, data%litran_min,       &
-             data%l_link_e_u_v, data%llink_min, data%FUVALS, data%lfuval,      &
-             data%ITRANS, data%LINK_elem_uses_var, data%WTRANS,                &
-             data%ISYMMD, data%ISWKSP, data%ISTAJC, data%ISTAGV,               &
-             data%ISVGRP, data%ISLGRP, data%IGCOLJ, data%IVALJR,               &
-             data%IUSED, data%ITYPER, data%ISSWTR, data%ISSITR,                &
-             data%ISET, data%ISVSET, data%INVSET, data%LIST_elements,          &
-             data%ISYMMH, data%IW_asmbl, data%NZ_comp_w, data%W_ws,            &
-             data%W_el, data%W_in, data%H_el, data%H_in,                       &
-             status, alloc_status, bad_alloc, data%array_status, data%skipg,   &
-             KNDOFG = data%KNDOFC )
-
-!     CALL INITW( n, data%ng, data%nel, data%IELING, data%leling,              &
-!         data%ISTADG, data%lstadg, data%IELVAR, data%lelvar, data%ISTAEV,     &
-!         data%lstaev, data%INTVAR, data%lntvar, data%ISTADH, data%lstadh,     &
-!         data%ICNA, data%licna, data%ISTADA, data%lstada, data%ITYPEE,        &
-!         data%lintre, data%GXEQX, data%lgxeqx, data%INTREP, data%lintre,      &
-!         lfuval, data%altriv, .TRUE., fdgrad, data%lfxi, LGXI, LHXI, LGGFX,   &
-!         data%ldx, data%lgrjac, data%lqgrad, data%lbreak, data%lp,            &
-!         data%lxcp, data%lx0, data%lgx0, data%ldeltx, data%lbnd, data%lwkstr, &
-!         data%lsptrs, data%lselts, data%lindex, data%lswksp, data%lstagv,     &
-!         data%lstajc, data%liused, data%lfreec, data%lnnonz, data%lnonz2,     &
-!         data%lsymmd, data%lsymmh, data%lslgrp, data%lsvgrp, data%lgcolj,     &
-!         data%lvaljr, data%lsend, data%lnptrs, data%lnelts, data%lnndex,      &
-!         data%lnwksp, data%lnstgv, data%lnstjc, data%lniuse, data%lnfrec,     &
-!         data%lnnnon, data%lnnno2, data%lnsymd, data%lnsymh, data%lnlgrp,     &
-!         data%lnvgrp, data%lngclj, data%lnvljr, data%lnqgrd, data%lnbrak,     &
-!         data%lnp, data%lnbnd, data%lnfxi, data%lngxi, data%lnguvl,           &
-!         data%lnhxi, data%lnhuvl, data%lnggfx, data%lndx, data%lngrjc,        &
-!         data%liwk2, data%lwk2, data%maxsin, data%ninvar, data%ntype,         &
-!         data%nsets, data%maxsel, data%lstype, data%lsswtr, data%lssiwt,      &
-!         data%lsiwtr, data%lswtra, data%lntype, data%lnswtr, data%lnsiwt,     &
-!         data%lniwtr, data%lnwtra, data%lsiset, data%lssvse, data%lniset,     &
-!         data%lnsvse, RANGE, data%IWORK(IWRK + 1), liwork, data%WRK, lwork,   &
-!         iprint, out, inform )
+             data%INTVAR, data%ISTADH, data%ICNA, data%ISTADA,                 &
+             data%GXEQX, data%alllin, data%altriv, data%lfxi,                  &
+             data%lgxi, data%lhxi, data%lggfx, data%ldx, data%lgrjac,          &
+             data%lnguvl, data%lnhuvl, data%ntotin, data%maxsel, RANGE, 0,     &
+             out, data%io_buffer, data%l_link_e_u_v, work%FUVALS, data%lfuval, &
+             data%LINK_elem_uses_var, work%ISWKSP, work%ISTAJC, data%ISTAGV,   &
+             data%ISVGRP, data%ISLGRP, data%IGCOLJ, data%ISYMMH, work%W_ws,    &
+             work%W_el, work%W_in, work%H_el, work%H_in,                       &
+             status, alloc_status, bad_alloc, work%array_status )
       IF ( status /= 0 ) RETURN
-
-!  shift the starting addresses for the real workspace relative to WRK
-
-!     data%lqgrad = data%lqgrad + WRK
-!     data%lbreak = data%lbreak + WRK
-!     data%lp = data%lp + WRK
-!     data%lxcp = data%lxcp + WRK
-!     data%lx0 = data%lx0 + WRK
-!     data%lgx0 = data%lgx0 + WRK
-!     data%ldeltx = data%ldeltx + WRK
-!     data%lbnd = data%lbnd + WRK
-!     data%lswtra = data%lswtra + WRK
-!     data%lwkstr = data%lwkstr + WRK
-
-!  shift the starting addresses for the integer workspace relative to IWRK
-
-!     data%lsptrs = data%lsptrs + IWRK
-!     data%lselts = data%lselts + IWRK
-!     data%lindex = data%lindex + IWRK
-!     data%lswksp = data%lswksp + IWRK
-!     data%lstagv = data%lstagv + IWRK
-!     data%lstajc = data%lstajc + IWRK
-!     data%liused = data%liused + IWRK
-!     data%lfreec = data%lfreec + IWRK
-!     data%lnnonz = data%lnnonz + IWRK
-!     data%lnonz2 = data%lnonz2 + IWRK
-!     data%lsymmd = data%lsymmd + IWRK
-!     data%lsymmh = data%lsymmh + IWRK
-!     data%lslgrp = data%lslgrp + IWRK
-!     data%lsvgrp = data%lsvgrp + IWRK
-!     data%lgcolj = data%lgcolj + IWRK
-!     data%lvaljr = data%lvaljr + IWRK
-!     data%lstype = data%lstype + IWRK
-!     data%lsswtr = data%lsswtr + IWRK
-!     data%lssiwt = data%lssiwt + IWRK
-!     data%lsiwtr = data%lsiwtr + IWRK
-!     data%lsiset = data%lsiset + IWRK
-!     data%lssvse = data%lssvse + IWRK
-!     data%lsend = data%lsend + IWRK
 
 !  initialize the performance counters and variables
 
-      data%nc2of = 0
-      data%nc2og = 0
-      data%nc2oh = 0
-      data%nc2cf = 0
-      data%nc2cg = 0
-      data%nc2ch = 0
-      data%nhvpr = 0
-      data%pnc = 0
+      work%nc2of = 0
+      work%nc2og = 0
+      work%nc2oh = 0
+      work%nc2cf = 0
+      work%nc2cg = 0
+      work%nc2ch = 0
+      work%nhvpr = 0
+      work%pnc = 0
 
       CALL CPU_TIME( data%sttime )
       data%sutime = data%sttime - data%sutime
@@ -628,14 +503,11 @@
       status = 1
       IF ( out > 0 ) WRITE( out,                                               &
         "( /, ' ** SUBROUTINE USETUP: allocation error for ', A, ' status = ', &
-       &  I0, /, ' Execution terminating ' )" ) bad_alloc, alloc_status
+       &  I0, /, ' Execution terminating ' )" ) TRIM( bad_alloc ), alloc_status
       RETURN
 
 !  non-executable statements
 
- 1000 FORMAT( I2, A8 )
- 1001 FORMAT( 10I8 )
-!1002 FORMAT( 2I8 )
  1010 FORMAT( ( 10I8 ) )
  1020 FORMAT( ( 1P, 4D16.8 ) )
  1030 FORMAT( ( 72L1 ) )
@@ -650,6 +522,138 @@
  2000 FORMAT( /, ' ** SUBROUTINE USETUP: array length ', A, ' too small.', /, &
               ' -- Increase the dimension to at least ', I0, ' and restart.' )
 
-!  End of subroutine USETUP
+!  End of subroutine CUTEST_usetup_threadsafe
 
-      END SUBROUTINE USETUP
+      END SUBROUTINE CUTEST_usetup_threadsafe
+
+!-*-*-*-*-*-*-  C U T E S T    U S E T U P    S U B R O U T I N E  -*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 22nd December 2012
+
+      SUBROUTINE CUTEST_usetup( status, input, out, io_buffer, n, X, X_l, X_u )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: input, out, io_buffer
+      INTEGER, INTENT( INOUT ) :: n
+      INTEGER, INTENT( OUT ) :: status
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: X, X_l, X_u
+
+!  --------------------------------------------------------------
+!  set up the input data for the unconstrained optimization tools
+!  --------------------------------------------------------------
+
+!  local variables
+
+      INTEGER :: alloc_status
+      CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
+
+!  allocate space for the global workspace
+
+      ALLOCATE( CUTEST_work_global( 1 ), STAT = alloc_status )
+      IF ( alloc_status /= 0 ) THEN
+        bad_alloc = 'CUTEST_work_global' ; GO TO 910
+      END IF
+
+!  set the data
+
+      CALL CUTEST_usetup_threadsafe( CUTEST_data_global,                       &
+                                     CUTEST_work_global( 1 ),                  &
+                                     status, input, out, io_buffer,            &
+                                     n, X, X_l, X_u )
+      RETURN
+
+!  allocation error
+
+  910 CONTINUE
+      status = 1
+      IF ( out > 0 ) WRITE( out,                                               &
+        "( /, ' ** SUBROUTINE USETUP: allocation error for ', A, ' status = ', &
+       &  I0, /, ' Execution terminating ' )" ) TRIM( bad_alloc ), alloc_status
+      RETURN
+
+!  End of subroutine CUTEST_usetup
+
+      END SUBROUTINE CUTEST_usetup
+
+!-*-  C U T E S T    U S E T U P  _ t h r e a d e d   S U B R O U T I N E  -*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 22nd December 2012
+
+      SUBROUTINE CUTEST_usetup_threaded( status, input, out, io_buffer,        &
+                                         n, X, X_l, X_u, threads )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: input, out, io_buffer, threads
+      INTEGER, INTENT( INOUT ) :: n
+      INTEGER, INTENT( OUT ) :: status
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: X, X_l, X_u
+
+!  --------------------------------------------------------------
+!  set up the input data for the unconstrained optimization tools
+!  --------------------------------------------------------------
+
+!  local variables
+
+      INTEGER :: alloc_status
+      CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
+
+!  threads must be positive
+
+      IF ( threads < 1 ) GO TO 940
+
+!  allocate space for the threaded workspace data
+
+      ALLOCATE( CUTEST_work_global( threads ), STAT = alloc_status )
+      IF ( alloc_status /= 0 ) THEN
+        bad_alloc = 'CUTEST_work_global' ; GO TO 910
+      END IF
+
+!  set the data
+
+      CALL CUTEST_usetup_threadsafe( CUTEST_data_global,                       &
+                                     CUTEST_work_global( 1 ),                  &
+                                     status, input, out, io_buffer,            &
+                                     n, X, X_l, X_u )
+
+!  copy the workspace data to each thread
+
+      IF ( threads > 1 )                                                       &
+        CUTEST_work_global( 2 : threads ) = CUTEST_work_global( 1 )
+      RETURN
+
+!  allocation error
+
+  910 CONTINUE
+      status = 1
+      IF ( out > 0 ) WRITE( out,                                               &
+        "( /, ' ** SUBROUTINE USETUP: allocation error for ', A, ' status = ', &
+       &  I0, /, ' Execution terminating ' )" ) TRIM( bad_alloc ), alloc_status
+      RETURN
+
+!  thread error
+
+  940 CONTINUE
+      status = 4
+      IF ( out > 0 ) WRITE( out,                                               &
+        "( /, ' ** SUBROUTINE USETUP: argument threads must be positive,',     &
+       &  ' execution terminating ' )" )
+      RETURN
+
+!  End of subroutine CUTEST_usetup_threaded
+
+      END SUBROUTINE CUTEST_usetup_threaded
+
