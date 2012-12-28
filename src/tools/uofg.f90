@@ -1,5 +1,83 @@
 ! THIS VERSION: CUTEST 1.0 - 23/12/2012 AT 16:10 GMT.
 
+!-*-*-*-*-*-*-*-  C U T E S T    U O F G    S U B R O U T I N E  -*-*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 23rd December 2012
+
+      SUBROUTINE CUTEST_uofg( status, n, X, f, G, grad )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n
+      INTEGER, INTENT( OUT ) :: status
+      REAL ( KIND = wp ), INTENT( OUT ) :: f
+      LOGICAL, INTENT( IN ) :: grad
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: G
+
+!  ---------------------------------------------------------------
+!  compute the value of the objective function and its gradient
+!  for a function initially written in Standard Input Format (SIF)
+
+!  G     is an array which gives the value of the gradient of the 
+!        objective function evaluated at X. G(i) gives the partial 
+!        derivative of the objective function wrt variable X(i)
+!  ---------------------------------------------------------------
+
+      CALL CUTEST_uofg_threadsafe( CUTEST_data_global,                         &
+                                   CUTEST_work_global( 1 ),                    &
+                                   status, n, X, f, G, grad )
+      RETURN
+
+!  end of subroutine CUTEST_uofg
+
+      END SUBROUTINE CUTEST_uofg
+
+!-*-*-   C U T E S T    U O F G _ t h r e a d e d   S U B R O U T I N E  -*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 23rd December 2012
+
+      SUBROUTINE CUTEST_uofg_threaded( status, n, X, f, G, grad, thread )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, thread
+      INTEGER, INTENT( OUT ) :: status
+      REAL ( KIND = wp ), INTENT( OUT ) :: f
+      LOGICAL, INTENT( IN ) :: grad
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: G
+
+!  ---------------------------------------------------------------
+!  compute the value of the objective function and its gradient
+!  for a function initially written in Standard Input Format (SIF)
+
+!  G     is an array which gives the value of the gradient of the 
+!        objective function evaluated at X. G(i) gives the partial 
+!        derivative of the objective function wrt variable X(i)
+!  ---------------------------------------------------------------
+
+      CALL CUTEST_uofg_threadsafe( CUTEST_data_global,                         &
+                                   CUTEST_work_global( thread ),               &
+                                   status, n, X, f, G, grad )
+      RETURN
+
+!  end of subroutine CUTEST_uofg_threaded
+
+      END SUBROUTINE CUTEST_uofg_threaded
+
 !-*-   C U T E S T    U O F G _ t h r e a d s a f e   S U B R O U T I N E   -*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
@@ -168,81 +246,3 @@
 !  end of subroutine CUTEST_uofg_threadsafe
 
       END SUBROUTINE CUTEST_uofg_threadsafe
-
-!-*-*-*-*-*-*-*-  C U T E S T    U O F G    S U B R O U T I N E  -*-*-*-*-*-*-
-
-!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
-!  Principal author: Nick Gould
-
-!  History -
-!   fortran 2003 version released in CUTEst, 23rd December 2012
-
-      SUBROUTINE CUTEST_uofg( status, n, X, f, G, grad )
-      USE CUTEST
-      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-
-!  dummy arguments
-
-      INTEGER, INTENT( IN ) :: n
-      INTEGER, INTENT( OUT ) :: status
-      REAL ( KIND = wp ), INTENT( OUT ) :: f
-      LOGICAL, INTENT( IN ) :: grad
-      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
-      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: G
-
-!  ---------------------------------------------------------------
-!  compute the value of the objective function and its gradient
-!  for a function initially written in Standard Input Format (SIF)
-
-!  G     is an array which gives the value of the gradient of the 
-!        objective function evaluated at X. G(i) gives the partial 
-!        derivative of the objective function wrt variable X(i)
-!  ---------------------------------------------------------------
-
-      CALL CUTEST_uofg_threadsafe( CUTEST_data_global,                         &
-                                   CUTEST_work_global( 1 ),                    &
-                                   status, n, X, f, G, grad )
-      RETURN
-
-!  end of subroutine CUTEST_uofg
-
-      END SUBROUTINE CUTEST_uofg
-
-!-*-*-   C U T E S T    U O F G _ t h r e a d e d   S U B R O U T I N E  -*-*-
-
-!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
-!  Principal author: Nick Gould
-
-!  History -
-!   fortran 2003 version released in CUTEst, 23rd December 2012
-
-      SUBROUTINE CUTEST_uofg_threaded( status, n, X, f, G, grad, thread )
-      USE CUTEST
-      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-
-!  dummy arguments
-
-      INTEGER, INTENT( IN ) :: n, thread
-      INTEGER, INTENT( OUT ) :: status
-      REAL ( KIND = wp ), INTENT( OUT ) :: f
-      LOGICAL, INTENT( IN ) :: grad
-      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
-      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: G
-
-!  ---------------------------------------------------------------
-!  compute the value of the objective function and its gradient
-!  for a function initially written in Standard Input Format (SIF)
-
-!  G     is an array which gives the value of the gradient of the 
-!        objective function evaluated at X. G(i) gives the partial 
-!        derivative of the objective function wrt variable X(i)
-!  ---------------------------------------------------------------
-
-      CALL CUTEST_uofg_threadsafe( CUTEST_data_global,                         &
-                                   CUTEST_work_global( thread ),               &
-                                   status, n, X, f, G, grad )
-      RETURN
-
-!  end of subroutine CUTEST_uofg_threaded
-
-      END SUBROUTINE CUTEST_uofg_threaded

@@ -1,6 +1,79 @@
-! THIS VERSION: CUTEST 1.0 - 23/11/2012 AT 15:00 GMT.
+! THIS VERSION: CUTEST 1.0 - 28/12/2012 AT 13:40 GMT.
 
 !-*-*-*-*-*-*-*-  C U T E S T    U S H    S U B R O U T I N E  -*-*-*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 28th December 2012
+
+      SUBROUTINE CUTEST_ush( status, n, X, nnzh, lh, H_val, H_row, H_col )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, lh
+      INTEGER, INTENT( OUT ) :: nnzh, status
+      INTEGER, INTENT( OUT ), DIMENSION( lh ) :: H_row, H_col
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lh ) :: H_val
+
+!  -------------------------------------------------------------------
+!  compute the Hessian matrix of a group partially separable function.
+!  The upper triangle of the Hessian is stored in coordinate form,
+!  i.e., the entry H_val(i) has row index H_row(i) and column index 
+!  H_col(i) for i = 1, ...., nnzh
+!  ------------------------------------------------------------------
+
+      CALL CUTEST_ush_threadsafe( CUTEST_data_global,                          &
+                                  CUTEST_work_global( 1 ), status, n, X,       &
+                                  nnzh, lh, H_val, H_row, H_col )
+      RETURN
+
+!  end of subroutine CUTEST_ush
+
+      END SUBROUTINE CUTEST_ush
+
+!-*-*-*-  C U T E S T    U S H _ t h r e a d e d   S U B R O U T I N E  -*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 28th December 2012
+
+      SUBROUTINE CUTEST_ush_threaded( status, n, X,                            &
+                                      nnzh, lh, H_val, H_row, H_col, thread )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, lh, thread
+      INTEGER, INTENT( OUT ) :: nnzh, status
+      INTEGER, INTENT( OUT ), DIMENSION( lh ) :: H_row, H_col
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lh ) :: H_val
+
+!  -------------------------------------------------------------------
+!  compute the Hessian matrix of a group partially separable function.
+!  The upper triangle of the Hessian is stored in coordinate form,
+!  i.e., the entry H_val(i) has row index H_row(i) and column index 
+!  H_col(i) for i = 1, ...., nnzh
+!  ------------------------------------------------------------------
+
+      CALL CUTEST_ush_threadsafe( CUTEST_data_global,                          &
+                                  CUTEST_work_global( thread ), status, n, X,  &
+                                  nnzh, lh, H_val, H_row, H_col )
+      RETURN
+
+!  end of subroutine CUTEST_ush_threaded
+
+      END SUBROUTINE CUTEST_ush_threaded
+
+!-*-*-  C U T E S T    U S H  _ t h r e a d s a f e   S U B R O U T I N E  -*-*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
 !  Principal author: Nick Gould
@@ -9,7 +82,8 @@
 !   fortran 77 version originally released in CUTE, July 1991
 !   fortran 2003 version released in CUTEst, 23rd November 2012
 
-      SUBROUTINE CUTEST_ush( data, work, status, n, X, nnzh, lh, H_val, H_row, H_col )
+      SUBROUTINE CUTEST_ush_threadsafe( data, work, status, n, X,              &
+                                        nnzh, lh, H_val, H_row, H_col )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
@@ -153,6 +227,6 @@
       status = 3
       RETURN
 
-!  end of subroutine CUTEST_ush
+!  end of subroutine CUTEST_ush_threadsafe
 
-      END SUBROUTINE CUTEST_ush
+      END SUBROUTINE CUTEST_ush_threadsafe
