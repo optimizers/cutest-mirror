@@ -1,6 +1,142 @@
-! THIS VERSION: CUTEST 1.0 - 27/11/2012 AT 14:00 GMT.
+! THIS VERSION: CUTEST 1.0 - 28/12/2012 AT 14:25 GMT.
 
 !-*-*-*-*-*-*-  C U T E S T    U G R E H    S U B R O U T I N E  -*-*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 28th December 2012
+
+      SUBROUTINE CUTEST_ugreh( status, n, X, G,                                &
+                               ne, lhe_ptr, HE_row_ptr, HE_val_ptr, lhe_row,   &
+                               HE_row, lhe_val, HE_val, byrows )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, lhe_ptr, lhe_row, lhe_val
+      INTEGER, INTENT( OUT ) :: ne, status
+      LOGICAL, INTENT( IN ) :: byrows
+      INTEGER, INTENT( OUT ), DIMENSION( lhe_ptr ) :: HE_row_ptr, HE_val_ptr
+      INTEGER, INTENT( OUT ), DIMENSION( lhe_row ) :: HE_row
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: G
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lhe_val ) :: HE_val
+
+!  ----------------------------------------------------------------------------
+!  compute the gradient and Hessian matrix of a group partially separable 
+!  function initially written in Standard Input Format (SIF)
+
+!  the matrix is represented in "finite element format", i.e., 
+
+!           ne
+!      H = sum H_e, 
+!          e=1
+
+!  where each element H_i involves a small subset of the rows of H. H is stored
+!  as a list of the row indices involved in each element and the upper triangle
+!  of H_e (stored by rows or columns). Specifically,
+
+!  ne (integer) number of elements
+!  HE_row (integer array) a list of the row indices involved which each
+!          element. Those for element e directly proceed those for 
+!          element e + 1, e = 1, ..., ne-1
+!  HE_row_ptr (integer array) pointers to the position in HE_row of the first 
+!          row index in each element. HE_row_ptr(ne+1) points to the first 
+!          empty location in IRPNHI
+!  HE_val (real array) a list of the nonzeros in the upper triangle of
+!          H_e, stored by rows, or by columns, for each element. Those 
+!          for element i directly proceed those for element, e + 1, 
+!          e = 1, ..., ne-1
+!  HE_val_ptr (integer array) pointers to the position in HE_val of the first 
+!          nonzero in each element. HE_val_ptr(ne+1) points to the first 
+!          empty location in HE_val
+!  byrows (logical) must be set .TRUE. if the upper triangle of each H_e is
+!          to be stored by rows, and .FALSE. if it is to be stored by columns
+!  ----------------------------------------------------------------------------
+
+      CALL CUTEST_ugreh_threadsafe( CUTEST_data_global,                        &
+                                    CUTEST_work_global( 1 ),                   &
+                                    status, n, X, G, ne, lhe_ptr, HE_row_ptr,  &
+                                    HE_val_ptr, lhe_row, HE_row, lhe_val,      &
+                                    HE_val, byrows )
+      RETURN
+
+!  end of subroutine CUTEST_ugreh
+
+      END SUBROUTINE CUTEST_ugreh
+
+!-*-*-  C U T E S T    U G R E H _ t h r e a d e d   S U B R O U T I N E  -*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 28th December 2012
+
+      SUBROUTINE CUTEST_ugreh_threaded( status, n, X, G, ne, lhe_ptr,          &
+                                        HE_row_ptr, HE_val_ptr, lhe_row,       &
+                                        HE_row, lhe_val, HE_val, byrows, thread)
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, lhe_ptr, lhe_row, lhe_val, thread
+      INTEGER, INTENT( OUT ) :: ne, status
+      LOGICAL, INTENT( IN ) :: byrows
+      INTEGER, INTENT( OUT ), DIMENSION( lhe_ptr ) :: HE_row_ptr, HE_val_ptr
+      INTEGER, INTENT( OUT ), DIMENSION( lhe_row ) :: HE_row
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: G
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lhe_val ) :: HE_val
+
+!  ----------------------------------------------------------------------------
+!  compute the gradient and Hessian matrix of a group partially separable 
+!  function initially written in Standard Input Format (SIF)
+
+!  the matrix is represented in "finite element format", i.e., 
+
+!           ne
+!      H = sum H_e, 
+!          e=1
+
+!  where each element H_i involves a small subset of the rows of H. H is stored
+!  as a list of the row indices involved in each element and the upper triangle
+!  of H_e (stored by rows or columns). Specifically,
+
+!  ne (integer) number of elements
+!  HE_row (integer array) a list of the row indices involved which each
+!          element. Those for element e directly proceed those for 
+!          element e + 1, e = 1, ..., ne-1
+!  HE_row_ptr (integer array) pointers to the position in HE_row of the first 
+!          row index in each element. HE_row_ptr(ne+1) points to the first 
+!          empty location in IRPNHI
+!  HE_val (real array) a list of the nonzeros in the upper triangle of
+!          H_e, stored by rows, or by columns, for each element. Those 
+!          for element i directly proceed those for element, e + 1, 
+!          e = 1, ..., ne-1
+!  HE_val_ptr (integer array) pointers to the position in HE_val of the first 
+!          nonzero in each element. HE_val_ptr(ne+1) points to the first 
+!          empty location in HE_val
+!  byrows (logical) must be set .TRUE. if the upper triangle of each H_e is
+!          to be stored by rows, and .FALSE. if it is to be stored by columns
+!  ----------------------------------------------------------------------------
+
+      CALL CUTEST_ugreh_threadsafe( CUTEST_data_global,                        &
+                                    CUTEST_work_global( thread ),              &
+                                    status, n, X, G, ne, lhe_ptr, HE_row_ptr,  &
+                                    HE_val_ptr, lhe_row, HE_row, lhe_val,      &
+                                    HE_val, byrows )
+      RETURN
+
+!  end of subroutine CUTEST_ugreh_threaded
+
+      END SUBROUTINE CUTEST_ugreh_threaded
+
+!-*-  C U T E S T    U G R E H _ t h r e a d s a f e   S U B R O U T I N E  -*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
 !  Principal author: Nick Gould
@@ -9,8 +145,9 @@
 !   fortran 77 version originally released in CUTEr, November 1994
 !   fortran 2003 version released in CUTEst, 27th November 2012
 
-      SUBROUTINE CUTEST_ugreh( data, work, status, n, X, G, ne, lhe_ptr, HE_row_ptr, &
-                        HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val, byrows )
+      SUBROUTINE CUTEST_ugreh_threadsafe( data, work, status, n, X, G,         &
+                               ne, lhe_ptr, HE_row_ptr, HE_val_ptr, lhe_row,   &
+                               HE_row, lhe_val, HE_val, byrows )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
@@ -208,6 +345,6 @@
       status = 3
       RETURN
 
-!  end of subroutine CUTEST_ugreh
+!  end of subroutine CUTEST_ugreh_threadsafe
 
-      END SUBROUTINE CUTEST_ugreh
+      END SUBROUTINE CUTEST_ugreh_threadsafe

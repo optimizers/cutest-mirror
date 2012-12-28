@@ -1,5 +1,69 @@
 ! THIS VERSION: CUTEST 1.0 - 23/12/2012 AT 16:00 GMT.
 
+!-*-*-*-*-*-*-*-  C U T E S T    U G R    S U B R O U T I N E  -*-*-*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 23rd December 2012
+
+      SUBROUTINE CUTEST_ugr( status, n, X, G )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n
+      INTEGER, INTENT( OUT ) :: status
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: G
+
+!  ------------------------------------------------------------
+!  compute the gradient of a group partially separable function
+!  ------------------------------------------------------------
+
+      CALL CUTEST_ugr_threadsafe( CUTEST_data_global,                          &
+                                  CUTEST_work_global( 1 ),                     &
+                                  status, n, X, G )
+      RETURN
+
+!  end of subroutine CUTEST_ugr
+
+      END SUBROUTINE CUTEST_ugr
+
+!-*-*-*-  C U T E S T    U G R _ t h r e a d e d   S U B R O U T I N E  -*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 23rd December 2012
+
+      SUBROUTINE CUTEST_ugr_threaded( status, n, X, G, thread )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, thread
+      INTEGER, INTENT( OUT ) :: status
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: G
+
+!  ------------------------------------------------------------
+!  compute the gradient of a group partially separable function
+!  ------------------------------------------------------------
+
+      CALL CUTEST_ugr_threadsafe( CUTEST_data_global,                          &
+                                  CUTEST_work_global( thread ),                &
+                                  status, n, X, G )
+      RETURN
+
+!  end of subroutine CUTEST_ugr_threaded
+
+      END SUBROUTINE CUTEST_ugr_threaded
+
 !-*-*-  C U T E S T    U G R _ t h r e a d s a f e   S U B R O U T I N E  -*-*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
@@ -128,66 +192,3 @@
 
       END SUBROUTINE CUTEST_ugr_threadsafe
 
-!-*-*-*-*-*-*-*-  C U T E S T    U G R    S U B R O U T I N E  -*-*-*-*-*-*-*-
-
-!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
-!  Principal author: Nick Gould
-
-!  History -
-!   fortran 2003 version released in CUTEst, 23rd December 2012
-
-      SUBROUTINE CUTEST_ugr( status, n, X, G )
-      USE CUTEST
-      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-
-!  dummy arguments
-
-      INTEGER, INTENT( IN ) :: n
-      INTEGER, INTENT( OUT ) :: status
-      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
-      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: G
-
-!  ------------------------------------------------------------
-!  compute the gradient of a group partially separable function
-!  ------------------------------------------------------------
-
-      CALL CUTEST_ugr_threadsafe( CUTEST_data_global,                          &
-                                  CUTEST_work_global( 1 ),                     &
-                                  status, n, X, G )
-      RETURN
-
-!  end of subroutine CUTEST_ugr
-
-      END SUBROUTINE CUTEST_ugr
-
-!-*-*-*-  C U T E S T    U G R _ t h r e a d e d   S U B R O U T I N E  -*-*-*-
-
-!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
-!  Principal author: Nick Gould
-
-!  History -
-!   fortran 2003 version released in CUTEst, 23rd December 2012
-
-      SUBROUTINE CUTEST_ugr_threaded( status, n, X, G, thread )
-      USE CUTEST
-      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-
-!  dummy arguments
-
-      INTEGER, INTENT( IN ) :: n, thread
-      INTEGER, INTENT( OUT ) :: status
-      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
-      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: G
-
-!  ------------------------------------------------------------
-!  compute the gradient of a group partially separable function
-!  ------------------------------------------------------------
-
-      CALL CUTEST_ugr_threadsafe( CUTEST_data_global,                          &
-                                  CUTEST_work_global( thread ),                &
-                                  status, n, X, G )
-      RETURN
-
-!  end of subroutine CUTEST_ugr_threaded
-
-      END SUBROUTINE CUTEST_ugr_threaded

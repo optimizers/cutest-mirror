@@ -1,6 +1,83 @@
-! THIS VERSION: CUTEST 1.0 - 28/11/2012 AT 14:15 GMT.
+! THIS VERSION: CUTEST 1.0 - 28/12/2012 AT 14:35 GMT.
 
 !-*-*-*-*-*-*-*-  C U T E S T    U H P R O D   S U B R O U T I N E  -*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 28th December 2012
+
+      SUBROUTINE CUTEST_uhprod( status, n, goth, X, VECTOR, RESULT )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n
+      INTEGER, INTENT( OUT ) :: status
+      LOGICAL, INTENT( IN ) :: goth
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X, VECTOR
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: RESULT
+
+!  ------------------------------------------------------------------
+!  compute the matrix-vector product between the Hessian matrix of
+!  a group partially separable function and a given vector VECTOR.
+!  The result is placed in RESULT. If goth is .TRUE. the second
+!  derivatives are assumed to have already been computed. If the user 
+!  is unsure, set goth = .FALSE. the first time a product is required
+!  with the Hessian evaluated at X. X is not used if  goth = .TRUE.
+!  ------------------------------------------------------------------
+
+      CALL CUTEST_uhprod_threadsafe( CUTEST_data_global,                       &
+                                     CUTEST_work_global( 1 ),                  &
+                                     status, n, goth, X, VECTOR, RESULT )
+      RETURN
+
+!  end of subroutine CUTEST_uhprod
+
+      END SUBROUTINE CUTEST_uhprod
+
+!-*-*-  C U T E S T    U H P R O D _ t h r e a d e d  S U B R O U T I N E  -*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 28th December 2012
+
+      SUBROUTINE CUTEST_uhprod_threaded( status, n, goth, X, VECTOR, RESULT,   &
+                                         thread )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, thread
+      INTEGER, INTENT( OUT ) :: status
+      LOGICAL, INTENT( IN ) :: goth
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X, VECTOR
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: RESULT
+
+!  ------------------------------------------------------------------
+!  compute the matrix-vector product between the Hessian matrix of
+!  a group partially separable function and a given vector VECTOR.
+!  The result is placed in RESULT. If goth is .TRUE. the second
+!  derivatives are assumed to have already been computed. If the user 
+!  is unsure, set goth = .FALSE. the first time a product is required
+!  with the Hessian evaluated at X. X is not used if  goth = .TRUE.
+!  ------------------------------------------------------------------
+
+      CALL CUTEST_uhprod_threadsafe( CUTEST_data_global,                       &
+                                     CUTEST_work_global( thread ),             &
+                                     status, n, goth, X, VECTOR, RESULT )
+      RETURN
+
+!  end of subroutine CUTEST_uhprod_threaded
+
+      END SUBROUTINE CUTEST_uhprod_threaded
+
+!-*-  C U T E S T    U H P R O D _ t h r e a d s a f e  S U B R O U T I N E  -*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
 !  Principal authors: Ingrid Bongartz and Nick Gould
@@ -9,7 +86,8 @@
 !   fortran 77 version originally released as UPROD in CUTE, July 1991
 !   fortran 2003 version released in CUTEst, 28th November 2012
 
-      SUBROUTINE CUTEST_uhprod( data, work, status, n, goth, X, VECTOR, RESULT )
+      SUBROUTINE CUTEST_uhprod_threadsafe( data, work, status, n, goth,        &
+                                           X, VECTOR, RESULT )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
@@ -146,8 +224,8 @@
       status = 3
       RETURN
 
-!  end of subroutine CUTEST_uhprod
+!  end of subroutine CUTEST_uhprod_threadsafe
 
-      END SUBROUTINE CUTEST_uhprod
+      END SUBROUTINE CUTEST_uhprod_threadsafe
 
 

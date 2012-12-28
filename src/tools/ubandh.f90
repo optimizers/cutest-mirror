@@ -1,6 +1,88 @@
-! THIS VERSION: CUTEST 1.0 - 23/11/2012 AT 15:00 GMT.
+! THIS VERSION: CUTEST 1.0 - 28/12/2012 AT 14:40 GMT.
 
-!-*-*-*-*-*-*-*-  C U T E S T    U S H    S U B R O U T I N E  -*-*-*-*-*-*-*-
+!-*-*-*-*-*-*-  C U T E S T    U B A N D H    S U B R O U T I N E  -*-*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 28th December 2012
+
+      SUBROUTINE CUTEST_ubandh( status, n, X, semibandwidth, H_band,           &
+                                lbandh, max_semibandwidth )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, semibandwidth, lbandh
+      INTEGER, INTENT( OUT ) :: status, max_semibandwidth
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( 0 : lbandh, n ) :: H_band
+
+!  ----------------------------------------------------------------------
+!  compute the portion of the Hessian matrix of a group partially
+!  separable function which lies within a band of given semi-bandwidth.
+!  The diagonal and subdiagonal entries in column i are stored in
+!  locations BAND( j, i ), where j = 0 for the diagonal and j > 0 for
+!  the j-th subdiagonal entry, j = 1, ..., MIN( semibandwidth, n - i ) 
+!  and semibandwidth is the requested semi-bandwidth. max_semibandwidth 
+!  gives the true semibandwidth, i.e, all entries outside the band with
+!  this semibandwidth are zero
+!  -----------------------------------------------------------------------
+
+      CALL CUTEST_ubandh_threadsafe( CUTEST_data_global,                       &
+                                     CUTEST_work_global( 1 ),                  &
+                                     status, n, X, semibandwidth, H_band,      &
+                                     lbandh, max_semibandwidth )
+      RETURN
+
+!  end of subroutine CUTEST_ubandh
+
+      END SUBROUTINE CUTEST_ubandh
+
+!-*-  C U T E S T    U B A N D H _ t h r e a d e d    S U B R O U T I N E  -*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 28th December 2012
+
+      SUBROUTINE CUTEST_ubandh_threaded( status, n, X, semibandwidth, H_band,  &
+                                         lbandh, max_semibandwidth, thread )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, semibandwidth, lbandh, thread
+      INTEGER, INTENT( OUT ) :: status, max_semibandwidth
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( 0 : lbandh, n ) :: H_band
+
+!  ----------------------------------------------------------------------
+!  compute the portion of the Hessian matrix of a group partially
+!  separable function which lies within a band of given semi-bandwidth.
+!  The diagonal and subdiagonal entries in column i are stored in
+!  locations BAND( j, i ), where j = 0 for the diagonal and j > 0 for
+!  the j-th subdiagonal entry, j = 1, ..., MIN( semibandwidth, n - i ) 
+!  and semibandwidth is the requested semi-bandwidth. max_semibandwidth 
+!  gives the true semibandwidth, i.e, all entries outside the band with
+!  this semibandwidth are zero
+!  -----------------------------------------------------------------------
+
+      CALL CUTEST_ubandh_threadsafe( CUTEST_data_global,                       &
+                                     CUTEST_work_global( thread ),             &
+                                     status, n, X, semibandwidth, H_band,      &
+                                     lbandh, max_semibandwidth )
+      RETURN
+
+!  end of subroutine CUTEST_ubandh_threaded
+
+      END SUBROUTINE CUTEST_ubandh_threaded
+
+!-   C U T E S T    U B A N D H _ t h r e a d s a f e   S U B R O U T I N E   -
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
 !  Principal author: Nick Gould
@@ -9,8 +91,9 @@
 !   fortran 77 version originally released in CUTE, August 1993
 !   fortran 2003 version released in CUTEst, 23rd November 2012
 
-      SUBROUTINE CUTEST_ubandh( data, work, status, n, X, semibandwidth, H_band,     &
-                         lbandh, max_semibandwidth )
+      SUBROUTINE CUTEST_ubandh_threadsafe( data, work, status, n, X,           &
+                                           semibandwidth, H_band, lbandh,      &
+                                           max_semibandwidth )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
@@ -153,7 +236,7 @@
       status = 3
       RETURN
 
-!  end of subroutine CUTEST_ubandh
+!  end of subroutine CUTEST_ubandh_threadsafe
 
-      END SUBROUTINE CUTEST_ubandh
+      END SUBROUTINE CUTEST_ubandh_threadsafe
 

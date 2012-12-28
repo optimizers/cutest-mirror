@@ -1,5 +1,71 @@
 ! THIS VERSION: CUTEST 1.0 - 23/12/2012 AT 15:15 GMT.
 
+!-*-*-*-*-*-*-*-  C U T E S T    U F N    S U B R O U T I N E  -*-*-*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 22nd December 2012
+
+      SUBROUTINE CUTEST_ufn( status, n, X, f )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n
+      INTEGER, INTENT( OUT ) :: status
+      REAL ( KIND = wp ), INTENT( OUT ) :: f
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+
+!  ----------------------------------------------------------
+!  Compute the value of a groups partially separable function
+!  initially written in Standard Input Format (SIF)
+!  ----------------------------------------------------------
+
+      CALL CUTEST_ufn_threadsafe( CUTEST_data_global,                          &
+                                  CUTEST_work_global( 1 ),                     &
+                                  status, n, X, f )
+      RETURN
+
+!  end of subroutine CUTEST_ufn
+
+      END SUBROUTINE CUTEST_ufn
+
+!-*-*-*-  C U T E S T    U F N _ t h r e a d e d   S U B R O U T I N E  -*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 22nd December 2012
+
+      SUBROUTINE CUTEST_ufn_threaded( status, n, X, f, thread )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, thread
+      INTEGER, INTENT( OUT ) :: status
+      REAL ( KIND = wp ), INTENT( OUT ) :: f
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+
+!  ----------------------------------------------------------
+!  Compute the value of a groups partially separable function
+!  initially written in Standard Input Format (SIF)
+!  ----------------------------------------------------------
+
+      CALL CUTEST_ufn_threadsafe( CUTEST_data_global,                          &
+                                  CUTEST_work_global( thread ),                &
+                                  status, n, X, f )
+      RETURN
+
+!  end of subroutine CUTEST_ufn_threaded
+
+      END SUBROUTINE CUTEST_ufn_threaded
+
 !-*-*-  C U T E S T    U F N _ t h r e a d s a f e  S U B R O U T I N E  -*-*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
@@ -112,69 +178,3 @@
 !  end of subroutine CUTEST_ufn_threadsafe
 
       END SUBROUTINE CUTEST_ufn_threadsafe
-
-!-*-*-*-*-*-*-*-  C U T E S T    U F N    S U B R O U T I N E  -*-*-*-*-*-*-*-
-
-!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
-!  Principal author: Nick Gould
-
-!  History -
-!   fortran 2003 version released in CUTEst, 22nd December 2012
-
-      SUBROUTINE CUTEST_ufn( status, n, X, f )
-      USE CUTEST
-      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-
-!  dummy arguments
-
-      INTEGER, INTENT( IN ) :: n
-      INTEGER, INTENT( OUT ) :: status
-      REAL ( KIND = wp ), INTENT( OUT ) :: f
-      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
-
-!  ----------------------------------------------------------
-!  Compute the value of a groups partially separable function
-!  initially written in Standard Input Format (SIF)
-!  ----------------------------------------------------------
-
-      CALL CUTEST_ufn_threadsafe( CUTEST_data_global,                          &
-                                  CUTEST_work_global( 1 ),                     &
-                                  status, n, X, f )
-      RETURN
-
-!  end of subroutine CUTEST_ufn
-
-      END SUBROUTINE CUTEST_ufn
-
-!-*-*-*-  C U T E S T    U F N _ t h r e a d e d   S U B R O U T I N E  -*-*-*-
-
-!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
-!  Principal author: Nick Gould
-
-!  History -
-!   fortran 2003 version released in CUTEst, 22nd December 2012
-
-      SUBROUTINE CUTEST_ufn_threaded( status, n, X, f, thread )
-      USE CUTEST
-      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-
-!  dummy arguments
-
-      INTEGER, INTENT( IN ) :: n, thread
-      INTEGER, INTENT( OUT ) :: status
-      REAL ( KIND = wp ), INTENT( OUT ) :: f
-      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
-
-!  ----------------------------------------------------------
-!  Compute the value of a groups partially separable function
-!  initially written in Standard Input Format (SIF)
-!  ----------------------------------------------------------
-
-      CALL CUTEST_ufn_threadsafe( CUTEST_data_global,                          &
-                                  CUTEST_work_global( thread ),                &
-                                  status, n, X, f )
-      RETURN
-
-!  end of subroutine CUTEST_ufn_threaded
-
-      END SUBROUTINE CUTEST_ufn_threaded

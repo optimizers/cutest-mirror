@@ -39,7 +39,7 @@
       INTEGER, PARAMETER :: lwtran_min = lmin
       INTEGER, PARAMETER :: litran_min = lmin
       INTEGER, PARAMETER :: llink_min = lmin
-      INTEGER, PARAMETER :: io_buffer = 75
+      INTEGER, PARAMETER :: io_buffer = 11
 
 !-------------------------------------
 !   G e n e r i c  i n t e r f a c e s
@@ -87,7 +87,6 @@
         INTEGER :: l_link_e_u_v, lfuval, lelvar
         INTEGER :: lfxi, lgxi, lhxi, lggfx, ldx, lgrjac, lnguvl, lnhuvl, maxsel
         INTEGER :: nnov, nnjv, numvar, numcon
-        INTEGER :: io_buffer = io_buffer
         REAL :: sutime, sttime
         LOGICAL :: alllin, altriv
         CHARACTER ( LEN = 10 ) :: pname
@@ -137,6 +136,7 @@
         INTEGER :: lh_row = lmin
         INTEGER :: lh_col = lmin
         INTEGER :: lh_val = lmin
+        INTEGER :: io_buffer = io_buffer
         LOGICAL :: array_status = .FALSE.
         LOGICAL :: firstg
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: ICALCF

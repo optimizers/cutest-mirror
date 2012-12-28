@@ -1,5 +1,143 @@
 ! THIS VERSION: CUTEST 1.0 - 23/12/2012 AT 15:10 GMT.
 
+!-*-*-*-*-*-*-  C U T E S T    U S E T U P    S U B R O U T I N E  -*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 22nd December 2012
+
+      SUBROUTINE CUTEST_usetup( status, input, out, io_buffer, n, X, X_l, X_u )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: input, out, io_buffer
+      INTEGER, INTENT( INOUT ) :: n
+      INTEGER, INTENT( OUT ) :: status
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: X, X_l, X_u
+
+!  --------------------------------------------------------------
+!  set up the input data for the unconstrained optimization tools
+!  --------------------------------------------------------------
+
+!  local variables
+
+      INTEGER :: alloc_status
+      CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
+
+!  allocate space for the global workspace
+
+      ALLOCATE( CUTEST_work_global( 1 ), STAT = alloc_status )
+      IF ( alloc_status /= 0 ) THEN
+        bad_alloc = 'CUTEST_work_global' ; GO TO 910
+      END IF
+
+!  set the data
+
+      CALL CUTEST_usetup_threadsafe( CUTEST_data_global,                       &
+                                     CUTEST_work_global( 1 ),                  &
+                                     status, input, out, io_buffer,            &
+                                     n, X, X_l, X_u )
+      RETURN
+
+!  allocation error
+
+  910 CONTINUE
+      status = 1
+      IF ( out > 0 ) WRITE( out,                                               &
+        "( /, ' ** SUBROUTINE USETUP: allocation error for ', A, ' status = ', &
+       &  I0, /, ' Execution terminating ' )" ) TRIM( bad_alloc ), alloc_status
+      RETURN
+
+!  End of subroutine CUTEST_usetup
+
+      END SUBROUTINE CUTEST_usetup
+
+!-*-  C U T E S T    U S E T U P  _ t h r e a d e d   S U B R O U T I N E  -*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 22nd December 2012
+
+      SUBROUTINE CUTEST_usetup_threaded( status, input, out, io_buffer,        &
+                                         n, X, X_l, X_u, threads )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: input, out, io_buffer, threads
+      INTEGER, INTENT( INOUT ) :: n
+      INTEGER, INTENT( OUT ) :: status
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: X, X_l, X_u
+
+!  --------------------------------------------------------------
+!  set up the input data for the unconstrained optimization tools
+!  --------------------------------------------------------------
+
+!  local variables
+
+      INTEGER :: alloc_status
+      CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
+
+!  threads must be positive
+
+      IF ( threads < 1 ) GO TO 940
+
+!  allocate space for the threaded workspace data
+
+      ALLOCATE( CUTEST_work_global( threads ), STAT = alloc_status )
+      IF ( alloc_status /= 0 ) THEN
+        bad_alloc = 'CUTEST_work_global' ; GO TO 910
+      END IF
+
+!  set the data
+
+      CALL CUTEST_usetup_threadsafe( CUTEST_data_global,                       &
+                                     CUTEST_work_global( 1 ),                  &
+                                     status, input, out, io_buffer,            &
+                                     n, X, X_l, X_u )
+
+!  copy the workspace data to each thread
+
+      IF ( threads > 1 ) THEN
+        CUTEST_work_global( 2 : threads ) = CUTEST_work_global( 1 )
+
+!  ensure that each thread uses its own i/o buffer if required
+
+        DO i = 2, threads
+          CUTEST_work_global( i )%io_buffer = io_buffer + i - 1
+        END DO
+      END IF
+      RETURN
+
+!  allocation error
+
+  910 CONTINUE
+      status = 1
+      IF ( out > 0 ) WRITE( out,                                               &
+        "( /, ' ** SUBROUTINE USETUP: allocation error for ', A, ' status = ', &
+       &  I0, /, ' Execution terminating ' )" ) TRIM( bad_alloc ), alloc_status
+      RETURN
+
+!  thread error
+
+  940 CONTINUE
+      status = 4
+      IF ( out > 0 ) WRITE( out,                                               &
+        "( /, ' ** SUBROUTINE USETUP: argument threads must be positive,',     &
+       &  ' execution terminating ' )" )
+      RETURN
+
+!  End of subroutine CUTEST_usetup_threaded
+
+      END SUBROUTINE CUTEST_usetup_threaded
+
 !-*-  C U T E S T    U S E T U P _ t h r e a d s a f e  S U B R O U T I N E  -*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
@@ -525,135 +663,3 @@
 !  End of subroutine CUTEST_usetup_threadsafe
 
       END SUBROUTINE CUTEST_usetup_threadsafe
-
-!-*-*-*-*-*-*-  C U T E S T    U S E T U P    S U B R O U T I N E  -*-*-*-*-*-
-
-!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
-!  Principal author: Nick Gould
-
-!  History -
-!   fortran 2003 version released in CUTEst, 22nd December 2012
-
-      SUBROUTINE CUTEST_usetup( status, input, out, io_buffer, n, X, X_l, X_u )
-      USE CUTEST
-      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-
-!  dummy arguments
-
-      INTEGER, INTENT( IN ) :: input, out, io_buffer
-      INTEGER, INTENT( INOUT ) :: n
-      INTEGER, INTENT( OUT ) :: status
-      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: X, X_l, X_u
-
-!  --------------------------------------------------------------
-!  set up the input data for the unconstrained optimization tools
-!  --------------------------------------------------------------
-
-!  local variables
-
-      INTEGER :: alloc_status
-      CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
-
-!  allocate space for the global workspace
-
-      ALLOCATE( CUTEST_work_global( 1 ), STAT = alloc_status )
-      IF ( alloc_status /= 0 ) THEN
-        bad_alloc = 'CUTEST_work_global' ; GO TO 910
-      END IF
-
-!  set the data
-
-      CALL CUTEST_usetup_threadsafe( CUTEST_data_global,                       &
-                                     CUTEST_work_global( 1 ),                  &
-                                     status, input, out, io_buffer,            &
-                                     n, X, X_l, X_u )
-      RETURN
-
-!  allocation error
-
-  910 CONTINUE
-      status = 1
-      IF ( out > 0 ) WRITE( out,                                               &
-        "( /, ' ** SUBROUTINE USETUP: allocation error for ', A, ' status = ', &
-       &  I0, /, ' Execution terminating ' )" ) TRIM( bad_alloc ), alloc_status
-      RETURN
-
-!  End of subroutine CUTEST_usetup
-
-      END SUBROUTINE CUTEST_usetup
-
-!-*-  C U T E S T    U S E T U P  _ t h r e a d e d   S U B R O U T I N E  -*-
-
-!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
-!  Principal author: Nick Gould
-
-!  History -
-!   fortran 2003 version released in CUTEst, 22nd December 2012
-
-      SUBROUTINE CUTEST_usetup_threaded( status, input, out, io_buffer,        &
-                                         n, X, X_l, X_u, threads )
-      USE CUTEST
-      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-
-!  dummy arguments
-
-      INTEGER, INTENT( IN ) :: input, out, io_buffer, threads
-      INTEGER, INTENT( INOUT ) :: n
-      INTEGER, INTENT( OUT ) :: status
-      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: X, X_l, X_u
-
-!  --------------------------------------------------------------
-!  set up the input data for the unconstrained optimization tools
-!  --------------------------------------------------------------
-
-!  local variables
-
-      INTEGER :: alloc_status
-      CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
-
-!  threads must be positive
-
-      IF ( threads < 1 ) GO TO 940
-
-!  allocate space for the threaded workspace data
-
-      ALLOCATE( CUTEST_work_global( threads ), STAT = alloc_status )
-      IF ( alloc_status /= 0 ) THEN
-        bad_alloc = 'CUTEST_work_global' ; GO TO 910
-      END IF
-
-!  set the data
-
-      CALL CUTEST_usetup_threadsafe( CUTEST_data_global,                       &
-                                     CUTEST_work_global( 1 ),                  &
-                                     status, input, out, io_buffer,            &
-                                     n, X, X_l, X_u )
-
-!  copy the workspace data to each thread
-
-      IF ( threads > 1 )                                                       &
-        CUTEST_work_global( 2 : threads ) = CUTEST_work_global( 1 )
-      RETURN
-
-!  allocation error
-
-  910 CONTINUE
-      status = 1
-      IF ( out > 0 ) WRITE( out,                                               &
-        "( /, ' ** SUBROUTINE USETUP: allocation error for ', A, ' status = ', &
-       &  I0, /, ' Execution terminating ' )" ) TRIM( bad_alloc ), alloc_status
-      RETURN
-
-!  thread error
-
-  940 CONTINUE
-      status = 4
-      IF ( out > 0 ) WRITE( out,                                               &
-        "( /, ' ** SUBROUTINE USETUP: argument threads must be positive,',     &
-       &  ' execution terminating ' )" )
-      RETURN
-
-!  End of subroutine CUTEST_usetup_threaded
-
-      END SUBROUTINE CUTEST_usetup_threaded
-
