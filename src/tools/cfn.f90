@@ -1,6 +1,74 @@
-! THIS VERSION: CUTEST 1.0 - 20/11/2012 AT 13:30 GMT.
+! THIS VERSION: CUTEST 1.0 - 28/12/2012 AT 17:10 GMT.
 
 !-*-*-*-*-*-*-*-  C U T E S T    C F N    S U B R O U T I N E  -*-*-*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 28th December 2012
+
+      SUBROUTINE CUTEST_cfn( status, n, m, X, f, C )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, m
+      INTEGER, INTENT( OUT ) :: status
+      REAL ( KIND = wp ), INTENT( OUT ) :: f
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( m ) :: C
+
+!  ---------------------------------------------------------------------
+!  Compute the values of the objective function and general constraints
+!  of a function initially written in Standard Input Format (SIF)
+!  ---------------------------------------------------------------------
+
+      CALL CUTEST_cfn_threadsafe( CUTEST_data_global,                          &
+                                  CUTEST_work_global( 1 ),                     &
+                                  status, n, m, X, f, C )
+      RETURN
+
+!  end of subroutine CUTEST_cfn
+
+      END SUBROUTINE CUTEST_cfn
+
+!-*-*-*-  C U T E S T    C F N _ t h r e a d e d   S U B R O U T I N E  -*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 28th December 2012
+
+      SUBROUTINE CUTEST_cfn_threaded( status, n, m, X, f, C, thread )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, m, thread
+      INTEGER, INTENT( OUT ) :: status
+      REAL ( KIND = wp ), INTENT( OUT ) :: f
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( m ) :: C
+
+!  ---------------------------------------------------------------------
+!  Compute the values of the objective function and general constraints
+!  of a function initially written in Standard Input Format (SIF)
+!  ---------------------------------------------------------------------
+
+      CALL CUTEST_cfn_threadsafe( CUTEST_data_global,                          &
+                                  CUTEST_work_global( thread ),                &
+                                  status, n, m, X, f, C )
+      RETURN
+
+!  end of subroutine CUTEST_cfn_threaded
+
+      END SUBROUTINE CUTEST_cfn_threaded
+
+!-*-*-  C U T E S T    C F N _ t h r e a d s a f e   S U B R O U T I N E  -*-*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
 !  Principal author: Nick Gould
@@ -9,7 +77,7 @@
 !   fortran 77 version originally released in CUTE, October 1991
 !   fortran 2003 version released in CUTEst, 20th November 2012
 
-      SUBROUTINE CUTEST_cfn( data, work, status, n, m, X, f, C )
+      SUBROUTINE CUTEST_cfn_threadsafe( data, work, status, n, m, X, f, C )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
@@ -133,6 +201,6 @@
       status = 3
       RETURN
 
-!  end of subroutine CUTEST_cfn
+!  end of subroutine CUTEST_cfn_threadsafe
 
-      END SUBROUTINE CUTEST_cfn
+      END SUBROUTINE CUTEST_cfn_threadsafe

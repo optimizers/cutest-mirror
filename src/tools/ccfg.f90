@@ -1,6 +1,102 @@
-! THIS VERSION: CUTEST 1.0 - 21/11/2012 AT 08:30 GMT.
+! THIS VERSION: CUTEST 1.0 - 29/12/2012 AT 11:40 GMT.
 
 !-*-*-*-*-*-*-*-  C U T E S T    C C F G    S U B R O U T I N E  -*-*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 29th December 2012
+
+      SUBROUTINE CUTEST_ccfg( status, n, m, X, C, jtrans,                      &
+                              lcjac1, lcjac2, CJAC, grad )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, m, lcjac1, lcjac2
+      INTEGER, INTENT( OUT ) :: status
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( m ) :: C
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lcjac1, lcjac2 ) :: CJAC
+      LOGICAL, INTENT( IN ) :: jtrans, grad
+
+! ------------------------------------------------------------------------
+!  compute the values of the constraint functions and their gradients
+!  for constraints initially written in Standard Input Format (SIF).  
+!  The Jacobian must be stored in a dense format.
+!  (Subroutine CSCFG performs the same calculations for a sparse Jacobian)
+
+!  CJAC  is a two-dimensional array of dimension ( lcjac1, lcjac2 )
+!        which gives the value of the Jacobian matrix of the
+!        constraint functions, or its transpose, evaluated at X.
+!        If JTRANS is .TRUE., the i,j-th component of the array
+!        will contain the i-th derivative of the j-th constraint
+!        function. Otherwise, if JTRANS is .FALSE., the i,j-th
+!        component of the array will contain the j-th derivative
+!        of the i-th constraint function.
+! ------------------------------------------------------------------------
+
+      CALL CUTEST_ccfg_threadsafe( CUTEST_data_global,                         &
+                                   CUTEST_work_global( 1 ),                    &
+                                   status, n, m, X, C,                         &
+                                   jtrans, lcjac1, lcjac2, CJAC, grad )
+      RETURN
+
+!  end of subroutine CUTEST_ccfg
+
+      END SUBROUTINE CUTEST_ccfg
+
+!-*-*-*-  C U T E S T   C C F G _ t h r e a d e d   S U B R O U T I N E  -*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 29th December 2012
+
+      SUBROUTINE CUTEST_ccfg_threaded( status, n, m, X, C, jtrans,             &
+                                       lcjac1, lcjac2, CJAC, grad, thread )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, m, lcjac1, lcjac2, thread
+      INTEGER, INTENT( OUT ) :: status
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( m ) :: C
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lcjac1, lcjac2 ) :: CJAC
+      LOGICAL, INTENT( IN ) :: jtrans, grad
+
+! ------------------------------------------------------------------------
+!  compute the values of the constraint functions and their gradients
+!  for constraints initially written in Standard Input Format (SIF).  
+!  The Jacobian must be stored in a dense format.
+!  (Subroutine CSCFG performs the same calculations for a sparse Jacobian)
+
+!  CJAC  is a two-dimensional array of dimension ( lcjac1, lcjac2 )
+!        which gives the value of the Jacobian matrix of the
+!        constraint functions, or its transpose, evaluated at X.
+!        If JTRANS is .TRUE., the i,j-th component of the array
+!        will contain the i-th derivative of the j-th constraint
+!        function. Otherwise, if JTRANS is .FALSE., the i,j-th
+!        component of the array will contain the j-th derivative
+!        of the i-th constraint function.
+! ------------------------------------------------------------------------
+
+      CALL CUTEST_ccfg_threadsafe( CUTEST_data_global,                         &
+                                   CUTEST_work_global( thread ),               &
+                                   status, n, m, X, C,                         &
+                                   jtrans, lcjac1, lcjac2, CJAC, grad )
+      RETURN
+
+!  end of subroutine CUTEST_ccfg_threaded
+
+      END SUBROUTINE CUTEST_ccfg_threaded
+
+!-*-*-  C U T E S T   C C F G _ t h r e a d s a f e   S U B R O U T I N E  -*-*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
 !  Principal authors: Ingrid Bongartz and Nick Gould
@@ -9,8 +105,8 @@
 !   fortran 77 version originally released in CUTE, April 1992
 !   fortran 2003 version released in CUTEst, 21st November 2012
 
-      SUBROUTINE CUTEST_ccfg( data, work, status, n, m, X, C, jtrans,                &
-                              lcjac1, lcjac2, CJAC, grad )
+      SUBROUTINE CUTEST_ccfg_threadsafe( data, work, status, n, m, X, C,       &
+                                         jtrans, lcjac1, lcjac2, CJAC, grad )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
@@ -332,7 +428,7 @@
  2000 FORMAT( ' ** SUBROUTINE CCFG: Increase the leading dimension of CJAC' ) 
  2010 FORMAT( ' ** SUBROUTINE CCFG: Increase the second dimension of CJAC' )
 
-!  end of subroutine CUTEST_ccfg
+!  end of subroutine CUTEST_ccfg_threadsafe
 
-      END SUBROUTINE CUTEST_ccfg
+      END SUBROUTINE CUTEST_ccfg_threadsafe
 

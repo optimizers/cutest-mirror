@@ -75,7 +75,7 @@
                       data%n, data%ng, data%nel, data%ntotel, data%nvrels,     &
                       data%nvargp, data%IELVAR, data%IELING,                   &
                       data%ISTADG, data%ISTAEV, data%ISTAGV, data%ISVGRP,      &
-                      data%GXEQX, data%out, data%io_buffer, status,            &
+                      data%GXEQX, data%out, work%io_buffer, status,            &
                       alloc_status, bad_alloc, lirnh, work%H_row,              &
                       work%LINK_col, work%POS_in_H, work%llink, work%lpos,     &
                       nnzh )

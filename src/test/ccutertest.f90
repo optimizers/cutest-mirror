@@ -33,7 +33,8 @@
       INTEGER :: n, m, H_ne, HE_nel, HE_val_ne, HE_row_ne, J_ne, Ji_ne
       INTEGER :: l_h2_1, l_h, lhe_ptr, lhe_val, lhe_row, alloc_stat
       REAL ( KIND = wp ) :: f, ci
-      LOGICAL :: grad, byrows, goth, efirst, lfirst, nvfrst, grlagf, jtrans
+      LOGICAL :: grad, byrows, goth, gotj, efirst, lfirst, nvfrst
+      LOGICAL :: grlagf, jtrans
       CHARACTER ( len = 10 ) ::  p_name
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: H_row, H_col, X_type
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: HE_row, HE_row_ptr, HE_val_ptr
@@ -46,7 +47,7 @@
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : , : ) :: J2_val
       LOGICAL, ALLOCATABLE, DIMENSION( : ) :: EQUATION, LINEAR
       CHARACTER ( len = 10 ), ALLOCATABLE, DIMENSION( : ) :: X_names, C_names
-!     REAL :: CPU( 2 ), CALLS( 4 )
+      REAL ( KIND = wp ) :: CPU( 2 ), CALLS( 7 )
 
 !  open the problem data file
 
@@ -58,11 +59,14 @@
       CALL CDIMEN( input, n, m )
       WRITE( out, "( ' * n = ', I0, ', m = ', I0 )" ) n, m
       l_h2_1 = n
-      ALLOCATE( X( n ), X_l( n ), X_u( n ), G( n ), VECTOR( n ), Ji( n ),      &
-                RESULT( n ), X_names( n ), X_type( n ), stat = alloc_stat )
+      ALLOCATE( X( n ), X_l( n ), X_u( n ), G( n ), Ji( n ),                   &
+                X_names( n ), X_type( n ), stat = alloc_stat )
       IF ( alloc_stat /= 0 ) GO TO 990
       ALLOCATE( C( m ), Y( m ), C_l( m ), C_u( m ), C_names( m ),              &
                 EQUATION( m ), LINEAR( m ), stat = alloc_stat )
+      IF ( alloc_stat /= 0 ) GO TO 990
+      ALLOCATE( VECTOR( MAX( n, m ) ), RESULT( MAX( n, m ) ),                  &
+                stat = alloc_stat )
       IF ( alloc_stat /= 0 ) GO TO 990
       ALLOCATE( H2_val( l_h2_1, n ), stat = alloc_stat )
       IF ( alloc_stat /= 0 ) GO TO 990
@@ -187,15 +191,15 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
 
 !  compute the constraint and sparse Jacobian values ....
 
-      grad = .TRUE.
-      WRITE( out, "( ' CALL CSCFG with grad = .TRUE.' )" )
-      CALL CSCFG( n, m, X, m, C, J_ne, l_j, J_val, J_var, J_fun, grad )
-      CALL WRITE_C( out, m, C )
-      CALL WRITE_J_sparse( out, J_ne, l_j, J_val, J_fun, J_var )
-      grad = .FALSE.
-      WRITE( out, "( ' CALL CSCFG with grad = .FALSE.' )" )
-      CALL CSCFG( n, m, X, m, C, J_ne, l_j, J_val, J_var, J_fun, grad )
-      CALL WRITE_C( out, m, C )
+!     grad = .TRUE.
+!     WRITE( out, "( ' CALL CSCFG with grad = .TRUE.' )" )
+!     CALL CSCFG( n, m, X, m, C, J_ne, l_j, J_val, J_var, J_fun, grad )
+!     CALL WRITE_C( out, m, C )
+!     CALL WRITE_J_sparse( out, J_ne, l_j, J_val, J_fun, J_var )
+!     grad = .FALSE.
+!     WRITE( out, "( ' CALL CSCFG with grad = .FALSE.' )" )
+!     CALL CSCFG( n, m, X, m, C, J_ne, l_j, J_val, J_var, J_fun, grad )
+!     CALL WRITE_C( out, m, C )
 
 !  ... and its current version
 
@@ -224,15 +228,15 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
 
 !  compute an individual constraint and its sparse gradient ....
 
-      grad = .TRUE.
-      WRITE( out, "( ' CALL CSCIFG with grad = .TRUE.' )" )
-      CALL CSCIFG( n, icon, X, ci, Ji_ne, n, Ji, J_var, grad )
-      CALL WRITE_CI( out, icon, ci )
-      CALL WRITE_SJI( out, icon, Ji_ne, n, Ji, J_var )
-      grad = .FALSE.
-      WRITE( out, "( ' CALL CSCIFG with grad = .FALSE.' )" )
-      CALL CSCIFG( n, icon, X, ci, Ji_ne, n, Ji, J_var, grad )
-      CALL WRITE_CI( out, icon, ci )
+!     grad = .TRUE.
+!     WRITE( out, "( ' CALL CSCIFG with grad = .TRUE.' )" )
+!     CALL CSCIFG( n, icon, X, ci, Ji_ne, n, Ji, J_var, grad )
+!     CALL WRITE_CI( out, icon, ci )
+!     CALL WRITE_SJI( out, icon, Ji_ne, n, Ji, J_var )
+!     grad = .FALSE.
+!     WRITE( out, "( ' CALL CSCIFG with grad = .FALSE.' )" )
+!     CALL CSCIFG( n, icon, X, ci, Ji_ne, n, Ji, J_var, grad )
+!     CALL WRITE_CI( out, icon, ci )
 
 !  ... and its current version
 
@@ -426,10 +430,34 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
       CALL CPROD1( n, m, goth, X, m, Y, VECTOR, RESULT )
       CALL WRITE_RESULT( out, n, VECTOR, RESULT )
 
-!  terminal exit
+!  compute a Jacobian-vector product
 
-!     WRITE( out, "( ' CALL CREPRT' )" )
-!     CALL CREPRT( CALLS, CPU )
+      VECTOR = one
+      gotj = .FALSE. ; jtrans = .FALSE.
+      WRITE( out, "( ' CALL CJPROD with gotj = .FALSE. and jtrans = .FALSE.')" )
+      CALL CJPROD( n, m, gotj, jtrans, X, VECTOR, n, RESULT, m )
+      CALL WRITE_RESULT2( out, n, VECTOR, m, RESULT )
+      gotj = .TRUE. ; jtrans = .FALSE.
+      WRITE( out, "( ' CALL CJPROD with gotj = .TRUE. and jtrans = .TRUE.' )" )
+      CALL CJPROD( n, m, gotj, jtrans, X, VECTOR, n, RESULT, m )
+      CALL WRITE_RESULT2( out, n, VECTOR, m, RESULT )
+      gotj = .FALSE. ; jtrans = .TRUE.
+      WRITE( out, "( ' CALL CJPROD with gotj = .FALSE. and jtrans = .TRUE.')" )
+      CALL CJPROD( n, m, gotj, jtrans, X, VECTOR, m, RESULT, n )
+      CALL WRITE_RESULT2( out, m, VECTOR, n, RESULT )
+      gotj = .TRUE. ; jtrans = .TRUE.
+      WRITE( out, "( ' CALL CJPROD with gotj = .TRUE. and jtrans = .TRUE.' )" )
+      CALL CJPROD( n, m, gotj, jtrans, X, VECTOR, m, RESULT, n )
+      CALL WRITE_RESULT2( out, m, VECTOR, n, RESULT )
+
+!  calls and time report
+
+      WRITE( out, "( ' CALL CREPRT' )" )
+      CALL CREPRT( CALLS, CPU )
+      WRITE( out, "( ' CALLS(1-7) =', 7( 1X, I0 ) )" ) INT( CALLS( 1 : 7 ) )
+      WRITE( out, "( ' CPU(1-2) =', 2F7.2 )" ) CPU( 1 : 2 )
+
+!  terminal exit
 
       DEALLOCATE( X_type, H_row, H_col, HE_row, HE_row_ptr, HE_val_ptr, X,     &
                   X_l, X_u, G, Ji, Y, C_l, C_u, C, H_val, HE_val, H2_val,      &
@@ -725,5 +753,25 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
         WRITE( out, "( ' * ', I7, 2ES12.4 )" ) i, VECTOR( i ), RESULT( i )
       END DO
       END SUBROUTINE WRITE_RESULT
+
+      SUBROUTINE WRITE_RESULT2( out, len_vector, VECTOR, len_result, RESULT )
+      INTEGER :: len_vector, len_result, out
+      REAL ( KIND = wp ), DIMENSION( len_vector ) :: VECTOR
+      REAL ( KIND = wp ), DIMENSION( len_result ) :: RESULT
+      INTEGER :: i
+      WRITE( out, "( ' *       i    VECTOR     RESULT' )" )
+      DO i = 1, MIN( len_vector, len_result )
+        WRITE( out, "( ' * ', I7, 2ES12.4 )" ) i, VECTOR( i ), RESULT( i )
+      END DO
+      IF ( len_vector > len_result ) THEN
+        DO i = len_result + 1, len_vector
+          WRITE( out, "( ' * ', I7, ES12.4, '     -' )" ) i, VECTOR( i )
+        END DO
+      ELSE IF ( len_vector < len_result ) THEN
+        DO i = len_vector + 1, len_result
+          WRITE( out, "( ' * ', I7, '     -      ', ES12.4 )" ) i, RESULT( i )
+        END DO
+      END IF
+      END SUBROUTINE WRITE_RESULT2
 
     END PROGRAM CUTEST_test_constrained_tools

@@ -1,6 +1,100 @@
-! THIS VERSION: CUTEST 1.0 - 28/11/2012 AT 08:20 GMT.
+! THIS VERSION: CUTEST 1.0 - 29/12/2012 AT 12:25 GMT.
 
 !-*-*-*-*-*-*-*-  C U T E S T    C C F S G    S U B R O U T I N E  -*-*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 29th December 2012
+
+      SUBROUTINE CUTEST_ccfsg( status, n, m, X, C,                             &
+                               nnzj, lj, J_val, J_var, J_fun, grad )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, m, lj
+      INTEGER, INTENT( OUT ) :: nnzj, status
+      LOGICAL, INTENT( IN ) :: grad
+      INTEGER, INTENT( OUT ), DIMENSION( lj ) :: J_var, J_fun
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( m ) :: C
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lj ) :: J_val
+
+!  ----------------------------------------------------------------------
+!  Compute the values of the constraint functions and their gradients
+!  for constraints initially written in Standard Input Format (SIF).
+!  The Jacobian will be stored in a sparse co-ordinate format.
+!  (Subroutine CCFG performs the same calculations for a dense Jacobian.)
+
+!  J_val  is an array which gives the values of the nonzeros of the
+!        general constraint functions evaluated at X and Y.
+!        The i-th entry of J_val gives the value of the derivative
+!        with respect to variable J_var(i) of constraint function 
+!        J_fun(i) (i.e., J_fun(i) = j > 0 indicates the j-th
+!        general constraint function).
+!  ----------------------------------------------------------------------
+
+      CALL CUTEST_ccfsg_threadsafe( CUTEST_data_global,                        &
+                                    CUTEST_work_global( 1 ),                   &
+                                    status, n, m, X, C,                        &
+                                    nnzj, lj, J_val, J_var, J_fun, grad )
+      RETURN
+
+!  end of subroutine CUTEST_cscfg
+
+      END SUBROUTINE CUTEST_ccfsg
+
+!-*-*-  C U T E S T    C C F S G _ t h r e a d e d   S U B R O U T I N E  -*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 29th December 2012
+
+      SUBROUTINE CUTEST_ccfsg_threaded( status, n, m, X, C, nnzj, lj,          &
+                                        J_val, J_var, J_fun, grad, thread )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, m, lj, thread
+      INTEGER, INTENT( OUT ) :: nnzj, status
+      LOGICAL, INTENT( IN ) :: grad
+      INTEGER, INTENT( OUT ), DIMENSION( lj ) :: J_var, J_fun
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( m ) :: C
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lj ) :: J_val
+
+!  ----------------------------------------------------------------------
+!  Compute the values of the constraint functions and their gradients
+!  for constraints initially written in Standard Input Format (SIF).
+!  The Jacobian will be stored in a sparse co-ordinate format.
+!  (Subroutine CCFG performs the same calculations for a dense Jacobian.)
+
+!  J_val  is an array which gives the values of the nonzeros of the
+!        general constraint functions evaluated at X and Y.
+!        The i-th entry of J_val gives the value of the derivative
+!        with respect to variable J_var(i) of constraint function 
+!        J_fun(i) (i.e., J_fun(i) = j > 0 indicates the j-th
+!        general constraint function).
+!  ----------------------------------------------------------------------
+
+      CALL CUTEST_ccfsg_threadsafe( CUTEST_data_global,                        &
+                                    CUTEST_work_global( thread ),              &
+                                    status, n, m, X, C,                        &
+                                    nnzj, lj, J_val, J_var, J_fun, grad )
+      RETURN
+
+!  end of subroutine CUTEST_cscfg_threaded
+
+      END SUBROUTINE CUTEST_ccfsg_threaded
+
+!-*-  C U T E S T    C C F S G _ t h r e a d s a f e   S U B R O U T I N E  -*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
 !  Principal authors: Ingrid Bongartz and Nick Gould
@@ -9,8 +103,8 @@
 !   fortran 77 version originally released in CUTE, April 1992
 !   fortran 2003 version released in CUTEst, 28th November 2012
 
-      SUBROUTINE CUTEST_ccfsg( data, work, status, n, m, X, C,                       &
-                               nnzj, lj, J_val, J_var, J_fun, grad )
+      SUBROUTINE CUTEST_ccfsg_threadsafe( data, work, status, n, m, X, C,      &
+                                          nnzj, lj, J_val, J_var, J_fun, grad )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
@@ -323,7 +417,7 @@
       status = 3
       RETURN
 
-!  end of subroutine CUTEST_cscfg
+!  end of subroutine CUTEST_cscfg_threadsafe
 
-      END SUBROUTINE CUTEST_ccfsg
+      END SUBROUTINE CUTEST_ccfsg_threadsafe
 

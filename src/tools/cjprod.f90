@@ -1,6 +1,91 @@
-! THIS VERSION: CUTEST 1.0 - 28/11/2012 AT 14:05 GMT.
+! THIS VERSION: CUTEST 1.0 - 29/12/2012 AT 16:05 GMT.
 
 !-*-*-*-*-*-*-  C U T E S T    C J P R O D    S U B R O U T I N E  -*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 29th December 2012
+
+      SUBROUTINE CUTEST_cjprod( status, n, m, gotj, jtrans, X,     &
+                                VECTOR, lvector, RESULT, lresult )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, m, lvector, lresult
+      INTEGER, INTENT( OUT ) :: status
+      LOGICAL, INTENT( IN ) :: gotj, jtrans
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( lvector ) :: VECTOR
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lresult ) :: RESULT
+
+!   -------------------------------------------------------------------
+!  compute the matrix-vector product between the Jacobian matrix of the
+!  constraints (jtrans = .FALSE.), or its transpose (jtrans = .TRUE.) 
+!  for the problem, and a given vector VECTOR. The result is placed in 
+!  RESULT. If gotj is .TRUE. the first derivatives are assumed to have 
+!  already been computed. If the user is unsure, set gotj = .FALSE. the 
+!  first time a product is required with the Jacobian evaluated at X. 
+!  X is not used if gotj = .TRUE.
+!   -------------------------------------------------------------------
+
+      CALL CUTEST_cjprod_threadsafe( CUTEST_data_global,                       &
+                                     CUTEST_work_global( 1 ),                  &
+                                     status, n, m, gotj, jtrans, X,            &
+                                     VECTOR, lvector, RESULT, lresult )
+      RETURN
+
+!  end of subroutine CUTEST_cjprod
+
+      END SUBROUTINE CUTEST_cjprod
+
+!-*-*-  C U T E S T   C J P R O D _ t h r e a d e d   S U B R O U T I N E  -*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 29th December 2012
+
+      SUBROUTINE CUTEST_cjprod_threaded( status, n, m, gotj, jtrans, X,        &
+                                         VECTOR, lvector, RESULT, lresult,     &
+                                         thread )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, m, lvector, lresult, thread
+      INTEGER, INTENT( OUT ) :: status
+      LOGICAL, INTENT( IN ) :: gotj, jtrans
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( lvector ) :: VECTOR
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lresult ) :: RESULT
+
+!   -------------------------------------------------------------------
+!  compute the matrix-vector product between the Jacobian matrix of the
+!  constraints (jtrans = .FALSE.), or its transpose (jtrans = .TRUE.) 
+!  for the problem, and a given vector VECTOR. The result is placed in 
+!  RESULT. If gotj is .TRUE. the first derivatives are assumed to have 
+!  already been computed. If the user is unsure, set gotj = .FALSE. the 
+!  first time a product is required with the Jacobian evaluated at X. 
+!  X is not used if gotj = .TRUE.
+!   -------------------------------------------------------------------
+
+      CALL CUTEST_cjprod_threadsafe( CUTEST_data_global,                       &
+                                     CUTEST_work_global( thread ),             &
+                                     status, n, m, gotj, jtrans, X,            &
+                                     VECTOR, lvector, RESULT, lresult )
+      RETURN
+
+!  end of subroutine CUTEST_cjprod_threaded
+
+      END SUBROUTINE CUTEST_cjprod_threaded
+
+!-*-  C U T E S T   C J P R O D _ t h r e a d s a f e   S U B R O U T I N E  -*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
 !  Principal authors: Ingrid Bongartz and Nick Gould
@@ -9,8 +94,9 @@
 !   fortran 77 version originally released in CUTEr, June 2003
 !   fortran 2003 version released in CUTEst, 28th November 2012
 
-      SUBROUTINE CUTEST_cjprod( data, work, status, n, m, gotj, jtrans, X,           &
-                                VECTOR, lvector, RESULT, lresult )
+      SUBROUTINE CUTEST_cjprod_threadsafe( data, work, status, n, m, gotj,     &
+                                           jtrans, X, VECTOR, lvector,         &
+                                           RESULT, lresult )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
@@ -270,6 +356,6 @@
       status = 3
       RETURN
 
-!  end of subroutine CUTEST_cjprod
+!  end of subroutine CUTEST_cjprod_threadsafe
 
-      END SUBROUTINE CUTEST_cjprod
+      END SUBROUTINE CUTEST_cjprod_threadsafe

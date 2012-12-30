@@ -123,6 +123,30 @@ run_test_cutest_constrained: ctools test_cutest_constrained
 	cat ../test/test_con.output
 	rm $(OBJ)/run_test
 
+run_test_cutest_threaded_unconstrained: utools test_cutest_unconstrained
+	echo " Exhaustive test of unconstrained threaded tools"
+	$(SED) -f $(SEDS) ../test/utest_threaded.f90 > $(OBJ)/utest_threaded.f90
+	echo "$(FORTRAN) $(RUNFFLAGS) $(SPECIAL) -o run_test \
+            $(U_TEST) utest_threaded.f90 -L$(OBJ) $(LIBS)"
+	cd $(OBJ) ; $(FORTRAN) $(RUNFFLAGS) $(SPECIAL) -o run_test \
+            $(U_TEST) utest_threaded.f90 -L$(OBJ) $(LIBS)
+#	- $(OBJ)/run_test
+	- $(OBJ)/run_test >& ../test/test_unc_threaded.output
+	cat ../test/test_unc_threaded.output
+	rm $(OBJ)/run_test
+
+run_test_cutest_threaded_constrained: ctools test_cutest_constrained
+	echo " Exhaustive test of constrained threaded tools"
+	$(SED) -f $(SEDS) ../test/ctest_threaded.f90 > $(OBJ)/ctest_threaded.f90
+	cd $(OBJ) ; echo "$(FORTRAN) $(RUNFFLAGS) $(SPECIAL) -o run_test \
+            $(C_TEST) ctest_threaded.f90 -L$(OBJ) $(LIBS)"
+	cd $(OBJ) ; $(FORTRAN) $(RUNFFLAGS) $(SPECIAL) -o run_test \
+            $(C_TEST) ctest_threaded.f90 -L$(OBJ) $(LIBS)
+#	- $(OBJ)/run_test
+	- $(OBJ)/run_test >& ../test/test_con_threaded.output
+	cat ../test/test_con_threaded.output
+	rm $(OBJ)/run_test
+
 run_test_cuter_unconstrained: test_cutest_unconstrained
 	echo " Exhaustive test of ** CUTEr ** unconstrained tools"
 	$(SED) -f $(SEDS) ../test/ucutertest.f90 > $(OBJ)/ucutertest.f90

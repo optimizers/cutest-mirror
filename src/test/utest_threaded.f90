@@ -1,14 +1,16 @@
-! THIS VERSION: CUTEST 1.0 - 17/11/2012 AT 10:00 GMT.
+! THIS VERSION: CUTEST 1.0 - 28/12/2012 AT 13:00 GMT.
 
 !- C U T E S T  t e s t _ u n c o n s t r a i n e d _ t o o l s  P R O G R A M -
 
-    PROGRAM CUTER_test_unconstrained_tools
+    PROGRAM CUTEST_test_unconstrained_tools
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
 !  Principal author: Nick Gould
 
 !  History -
 !   fortran 2003 version released November 2012
+
+!  threaded version
 
 !--------------------
 !   P r e c i s i o n
@@ -22,14 +24,17 @@
 
       INTEGER, PARAMETER :: input = 55
       INTEGER, PARAMETER :: out = 6
+      INTEGER, PARAMETER :: threads = 4
+      INTEGER, PARAMETER :: BUFFER( 4 ) = (/ 77, 78, 79, 80 /)
+      INTEGER, PARAMETER :: thread = 2
       REAL ( KIND = wp ), PARAMETER :: one = 1.0_wp
 
 !--------------------------------
 !   L o c a l   V a r i a b l e s
 !--------------------------------
 
-      INTEGER :: i, n, HE_nel, HE_val_ne, HE_row_ne, alloc_stat
-      INTEGER :: l_h2_1, l_h, lhe_ptr, H_ne, lhe_val, lhe_row
+      INTEGER :: i, n, HE_nel, HE_val_ne, HE_row_ne, status, alloc_stat
+      INTEGER :: l_h2_1, l_h, lhe_ptr, H_ne, lhe_val, lhe_row, maxsbw
       REAL ( KIND = wp ) :: f
       LOGICAL :: grad, byrows, goth
       CHARACTER ( len = 10 ) ::  p_name
@@ -48,8 +53,8 @@
 
 !  allocate basic arrays
 
-      WRITE( out, "( ' Call UDIMEN ' )" )
-      CALL UDIMEN( input, n )
+      WRITE( out, "( ' Call CUTEST_udimen ' )" )
+      CALL CUTEST_udimen( input, status, n )
       WRITE( out, "( ' * n = ', I0 )" ) n
       l_h2_1 = n
       ALLOCATE( X( n ), X_l( n ), X_u( n ), G( n ), VECTOR( n ), RESULT( n ),  &
@@ -60,77 +65,92 @@
 
 !  set up SIF data
 
-      WRITE( out, "( ' Call USETUP ' )" )
-      CALL USETUP( input, out, n, X, X_l, X_u, n )
+      WRITE( out, "( ' Call CUTEST_usetup ' )" )
+      CALL CUTEST_usetup_threaded( status, input, out, threads, BUFFER,        &
+                                   n, X, X_l, X_u )
+      IF ( status /= 0 ) GO to 900
       CALL WRITE_X( out, n, X, X_l, X_u )
+
+!X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
 
 !  obtain variable and problem names
 
-      WRITE( out, "( ' Call UNAMES' )" )
-      CALL UNAMES( n, p_name, X_names )
+      WRITE( out, "( ' Call CUTEST_unames' )" )
+      CALL CUTEST_unames( status, n, p_name, X_names )
+      IF ( status /= 0 ) GO to 900
       CALL WRITE_p_name( out, p_name )
       CALL WRITE_X_names( out, n, X_names )
 
 !  obtain problem name
 
-      WRITE( out, "( ' Call PBNAME' )" )
-      CALL PBNAME( n, p_name )
+      WRITE( out, "( ' Call CUTEST_probname' )" )
+      CALL CUTEST_probname( status, p_name )
+      IF ( status /= 0 ) GO to 900
       CALL WRITE_p_name( out, p_name )
 
 !  obtain variable names
 
-      WRITE( out, "( ' Call VARNAMES' )" )
-      CALL VARNAMES( n, X_names )
+      WRITE( out, "( ' Call CUTEST_varnames' )" )
+      CALL CUTEST_varnames( status, n, X_names )
+      IF ( status /= 0 ) GO to 900
       CALL WRITE_X_names( out, n, X_names )
 
 !  obtain variable types
 
-      WRITE( out, "( ' Call UVARTY' )" )
-      CALL UVARTY( n, X_type )
+      WRITE( out, "( ' Call CUTEST_uvartype' )" )
+      CALL CUTEST_uvartype( status, n, X_type )
+      IF ( status /= 0 ) GO to 900
       CALL WRITE_X_type( out, n, X_type )
 
 !  compute the objective function value
 
-      WRITE( out, "( ' Call UFN' )" )
-      CALL UFN( n, X, f )
+      WRITE( out, "( ' Call CUTEST_ufn' )" )
+      CALL CUTEST_ufn_threaded( status, n, X, f, thread )
+      IF ( status /= 0 ) GO to 900
       CALL WRITE_f( out, f )
 
 !  compute the gradient value
 
-      WRITE( out, "( ' Call UGR' )" )
-      CALL UGR( n, X, G )
+      WRITE( out, "( ' Call CUTEST_ugr' )" )
+      CALL CUTEST_ugr_threaded( status, n, X, G, thread )
+      IF ( status /= 0 ) GO to 900
       CALL WRITE_G( out, n, G )
 
 !  compute the objective function and gradient values
 
       grad = .TRUE.
-      WRITE( out, "( ' Call UOFG with grad = .TRUE.' )" )
-      CALL UOFG( n, X, f, G, grad )
+      WRITE( out, "( ' Call CUTEST_uofg with grad = .TRUE.' )" )
+      CALL CUTEST_uofg_threaded( status, n, X, f, G, grad, thread )
+      IF ( status /= 0 ) GO to 900
       CALL WRITE_f( out, f )
       CALL WRITE_G( out, n, G )
 
       grad = .FALSE.
-      WRITE( out, "( ' Call UOFG with grad = .FALSE.' )" )
-      CALL UOFG( n, X, f, G, grad )
+      WRITE( out, "( ' Call CUTEST_uofg with grad = .FALSE.' )" )
+      CALL CUTEST_uofg_threaded( status, n, X, f, G, grad, thread )
+      IF ( status /= 0 ) GO to 900
       CALL WRITE_f( out, f )
 
 !  compute the dense Hessian value
 
-      WRITE( out, "( ' Call UDH' )" )
-      CALL UDH( n, X, l_h2_1, H2_val )
+      WRITE( out, "( ' Call CUTEST_udh' )" )
+      CALL CUTEST_udh_threaded( status, n, X, l_h2_1, H2_val, thread )
+      IF ( status /= 0 ) GO to 900
       CALL WRITE_H_dense( out, n, l_h2_1, H2_val )
 
 !  compute the gradient and dense Hessian values
 
-      WRITE( out, "( ' Call UGRDH' )" )
-      CALL UGRDH( n, X, G, l_h2_1, H2_val )
+      WRITE( out, "( ' Call CUTEST_ugrdh' )" )
+      CALL CUTEST_ugrdh_threaded( status, n, X, G, l_h2_1, H2_val, thread )
+      IF ( status /= 0 ) GO to 900
       CALL WRITE_G( out, n, G )
       CALL WRITE_H_dense( out, n, l_h2_1, H2_val )
 
 !  compute the number of nonzeros in the sparse Hessian
 
-      WRITE( out, "( ' Call UDIMSH' )" )
-      CALL UDIMSH( H_ne )
+      WRITE( out, "( ' Call CUTEST_udimsh' )" )
+      CALL CUTEST_udimsh( status, H_ne )
+      IF ( status /= 0 ) GO to 900
       WRITE( out, "( ' * H_ne = ', I0 )" ) H_ne
 
       l_h = H_ne
@@ -139,21 +159,26 @@
 
 !  compute the sparse Hessian value
 
-      WRITE( out, "( ' Call USH' )" )
-      CALL USH( n, X, H_ne, l_h, H_val, H_row, H_col )
+      WRITE( out, "( ' Call CUTEST_ush' )" )
+      CALL CUTEST_ush_threaded( status, n, X, H_ne, l_h, H_val, H_row, H_col,  &
+                                thread )
+      IF ( status /= 0 ) GO to 900
       CALL WRITE_H_sparse( out, H_ne, l_h, H_val, H_row, H_col )
 
 !  compute the gradient and sparse Hessian values
 
-      WRITE( out, "( ' Call UGRSH' )" )
-      CALL UGRSH( n, X, G, H_ne, l_h, H_val, H_row, H_col )
+      WRITE( out, "( ' Call CUTEST_ugrsh' )" )
+      CALL CUTEST_ugrsh_threaded( status, n, X, G, H_ne, l_h, H_val, H_row,    &
+                                  H_col, thread )
+      IF ( status /= 0 ) GO to 900
       CALL WRITE_G( out, n, G )
       CALL WRITE_H_sparse( out, H_ne, l_h, H_val, H_row, H_col )
 
 !  compute the number of nonzeros in the element Hessian
 
-      WRITE( out, "( ' Call UDIMSE' )" )
-      CALL UDIMSE( HE_nel, HE_val_ne, HE_row_ne )
+      WRITE( out, "( ' Call CUTEST_udimse' )" )
+      CALL CUTEST_udimse( status, HE_nel, HE_val_ne, HE_row_ne )
+      IF ( status /= 0 ) GO to 900
       WRITE( out, "( ' * H_nel = ', I0, ' HE_val_ne = ', I0,                   &
      &                 ' HE_row_ne = ', I0 )" ) HE_nel, HE_val_ne, HE_row_ne
 
@@ -167,31 +192,37 @@
 !  compute the element Hessian value
 
       byrows = .FALSE.
-      WRITE( out, "( ' Call UEH with byrows = .FALSE.' )" )
-      CALL UEH( n, X, HE_nel, HE_row, lhe_row, lhe_ptr, HE_row_ptr,            &
-                HE_val, lhe_val, HE_val_ptr, byrows )
+      WRITE( out, "( ' Call CUTEST_ueh with byrows = .FALSE.' )" )
+      CALL CUTEST_ueh_threaded( status, n, X, HE_nel, lhe_ptr, HE_row_ptr,     &
+                HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val, byrows, thread )
+      IF ( status /= 0 ) GO to 900
       CALL WRITE_H_element( out, HE_nel, lhe_ptr, HE_row_ptr,                  &
                             HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val )
       byrows = .TRUE.
-      WRITE( out, "( ' Call UEH with byrows = .TRUE.' )" )
-      CALL UEH( n, X, HE_nel, HE_row, lhe_row, lhe_ptr, HE_row_ptr,            &
-                HE_val, lhe_val, HE_val_ptr, byrows )
+      WRITE( out, "( ' Call CUTEST_ueh with byrows = .TRUE.' )" )
+      CALL CUTEST_ueh_threaded( status, n, X, HE_nel, lhe_ptr, HE_row_ptr,     &
+                HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val, byrows, thread )
+      IF ( status /= 0 ) GO to 900
       CALL WRITE_H_element( out, HE_nel, lhe_ptr, HE_row_ptr,                  &
                             HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val )
 
 !  compute the gradient and element Hessian values
 
       byrows = .FALSE.
-      WRITE( out, "( ' Call UGREH with byrows = .FALSE' )" )
-      CALL UGREH( n, X, G, HE_nel, HE_row, lhe_row, lhe_ptr, HE_row_ptr,       &
-                  HE_val, lhe_val, HE_val_ptr, byrows )
+      WRITE( out, "( ' Call CUTEST_ugreh with byrows = .FALSE' )" )
+      CALL CUTEST_ugreh_threaded( status, n, X, G, HE_nel, lhe_ptr,            &
+                                  HE_row_ptr, HE_val_ptr, lhe_row,             &
+                                  HE_row, lhe_val, HE_val, byrows, thread )
+      IF ( status /= 0 ) GO to 900
       CALL WRITE_G( out, n, G )
       CALL WRITE_H_element( out, HE_nel, lhe_ptr, HE_row_ptr,                  &
                             HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val )
       byrows = .TRUE.
-      WRITE( out, "( ' Call UGREH with byrows = .TRUE.' )" )
-      CALL UGREH( n, X, G, HE_nel, HE_row, lhe_row, lhe_ptr, HE_row_ptr,       &
-                  HE_val, lhe_val, HE_val_ptr, byrows )
+      WRITE( out, "( ' Call CUTEST_ugreh with byrows = .TRUE.' )" )
+      CALL CUTEST_ugreh_threaded( status, n, X, G, HE_nel, lhe_ptr,            &
+                                  HE_row_ptr, HE_val_ptr, lhe_row,             &
+                                  HE_row, lhe_val, HE_val, byrows, thread )
+      IF ( status /= 0 ) GO to 900
       CALL WRITE_G( out, n, G )
       CALL WRITE_H_element( out, HE_nel, lhe_ptr, HE_row_ptr,                  &
                             HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val )
@@ -200,12 +231,14 @@
 
       VECTOR = one
       goth = .FALSE.
-      WRITE( out, "( ' Call UPROD with goth = .FALSE.' )" )
-      CALL UPROD( n, goth, X, VECTOR, RESULT )
+      WRITE( out, "( ' Call CUTEST_uhprod with goth = .FALSE.' )" )
+      CALL CUTEST_uhprod_threaded( status, n, goth, X, VECTOR, RESULT, thread )
+      IF ( status /= 0 ) GO to 900
       CALL WRITE_RESULT( out, n, VECTOR, RESULT )
       goth = .TRUE.
-      WRITE( out, "( ' Call UPROD with goth = .TRUE.' )" )
-      CALL UPROD( n, goth, X, VECTOR, RESULT )
+      WRITE( out, "( ' Call CUTEST_uhprod with goth = .TRUE.' )" )
+      CALL CUTEST_uhprod_threaded( status, n, goth, X, VECTOR, RESULT, thread )
+      IF ( status /= 0 ) GO to 900
       CALL WRITE_RESULT( out, n, VECTOR, RESULT )
 
 !  compute a band of the Hessian
@@ -216,23 +249,35 @@
       IF ( alloc_stat /= 0 ) GO TO 990
 
       goth = .FALSE.
-      WRITE( out, "( ' Call UBANDH with goth = .FALSE.' )" )
-      CALL UBANDH( n, goth, X, nsemib, H_band, lbandh )
-      CALL WRITE_H_BAND( out, n, lbandh, H_band, nsemib )
+      WRITE( out, "( ' Call CUTEST_ubandh with goth = .FALSE.' )" )
+      CALL CUTEST_ubandh_threaded( status, n, X, nsemib, H_band, lbandh,       &
+                                   maxsbw, thread )
+      IF ( status /= 0 ) GO to 900
+      CALL WRITE_H_BAND( out, n, lbandh, H_band, nsemib, maxsbw )
       goth = .TRUE.
-      WRITE( out, "( ' Call UBANDH with goth = .TRUE.' )" )
-      CALL UBANDH( n, goth, X, nsemib, H_band, lbandh )
-      CALL WRITE_H_BAND( out, n, lbandh, H_band, nsemib )
+      WRITE( out, "( ' Call CUTEST_ubandh with goth = .TRUE.' )" )
+      CALL CUTEST_ubandh_threaded( status, n, X, nsemib, H_band, lbandh,       &
+                                   maxsbw, thread )
+      IF ( status /= 0 ) GO to 900
+      CALL WRITE_H_BAND( out, n, lbandh, H_band, nsemib, maxsbw )
 
 !  calls and time report
 
-      WRITE( out, "( ' CALL UREPRT' )" )
-      CALL UREPRT( CALLS, CPU )
+!     WRITE( out, "( ' CALL CUTEST_ureport for thread 1' )" )
+!     CALL CUTEST_ureport_threaded( status, CALLS, CPU, 1 )
+!     WRITE( out, "( ' CALLS(1-4) =', 4( 1X, I0 ) )" ) INT( CALLS( 1 : 4 ) )
+!     WRITE( out, "( ' CPU(1-2) =', 2F7.2 )" ) CPU( 1 : 2 )
+
+      WRITE( out, "( ' CALL CUTEST_ureport for thread ', I0 )" ) thread
+      CALL CUTEST_ureport_threaded( status, CALLS, CPU, thread )
       WRITE( out, "( ' CALLS(1-4) =', 4( 1X, I0 ) )" ) INT( CALLS( 1 : 4 ) )
       WRITE( out, "( ' CPU(1-2) =', 2F7.2 )" ) CPU( 1 : 2 )
 
-
 !  terminal exit
+
+      WRITE( out, "( ' Call CUTEST_uterminate' )" )
+      CALL CUTEST_uterminate( status )
+      IF ( status /= 0 ) GO to 900
 
       DEALLOCATE( X_type, H_row, H_col, HE_row, HE_row_ptr, HE_val_ptr, X,     &
                   X_l, X_u, G, H_val, HE_val, VECTOR, RESULT, H2_val, H_band,  &
@@ -241,6 +286,11 @@
       STOP
 
 !  error exits
+
+ 900  CONTINUE
+      WRITE( out, "( ' error status = ', I0 )" ) status
+      CLOSE( INPUT  )
+      STOP
 
  990  CONTINUE
       WRITE( out, "( ' Allocation error, status = ', I0 )" ) alloc_stat
@@ -384,11 +434,12 @@
       END DO
       END SUBROUTINE WRITE_RESULT
 
-      SUBROUTINE WRITE_H_BAND( out, n, lbandh, H_band, nsemib )
-      INTEGER :: n, lbandh, out
+      SUBROUTINE WRITE_H_BAND( out, n, lbandh, H_band, nsemib, maxsbw )
+      INTEGER :: n, lbandh, maxsbw, out
       REAL ( KIND = wp ), DIMENSION( 0 : lbandh, n ):: H_band
       INTEGER :: i, j
       WRITE( out, "( ' * H(band)' )" )
+!     WRITE( out, "( ' * H(band) has max seemibandwidth ', I0 )" ) maxsbw
       WRITE( out, "( ' *       i   band', I7, 4I12 )" ) ( j, j = 0, nsemib )
       DO i = 1, n
         WRITE( out, "( ' * ', I7, 6X, 5ES12.4 )" )                             &
@@ -396,4 +447,4 @@
       END DO
       END SUBROUTINE WRITE_H_BAND
 
-    END PROGRAM CUTER_test_unconstrained_tools
+    END PROGRAM CUTEST_test_unconstrained_tools

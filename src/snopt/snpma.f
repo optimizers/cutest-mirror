@@ -590,7 +590,7 @@ C
 C
 C        Incorporate nonzero constants from linear constraints 
 C        as bounds on slack variables.  (Constants for nonlinear
-C        constraints are added in CCFG or CSCFG, which are called
+C        constraints are added in CCFG or CCFSG, which are called
 C        by FUNCON.)
 C
          IF ( I .GT. 0 ) THEN
@@ -739,7 +739,7 @@ C
      *               ICWK( INDV + 1 ), ICWK( INDF + 1 ), GRAD )
          IF ( GRAD ) THEN
 C
-C           Copy Jacobian from CSCFG, contained in CWK,
+C           Copy Jacobian from CCFSG, contained in CWK,
 C           into SNOPT Jacobian G in correct order.
 C           Use ICWK( JSTRT + J ) to keep track of position for variable
 C           J.  

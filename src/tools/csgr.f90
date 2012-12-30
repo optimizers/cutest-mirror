@@ -1,6 +1,104 @@
-! THIS VERSION: CUTEST 1.0 - 28/11/2012 AT 09:20 GMT.
+! THIS VERSION: CUTEST 1.0 - 29/12/2012 AT 11:30 GMT.
 
 !-*-*-*-*-*-*-*-  C U T E S T    C S G R   S U B R O U T I N E  -*-*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 29th December 2012
+
+      SUBROUTINE CUTEST_csgr( status, n, m, X, Y, grlagf,                      &
+                              nnzj, lj, J_val, J_var, J_fun )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, m, lj
+      INTEGER, INTENT( OUT ) :: nnzj, status
+      LOGICAL, INTENT( IN ) :: grlagf
+      INTEGER, INTENT( OUT ), DIMENSION( lj ) :: J_var, J_fun
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( m ) :: Y
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lj ) :: J_val
+
+!  ----------------------------------------------------------------
+!  compute the gradients of the objective function and general
+!  constraints of a function initially written in Standard
+!  Input Format (SIF). The gradients are given in a sparse format
+
+!  J_val is an array which gives the values of the nonzeros of the
+!	 gradients of the objective, or Lagrangian, and general
+!	 constraint functions evaluated  at X and Y. The i-th entry
+!	 of J_val gives the value of the derivative with respect to
+!	 variable J_var(i) of function J_fun(i). J_fun(i) = 0
+!        indicates the objective function whenever grlagf is .FALSE.
+!        or the Lagrangian function when grlagf is .TRUE., while
+!        J_fun(i) = j > 0 indicates the j-th general constraint
+!        function
+!  ----------------------------------------------------------------
+
+      CALL CUTEST_csgr_threadsafe( CUTEST_data_global,                         &
+                                   CUTEST_work_global( 1 ),                    &
+                                   status, n, m, X, Y, grlagf,                 &
+                                   nnzj, lj, J_val, J_var, J_fun )
+      RETURN
+
+!  end of subroutine CUTEST_csgr
+
+      END SUBROUTINE CUTEST_csgr
+
+!-*-*-*-  C U T E S T    C S G R _ t h r e a d e d  S U B R O U T I N E  -*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 29th December 2012
+
+      SUBROUTINE CUTEST_csgr_threaded( status, n, m, X, Y, grlagf,             &
+                                       nnzj, lj, J_val, J_var, J_fun, thread )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, m, lj, thread
+      INTEGER, INTENT( OUT ) :: nnzj, status
+      LOGICAL, INTENT( IN ) :: grlagf
+      INTEGER, INTENT( OUT ), DIMENSION( lj ) :: J_var, J_fun
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( m ) :: Y
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lj ) :: J_val
+
+!  ----------------------------------------------------------------
+!  compute the gradients of the objective function and general
+!  constraints of a function initially written in Standard
+!  Input Format (SIF). The gradients are given in a sparse format
+
+!  J_val is an array which gives the values of the nonzeros of the
+!	 gradients of the objective, or Lagrangian, and general
+!	 constraint functions evaluated  at X and Y. The i-th entry
+!	 of J_val gives the value of the derivative with respect to
+!	 variable J_var(i) of function J_fun(i). J_fun(i) = 0
+!        indicates the objective function whenever grlagf is .FALSE.
+!        or the Lagrangian function when grlagf is .TRUE., while
+!        J_fun(i) = j > 0 indicates the j-th general constraint
+!        function
+!  ----------------------------------------------------------------
+
+      CALL CUTEST_csgr_threadsafe( CUTEST_data_global,                         &
+                                   CUTEST_work_global( thread ),               &
+                                   status, n, m, X, Y, grlagf,                 &
+                                   nnzj, lj, J_val, J_var, J_fun )
+      RETURN
+
+!  end of subroutine CUTEST_csgr_threaded
+
+      END SUBROUTINE CUTEST_csgr_threaded
+
+!-*-*-  C U T E S T    C S G R _ t h r e a d s a f e  S U B R O U T I N E  -*-*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
 !  Principal author: Nick Gould
@@ -9,8 +107,8 @@
 !   fortran 77 version originally released in CUTE, November 1991
 !   fortran 2003 version released in CUTEst, 28th November 2012
 
-      SUBROUTINE CUTEST_csgr( data, work, status, n, m, X, Y, grlagf,                &
-                              nnzj, lj, J_val, J_var, J_fun )
+      SUBROUTINE CUTEST_csgr_threadsafe( data, work, status, n, m, X, Y,       &
+                                         grlagf, nnzj, lj, J_val, J_var, J_fun )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
@@ -340,6 +438,6 @@
       status = 3
       RETURN
 
-!  end of subroutine CUTEST_csgr
+!  end of subroutine CUTEST_csgr_threadsafe
 
-      END SUBROUTINE CUTEST_csgr
+      END SUBROUTINE CUTEST_csgr_threadsafe

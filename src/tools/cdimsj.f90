@@ -1,6 +1,34 @@
-! THIS VERSION: CUTEST 1.0 - 28/11/2012 AT 08:40 GMT.
+! THIS VERSION: CUTEST 1.0 - 29/12/2012 AT 11:25 GMT.
 
 !-*-*-*-*-*-*-  C U T E S T    C D I M S J    S U B R O U T I N E  -*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 29th December 2012
+
+      SUBROUTINE CUTEST_cdimsj( status, nnzj )
+      USE CUTEST
+
+!  dummy arguments
+
+      INTEGER, INTENT( OUT ) :: nnzj, status
+
+!  --------------------------------------------------------------
+!  compute the space required to store the Jacobian matrix of the 
+!  constraints/objective function of a problem initially written 
+!  in Standard Input Format (SIF)
+!  --------------------------------------------------------------
+
+      CALL CUTEST_cdimsj_threadsafe( CUTEST_data_global, status, nnzj )
+      RETURN
+
+!  end of sunroutine CUTEST_cdimsj
+
+      END SUBROUTINE CUTEST_cdimsj
+
+!-*-  C U T E S T   C D I M S J _ t h r e a d s a f e   S U B R O U T I N E  -*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
 !  Principal author: Nick Gould
@@ -9,7 +37,7 @@
 !   fortran 77 version originally released in CUTEr, April 1999
 !   fortran 2003 version released in CUTEst, 28th November 2012
 
-      SUBROUTINE CUTEST_cdimsj( data, status, nnzj )
+      SUBROUTINE CUTEST_cdimsj_threadsafe( data, status, nnzj )
       USE CUTEST
 
 !  dummy arguments
@@ -44,6 +72,6 @@
       status = 0
       RETURN
 
-!  end of sunroutine CUTEST_cdimsj
+!  end of sunroutine CUTEST_cdimsj_threadsafe
 
-      END SUBROUTINE CUTEST_cdimsj
+      END SUBROUTINE CUTEST_cdimsj_threadsafe

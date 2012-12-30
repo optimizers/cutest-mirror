@@ -1,6 +1,90 @@
-! THIS VERSION: CUTEST 1.0 - 24/11/2012 AT 15:15 GMT.
+! THIS VERSION: CUTEST 1.0 - 29/12/2012 AT 14:05 GMT.
 
 !-*-*-*-*-*-*-*-  C U T E S T    C I S H    S U B R O U T I N E  -*-*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 29th December 2012
+
+      SUBROUTINE CUTEST_cish( status, n, X, iprob, nnzh, lh,                   &
+                              H_val, H_row, H_col )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, iprob, lh
+      INTEGER, INTENT( OUT ) :: nnzh, status
+      INTEGER, INTENT( OUT ), DIMENSION( lh ) :: H_row, H_col
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lh ) :: H_val
+
+!  ---------------------------------------------------------------
+!  compute the Hessian matrix of a specified problem function 
+!  (iprob = 0 is the objective function, while iprob > 0 is the 
+!  iprob-th constraint) of a problem initially written in 
+!  Standard Input Format (SIF).
+
+!  The upper triangle of the Hessian is stored in coordinate form,
+!  i.e., the entry H_val(i) has row index H_row(i) and column index 
+!  H_col(i) for i = 1, ...., nnzh
+!  ---------------------------------------------------------------
+
+      CALL CUTEST_cish_threadsafe( CUTEST_data_global,                         &
+                                   CUTEST_work_global( 1 ),                    &
+                                   status, n, X, iprob,                        &
+                                   nnzh, lh, H_val, H_row, H_col )
+      RETURN
+
+!  end of subroutine CUTEST_cish
+
+      END SUBROUTINE CUTEST_cish
+
+!-*-*-*-  C U T E S T   C I S H _ t h r e a d e d   S U B R O U T I N E  -*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 29th December 2012
+
+      SUBROUTINE CUTEST_cish_threaded( status, n, X, iprob, nnzh, lh,          &
+                                       H_val, H_row, H_col, thread )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, iprob, lh, thread
+      INTEGER, INTENT( OUT ) :: nnzh, status
+      INTEGER, INTENT( OUT ), DIMENSION( lh ) :: H_row, H_col
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lh ) :: H_val
+
+!  ---------------------------------------------------------------
+!  compute the Hessian matrix of a specified problem function 
+!  (iprob = 0 is the objective function, while iprob > 0 is the 
+!  iprob-th constraint) of a problem initially written in 
+!  Standard Input Format (SIF).
+
+!  The upper triangle of the Hessian is stored in coordinate form,
+!  i.e., the entry H_val(i) has row index H_row(i) and column index 
+!  H_col(i) for i = 1, ...., nnzh
+!  ---------------------------------------------------------------
+
+      CALL CUTEST_cish_threadsafe( CUTEST_data_global,                         &
+                                   CUTEST_work_global( thread ),               &
+                                   status, n, X, iprob,                        &
+                                   nnzh, lh, H_val, H_row, H_col )
+      RETURN
+
+!  end of subroutine CUTEST_cish_threaded
+
+      END SUBROUTINE CUTEST_cish_threaded
+
+!-*-*-  C U T E S T   C I S H _ t h r e a d s a f e   S U B R O U T I N E  -*-*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
 !  Principal author: Nick Gould
@@ -9,8 +93,8 @@
 !   fortran 77 version originally released in CUTE, August 1998
 !   fortran 2003 version released in CUTEst, 24th November 2012
 
-      SUBROUTINE CUTEST_cish( data, work, status, n, X, iprob, nnzh, lh,             &
-                              H_val, H_row, H_col )
+      SUBROUTINE CUTEST_cish_threadsafe( data, work, status, n, X, iprob,      &
+                                         nnzh, lh, H_val, H_row, H_col )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
@@ -225,7 +309,7 @@
              work%FUVALS, data%lnguvl, work%FUVALS, data%lnhuvl,               &
              work%GVALS( : , 2 ), work%GVALS( :  , 3 ), work%GSCALE_used,      &
              data%ESCALE, data%GXEQX, data%ITYPEE, data%INTREP, RANGE,         &
-             0, data%out, data%out, data%io_buffer, .FALSE., .FALSE.,          &
+             0, data%out, data%out, work%io_buffer, .FALSE., .FALSE.,          &
              n, status, alloc_status, bad_alloc,                               &
              work%array_status, work%lh_row, work%lh_col, work%lh_val,         &
              work%H_row, work%H_col, work%H_val,                               &
@@ -241,7 +325,7 @@
              work%FUVALS, data%lnguvl, work%FUVALS, data%lnhuvl,               &
              work%GVALS( : , 2 ), work%GVALS( :  , 3 ), data%GSCALE,           &
              data%ESCALE, data%GXEQX, data%ITYPEE, data%INTREP, RANGE,         &
-             0, data%out, data%out, data%io_buffer, .FALSE., .FALSE.,          &
+             0, data%out, data%out, work%io_buffer, .FALSE., .FALSE.,          &
              n, status, alloc_status, bad_alloc,                               &
              work%array_status, work%lh_row, work%lh_col, work%lh_val,         &
              work%H_row, work%H_col, work%H_val,                               &
@@ -278,6 +362,6 @@
       status = 3
       RETURN
 
-!  end of subroutine CUTEST_cish
+!  end of subroutine CUTEST_cish_threadsafe
 
-      END SUBROUTINE CUTEST_cish
+      END SUBROUTINE CUTEST_cish_threadsafe

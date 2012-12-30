@@ -1,6 +1,166 @@
-! THIS VERSION: CUTEST 1.0 - 04/11/2012 AT 12:00 GMT.
+! THIS VERSION: CUTEST 1.0 - 28/12/2012 AT 16:30 GMT.
 
-!-*-*-*-*-*-*-  C U T E S T    C S E T U P    S U B R O U T I N E  -*-*-*-*-*-
+!-*-*-*-*-*-*-  C U T E S T    U S E T U P    S U B R O U T I N E  -*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 28th December 2012
+
+      SUBROUTINE CUTEST_csetup( status, input, out,                            &
+                                io_buffer, n, m, X, X_l, X_u, Y, C_l, C_u,     &
+                                EQUATN, LINEAR, efirst, lfirst, nvfrst )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: input, out, io_buffer
+      INTEGER, INTENT( INOUT ) :: n, m
+      INTEGER, INTENT( OUT ) :: status
+      LOGICAL, INTENT( IN ) :: efirst, lfirst, nvfrst
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: X, X_l, X_u
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( m ) :: Y, C_l, C_u
+      LOGICAL, INTENT( OUT ), DIMENSION( m ) :: EQUATN, LINEAR
+
+!  ------------------------------------------------------------
+!  set up the input data for the constrained optimization tools
+!  ------------------------------------------------------------
+
+!  local variables
+
+      INTEGER :: alloc_status
+      CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
+
+!  allocate space for the global workspace
+
+      ALLOCATE( CUTEST_work_global( 1 ), STAT = alloc_status )
+      IF ( alloc_status /= 0 ) THEN
+        bad_alloc = 'CUTEST_work_global' ; GO TO 910
+      END IF
+
+!  set the data
+
+      CALL CUTEST_csetup_threadsafe( CUTEST_data_global,                       &
+                                     CUTEST_work_global( 1 ),                  &
+                                     status, input, out, io_buffer,            &
+                                     n, m, X, X_l, X_u, Y, C_l, C_u,           &
+                                     EQUATN, LINEAR, efirst, lfirst, nvfrst )
+      CUTEST_data_global%threads = 1
+      RETURN
+
+!  allocation error
+
+  910 CONTINUE
+      status = 1
+      IF ( out > 0 ) WRITE( out,                                               &
+        "( /, ' ** SUBROUTINE CSETUP: allocation error for ', A, ' status = ', &
+       &  I0, /, ' Execution terminating ' )" ) TRIM( bad_alloc ), alloc_status
+      RETURN
+
+!  End of subroutine CUTEST_csetup
+
+      END SUBROUTINE CUTEST_csetup
+
+!-*-  C U T E S T    C S E T U P  _ t h r e a d e d   S U B R O U T I N E  -*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 28th December 2012
+
+      SUBROUTINE CUTEST_csetup_threaded( status, input, out, threads,          &
+                                         IO_BUFFERS, n, m, X, X_l, X_u, Y,     &
+                                         C_l, C_u, EQUATN, LINEAR,             &
+                                         efirst, lfirst, nvfrst )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: input, out, threads
+      INTEGER, INTENT( INOUT ) :: n, m
+      INTEGER, INTENT( OUT ) :: status
+      LOGICAL, INTENT( IN ) :: efirst, lfirst, nvfrst
+      INTEGER, INTENT( IN ), DIMENSION( threads ) :: IO_BUFFERS
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: X, X_l, X_u
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( m ) :: Y, C_l, C_u
+      LOGICAL, INTENT( OUT ), DIMENSION( m ) :: EQUATN, LINEAR
+
+!  ------------------------------------------------------------
+!  set up the input data for the constrained optimization tools
+!  ------------------------------------------------------------
+
+!  local variables
+
+      INTEGER :: i, alloc_status
+      CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
+
+!  threads must be positive
+
+      IF ( threads < 1 ) GO TO 940
+
+!  allocate space for the threaded workspace data
+
+      ALLOCATE( CUTEST_work_global( threads ), STAT = alloc_status )
+      IF ( alloc_status /= 0 ) THEN
+        bad_alloc = 'CUTEST_work_global' ; GO TO 910
+      END IF
+
+!  set the data
+
+      CALL CUTEST_csetup_threadsafe( CUTEST_data_global,                       &
+                                     CUTEST_work_global( 1 ),                  &
+                                     status, input, out, IO_BUFFERS( 1 ),      &
+                                     n, m, X, X_l, X_u, Y, C_l, C_u,           &
+                                     EQUATN, LINEAR, efirst, lfirst, nvfrst )
+      CUTEST_data_global%threads = threads
+
+!  initialize additional thread data
+
+      DO i = 2, threads
+        CALL CUTEST_initialize_thread( CUTEST_data_global,                     &
+                                       CUTEST_work_global( i ), .TRUE.,        &
+                                       status, alloc_status, bad_alloc )
+        IF ( status /= 0 ) RETURN
+
+!  ensure that each thread uses its own i/o buffer if required
+
+        CUTEST_work_global( i )%io_buffer = IO_BUFFERS( i )
+
+!  copy necessary starting addresses
+
+        CUTEST_work_global( i )%ISTAJC( : CUTEST_data_global%n + 1 )           &
+         = CUTEST_work_global( 1 )%ISTAJC( : CUTEST_data_global%n + 1 )
+        CUTEST_work_global( i )%pnc = CUTEST_work_global( 1 )%pnc
+      END DO
+      RETURN
+
+!  allocation error
+
+  910 CONTINUE
+      status = 1
+      IF ( out > 0 ) WRITE( out,                                               &
+        "( /, ' ** SUBROUTINE CSETUP: allocation error for ', A, ' status = ', &
+       &  I0, /, ' Execution terminating ' )" ) TRIM( bad_alloc ), alloc_status
+      RETURN
+
+!  thread error
+
+  940 CONTINUE
+      status = 4
+      IF ( out > 0 ) WRITE( out,                                               &
+        "( /, ' ** SUBROUTINE CSETUP: argument threads must be positive,',     &
+       &  ' execution terminating ' )" )
+      RETURN
+
+!  End of subroutine CUTEST_csetup_threaded
+
+      END SUBROUTINE CUTEST_csetup_threaded
+
+!-*-  C U T E S T   C S E T U P _ t h r e a d s a f e   S U B R O U T I N E  -*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
 !  Principal author: Nick Gould with modifications by Ingrid Bongartz
@@ -9,8 +169,8 @@
 !   fortran 77 version originally released in CUTE, 30th October, 1991
 !   fortran 2003 version released in CUTEst, 4th November 2012
 
-      SUBROUTINE CUTEST_csetup( data, work, status, input, out, io_buffer,           &
-                                n, m, X, X_l, X_u, Y, C_l, C_u,                &
+      SUBROUTINE CUTEST_csetup_threadsafe( data, work, status, input, out,     &
+                                io_buffer, n, m, X, X_l, X_u, Y, C_l, C_u,     &
                                 EQUATN, LINEAR, efirst, lfirst, nvfrst )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
@@ -47,7 +207,7 @@
 
       CALL CPU_TIME( data%sutime )
       data%out = out
-      data%io_buffer = io_buffer
+      work%io_buffer = io_buffer
       debug = .FALSE.
       debug = debug .AND. out > 0
 
@@ -237,7 +397,7 @@
 
       ALLOCATE( work%G_temp( n ), STAT = alloc_status )
       IF ( alloc_status /= 0 ) THEN
-        bad_alloc = 'data%Q' ; GO TO 910
+        bad_alloc = 'work%G_temp' ; GO TO 910
       END IF
 
       ALLOCATE( work%FT( data%ng ), STAT = alloc_status )
@@ -779,10 +939,10 @@
              data%n, data%ng, data%nel, data%ntotel, data%nvrels, data%nnza,   &
              data%nvargp, data%IELING, data%ISTADG, data%IELVAR, data%ISTAEV,  &
              data%INTVAR, data%ISTADH, data%ICNA, data%ISTADA,                 &
-             data%GXEQX, data%alllin, data%altriv, data%lfxi,                  &
-             data%lgxi, data%lhxi, data%lggfx, data%ldx, data%lgrjac,          &
-             data%lnguvl, data%lnhuvl, data%ntotin, data%maxsel, RANGE, 0,     &
-             out, data%io_buffer, data%l_link_e_u_v, work%FUVALS, data%lfuval, &
+             data%GXEQX, data%alllin, data%altriv, data%lfxi, data%lgxi,       &
+             data%lhxi, data%lggfx, data%ldx, data%lgrjac, data%lnguvl,        &
+             data%lnhuvl, data%ntotin, data%maxsel, data%maxsin, RANGE, 0,     &
+             out, work%io_buffer, data%l_link_e_u_v, work%FUVALS, data%lfuval, &
              data%LINK_elem_uses_var, work%ISWKSP, work%ISTAJC, data%ISTAGV,   &
              data%ISVGRP, data%ISLGRP, data%IGCOLJ, data%ISYMMH, work%W_ws,    &
              work%W_el, work%W_in, work%H_el, work%H_in,                       &
@@ -979,13 +1139,8 @@
 !  initialize the performance counters and variables
 
  340  CONTINUE
-      work%nc2of = 0
-      work%nc2og = 0
-      work%nc2oh = 0
-      work%nc2cf = 0
-      work%nc2cg = 0
-      work%nc2ch = 0
-      work%nhvpr = 0
+      work%nc2of = 0 ; work%nc2og = 0 ; work%nc2oh = 0
+      work%nc2cf = 0 ; work%nc2cg = 0 ; work%nc2ch = 0 ; work%nhvpr = 0
       work%pnc = m
 
       CALL CPU_TIME( data%sttime )
@@ -1017,6 +1172,6 @@
  2000 FORMAT( /, ' ** SUBROUTINE CSETUP: array length ', A, ' too small.', /, &
               ' -- Increase the dimension to at least ', I0, ' and restart.' )
 
-!  End of subroutine CUTEST_csetup
+!  End of subroutine CUTEST_csetup_threadsafe
 
-      END SUBROUTINE CUTEST_csetup
+      END SUBROUTINE CUTEST_csetup_threadsafe
