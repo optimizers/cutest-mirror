@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.0 - 17/11/2012 AT 10:00 GMT.
+! THIS VERSION: CUTEST 1.0 - 28/12/2012 AT 13:00 GMT.
 
 !- C U T E S T  t e s t _ u n c o n s t r a i n e d _ t o o l s  P R O G R A M -
 
@@ -9,8 +9,6 @@
 
 !  History -
 !   fortran 2003 version released November 2012
-
-      USE CUTEST
 
 !--------------------
 !   P r e c i s i o n
@@ -43,8 +41,7 @@
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: VECTOR, RESULT
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : , : ) :: H2_val, H_band
       CHARACTER ( len = 10 ), ALLOCATABLE, DIMENSION( : ) :: X_names
-!     REAL :: CPU( 2 ), CALLS( 4 )
-      TYPE ( CUTEST_data_type ) :: data
+      REAL ( KIND = wp ) :: CPU( 2 ), CALLS( 4 )
 
 !  open the problem data file
 
@@ -129,19 +126,17 @@
       IF ( status /= 0 ) GO to 900
       CALL WRITE_f( out, f )
 
-stop
-
 !  compute the dense Hessian value
 
       WRITE( out, "( ' Call CUTEST_udh' )" )
-      CALL CUTEST_udh( data, status, n, X, l_h2_1, H2_val )
+      CALL CUTEST_udh( status, n, X, l_h2_1, H2_val )
       IF ( status /= 0 ) GO to 900
       CALL WRITE_H_dense( out, n, l_h2_1, H2_val )
 
 !  compute the gradient and dense Hessian values
 
       WRITE( out, "( ' Call CUTEST_ugrdh' )" )
-      CALL CUTEST_ugrdh( data, status, n, X, G, l_h2_1, H2_val )
+      CALL CUTEST_ugrdh( status, n, X, G, l_h2_1, H2_val )
       IF ( status /= 0 ) GO to 900
       CALL WRITE_G( out, n, G )
       CALL WRITE_H_dense( out, n, l_h2_1, H2_val )
@@ -149,7 +144,7 @@ stop
 !  compute the number of nonzeros in the sparse Hessian
 
       WRITE( out, "( ' Call CUTEST_udimsh' )" )
-      CALL CUTEST_udimsh( data, status, H_ne )
+      CALL CUTEST_udimsh( status, H_ne )
       IF ( status /= 0 ) GO to 900
       WRITE( out, "( ' * H_ne = ', I0 )" ) H_ne
 
@@ -160,14 +155,14 @@ stop
 !  compute the sparse Hessian value
 
       WRITE( out, "( ' Call CUTEST_ush' )" )
-      CALL CUTEST_ush( data, status, n, X, H_ne, l_h, H_val, H_row, H_col )
+      CALL CUTEST_ush( status, n, X, H_ne, l_h, H_val, H_row, H_col )
       IF ( status /= 0 ) GO to 900
       CALL WRITE_H_sparse( out, H_ne, l_h, H_val, H_row, H_col )
 
 !  compute the gradient and sparse Hessian values
 
       WRITE( out, "( ' Call CUTEST_ugrsh' )" )
-      CALL CUTEST_ugrsh( data, status, n, X, G, H_ne, l_h, H_val, H_row, H_col )
+      CALL CUTEST_ugrsh( status, n, X, G, H_ne, l_h, H_val, H_row, H_col )
       IF ( status /= 0 ) GO to 900
       CALL WRITE_G( out, n, G )
       CALL WRITE_H_sparse( out, H_ne, l_h, H_val, H_row, H_col )
@@ -175,7 +170,7 @@ stop
 !  compute the number of nonzeros in the element Hessian
 
       WRITE( out, "( ' Call CUTEST_udimse' )" )
-      CALL CUTEST_udimse( data, status, HE_nel, HE_val_ne, HE_row_ne )
+      CALL CUTEST_udimse( status, HE_nel, HE_val_ne, HE_row_ne )
       IF ( status /= 0 ) GO to 900
       WRITE( out, "( ' * H_nel = ', I0, ' HE_val_ne = ', I0,                   &
      &                 ' HE_row_ne = ', I0 )" ) HE_nel, HE_val_ne, HE_row_ne
@@ -191,14 +186,14 @@ stop
 
       byrows = .FALSE.
       WRITE( out, "( ' Call CUTEST_ueh with byrows = .FALSE.' )" )
-      CALL CUTEST_ueh( data, status, n, X, HE_nel, lhe_ptr, HE_row_ptr,               &
+      CALL CUTEST_ueh( status, n, X, HE_nel, lhe_ptr, HE_row_ptr,              &
                 HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val, byrows )
       IF ( status /= 0 ) GO to 900
       CALL WRITE_H_element( out, HE_nel, lhe_ptr, HE_row_ptr,                  &
                             HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val )
       byrows = .TRUE.
       WRITE( out, "( ' Call CUTEST_ueh with byrows = .TRUE.' )" )
-      CALL CUTEST_ueh( data, status, n, X, HE_nel, lhe_ptr, HE_row_ptr,               &
+      CALL CUTEST_ueh( status, n, X, HE_nel, lhe_ptr, HE_row_ptr,              &
                 HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val, byrows )
       IF ( status /= 0 ) GO to 900
       CALL WRITE_H_element( out, HE_nel, lhe_ptr, HE_row_ptr,                  &
@@ -208,7 +203,7 @@ stop
 
       byrows = .FALSE.
       WRITE( out, "( ' Call CUTEST_ugreh with byrows = .FALSE' )" )
-      CALL CUTEST_ugreh( data, status, n, X, G, HE_nel, lhe_ptr, HE_row_ptr,          &
+      CALL CUTEST_ugreh( status, n, X, G, HE_nel, lhe_ptr, HE_row_ptr,         &
                   HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val, byrows )
       IF ( status /= 0 ) GO to 900
       CALL WRITE_G( out, n, G )
@@ -216,7 +211,7 @@ stop
                             HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val )
       byrows = .TRUE.
       WRITE( out, "( ' Call CUTEST_ugreh with byrows = .TRUE.' )" )
-      CALL CUTEST_ugreh( data, status, n, X, G, HE_nel, lhe_ptr, HE_row_ptr,          &
+      CALL CUTEST_ugreh( status, n, X, G, HE_nel, lhe_ptr, HE_row_ptr,         &
                   HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val, byrows )
       IF ( status /= 0 ) GO to 900
       CALL WRITE_G( out, n, G )
@@ -228,12 +223,12 @@ stop
       VECTOR = one
       goth = .FALSE.
       WRITE( out, "( ' Call CUTEST_uhprod with goth = .FALSE.' )" )
-      CALL CUTEST_uhprod( data, status, n, goth, X, VECTOR, RESULT )
+      CALL CUTEST_uhprod( status, n, goth, X, VECTOR, RESULT )
       IF ( status /= 0 ) GO to 900
       CALL WRITE_RESULT( out, n, VECTOR, RESULT )
       goth = .TRUE.
       WRITE( out, "( ' Call CUTEST_uhprod with goth = .TRUE.' )" )
-      CALL CUTEST_uhprod( data, status, n, goth, X, VECTOR, RESULT )
+      CALL CUTEST_uhprod( status, n, goth, X, VECTOR, RESULT )
       IF ( status /= 0 ) GO to 900
       CALL WRITE_RESULT( out, n, VECTOR, RESULT )
 
@@ -246,19 +241,27 @@ stop
 
       goth = .FALSE.
       WRITE( out, "( ' Call CUTEST_ubandh with goth = .FALSE.' )" )
-      CALL CUTEST_ubandh( data, status, n, X, nsemib, H_band, lbandh, maxsbw )
+      CALL CUTEST_ubandh( status, n, X, nsemib, H_band, lbandh, maxsbw )
       IF ( status /= 0 ) GO to 900
       CALL WRITE_H_BAND( out, n, lbandh, H_band, nsemib, maxsbw )
       goth = .TRUE.
       WRITE( out, "( ' Call CUTEST_ubandh with goth = .TRUE.' )" )
-      CALL CUTEST_ubandh( data, status, n, X, nsemib, H_band, lbandh, maxsbw )
+      CALL CUTEST_ubandh( status, n, X, nsemib, H_band, lbandh, maxsbw )
       IF ( status /= 0 ) GO to 900
       CALL WRITE_H_BAND( out, n, lbandh, H_band, nsemib, maxsbw )
 
+!  calls and time report
+
+      WRITE( out, "( ' CALL CUTEST_ureport' )" )
+      CALL CUTEST_ureport( status, CALLS, CPU )
+      WRITE( out, "( ' CALLS(1-4) =', 4( 1X, I0 ) )" ) INT( CALLS( 1 : 4 ) )
+      WRITE( out, "( ' CPU(1-2) =', 2F7.2 )" ) CPU( 1 : 2 )
+
 !  terminal exit
 
-!     WRITE( out, "( ' Call CUTEST_ureport' )" )
-!     CALL CUTEST_ureport( CALLS, CPU )
+      WRITE( out, "( ' Call CUTEST_uterminate' )" )
+      CALL CUTEST_uterminate( status )
+      IF ( status /= 0 ) GO to 900
 
       DEALLOCATE( X_type, H_row, H_col, HE_row, HE_row_ptr, HE_val_ptr, X,     &
                   X_l, X_u, G, H_val, HE_val, VECTOR, RESULT, H2_val, H_band,  &

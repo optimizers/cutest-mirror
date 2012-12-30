@@ -195,7 +195,7 @@
              work%FUVALS, data%lnguvl, work%FUVALS, data%lnhuvl,               &
              work%GVALS( : , 2 ), work%GVALS( :  , 3 ), data%GSCALE,           &
              data%ESCALE, data%GXEQX, data%ITYPEE, data%INTREP, RANGE,         &
-             0, data%out, data%out, data%io_buffer, .TRUE., .FALSE.,           &
+             0, data%out, data%out, work%io_buffer, .TRUE., .FALSE.,           &
              n, status, alloc_status, bad_alloc,                               &
              work%array_status, work%lh_row, work%lh_col, work%lh_val,         &
              work%H_row, work%H_col, work%H_val,                               &

@@ -58,9 +58,9 @@ C
       INTEGER*4        IVARTY( NMAX )
       REAL*8           IVARTY_real( NMAX )
       CHARACTER*7      TOOL, TSETUP, TNAMES, TFN, TGR, TOFG, TSGR,
-     *                 TCFG, TSCFG, TDH, TGRDH, TSH, TSGRSH, TPROD,
+     *                 TCFG, TDH, TGRDH, TSH, TSGRSH, TPROD,
      *                 TCFSG, TCIFG, TDIMEN, TDIMSH, TDIMSJ, TVARTY,
-     *                 TCIFSG, TSCIFG, TIDH, TISH, TSH1, TPROD1
+     *                 TCIFSG, TIDH, TISH, TSH1, TPROD1
       CHARACTER*150    MSG
       REAL*8           CI, GCI( NMAX ), N_real, M_real, NNZ_real
 C
@@ -98,7 +98,6 @@ C
       TOFG   = NULLSTR( 'COFG' )
       TSGR   = NULLSTR( 'CSGR' )
       TCFG   = NULLSTR( 'CCFG' )
-      TSCFG  = NULLSTR( 'CSCFG' )
       TCFSG  = NULLSTR( 'CCFSG' )
       TDH    = NULLSTR( 'CDH' )
       TGRDH  = NULLSTR( 'CGRDH' )
@@ -109,7 +108,6 @@ C
       TPROD1  = NULLSTR( 'CPROD1' )
       TCIFG  = NULLSTR( 'CCIFG' )
       TCIFSG  = NULLSTR( 'CCIFSG' )
-      TSCIFG  = NULLSTR( 'CSCIFG' )
       TDIMEN  = NULLSTR( 'CDIMEN' )
       TDIMSH  = NULLSTR( 'CDIMSH' )
       TDIMSJ  = NULLSTR( 'CDIMSJ' )
@@ -557,10 +555,7 @@ C
             CALL MXCOPYREAL8TOPTR( CJAC, PR, NN )
          END IF
 C
-      ELSE IF ( EQUAL( TOOL, TSCFG ) .OR. EQUAL( TOOL, TCFSG ) ) THEN
-C
-C  CSCFG has been superseded by CCFSG -- we keep it for compatibility
-C
+      ELSE IF ( EQUAL( TOOL, TCFSG ) ) THEN
 C
 C  Check number of input and output arguments.
 C
@@ -1202,7 +1197,7 @@ C
         CALL MXCOPYREAL8TOPTR( CI,  PR2, 1 )
      ENDIF
 
-      ELSE IF ( EQUAL( TOOL, TSCIFG ) .OR. EQUAL( TOOL, TCIFSG ) ) THEN
+      ELSE IF ( EQUAL( TOOL, TCIFSG ) ) THEN
 C
 C  Check number of input and output arguments.
 C
@@ -1214,9 +1209,6 @@ C
             MSG = 'CCIFSG RETURNS ONE OR TWO OUTPUT ARGUMENTS.'
             CALL MEXERRMSGTXT( MSG )
          END IF
-C
-C  CSCIFG has been superseded by CCIFSG and is included for compatibility.
-C
 C
 C  Copy first input argument into X.
 C

@@ -1,6 +1,110 @@
-! THIS VERSION: CUTEST 1.0 - 20/11/2012 AT 17:00 GMT.
+! THIS VERSION: CUTEST 1.0 - 28/12/2012 AT 17:15 GMT.
 
 !-*-*-*-*-*-*-*-  C U T E S T    C G R    S U B R O U T I N E  -*-*-*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 28th December 2012
+
+      SUBROUTINE CUTEST_cgr( status, n, m, X, Y, grlagf, G, jtrans,           &
+                             lj1, lj2, J_val )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, m, lj1, lj2
+      INTEGER, INTENT( OUT ) :: status
+      LOGICAL, INTENT( IN ) :: grlagf, jtrans
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( m ) :: Y
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: G
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lj1, lj2 ) :: J_val
+
+!  ----------------------------------------------------------------
+!  compute both the gradients of the objective, or Lagrangian, and
+!  general constraint functions of a problem initially written in
+!  Standard Input Format (SIF).
+
+!  G	 is an array which gives the value of the gradient of the
+!	 objective function evaluated at X (grlagf = .FALSE.) or of
+!        the Lagrangian function evaluated at X and Y (grlagf = .TRUE.)
+
+!  J_val	 is a two-dimensional array of dimension ( lj1, lj2 )
+!	 which gives the value of the Jacobian matrix of the
+!	 constraint functions, or its transpose, evaluated at X.
+!	 If jtrans is .TRUE., the i,j-th component of the array
+!        will contain the i-th derivative of the j-th constraint
+!        function. Otherwise, if jtrans is .FALSE., the i,j-th
+!        component of the array will contain the j-th derivative
+!        of the i-th constraint function.
+!  ----------------------------------------------------------------
+
+      CALL CUTEST_cgr_threadsafe( CUTEST_data_global,                          &
+                                  CUTEST_work_global( 1 ),                     &
+                                  status, n, m, X, Y, grlagf, G, jtrans,       &
+                                  lj1, lj2, J_val )
+      RETURN
+
+!  end of subroutine CUTEST_cgr
+
+      END SUBROUTINE CUTEST_cgr
+
+!-*-*-*-  C U T E S T    C G R _ t h r e a d e d   S U B R O U T I N E  -*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 28th December 2012
+
+      SUBROUTINE CUTEST_cgr_threaded( status, n, m, X, Y, grlagf, G, jtrans,   &
+                                      lj1, lj2, J_val, thread )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, m, lj1, lj2, thread
+      INTEGER, INTENT( OUT ) :: status
+      LOGICAL, INTENT( IN ) :: grlagf, jtrans
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( m ) :: Y
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: G
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lj1, lj2 ) :: J_val
+
+!  ----------------------------------------------------------------
+!  compute both the gradients of the objective, or Lagrangian, and
+!  general constraint functions of a problem initially written in
+!  Standard Input Format (SIF).
+
+!  G	 is an array which gives the value of the gradient of the
+!	 objective function evaluated at X (grlagf = .FALSE.) or of
+!        the Lagrangian function evaluated at X and Y (grlagf = .TRUE.)
+
+!  J_val	 is a two-dimensional array of dimension ( lj1, lj2 )
+!	 which gives the value of the Jacobian matrix of the
+!	 constraint functions, or its transpose, evaluated at X.
+!	 If jtrans is .TRUE., the i,j-th component of the array
+!        will contain the i-th derivative of the j-th constraint
+!        function. Otherwise, if jtrans is .FALSE., the i,j-th
+!        component of the array will contain the j-th derivative
+!        of the i-th constraint function.
+!  ----------------------------------------------------------------
+
+      CALL CUTEST_cgr_threadsafe( CUTEST_data_global,                          &
+                                  CUTEST_work_global( thread ),                &
+                                  status, n, m, X, Y, grlagf, G, jtrans,       &
+                                  lj1, lj2, J_val )
+      RETURN
+
+!  end of subroutine CUTEST_cgr_threaded
+
+      END SUBROUTINE CUTEST_cgr_threaded
+
+!-*-*-  C U T E S T    C G R _ t h r e a d s a f e   S U B R O U T I N E  -*-*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
 !  Principal author: Nick Gould
@@ -9,8 +113,8 @@
 !   fortran 77 version originally released in CUTE, November 1991
 !   fortran 2003 version released in CUTEst, 20th November 2012
 
-      SUBROUTINE CUTEST_cgr( data, work, status, n, m, X, Y, grlagf, G, jtrans,      &
-                             lj1, lj2, J_val )
+      SUBROUTINE CUTEST_cgr_threadsafe( data, work, status, n, m, X, Y,        &
+                                       grlagf, G, jtrans, lj1, lj2, J_val )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
@@ -344,6 +448,6 @@
  2000 FORMAT( ' ** SUBROUTINE CGR: Increase the leading dimension of J_val' )
  2010 FORMAT( ' ** SUBROUTINE CGR: Increase the second dimension of J_val' )
 
-!  end of subroutine CUTEST_cgr
+!  end of subroutine CUTEST_cgr_threadsafe
 
-      END SUBROUTINE CUTEST_cgr
+      END SUBROUTINE CUTEST_cgr_threadsafe

@@ -1,15 +1,105 @@
-! THIS VERSION: CUTEST 1.0 - 28/11/2012 AT 10:15 GMT.
+! THIS VERSION: CUTEST 1.0 - 29/12/2012 AT 13:15 GMT.
 
 !-*-*-*-*-*-*-  C U T E S T    C C I F S G    S U B R O U T I N E  -*-*-*-*-*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 29th December 2012
+
+      SUBROUTINE CUTEST_ccifsg( status, n, icon, X, ci,                        &
+                                nnzgci, lgci, GCI_val, GCI_var, grad )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, icon, lgci
+      INTEGER, INTENT( OUT ) :: status, nnzgci
+      LOGICAL, INTENT( IN ) :: grad
+      INTEGER, INTENT( OUT ), DIMENSION( lgci ) :: GCI_var
+      REAL ( KIND = wp ), INTENT( OUT ) :: ci
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lgci ) :: GCI_val
+
+!  ---------------------------------------------------------------------
+!  evaluate constraint function icon and possibly its gradient,
+!  for constraints initially written in Standard Input Format (SIF).
+!  The constraint gradient is stored as a sparse vector in array GCI_val.
+!  The j-th entry of GCI_val gives the value of the partial derivative
+!  of constraint icon with respect to variable GCI_var(j).
+!  The number of nonzeros in vector GCI_val is given by nnzgci.
+!  (Subroutine CCIFG performs the same calculations for a dense
+!   constraint gradient vector.)
+!  ---------------------------------------------------------------------
+
+      CALL CUTEST_ccifsg_threadsafe( CUTEST_data_global,                       &
+                                     CUTEST_work_global( 1 ),                  &
+                                     status, n, icon, X, ci, nnzgci, lgci,     &
+                                     GCI_val, GCI_var, grad )
+      RETURN
+
+!  end of subroutine CUTEST_ccifsg
+
+      END SUBROUTINE CUTEST_ccifsg
+
+!-*-  C U T E S T    C C I F S G _ t h r e a d e d   S U B R O U T I N E  -*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 29th December 2012
+
+      SUBROUTINE CUTEST_ccifsg_threaded( status, n, icon, X, ci, nnzgci, lgci, &
+                                         GCI_val, GCI_var, grad, thread )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, icon, lgci, thread
+      INTEGER, INTENT( OUT ) :: status, nnzgci
+      LOGICAL, INTENT( IN ) :: grad
+      INTEGER, INTENT( OUT ), DIMENSION( lgci ) :: GCI_var
+      REAL ( KIND = wp ), INTENT( OUT ) :: ci
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lgci ) :: GCI_val
+
+!  ---------------------------------------------------------------------
+!  evaluate constraint function icon and possibly its gradient,
+!  for constraints initially written in Standard Input Format (SIF).
+!  The constraint gradient is stored as a sparse vector in array GCI_val.
+!  The j-th entry of GCI_val gives the value of the partial derivative
+!  of constraint icon with respect to variable GCI_var(j).
+!  The number of nonzeros in vector GCI_val is given by nnzgci.
+!  (Subroutine CCIFG performs the same calculations for a dense
+!   constraint gradient vector.)
+!  ---------------------------------------------------------------------
+
+      CALL CUTEST_ccifsg_threadsafe( CUTEST_data_global,                       &
+                                     CUTEST_work_global( thread ),             &
+                                     status, n, icon, X, ci, nnzgci, lgci,     &
+                                     GCI_val, GCI_var, grad )
+      RETURN
+
+!  end of subroutine CUTEST_ccifsg_threaded
+
+      END SUBROUTINE CUTEST_ccifsg_threaded
+
+!-*-  C U T E S T   C C I F S G _ t h r e a d s a f e   S U B R O U T I N E  -*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
 !  Principal authors: Ingrid Bongartz and Nick Gould
 
+!  History -
 !   replaced obsolete subroutine CSCIFG in CUTEr, September 1994
 !   fortran 2003 version released in CUTEst, 28th November 2012
 
-      SUBROUTINE CUTEST_ccifsg( data, work, status, n, icon, X, ci,                  &
-                                nnzgci, lgci, GCI_val, GCI_var, grad )
+      SUBROUTINE CUTEST_ccifsg_threadsafe( data, work, status, n, icon, X,     &
+                                           ci, nnzgci, lgci, GCI_val,          &
+                                           GCI_var, grad )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
@@ -280,6 +370,6 @@
 
  2000 FORMAT( ' ** SUBROUTINE CCIFSG: invalid constraint index icon ' )
 
-!  end of subroutine CUTEST_ccifsg
+!  end of subroutine CUTEST_ccifsg_threadsafe
 
-      END SUBROUTINE CUTEST_ccifsg
+      END SUBROUTINE CUTEST_ccifsg_threadsafe

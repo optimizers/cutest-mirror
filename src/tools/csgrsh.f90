@@ -1,6 +1,126 @@
-! THIS VERSION: CUTEST 1.0 - 24/11/2012 AT 15450 GMT.
+! THIS VERSION: CUTEST 1.0 - 29/12/2012 AT 14:25 GMT.
 
 !-*-*-*-*-*-*-  C U T E S T    C S G R S H    S U B R O U T I N E  -*-*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 29th December 2012
+
+      SUBROUTINE CUTEST_csgrsh( status, n, m, X, Y, grlagf,                    &
+                                nnzj, lj, J_val, J_var, J_fun,                 &
+                                nnzh, lh, H_val, H_row, H_col )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, m, lj, lh
+      INTEGER, INTENT( OUT ) :: nnzh, nnzj, status
+      LOGICAL, INTENT( IN ) :: grlagf
+      INTEGER, INTENT( OUT ), DIMENSION( lj ) :: J_var, J_fun
+      INTEGER, INTENT( OUT ), DIMENSION( lh ) :: H_row, H_col
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( m ) :: Y
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lh ) :: H_val
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lj ) :: J_val
+
+!  ----------------------------------------------------------------
+!  compute the Hessian matrix of the Lagrangian function of
+!  a problem initially written in Standard Input Format (SIF).
+!  Also compute the Hessian matrix of the Lagrangian function of
+!  the problem
+
+!  J_val is an array which gives the values of the nonzeros of the
+!	 gradients of the objective, or Lagrangian, and general
+!	 constraint functions evaluated  at X and Y. The i-th entry
+!	 of J_val gives the value of the derivative with respect to
+!	 variable J_var(i) of function J_fun(i). J_fun(i) = 0
+!        indicates the objective function whenever grlagf is .FALSE.
+!        or the Lagrangian function when grlagf is .TRUE., while
+!        J_fun(i) = j > 0 indicates the j-th general constraint
+!        function
+
+! H      is an array which gives the values of entries of the
+!        upper triangular part of the Hessian matrix of the
+!        Lagrangian function, stored in coordinate form, i.e.,
+!        the entry H(i) is the derivative with respect to variables
+!        with indices H_row(i) and H_col(i) for i = 1, ...., nnzh
+!  ----------------------------------------------------------------
+
+      CALL CUTEST_csgrsh_threadsafe( CUTEST_data_global,                       &
+                                     CUTEST_work_global( 1 ),                  &
+                                     status, n, m, X, Y, grlagf,               &
+                                     nnzj, lj, J_val, J_var, J_fun,            &
+                                     nnzh, lh, H_val, H_row, H_col )
+      RETURN
+
+!  end of subroutine CUTEST_csgrsh
+
+      END SUBROUTINE CUTEST_csgrsh
+
+!-*-*-  C U T E S T   C S G R S H _ t h r e a d e d   S U B R O U T I N E  -*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 29th December 2012
+
+      SUBROUTINE CUTEST_csgrsh_threaded( status, n, m, X, Y, grlagf,           &
+                                         nnzj, lj, J_val, J_var, J_fun,        &
+                                         nnzh, lh, H_val, H_row, H_col, thread )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, m, lj, lh, thread
+      INTEGER, INTENT( OUT ) :: nnzh, nnzj, status
+      LOGICAL, INTENT( IN ) :: grlagf
+      INTEGER, INTENT( OUT ), DIMENSION( lj ) :: J_var, J_fun
+      INTEGER, INTENT( OUT ), DIMENSION( lh ) :: H_row, H_col
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( m ) :: Y
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lh ) :: H_val
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lj ) :: J_val
+
+!  ----------------------------------------------------------------
+!  compute the Hessian matrix of the Lagrangian function of
+!  a problem initially written in Standard Input Format (SIF).
+!  Also compute the Hessian matrix of the Lagrangian function of
+!  the problem
+
+!  J_val is an array which gives the values of the nonzeros of the
+!	 gradients of the objective, or Lagrangian, and general
+!	 constraint functions evaluated  at X and Y. The i-th entry
+!	 of J_val gives the value of the derivative with respect to
+!	 variable J_var(i) of function J_fun(i). J_fun(i) = 0
+!        indicates the objective function whenever grlagf is .FALSE.
+!        or the Lagrangian function when grlagf is .TRUE., while
+!        J_fun(i) = j > 0 indicates the j-th general constraint
+!        function
+
+! H      is an array which gives the values of entries of the
+!        upper triangular part of the Hessian matrix of the
+!        Lagrangian function, stored in coordinate form, i.e.,
+!        the entry H(i) is the derivative with respect to variables
+!        with indices H_row(i) and H_col(i) for i = 1, ...., nnzh
+!  ----------------------------------------------------------------
+
+      CALL CUTEST_csgrsh_threadsafe( CUTEST_data_global,                       &
+                                     CUTEST_work_global( thread ),             &
+                                     status, n, m, X, Y, grlagf,               &
+                                     nnzj, lj, J_val, J_var, J_fun,            &
+                                     nnzh, lh, H_val, H_row, H_col )
+      RETURN
+
+!  end of subroutine CUTEST_csgrsh_threaded
+
+      END SUBROUTINE CUTEST_csgrsh_threaded
+
+!-*-  C U T E S T   C S G R S H _ t h r e a d s a f e   S U B R O U T I N E  -*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
 !  Principal author: Nick Gould
@@ -9,8 +129,10 @@
 !   fortran 77 version originally released in CUTE, November 1991
 !   fortran 2003 version released in CUTEst, 24th November 2012
 
-      SUBROUTINE CUTEST_csgrsh( data, work, status, n, m, X, Y, grlagf,              &
-                  nnzj, lj, J_val, J_var, J_fun, nnzh, lh, H_val, H_row, H_col )
+      SUBROUTINE CUTEST_csgrsh_threadsafe( data, work, status, n, m, X, Y,     &
+                                           grlagf, nnzj, lj, J_val, J_var,     &
+                                           J_fun, nnzh, lh, H_val, H_row,      &
+                                           H_col )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
@@ -350,7 +472,7 @@
              work%FUVALS, data%lnguvl, work%FUVALS, data%lnhuvl,               &
              work%GVALS( : , 2 ), work%GVALS( :  , 3 ), work%GSCALE_used,      &
              data%ESCALE, data%GXEQX, data%ITYPEE, data%INTREP, RANGE,         &
-             0, data%out, data%out, data%io_buffer, .TRUE., .FALSE.,           &
+             0, data%out, data%out, work%io_buffer, .TRUE., .FALSE.,           &
              n, status, alloc_status, bad_alloc,                               &
              work%array_status, work%lh_row, work%lh_col, work%lh_val,         &
              work%H_row, work%H_col, work%H_val,                               &
@@ -366,7 +488,7 @@
              work%FUVALS, data%lnguvl, work%FUVALS, data%lnhuvl,               &
              work%GVALS( : , 2 ), work%GVALS( :  , 3 ), data%GSCALE,           &
              data%ESCALE, data%GXEQX, data%ITYPEE, data%INTREP, RANGE,         &
-             0, data%out, data%out, data%io_buffer, .TRUE., .FALSE.,           &
+             0, data%out, data%out, work%io_buffer, .TRUE., .FALSE.,           &
              n, status, alloc_status, bad_alloc,                               &
              work%array_status, work%lh_row, work%lh_col, work%lh_val,         &
              work%H_row, work%H_col, work%H_val,                               &
@@ -402,6 +524,6 @@
       status = 3
       RETURN
 
-!  end of subroutine CUTEST_csgrsh
+!  end of subroutine CUTEST_csgrsh_threadsafe
 
-      END SUBROUTINE CUTEST_csgrsh
+      END SUBROUTINE CUTEST_csgrsh_threadsafe

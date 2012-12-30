@@ -1,6 +1,84 @@
-! THIS VERSION: CUTEST 1.0 - 24/11/2012 AT 14:20 GMT.
+! THIS VERSION: CUTEST 1.0 - 29/12/2012 AT 13:30 GMT.
 
 !-*-*-*-*-*-*-*-  C U T E S T    C D H    S U B R O U T I N E  -*-*-*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 29th December 2012
+
+      SUBROUTINE CUTEST_cdh( status, n, m, X, Y, lh1, H_val )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, m, lh1
+      INTEGER, INTENT( OUT ) :: status
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( m ) :: Y
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lh1, n ) :: H_val
+
+!  -----------------------------------------------------------
+!  compute the Hessian matrix of the Lagrangian function of
+!  a problem initially written in Standard Input Format (SIF).
+
+!  H is a two-dimensional array which gives the value of the
+!    Hessian matrix of the Lagrangian function evaluated at 
+!    X and Y. The i,j-th component of the array will contain
+!    the derivative with respect to variables X(i) and X(j).
+!  -----------------------------------------------------------
+
+      CALL CUTEST_cdh_threadsafe( CUTEST_data_global,                          &
+                                  CUTEST_work_global( 1 ),                     &
+                                  status, n, m, X, Y, lh1, H_val )
+      RETURN
+
+!  end of subroutine CUTEST_cdh
+
+      END SUBROUTINE CUTEST_cdh
+
+!-*-*-*-  C U T E S T    C D H _ t h r e a d e d   S U B R O U T I N E  -*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 29th December 2012
+
+      SUBROUTINE CUTEST_cdh_threaded( status, n, m, X, Y, lh1, H_val, thread )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, m, lh1, thread
+      INTEGER, INTENT( OUT ) :: status
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( m ) :: Y
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lh1, n ) :: H_val
+
+!  -----------------------------------------------------------
+!  compute the Hessian matrix of the Lagrangian function of
+!  a problem initially written in Standard Input Format (SIF).
+
+!  H is a two-dimensional array which gives the value of the
+!    Hessian matrix of the Lagrangian function evaluated at 
+!    X and Y. The i,j-th component of the array will contain
+!    the derivative with respect to variables X(i) and X(j).
+!  -----------------------------------------------------------
+
+      CALL CUTEST_cdh_threadsafe( CUTEST_data_global,                          &
+                                  CUTEST_work_global( thread ),                &
+                                  status, n, m, X, Y, lh1, H_val )
+      RETURN
+
+!  end of subroutine CUTEST_cdh_threaded
+
+      END SUBROUTINE CUTEST_cdh_threaded
+
+!-*-*-  C U T E S T    C D H _ t h r e a d s a f e   S U B R O U T I N E  -*-*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
 !  Principal author: Nick Gould
@@ -9,7 +87,8 @@
 !   fortran 77 version originally released in CUTE, November 1991
 !   fortran 2003 version released in CUTEst, 24th November 2012
 
-      SUBROUTINE CUTEST_cdh( data, work, status, n, m, X, Y, lh1, H_val )
+      SUBROUTINE CUTEST_cdh_threadsafe( data, work, status, n, m, X, Y,        &
+                                        lh1, H_val )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
@@ -156,7 +235,7 @@
              work%FUVALS, data%lnguvl, work%FUVALS, data%lnhuvl,               &
              work%GVALS( : , 2 ), work%GVALS( :  , 3 ), work%GSCALE_used,      &
              data%ESCALE, data%GXEQX, data%ITYPEE, data%INTREP, RANGE,         &
-             0, data%out, data%out, data%io_buffer, .TRUE., .FALSE.,           &
+             0, data%out, data%out, work%io_buffer, .TRUE., .FALSE.,           &
              n, status, alloc_status, bad_alloc,                               &
              work%array_status, work%lh_row, work%lh_col, work%lh_val,         &
              work%H_row, work%H_col, work%H_val,                               &
@@ -172,7 +251,7 @@
              work%FUVALS, data%lnguvl, work%FUVALS, data%lnhuvl,               &
              work%GVALS( : , 2 ), work%GVALS( :  , 3 ), data%GSCALE,           &
              data%ESCALE, data%GXEQX, data%ITYPEE, data%INTREP, RANGE,         &
-             0, data%out, data%out, data%io_buffer, .TRUE., .FALSE.,           &
+             0, data%out, data%out, work%io_buffer, .TRUE., .FALSE.,           &
              n, status, alloc_status, bad_alloc,                               &
              work%array_status, work%lh_row, work%lh_col, work%lh_val,         &
              work%H_row, work%H_col, work%H_val,                               &
@@ -212,6 +291,6 @@
       status = 3
       RETURN
 
-!  end of subroutine CUTEST_cdh
+!  end of subroutine CUTEST_cdh_threadsafe
 
-      END SUBROUTINE CUTEST_cdh
+      END SUBROUTINE CUTEST_cdh_threadsafe

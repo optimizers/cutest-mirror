@@ -79,7 +79,7 @@ C
 C  Evaluate the constant and linear terms of the constraint functions
 C  in a sparse format.
 C
-      CALL CSCFG ( N, M, X, MMAX, C, NNZJ, NJAC, G( N + 1 ),
+      CALL CCFSG ( N, M, X, MMAX, C, NNZJ, NJAC, G( N + 1 ),
      *             IW( INDV + 1 ), IW( INDF + 1 ), .TRUE. )
 C
 C  Set up row bounds

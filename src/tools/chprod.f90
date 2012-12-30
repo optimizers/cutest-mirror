@@ -1,6 +1,85 @@
-! THIS VERSION: CUTEST 1.0 - 28/11/2012 AT 14:00 GMT.
+! THIS VERSION: CUTEST 1.0 - 29/12/2012 AT 15:10 GMT.
 
 !-*-*-*-*-*-*-  C U T E S T    C H P R O D    S U B R O U T I N E  -*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 29th December 2012
+
+      SUBROUTINE CUTEST_chprod( status, n, m, goth, X, Y, VECTOR, RESULT )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, m
+      INTEGER, INTENT( OUT ) :: status
+      LOGICAL, INTENT( IN ) :: goth
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X, VECTOR
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( m ) :: Y
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: RESULT
+
+!  -----------------------------------------------------------------------
+!  compute the matrix-vector product between the Hessian matrix of 
+!  the Lagrangian function for the problem and  a given vector VECTOR.
+!  The result is placed in RESULT. If goth is .TRUE. the second
+!  derivatives are assumed to have already been computed. If the user is 
+!  unsure, set goth = .FALSE. the first time a product is required with 
+!  the Hessian evaluated at X and Y. X and Y are not used if goth = .TRUE.
+!  -----------------------------------------------------------------------
+
+      CALL CUTEST_chprod_threadsafe( CUTEST_data_global,                       &
+                                     CUTEST_work_global( 1 ),                  &
+                                      status, n, m, goth, X, Y, VECTOR, RESULT )
+      RETURN
+
+!  end of subroutine CUTEST_chprod
+
+      END SUBROUTINE CUTEST_chprod
+
+!-*-*-  C U T E S T   C H P R O D _ t h r e a d e d   S U B R O U T I N E  -*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 29th December 2012
+
+      SUBROUTINE CUTEST_chprod_threaded( status, n, m, goth, X, Y,             &
+                                         VECTOR, RESULT, thread )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, m, thread
+      INTEGER, INTENT( OUT ) :: status
+      LOGICAL, INTENT( IN ) :: goth
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X, VECTOR
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( m ) :: Y
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: RESULT
+
+!  -----------------------------------------------------------------------
+!  compute the matrix-vector product between the Hessian matrix of 
+!  the Lagrangian function for the problem and  a given vector VECTOR.
+!  The result is placed in RESULT. If goth is .TRUE. the second
+!  derivatives are assumed to have already been computed. If the user is 
+!  unsure, set goth = .FALSE. the first time a product is required with 
+!  the Hessian evaluated at X and Y. X and Y are not used if goth = .TRUE.
+!  -----------------------------------------------------------------------
+
+      CALL CUTEST_chprod_threadsafe( CUTEST_data_global,                       &
+                                     CUTEST_work_global( thread ),             &
+                                     status, n, m, goth, X, Y, VECTOR, RESULT )
+      RETURN
+
+!  end of subroutine CUTEST_chprod_threaded
+
+      END SUBROUTINE CUTEST_chprod_threaded
+
+!-*-  C U T E S T   C H P R O D _ t h r e a d s a f e   S U B R O U T I N E  -*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
 !  Principal authors: Ingrid Bongartz and Nick Gould
@@ -9,7 +88,8 @@
 !   fortran 77 version originally released as CPROD in CUTE, November 1991
 !   fortran 2003 version released in CUTEst, 28th November 2012
 
-      SUBROUTINE CUTEST_chprod( data, work, status, n, m, goth, X, Y, VECTOR, RESULT )
+      SUBROUTINE CUTEST_chprod_threadsafe( data, work, status, n, m, goth,     &
+                                           X, Y, VECTOR, RESULT )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
@@ -185,8 +265,8 @@
       status = 3
       RETURN
 
-!  end of subroutine CUTEST_chprod
+!  end of subroutine CUTEST_chprod_threadsafe
 
-      END SUBROUTINE CUTEST_chprod
+      END SUBROUTINE CUTEST_chprod_threadsafe
 
 

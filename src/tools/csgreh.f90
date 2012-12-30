@@ -1,6 +1,153 @@
-! THIS VERSION: CUTEST 1.0 - 27/11/2012 AT 16:15 GMT.
+! THIS VERSION: CUTEST 1.0 - 29/12/2012 AT 14:57 GMT.
 
 !-*-*-*-*-*-*-  C U T E S T    C S G R E H    S U B R O U T I N E  -*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 29th December 2012
+
+      SUBROUTINE CUTEST_csgreh( status, n, m, X, Y, grlagf,                    &
+                                nnzj, lj, J_val, J_var, J_fun, ne,             &
+                                lhe_ptr, HE_row_ptr, HE_val_ptr,               &
+                                lhe_row, HE_row, lhe_val, HE_val, byrows )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, m, lj, lhe_ptr, lhe_row, lhe_val
+      INTEGER, INTENT( OUT ) :: ne, nnzj, status
+      LOGICAL, INTENT( IN ) :: grlagf, byrows
+      INTEGER, INTENT( OUT ), DIMENSION( lj ) :: J_var, J_fun
+      INTEGER, INTENT( OUT ), DIMENSION( lhe_ptr ) :: HE_row_ptr, HE_val_ptr
+      INTEGER, INTENT( OUT ), DIMENSION( lhe_row ) :: HE_row
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( m ) :: Y
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lj ) :: J_val
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lhe_val ) :: HE_val
+
+!  ----------------------------------------------------------------------------
+!  compute the constraint Jacobian in co-ordinate format and Hessian matrix 
+!  of the Lagrangian function of a problem initially written in Standard 
+!  Input Format (SIF)
+
+!  the Hessian matrix is represented in "finite element format", i.e., 
+
+!           ne
+!      H = sum H_e, 
+!          e=1
+
+!  where each element H_i involves a small subset of the rows of H. H is stored
+!  as a list of the row indices involved in each element and the upper triangle
+!  of H_e (stored by rows or columns). Specifically,
+
+!  ne (integer) number of elements
+!  HE_row (integer array) a list of the row indices involved which each
+!          element. Those for element e directly proceed those for 
+!          element e + 1, e = 1, ..., ne-1
+!  HE_row_ptr (integer array) pointers to the position in HE_row of the first 
+!          row index in each element. HE_row_ptr(ne+1) points to the first 
+!          empty location in IRPNHI
+!  HE_val (real array) a list of the nonzeros in the upper triangle of
+!          H_e, stored by rows, or by columns, for each element. Those 
+!          for element i directly proceed those for element, e + 1, 
+!          e = 1, ..., ne-1
+!  HE_val_ptr (integer array) pointers to the position in HE_val of the first 
+!          nonzero in each element. HE_val_ptr(ne+1) points to the first 
+!          empty location in HE_val
+!  byrows (logical) must be set .TRUE. if the upper triangle of each H_e is
+!          to be stored by rows, and .FALSE. if it is to be stored by columns
+!  ----------------------------------------------------------------------------
+
+      CALL CUTEST_csgreh_threadsafe( CUTEST_data_global,                       &
+                                     CUTEST_work_global( 1 ),                  &
+                                     status, n, m, X, Y, grlagf,               &
+                                     nnzj, lj, J_val, J_var, J_fun, ne,        &
+                                     lhe_ptr, HE_row_ptr, HE_val_ptr,          &
+                                     lhe_row, HE_row, lhe_val, HE_val, byrows )
+      RETURN
+
+!  end of subroutine CUTEST_csgreh
+
+      END SUBROUTINE CUTEST_csgreh
+
+!-*-*-  C U T E S T   C S G R E H _ t h r e a d e d   S U B R O U T I N E  -*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 29th December 2012
+
+      SUBROUTINE CUTEST_csgreh_threaded( status, n, m, X, Y, grlagf, nnzj, lj, &
+                                         J_val, J_var, J_fun, ne, lhe_ptr,     &
+                                         HE_row_ptr, HE_val_ptr, lhe_row,      &
+                                         HE_row, lhe_val, HE_val, byrows,      &
+                                         thread )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, m, lj, lhe_ptr, lhe_row, lhe_val, thread
+      INTEGER, INTENT( OUT ) :: ne, nnzj, status
+      LOGICAL, INTENT( IN ) :: grlagf, byrows
+      INTEGER, INTENT( OUT ), DIMENSION( lj ) :: J_var, J_fun
+      INTEGER, INTENT( OUT ), DIMENSION( lhe_ptr ) :: HE_row_ptr, HE_val_ptr
+      INTEGER, INTENT( OUT ), DIMENSION( lhe_row ) :: HE_row
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( m ) :: Y
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lj ) :: J_val
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lhe_val ) :: HE_val
+
+!  ----------------------------------------------------------------------------
+!  compute the constraint Jacobian in co-ordinate format and Hessian matrix 
+!  of the Lagrangian function of a problem initially written in Standard 
+!  Input Format (SIF)
+
+!  the Hessian matrix is represented in "finite element format", i.e., 
+
+!           ne
+!      H = sum H_e, 
+!          e=1
+
+!  where each element H_i involves a small subset of the rows of H. H is stored
+!  as a list of the row indices involved in each element and the upper triangle
+!  of H_e (stored by rows or columns). Specifically,
+
+!  ne (integer) number of elements
+!  HE_row (integer array) a list of the row indices involved which each
+!          element. Those for element e directly proceed those for 
+!          element e + 1, e = 1, ..., ne-1
+!  HE_row_ptr (integer array) pointers to the position in HE_row of the first 
+!          row index in each element. HE_row_ptr(ne+1) points to the first 
+!          empty location in IRPNHI
+!  HE_val (real array) a list of the nonzeros in the upper triangle of
+!          H_e, stored by rows, or by columns, for each element. Those 
+!          for element i directly proceed those for element, e + 1, 
+!          e = 1, ..., ne-1
+!  HE_val_ptr (integer array) pointers to the position in HE_val of the first 
+!          nonzero in each element. HE_val_ptr(ne+1) points to the first 
+!          empty location in HE_val
+!  byrows (logical) must be set .TRUE. if the upper triangle of each H_e is
+!          to be stored by rows, and .FALSE. if it is to be stored by columns
+!  ----------------------------------------------------------------------------
+
+      CALL CUTEST_csgreh_threadsafe( CUTEST_data_global,                       &
+                                     CUTEST_work_global( thread ),             &
+                                     status, n, m, X, Y, grlagf,               &
+                                     nnzj, lj, J_val, J_var, J_fun, ne,        &
+                                     lhe_ptr, HE_row_ptr, HE_val_ptr,          &
+                                     lhe_row, HE_row, lhe_val, HE_val, byrows )
+      RETURN
+
+!  end of subroutine CUTEST_csgreh_threaded
+
+      END SUBROUTINE CUTEST_csgreh_threaded
+
+!-*-  C U T E S T   C S G R E H _ t h r e a d s a f e   S U B R O U T I N E  -*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
 !  Principal author: Nick Gould
@@ -9,9 +156,11 @@
 !   fortran 77 version originally released in CUTEr, November 1994
 !   fortran 2003 version released in CUTEst, 27th November 2012
 
-      SUBROUTINE CUTEST_csgreh( data, work, status, n, m, X, Y, grlagf, nnzj, lj,    &
-                         J_val, J_var, J_fun, ne, lhe_ptr, HE_row_ptr,         &
-                         HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val, byrows )
+      SUBROUTINE CUTEST_csgreh_threadsafe( data, work, status, n, m, X, Y,     &
+                                           grlagf, nnzj, lj, J_val, J_var,     &
+                                           J_fun, ne, lhe_ptr, HE_row_ptr,     &
+                                           HE_val_ptr, lhe_row, HE_row,        &
+                                           lhe_val, HE_val, byrows )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
@@ -379,7 +528,7 @@
                         work%H_el, work%H_in, RANGE, ne, lhe_row_int,          &
                         lhe_val_int, work%H_row, HE_row_ptr, work%H_val,       &
                         HE_val_ptr, byrows, 0, data%out, data%out,             &
-                        data%io_buffer, alloc_status, bad_alloc, status )
+                        work%io_buffer, alloc_status, bad_alloc, status )
       ELSE
         CALL CUTEST_assemble_element_hessian(                                  &
                         data%ng, data%nel,data% ntotel, data%nvrels,           &
@@ -395,7 +544,7 @@
                         work%H_el, work%H_in, RANGE, ne, lhe_row_int,          &
                         lhe_val_int, work%H_row, HE_row_ptr, work%H_val,       &
                         HE_val_ptr, byrows, 0, data%out, data%out,             &
-                        data%io_buffer, alloc_status, bad_alloc, status )
+                        work%io_buffer, alloc_status, bad_alloc, status )
       END IF 
 
 !  check for errors in the assembly
@@ -442,6 +591,6 @@
       status = 3
       RETURN
 
-!  end of subroutine CUTEST_csgreh
+!  end of subroutine CUTEST_csgreh_threadsafe
 
-      END SUBROUTINE CUTEST_csgreh
+      END SUBROUTINE CUTEST_csgreh_threadsafe

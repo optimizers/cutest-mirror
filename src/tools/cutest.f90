@@ -22,7 +22,8 @@
                 CUTEST_assemble_hessian, CUTEST_size_sparse_hessian,           &
                 CUTEST_assemble_element_hessian, CUTEST_size_element_hessian,  &
                 CUTEST_hessian_times_vector, CUTEST_extend_array,              &
-                CUTEST_allocate_array, CUTEST_terminate
+                CUTEST_allocate_array, CUTEST_initialize_thread,               &
+                CUTEST_terminate_data, CUTEST_terminate_work
 
 !--------------------
 !   P r e c i s i o n
@@ -84,9 +85,9 @@
         INTEGER :: lstaev, lstadh, lntvar, lcalcf, leling, lintre, lft
         INTEGER :: lgxeqx, licna, lstada, lkndof, lgpvlu, lepvlu, lstep, lstgp
         INTEGER :: lstadg, lgvals, lgscal, lescal, lvscal, lcalcg            
-        INTEGER :: l_link_e_u_v, lfuval, lelvar
-        INTEGER :: lfxi, lgxi, lhxi, lggfx, ldx, lgrjac, lnguvl, lnhuvl, maxsel
-        INTEGER :: nnov, nnjv, numvar, numcon
+        INTEGER :: l_link_e_u_v, lfuval, lelvar, maxsel, maxsin
+        INTEGER :: lfxi, lgxi, lhxi, lggfx, ldx, lgrjac, lnguvl, lnhuvl
+        INTEGER :: nnov, nnjv, numvar, numcon, threads
         REAL :: sutime, sttime
         LOGICAL :: alllin, altriv
         CHARACTER ( LEN = 10 ) :: pname
@@ -179,7 +180,7 @@
                     IELING, ISTADG, IELVAR, ISTAEV, INTVAR, ISTADH, ICNA,      &
                     ISTADA, GXEQX, alllin, altriv, lfxi, lgxi,                 &
                     lhxi, lggfx, ldx, lgrjac, lnguvl, lnhuvl, ntotin, maxsel,  &
-                    RANGE, iprint, out, buffer, l_link_e_u_v,                  &
+                    maxsin, RANGE, iprint, out, buffer, l_link_e_u_v,          &
                     FUVALS, lfuval, LINK_elem_uses_var, ISWKSP, ISTAJC,        &
                     ISTAGV, ISVGRP, ISLGRP, IGCOLJ, ISYMMH, W_ws, W_el, W_in,  &
                     H_el, H_in, status, alloc_status, bad_alloc, array_status )
@@ -201,7 +202,7 @@
       INTEGER, INTENT( IN ) :: iprint, out, buffer
       INTEGER, INTENT( OUT ) :: lfxi, lgxi, lhxi, lggfx, ldx, lgrjac  
       INTEGER, INTENT( OUT ) :: lnguvl, lnhuvl, nvargp, status, alloc_status
-      INTEGER, INTENT( OUT ) :: ntotin, maxsel
+      INTEGER, INTENT( OUT ) :: ntotin, maxsel, maxsin
       LOGICAL, INTENT( OUT ) :: altriv, alllin, array_status
       CHARACTER ( LEN = 24 ), INTENT( OUT ) :: bad_alloc
       INTEGER, INTENT( IN ), DIMENSION( ntotel  ) :: IELING
@@ -254,10 +255,8 @@
 !   L o c a l   V a r i a b l e s
 !-----------------------------------------------
 
-      INTEGER :: i, iel, ig, j, k, l, iielts, ientry
-      INTEGER :: nsizeh, nel1, lnwksp
+      INTEGER :: i, iel, ig, j, k, l, iielts, ientry, nsizeh, nel1, lnwksp
       INTEGER :: llink, mlink, nlink, ulink
-      INTEGER :: maxsin
       LOGICAL :: reallocate
 
 !     CHARACTER ( LEN = 80 ) :: array
@@ -3007,16 +3006,134 @@
 
      END SUBROUTINE CUTEST_symmh
 
-!-*-*-*-*-  C U T E S T _ t e r m i n a t e   S U B R O U T I N E  -*-*-*-*-
+!-*-   C U T E S T _ i n i t i a l i z e _ t h r e a d  S U B R O U T I N E  -*-
 
-     SUBROUTINE CUTEST_terminate( data, work, status, alloc_status, bad_alloc )
+     SUBROUTINE CUTEST_initialize_thread( data, work, constrained, status,     &
+                                          alloc_status, bad_alloc )
+
+!  dummy arguments
+
+     TYPE ( CUTEST_data_type ), INTENT( IN ) :: data
+     TYPE ( CUTEST_work_type ), INTENT( OUT ) :: work
+     INTEGER, INTENT( OUT ) :: status, alloc_status
+     LOGICAL, INTENT( IN ) :: constrained
+     CHARACTER ( LEN = 24 ), INTENT( OUT ) :: bad_alloc
+
+!  set default output values
+ 
+     status = 0 ; alloc_status = 0 ; bad_alloc = REPEAT( ' ', 24 )
+
+!  set scalar values
+
+     work%lh_row = lmin ; work%lh_col = lmin ; work%lh_val = lmin
+     work%nc2of = 0 ;  work%nc2og = 0 ; work%nc2oh = 0
+     work%nc2cf = 0 ;  work%nc2cg = 0 ; work%nc2ch = 0 ; work%nhvpr = 0
+     work%pnc = 0
+     work%firstg = .TRUE.
+
+!  allocate arrays
+
+     ALLOCATE( work%ISWKSP( MAX( data%ntotel, data%nel, data%n ) ),            &
+               STAT = alloc_status )
+     IF ( alloc_status /= 0 ) THEN
+       bad_alloc = 'work%ISWKSP' ; GO TO 910
+     END IF
+
+     ALLOCATE( work%ICALCF( MAX( data%nel, data%ng ) ), STAT = alloc_status )
+     IF ( alloc_status /= 0 ) THEN
+       bad_alloc = 'work%ICALCF' ; GO TO 910
+     END IF
+
+     ALLOCATE( work%ISTAJC( data%n + 1 ), STAT = alloc_status )
+     IF ( alloc_status /= 0 ) THEN
+       bad_alloc = 'work%ISTAJC' ; GO TO 910
+     END IF
+
+     ALLOCATE( work%GSCALE_used( data%ng ), STAT = alloc_status )
+     IF ( alloc_status /= 0 ) THEN
+       bad_alloc = 'work%GSCALE_used' ; GO TO 910
+     END IF
+
+     ALLOCATE( work%GVALS( data%ng, 3 ), STAT = alloc_status )
+     IF ( alloc_status /= 0 ) THEN
+       bad_alloc = 'work%GVALS' ; GO TO 910
+     END IF
+
+     ALLOCATE( work%FT( data%ng ), STAT = alloc_status )
+     IF ( alloc_status /= 0 ) THEN
+       bad_alloc = 'work%FT' ; GO TO 910
+     END IF
+
+     ALLOCATE( work%FUVALS( data%lfuval ), STAT = alloc_status )
+     IF ( alloc_status /= 0 ) THEN
+       bad_alloc = 'work%FUVALS' ; GO TO 910
+     END IF
+
+     ALLOCATE( work%W_ws( MAX( data%n, data%ng ) ), STAT = alloc_status )
+     IF ( alloc_status /= 0 ) THEN
+       bad_alloc = 'work%W_ws' ; GO TO 910
+     END IF
+
+     ALLOCATE( work%W_el( data%maxsel ), STAT = alloc_status )
+     IF ( alloc_status /= 0 ) THEN
+       bad_alloc = 'work%W_el' ; GO TO 910
+     END IF
+
+     ALLOCATE( work%W_in( data%maxsin ), STAT = alloc_status )
+     IF ( alloc_status /= 0 ) THEN
+       bad_alloc = 'work%W_in' ; GO TO 910
+     END IF
+
+     ALLOCATE( work%H_el( data%maxsel ), STAT = alloc_status )
+     IF ( alloc_status /= 0 ) THEN
+       bad_alloc = 'work%H_el' ; GO TO 910
+     END IF
+
+     ALLOCATE( work%H_in( data%maxsin ), STAT = alloc_status )
+     IF ( alloc_status /= 0 ) THEN
+       bad_alloc = 'work%H_in' ; GO TO 910
+     END IF
+
+     IF ( constrained ) THEN
+       ALLOCATE( work%G_temp( data%n ), STAT = alloc_status )
+       IF ( alloc_status /= 0 ) THEN
+         bad_alloc = 'work%G_temp' ; GO TO 910
+       END IF
+
+       ALLOCATE( work%LOGIC( data%nel ), STAT = alloc_status )
+       IF ( alloc_status /= 0 ) THEN
+         bad_alloc = 'work%LOGIC' ; GO TO 910
+       END IF
+     END IF
+
+     RETURN
+
+!  unsuccessful returns
+
+  910 CONTINUE
+      IF ( data%out > 0 )                                                      &
+        WRITE( data%out, "( ' ** Message from -CUTEST_initialize_thread-',     &
+     &    /, ' Allocation error (status = ', I0, ') for ', A )" )              &
+         alloc_status, bad_alloc
+      RETURN
+
+!  end of subroutine CUTEST_initialize_thread
+
+      END SUBROUTINE CUTEST_initialize_thread
+
+!-*-*-  C U T E S T _ t e r m i n a t e _ d a t a   S U B R O U T I N E  -*-*-
+
+     SUBROUTINE CUTEST_terminate_data( data, status, alloc_status, bad_alloc )
 
 !  dummy arguments
 
      TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
-     TYPE ( CUTEST_work_type ), INTENT( INOUT ) :: work
      INTEGER, INTENT( OUT ) :: status, alloc_status
      CHARACTER ( LEN = 24 ), INTENT( OUT ) :: bad_alloc
+
+!  set default output values
+ 
+     status = 0 ; alloc_status = 0 ; bad_alloc = REPEAT( ' ', 24 )
 
 !  delallocate any array in data that has been allocated
 
@@ -3104,12 +3221,6 @@
          bad_alloc = 'data%IVAR' ; GO TO 600 ; END IF
      END IF
 
-     IF ( ALLOCATED( work%ICALCF ) ) THEN
-       DEALLOCATE( work%ICALCF, STAT = alloc_status )
-       IF ( alloc_status /= 0 ) THEN
-         bad_alloc = 'work%ICALCF' ; GO TO 600 ; END IF
-     END IF
-
      IF ( ALLOCATED( data%ITYPEV ) ) THEN
        DEALLOCATE( data%ITYPEV, STAT = alloc_status )
        IF ( alloc_status /= 0 ) THEN
@@ -3120,36 +3231,6 @@
        DEALLOCATE( data%IWORK, STAT = alloc_status )
        IF ( alloc_status /= 0 ) THEN
          bad_alloc = 'data%IWORK' ; GO TO 600 ; END IF
-     END IF
-
-     IF ( ALLOCATED( work%LINK_col ) ) THEN
-       DEALLOCATE( work%LINK_col, STAT = alloc_status )
-       IF ( alloc_status /= 0 ) THEN
-         bad_alloc = 'work%LINK_col' ; GO TO 600 ; END IF
-     END IF
-
-     IF ( ALLOCATED( work%POS_in_H ) ) THEN
-       DEALLOCATE( work%POS_in_H, STAT = alloc_status )
-       IF ( alloc_status /= 0 ) THEN
-         bad_alloc = 'work%POS_in_H' ; GO TO 600 ; END IF
-     END IF
-
-     IF ( ALLOCATED( work%H_row ) ) THEN
-       DEALLOCATE( work%H_row, STAT = alloc_status )
-       IF ( alloc_status /= 0 ) THEN
-         bad_alloc = 'work%H_row' ; GO TO 600 ; END IF
-     END IF
-
-     IF ( ALLOCATED( work%H_col ) ) THEN
-       DEALLOCATE( work%H_col, STAT = alloc_status )
-       IF ( alloc_status /= 0 ) THEN
-         bad_alloc = 'work%H_col' ; GO TO 600 ; END IF
-     END IF
-
-     IF ( ALLOCATED( work%ISTAJC ) ) THEN
-       DEALLOCATE( work%ISTAJC, STAT = alloc_status )
-       IF ( alloc_status /= 0 ) THEN
-         bad_alloc = 'work%ISTAJC' ; GO TO 600 ; END IF
      END IF
 
      IF ( ALLOCATED( data%ISTAGV ) ) THEN
@@ -3174,12 +3255,6 @@
        DEALLOCATE( data%IGCOLJ, STAT = alloc_status )
        IF ( alloc_status /= 0 ) THEN
          bad_alloc = 'data%IGCOLJ' ; GO TO 600 ; END IF
-     END IF
-
-     IF ( ALLOCATED( work%ISWKSP ) ) THEN
-       DEALLOCATE( work%ISWKSP, STAT = alloc_status )
-       IF ( alloc_status /= 0 ) THEN
-         bad_alloc = 'work%ISWKSP' ; GO TO 600 ; END IF
      END IF
 
      IF ( ALLOCATED( data%LINK_elem_uses_var ) ) THEN
@@ -3236,16 +3311,114 @@
          bad_alloc = 'data%GSCALE' ; GO TO 600 ; END IF
      END IF
 
-     IF ( ALLOCATED( work%GSCALE_used ) ) THEN
-       DEALLOCATE( work%GSCALE_used, STAT = alloc_status )
-       IF ( alloc_status /= 0 ) THEN
-         bad_alloc = 'work%GSCALE_used' ; GO TO 600 ; END IF
-     END IF
-
      IF ( ALLOCATED( data%VSCALE ) ) THEN
        DEALLOCATE( data%VSCALE, STAT = alloc_status )
        IF ( alloc_status /= 0 ) THEN
          bad_alloc = 'data%VSCALE' ; GO TO 600 ; END IF
+     END IF
+
+     IF ( ALLOCATED( data%INTREP ) ) THEN
+       DEALLOCATE( data%INTREP, STAT = alloc_status )
+       IF ( alloc_status /= 0 ) THEN
+         bad_alloc = 'data%INTREP' ; GO TO 600 ; END IF
+     END IF
+
+     IF ( ALLOCATED( data%GXEQX ) ) THEN
+       DEALLOCATE( data%GXEQX, STAT = alloc_status )
+       IF ( alloc_status /= 0 ) THEN
+         bad_alloc = 'data%GXEQX' ; GO TO 600 ; END IF
+     END IF
+
+     IF ( ALLOCATED( data%GNAMES ) ) THEN
+       DEALLOCATE( data%GNAMES, STAT = alloc_status )
+       IF ( alloc_status /= 0 ) THEN
+         bad_alloc = 'data%GNAMES' ; GO TO 600 ; END IF
+     END IF
+
+     IF ( ALLOCATED( data%VNAMES ) ) THEN
+       DEALLOCATE( data%VNAMES, STAT = alloc_status )
+       IF ( alloc_status /= 0 ) THEN
+         bad_alloc = 'data%VNAMES' ; GO TO 600 ; END IF
+     END IF
+     RETURN
+
+!  unsuccessful returns
+
+ 600 CONTINUE
+     status = 1000 + alloc_status
+     IF ( data%out > 0 ) WRITE( data%out,                                      &
+       "( ' ** Message from -CUTEST_terminate_data-', /, ' Deallocation ',     &
+    &  'error for ', A, ', status = ', I0 )" ) bad_alloc, alloc_status
+     RETURN
+
+!  end of subroutine CUTEST_terminate_data
+
+     END SUBROUTINE CUTEST_terminate_data
+
+!-*-*-   C U T E S T _ t e r m i n a t e _ w o r k  S U B R O U T I N E   -*-*-
+
+     SUBROUTINE CUTEST_terminate_work( data, work, status,                     &
+                                       alloc_status, bad_alloc )
+
+!  dummy arguments
+
+     TYPE ( CUTEST_data_type ), INTENT( INOUT ) :: data
+     TYPE ( CUTEST_work_type ), INTENT( INOUT ) :: work
+     INTEGER, INTENT( OUT ) :: status, alloc_status
+     CHARACTER ( LEN = 24 ), INTENT( OUT ) :: bad_alloc
+
+!  set default output values
+ 
+     status = 0 ; alloc_status = 0 ; bad_alloc = REPEAT( ' ', 24 )
+
+!  delallocate any array in work that has been allocated
+
+     IF ( ALLOCATED( work%ICALCF ) ) THEN
+       DEALLOCATE( work%ICALCF, STAT = alloc_status )
+       IF ( alloc_status /= 0 ) THEN
+         bad_alloc = 'work%ICALCF' ; GO TO 600 ; END IF
+     END IF
+
+     IF ( ALLOCATED( work%LINK_col ) ) THEN
+       DEALLOCATE( work%LINK_col, STAT = alloc_status )
+       IF ( alloc_status /= 0 ) THEN
+         bad_alloc = 'work%LINK_col' ; GO TO 600 ; END IF
+     END IF
+
+     IF ( ALLOCATED( work%POS_in_H ) ) THEN
+       DEALLOCATE( work%POS_in_H, STAT = alloc_status )
+       IF ( alloc_status /= 0 ) THEN
+         bad_alloc = 'work%POS_in_H' ; GO TO 600 ; END IF
+     END IF
+
+     IF ( ALLOCATED( work%H_row ) ) THEN
+       DEALLOCATE( work%H_row, STAT = alloc_status )
+       IF ( alloc_status /= 0 ) THEN
+         bad_alloc = 'work%H_row' ; GO TO 600 ; END IF
+     END IF
+
+     IF ( ALLOCATED( work%H_col ) ) THEN
+       DEALLOCATE( work%H_col, STAT = alloc_status )
+       IF ( alloc_status /= 0 ) THEN
+         bad_alloc = 'work%H_col' ; GO TO 600 ; END IF
+     END IF
+
+     IF ( ALLOCATED( work%ISTAJC ) ) THEN
+       DEALLOCATE( work%ISTAJC, STAT = alloc_status )
+       IF ( alloc_status /= 0 ) THEN
+         bad_alloc = 'work%ISTAJC' ; GO TO 600 ; END IF
+     END IF
+
+     IF ( ALLOCATED( work%ISWKSP ) ) THEN
+       DEALLOCATE( work%ISWKSP, STAT = alloc_status )
+       IF ( alloc_status /= 0 ) THEN
+         bad_alloc = 'work%ISWKSP' ; GO TO 600 ; END IF
+     END IF
+
+     IF ( ALLOCATED( work%GSCALE_used ) ) THEN
+       DEALLOCATE( work%GSCALE_used, STAT = alloc_status )
+       IF ( alloc_status /= 0 ) THEN
+         bad_alloc = 'work%GSCALE_used' ; GO TO 600 ; END IF
      END IF
 
      IF ( ALLOCATED( work%G_temp ) ) THEN
@@ -3308,48 +3481,26 @@
          bad_alloc = 'work%GVALS' ; GO TO 600 ; END IF
      END IF
 
-     IF ( ALLOCATED( data%INTREP ) ) THEN
-       DEALLOCATE( data%INTREP, STAT = alloc_status )
-       IF ( alloc_status /= 0 ) THEN
-         bad_alloc = 'data%INTREP' ; GO TO 600 ; END IF
-     END IF
-
-     IF ( ALLOCATED( data%GXEQX ) ) THEN
-       DEALLOCATE( data%GXEQX, STAT = alloc_status )
-       IF ( alloc_status /= 0 ) THEN
-         bad_alloc = 'data%GXEQX' ; GO TO 600 ; END IF
-     END IF
-
      IF ( ALLOCATED( work%LOGIC ) ) THEN
        DEALLOCATE( work%LOGIC, STAT = alloc_status )
        IF ( alloc_status /= 0 ) THEN
          bad_alloc = 'work%LOGIC' ; GO TO 600 ; END IF
      END IF
-
-     IF ( ALLOCATED( data%GNAMES ) ) THEN
-       DEALLOCATE( data%GNAMES, STAT = alloc_status )
-       IF ( alloc_status /= 0 ) THEN
-         bad_alloc = 'data%GNAMES' ; GO TO 600 ; END IF
-     END IF
-
-     IF ( ALLOCATED( data%VNAMES ) ) THEN
-       DEALLOCATE( data%VNAMES, STAT = alloc_status )
-       IF ( alloc_status /= 0 ) THEN
-         bad_alloc = 'data%VNAMES' ; GO TO 600 ; END IF
-     END IF
+     work%array_status = .FALSE.
+     RETURN
 
 !  unsuccessful returns
 
-  600 CONTINUE
-      status = 1000 + alloc_status
-      IF ( data%out > 0 ) WRITE( data%out,                                     &
-        "( ' ** Message from -CUTEST_terminate-', /, ' Deallocation error ',   &
-     &  'for ', A, ', status = ', I0 )" ) bad_alloc, alloc_status
-      RETURN
+ 600 CONTINUE
+     status = 1000 + alloc_status
+     IF ( data%out > 0 ) WRITE( data%out,                                      &
+       "( ' ** Message from -CUTEST_terminate_work-', /, ' Deallocation ',     &
+    &  'error for ', A, ', status = ', I0 )" ) bad_alloc, alloc_status
+     RETURN
 
-!  end of subroutine CUTEST_terminate
+!  end of subroutine CUTEST_terminate_work
 
-      END SUBROUTINE CUTEST_terminate
+     END SUBROUTINE CUTEST_terminate_work
 
 !  end of module CUTEST
 

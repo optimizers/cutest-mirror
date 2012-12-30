@@ -41,6 +41,7 @@
                                      CUTEST_work_global( 1 ),                  &
                                      status, input, out, io_buffer,            &
                                      n, X, X_l, X_u )
+      CUTEST_data_global%threads = 1
       RETURN
 
 !  allocation error
@@ -64,16 +65,17 @@
 !  History -
 !   fortran 2003 version released in CUTEst, 22nd December 2012
 
-      SUBROUTINE CUTEST_usetup_threaded( status, input, out, io_buffer,        &
-                                         n, X, X_l, X_u, threads )
+      SUBROUTINE CUTEST_usetup_threaded( status, input, out, threads,         &
+                                         IO_BUFFERS, n, X, X_l, X_u )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
 !  dummy arguments
 
-      INTEGER, INTENT( IN ) :: input, out, io_buffer, threads
+      INTEGER, INTENT( IN ) :: input, out, threads
       INTEGER, INTENT( INOUT ) :: n
       INTEGER, INTENT( OUT ) :: status
+      INTEGER, INTENT( IN ), DIMENSION( threads ) :: IO_BUFFERS
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: X, X_l, X_u
 
 !  --------------------------------------------------------------
@@ -82,7 +84,7 @@
 
 !  local variables
 
-      INTEGER :: alloc_status
+      INTEGER :: i, alloc_status
       CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
 
 !  threads must be positive
@@ -100,20 +102,27 @@
 
       CALL CUTEST_usetup_threadsafe( CUTEST_data_global,                       &
                                      CUTEST_work_global( 1 ),                  &
-                                     status, input, out, io_buffer,            &
+                                     status, input, out, IO_BUFFERS( 1 ),      &
                                      n, X, X_l, X_u )
+      CUTEST_data_global%threads = threads
 
-!  copy the workspace data to each thread
+!  initialize additional thread data
 
-      IF ( threads > 1 ) THEN
-        CUTEST_work_global( 2 : threads ) = CUTEST_work_global( 1 )
+      DO i = 2, threads
+        CALL CUTEST_initialize_thread( CUTEST_data_global,                     &
+                                       CUTEST_work_global( i ), .FALSE.,       &
+                                       status, alloc_status, bad_alloc )
+        IF ( status /= 0 ) RETURN
 
 !  ensure that each thread uses its own i/o buffer if required
 
-        DO i = 2, threads
-          CUTEST_work_global( i )%io_buffer = io_buffer + i - 1
-        END DO
-      END IF
+        CUTEST_work_global( i )%io_buffer = IO_BUFFERS( i )
+
+!  copy necessary starting addresses
+
+        CUTEST_work_global( i )%ISTAJC( : CUTEST_data_global%n + 1 )           &
+         = CUTEST_work_global( 1 )%ISTAJC( : CUTEST_data_global%n + 1 )
+      END DO
       RETURN
 
 !  allocation error
@@ -178,7 +187,7 @@
 
       CALL CPU_TIME( data%sutime )
       data%out = out
-      data%io_buffer = io_buffer
+      work%io_buffer = io_buffer
       debug = .FALSE.
       debug = debug .AND. out > 0
 
@@ -610,10 +619,10 @@
              data%n, data%ng, data%nel, data%ntotel, data%nvrels, data%nnza,   &
              data%nvargp, data%IELING, data%ISTADG, data%IELVAR, data%ISTAEV,  &
              data%INTVAR, data%ISTADH, data%ICNA, data%ISTADA,                 &
-             data%GXEQX, data%alllin, data%altriv, data%lfxi,                  &
-             data%lgxi, data%lhxi, data%lggfx, data%ldx, data%lgrjac,          &
-             data%lnguvl, data%lnhuvl, data%ntotin, data%maxsel, RANGE, 0,     &
-             out, data%io_buffer, data%l_link_e_u_v, work%FUVALS, data%lfuval, &
+             data%GXEQX, data%alllin, data%altriv, data%lfxi, data%lgxi,       &
+             data%lhxi, data%lggfx, data%ldx, data%lgrjac, data%lnguvl,        &
+             data%lnhuvl, data%ntotin, data%maxsel, data%maxsin, RANGE, 0,     &
+             out, work%io_buffer, data%l_link_e_u_v, work%FUVALS, data%lfuval, &
              data%LINK_elem_uses_var, work%ISWKSP, work%ISTAJC, data%ISTAGV,   &
              data%ISVGRP, data%ISLGRP, data%IGCOLJ, data%ISYMMH, work%W_ws,    &
              work%W_el, work%W_in, work%H_el, work%H_in,                       &
@@ -622,13 +631,8 @@
 
 !  initialize the performance counters and variables
 
-      work%nc2of = 0
-      work%nc2og = 0
-      work%nc2oh = 0
-      work%nc2cf = 0
-      work%nc2cg = 0
-      work%nc2ch = 0
-      work%nhvpr = 0
+      work%nc2of = 0 ;  work%nc2og = 0 ; work%nc2oh = 0
+      work%nc2cf = 0 ;  work%nc2cg = 0 ; work%nc2ch = 0 ; work%nhvpr = 0
       work%pnc = 0
 
       CALL CPU_TIME( data%sttime )

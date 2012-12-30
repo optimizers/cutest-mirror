@@ -1,14 +1,95 @@
-! THIS VERSION: CUTEST 1.0 - 28/11/2012 AT 10:15 GMT.
+! THIS VERSION: CUTEST 1.0 - 29/12/2012 AT 13:05 GMT.
 
 !-*-*-*-*-*-*-  C U T E S T    C C I F G    S U B R O U T I N E  -*-*-*-*-*-*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
 !  Principal authors: Ingrid Bongartz and Nick Gould
 
+!  History -
+!   fortran 2003 version released in CUTEst, 29th December 2012
+
+      SUBROUTINE CUTEST_ccifg( status, n, icon, X, ci, GCI, grad )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, icon
+      INTEGER, INTENT( OUT ) :: status
+      LOGICAL, INTENT( IN ) :: grad
+      REAL ( KIND = wp ), INTENT( OUT ) :: ci
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: GCI
+
+!  -----------------------------------------------------------------
+!  evaluate constraint function icon and possibly its gradient, for
+!  constraints initially written in Standard Input Format (SIF).  
+!  The constraint gradient is stored as a dense vector in array GCI;
+!  that is, GCI(j) is the partial derivative of constraint icon with 
+!  respect to variable j. (Subroutine CSCIFG performs the same 
+!  calculations for a sparse constraint gradient vector.)
+!  -----------------------------------------------------------------
+
+      CALL CUTEST_ccifg_threadsafe( CUTEST_data_global,                        &
+                                    CUTEST_work_global( 1 ),                   &
+                                    status, n, icon, X, ci, GCI, grad )
+      RETURN
+
+!  end of subroutine CUTEST_ccifg
+
+      END SUBROUTINE CUTEST_ccifg
+
+!-*-*-  C U T E S T    C C I F G _ t h r e a d e d   S U B R O U T I N E  -*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal authors: Ingrid Bongartz and Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 29th December 2012
+
+      SUBROUTINE CUTEST_ccifg_threaded( status, n, icon, X, ci, GCI, grad,     &
+                                        thread )
+      USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, icon, thread
+      INTEGER, INTENT( OUT ) :: status
+      LOGICAL, INTENT( IN ) :: grad
+      REAL ( KIND = wp ), INTENT( OUT ) :: ci
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: GCI
+
+!  -----------------------------------------------------------------
+!  evaluate constraint function icon and possibly its gradient, for
+!  constraints initially written in Standard Input Format (SIF).  
+!  The constraint gradient is stored as a dense vector in array GCI;
+!  that is, GCI(j) is the partial derivative of constraint icon with 
+!  respect to variable j. (Subroutine CSCIFG performs the same 
+!  calculations for a sparse constraint gradient vector.)
+!  -----------------------------------------------------------------
+
+      CALL CUTEST_ccifg_threadsafe( CUTEST_data_global,                        &
+                                    CUTEST_work_global( thread ),              &
+                                    status, n, icon, X, ci, GCI, grad )
+      RETURN
+
+!  end of subroutine CUTEST_ccifg_threaded
+
+      END SUBROUTINE CUTEST_ccifg_threaded
+
+!-*-  C U T E S T    C C I F G _ t h r e a d s a f e   S U B R O U T I N E  -*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal authors: Ingrid Bongartz and Nick Gould
+
+!  History -
 !   fortran 77 version originally released in CUTE, September 1994
 !   fortran 2003 version released in CUTEst, 28th November 2012
 
-      SUBROUTINE CUTEST_ccifg( data, work, status, n, icon, X, ci, GCI, grad )
+      SUBROUTINE CUTEST_ccifg_threadsafe( data, work,                          &
+                                          status, n, icon, X, ci, GCI, grad )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
@@ -262,6 +343,6 @@
       status = 3
       RETURN
 
-!  end of subroutine CUTEST_ccifg
+!  end of subroutine CUTEST_ccifg_threadsafe
 
-      END SUBROUTINE CUTEST_ccifg
+      END SUBROUTINE CUTEST_ccifg_threadsafe
