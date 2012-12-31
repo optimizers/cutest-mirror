@@ -76,6 +76,17 @@
 !  Version of CSH that ignores objective function needed by FilterSQP
 !  ---------------------------------------------------------------------
 
+!  check that the specified thread is within range
+
+      IF ( thread < 1 .OR. thread > CUTEST_data_global%threads ) THEN
+        IF ( CUTEST_data_global%out > 0 )                                      &
+          WRITE( CUTEST_data_global%out, "( ' ** CUTEST error: thread ', I0,   &
+         &  ' out of range [1,', I0, ']' )" ) thread, CUTEST_data_global%threads
+        status = 4 ; RETURN
+      END IF
+
+!  evaluate using specified thread
+
       CALL CUTEST_cshc_threadsafe( CUTEST_data_global,                         &
                                    CUTEST_work_global( thread ),               &
                                    status, n, m, X, Y,                         &

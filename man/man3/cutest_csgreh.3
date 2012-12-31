@@ -6,7 +6,7 @@ Lagrangian Hessian in finite element format and the gradient of either
 the objective/Lagrangian in sparse format.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_csgreh( data, status, n, m, X, Y, grlagf, 
+CALL CUTEST_csgreh( status, n, m, X, Y, grlagf, 
 nnzj, lj, J_val, J_var, J_fun, 
 ne, lhe_ptr, HE_row_ptr, HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val, byrows )
 .SH DESCRIPTION
@@ -83,9 +83,6 @@ The objective function is group-partially separable and all constraint functions
 .SH ARGUMENTS
 The arguments of CUTEST_csgreh are as follows
 .TP 5
-.B data \fP[inout] - CUTEST_data_type derived type
-problem-specific private data,
-.TP
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,
@@ -198,4 +195,4 @@ Environment, revisited\fP,
 I. Bongartz, A.R. Conn, N.I.M. Gould and Ph.L. Toint, 
 TOMS, \fB21\fP:1, pp.123-160, 1995.
 
-cgreh(3M), sifdecode(1).
+cutest_ugreh(3M), sifdecode(1).

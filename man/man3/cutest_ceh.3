@@ -5,7 +5,7 @@ CUTEST_ceh \- CUTEst tool to evaluate the sparse Lagrangian Hessian matrix in
 finite element format.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_ceh( data, status, n, m, X, Y, 
+CALL CUTEST_ceh( status, n, m, X, Y, 
 ne, lhe_ptr, HE_row_ptr, HE_val_ptr, 
 lhe_row, HE_row, lhe_val, HE_val, byrows )
 .SH DESCRIPTION
@@ -78,9 +78,6 @@ and all constraint functions are partially separable.
 .SH ARGUMENTS
 The arguments of CUTEST_ceh are as follows
 .TP 5
-.B data \fP[inout] - CUTEST_data_type derived type
-problem-specific private data,
-.TP
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,

@@ -4,7 +4,7 @@
 CUTEST_ufn \- CUTEst tool to evaluate function value.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_ufn( data, status, n, X, f )
+CALL CUTEST_ufn( status, n, X, f )
 .SH DESCRIPTION
 The CUTEST_ufn subroutine evaluates the value of the objective function of
 the problem decoded from a SIF file by the script
@@ -33,9 +33,6 @@ The objective function is group-partially separable.
 .SH ARGUMENTS
 The arguments of CUTEST_ufn are as follows
 .TP 5
-.B data \fP[inout] - CUTEST_data_type derived type
-problem-specific private data,
-.TP
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,

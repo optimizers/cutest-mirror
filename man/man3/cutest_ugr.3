@@ -4,7 +4,7 @@
 CUTEST_ugr \- CUTEst tool to evaluate gradient.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_ugr( data, status, n, X, G )
+CALL CUTEST_ugr( status, n, X, G )
 .SH DESCRIPTION
 The CUTEST_ugr subroutine evaluates the gradient of the objective function of
 the problem decoded from a SIF file by the script \fIsifdecode\fP at the
@@ -33,9 +33,6 @@ The objective function is group-partially separable.
 .SH ARGUMENTS
 The arguments of CUTEST_ugr are as follows
 .TP 5
-.B data \fP[inout] - CUTEST_data_type derived type
-problem-specific private data,
-.TP
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,

@@ -5,7 +5,7 @@ CUTEST_ccifsg \- CUTEst tool to evaluate a single constraint function value and
 possibly gradient in sparse format.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_ccifsg( data, status, n, icon, X, ci, 
+CALL CUTEST_ccifsg( status, n, icon, X, ci, 
 nnzgci, lgci, GCI_val, GCI_var, grad )
 .SH DESCRIPTION
 The CUTEST_ccifsg subroutine evaluates the value of a particular constraint
@@ -58,9 +58,6 @@ and all constraint functions are partially separable.
 .SH ARGUMENTS
 The arguments of CUTEST_ccifsg are as follows
 .TP 5
-.B data \fP[inout] - CUTEST_data_type derived type
-problem-specific private data,
-.TP
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,

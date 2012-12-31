@@ -6,7 +6,7 @@ Hessian of the Lagrangian function for the problem decoded from a
 SIF file by the script \fIsifdecode\fP.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_cdimsh( data, status, nnzh )
+CALL CUTEST_cdimsh( status, nnzh )
 .SH DESCRIPTION
 The CUTEST_cdimsh subroutine determines the number of nonzero elements
 required to store the Hessian matrix of the Lagrangian function for
@@ -59,9 +59,6 @@ and all constraint functions are partially separable.
 .SH ARGUMENTS
 The arguments of CUTEST_cdimsh are as follows
 .TP 5
-.B data \fP[inout] - CUTEST_data_type derived type
-problem-specific private data,
-.TP
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,

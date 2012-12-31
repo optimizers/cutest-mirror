@@ -5,7 +5,7 @@ CUTEST_udimsh \- CUTEst tool to determine the number of nonzeros required to
 store the sparse Hessian matrix in coordinate format.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_udimsh( data, status, nnzh )
+CALL CUTEST_udimsh( status, nnzh )
 .SH DESCRIPTION
 The CUTEST_udimsh subroutine determine the number of nonzeros required to
 store the Hessian matrix of the objective function of the problem
@@ -35,9 +35,6 @@ The objective function is group-partially separable.
 .SH ARGUMENTS
 The arguments of CUTEST_udimsh are as follows
 .TP 5
-.B data \fP[inout] - CUTEST_data_type derived type
-problem-specific private data,
-.TP
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,

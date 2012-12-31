@@ -4,7 +4,7 @@
 CUTEST_cvartype \- CUTEst tool to determine the type of each variable.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_cvartype( data, status, n, X_type )
+CALL CUTEST_cvartype( status, n, X_type )
 .SH DESCRIPTION
 The CUTEST_cvartype subroutine determines the type (continuous, 0-1,
 integer) of each variable involved in the problem
@@ -57,9 +57,6 @@ and all constraint functions are partially separable.
 .SH ARGUMENTS
 The arguments of CUTEST_cvartype are as follows
 .TP 5
-.B data \fP[inout] - CUTEST_data_type derived type
-problem-specific private data,
-.TP
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,

@@ -5,7 +5,7 @@ CUTEST_ugrsh \- CUTEst tool to evaluate the gradient and sparse Hessian matrix
 in coordinate format.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_ugrsh( data, status, n, X, G, 
+CALL CUTEST_ugrsh( status, n, X, G, 
 nnzh, lh, H_val, H_row, H_col  )
 .SH DESCRIPTION
 The CUTEST_ugrsh subroutine evaluates the gradient and Hessian matrix of
@@ -36,9 +36,6 @@ The objective function is group-partially separable.
 .SH ARGUMENTS
 The arguments of CUTEST_ugrsh are as follows
 .TP 5
-.B data \fP[inout] - CUTEST_data_type derived type
-problem-specific private data,
-.TP
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,

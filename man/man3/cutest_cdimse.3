@@ -4,7 +4,7 @@
 CUTEST_cdimse \- CUTEst tool to determine number of nonzeros to store the
 Hessian of the Lagrangian.
 .SH SYNOPSIS
-CALL CUTEST_cdimse( data, status, ne, he_val_ne, he_row_ne )
+CALL CUTEST_cdimse( status, ne, he_val_ne, he_row_ne )
 .SH DESCRIPTION
 The CUTEST_cdimse subroutine determines the number of nonzero elements
 required to store the Hessian matrix of the Lagrangian function for
@@ -67,9 +67,6 @@ constraint functions are partially separable.
 .SH ARGUMENTS
 The arguments of CUTEST_cdimse are as follows
 .TP 5
-.B data \fP[inout] - CUTEST_data_type derived type
-problem-specific private data,
-.TP
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,

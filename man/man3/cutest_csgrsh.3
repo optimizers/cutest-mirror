@@ -6,7 +6,7 @@ Lagrangian Hessian and the gradient of either the objective/Lagrangian
 in sparse format.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_csgrsh( data, status, n, m, X, Y, grlagf,  
+CALL CUTEST_csgrsh( status, n, m, X, Y, grlagf,  
 nnzj, lj, J_val, J_var, J_fun, 
 nnzh, lh, H_val, H_row, H_col )
 .SH DESCRIPTION
@@ -70,9 +70,6 @@ all constraint functions are partially separable.
 .SH ARGUMENTS
 The arguments of CUTEST_csgrsh are as follows
 .TP 5
-.B data \fP[inout] - CUTEST_data_type derived type
-problem-specific private data,
-.TP
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,

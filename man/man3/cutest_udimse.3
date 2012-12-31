@@ -5,7 +5,7 @@ CUTEST_udimse \- CUTEst tool to determine the number of nonzeros required to
 store the sparse Hessian matrix in finite element format.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_udimse( data, status, ne, he_val_ne, he_row_ne )
+CALL CUTEST_udimse( status, ne, he_val_ne, he_row_ne )
 .SH DESCRIPTION
 The CUTEST_udimse subroutine determine the number of nonzeros required to
 store the Hessian matrix of the objective function of the problem
@@ -42,9 +42,6 @@ The objective function is group-partially separable.
 .SH ARGUMENTS
 The arguments of CUTEST_udimse are as follows
 .TP 5
-.B data \fP[inout] - CUTEST_data_type derived type
-problem-specific private data,
-.TP
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,

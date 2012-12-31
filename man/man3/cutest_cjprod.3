@@ -6,7 +6,7 @@ the Jacobian of the constraints, or its transpose.
 \fP
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_cjprod( data, status, n, m, gotj, jtrans, X,
+CALL CUTEST_cjprod( status, n, m, gotj, jtrans, X,
 VECTOR, lvector, RESULT, lresult )
 .SH DESCRIPTION
 The CUTEST_cjprod subroutine forms the product of a vector with the Jacobian
@@ -61,9 +61,6 @@ and all constraint functions are partially separable.
 .SH ARGUMENTS
 The arguments of CUTEST_cjprod are as follows
 .TP 5
-.B data \fP[inout] - CUTEST_data_type derived type
-problem-specific private data,
-.TP
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,

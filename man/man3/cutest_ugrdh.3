@@ -4,7 +4,7 @@
 CUTEST_ugrdh \- CUTEst tool to evaluate the gradient and Hessian matrix.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_ugrdh( data, status, n, X, G, lh1, H_val )
+CALL CUTEST_ugrdh( status, n, X, G, lh1, H_val )
 .SH DESCRIPTION
 The CUTEST_ugrdh subroutine evaluates the gradient and Hessian matrix of
 the objective function of the problem decoded from a SIF file by the
@@ -34,9 +34,6 @@ The objective function is group-partially separable.
 .SH ARGUMENTS
 The arguments of CUTEST_ugrdh are as follows
 .TP 5
-.B data \fP[inout] - CUTEST_data_type derived type
-problem-specific private data,
-.TP
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,

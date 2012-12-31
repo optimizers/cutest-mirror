@@ -5,7 +5,7 @@ CUTEST_ubandh \- CUTEst tool to extract a banded matrix out of the Hessian
 matrix.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_ubandh( data, status, n, goth, X, nsemib, BANDH, lbandh )
+CALL CUTEST_ubandh( status, n, goth, X, nsemib, BANDH, lbandh )
 .SH DESCRIPTION
 The CUTEST_ubandh subroutine extracts the elements which lie within a band
 of given semi-bandwidth out of the Hessian matrix of the objective
@@ -35,9 +35,6 @@ The objective function is group-partially separable.
 .SH ARGUMENTS
 The arguments of CUTEST_ubandh are as follows
 .TP 5
-.B data \fP[inout] - CUTEST_data_type derived type
-problem-specific private data,
-.TP
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,

@@ -5,7 +5,7 @@ CUTEST_cish \- CUTEst tool to evaluate the Hessian of an individual problem
 function, in sparse format.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_cish( data, status, n, X, iprob, 
+CALL CUTEST_cish( status, n, X, iprob, 
 nnzh, lh, H_val, H_row, H_col )
 .SH DESCRIPTION
 The CUTEST_cish subroutine evaluates the Hessian of a particular constraint
@@ -59,9 +59,6 @@ all constraint functions are partially separable.
 .SH ARGUMENTS
 The arguments of CUTEST_cish are as follows
 .TP 5
-.B data \fP[inout] - CUTEST_data_type derived type
-problem-specific private data,
-.TP
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,

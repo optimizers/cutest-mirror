@@ -4,7 +4,7 @@
 CUTEST_cidh \- CUTEst tool to evaluate the Hessian of a problem function.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_cidh( data, status, n, X, iprob, lh1, H_val )
+CALL CUTEST_cidh( status, n, X, iprob, lh1, H_val )
 .SH DESCRIPTION
 The CUTEST_cidh subroutine evaluates the Hessian matrix of either the
 objective function or a constraint function for the problem decoded
@@ -57,9 +57,6 @@ and all constraint functions are partially separable.
 .SH ARGUMENTS
 The arguments of CUTEST_cidh are as follows
 .TP 5
-.B data \fP[inout] - CUTEST_data_type derived type
-problem-specific private data,
-.TP
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,
