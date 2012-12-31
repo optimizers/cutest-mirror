@@ -29,7 +29,8 @@ foreach pack ( cutest_ccfg cutest_ccfsg cutest_ccifg cutest_ccifsg cutest_cdh \
                cutest_ugreh_threaded cutest_ugrsh_threaded \
                cutest_uhprod_threaded cutest_uofg_threaded \
                cutest_ureport_threaded cutest_usetup_threaded \
-               cutest_ush_threaded )
+               cutest_ush_threaded cutest )
+#foreach pack ( cutest )
 #foreach pack ( cutest_ccfg )
 #foreach pack ( cutest_ccfsg )
 #foreach pack ( cutest_ccifg )
