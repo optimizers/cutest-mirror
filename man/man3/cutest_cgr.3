@@ -5,7 +5,7 @@ CUTEST_cgr \- CUTEst tool to evaluate constraints gradients and gradient of
 objective/Lagrangian function.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_cgr( data, status, n, m, X, Y, grlagf, G, jtrans,
+CALL CUTEST_cgr( status, n, m, X, Y, grlagf, G, jtrans,
 lj1, lj2, J_val )
 .SH DESCRIPTION
 The CUTEST_cgr subroutine evaluates the gradients of the general
@@ -70,9 +70,6 @@ and all constraint functions are partially separable.
 .SH ARGUMENTS
 The arguments of CUTEST_cgr are as follows
 .TP 5
-.B data \fP[inout] - CUTEST_data_type derived type
-problem-specific private data,
-.TP
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,

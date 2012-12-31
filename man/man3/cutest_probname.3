@@ -4,7 +4,7 @@
 CUTEST_probname \- CUTEst tool to obtain the names of the problem.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_probname( data, status, pname )
+CALL CUTEST_probname( status, pname )
 .SH DESCRIPTION
 The CUTEST_probname subroutine obtains the names of the problem.
 
@@ -55,9 +55,6 @@ all constraint functions are partially separable.
 .SH ARGUMENTS
 The arguments of CUTEST_probname are as follows
 .TP 5
-.B data \fP[inout] - CUTEST_data_type derived type
-problem-specific private data,
-.TP
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,

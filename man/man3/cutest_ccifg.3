@@ -2,10 +2,10 @@
 .TH cutest_ccifg 3M "4 Dec 2012" "CUTEst user documentation" "CUTEst user documentation"
 .SH NAME
 CUTEST_ccifg \- CUTEst tool to evaluate a single constraint function value and
-possibly gradient.
+possibly its gradient.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_ccifg( data, status, n, icon, X, ci, GCI_val, grad )
+CALL CUTEST_ccifg( status, n, icon, X, ci, GCI_val, grad )
 .SH DESCRIPTION
 The CUTEST_ccifg subroutine evaluates the value of a particular constraint
 function of the problem decoded from a SIF file by the script 
@@ -58,9 +58,6 @@ all constraint functions are partially separable.
 .SH ARGUMENTS
 The arguments of CUTEST_ccifg are as follows
 .TP 5
-.B data \fP[inout] - CUTEST_data_type derived type
-problem-specific private data,
-.TP
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,

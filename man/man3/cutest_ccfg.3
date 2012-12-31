@@ -6,7 +6,7 @@ CUTEST_ccfg \- CUTEst tool to evaluate constraint functions values and
 possibly gradients.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_ccfg( data, status, n, m, X, C, jtrans, lj1, lj2, J_val, grad )
+CALL CUTEST_ccfg( status, n, m, X, C, jtrans, lj1, lj2, J_val, grad )
 .SH DESCRIPTION
 The CUTEST_ccfg subroutine evaluates the values of the constraint functions of
 the problem decoded from a SIF file by the script \fIsifdecode\fP at the
@@ -56,9 +56,6 @@ and all constraint functions are partially separable.
 .SH ARGUMENTS
 The arguments of CUTEST_ccfg are as follows
 .TP 5
-.B data \fP[inout] - CUTEST_data_type derived type
-problem-specific private data,
-.TP
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,

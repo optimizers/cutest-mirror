@@ -4,7 +4,7 @@
 CUTEST_cdh \- CUTEst tool to evaluate the Hessian of the Lagrangian.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_cdh( data, status, n, m, X, Y, lh1, H_val )
+CALL CUTEST_cdh( status, n, m, X, Y, lh1, H_val )
 .SH DESCRIPTION
 The CUTEST_cdh subroutine evaluates the Hessian matrix of the Lagrangian
 function 
@@ -65,9 +65,6 @@ and all constraint functions are partially separable.
 .SH ARGUMENTS
 The arguments of CUTEST_cdh are as follows
 .TP 5
-.B data \fP[inout] - CUTEST_data_type derived type
-problem-specific private data,
-.TP
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,

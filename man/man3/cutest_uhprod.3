@@ -5,7 +5,7 @@ CUTEST_uhprod \- CUTEst tool to form the matrix-vector product of a vector with
 the Hessian matrix.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_uhprod( data, status, n, goth, X, VECTOR, RESULT )
+CALL CUTEST_uhprod( status, n, goth, X, VECTOR, RESULT )
 .SH DESCRIPTION
 The CUTEST_uhprod subroutine forms the product of a vector with the Hessian
 matrix of the objective function of the problem decoded from a SIF file
@@ -34,9 +34,6 @@ The objective function is group-partially separable.
 .SH ARGUMENTS
 The arguments of CUTEST_uhprod are as follows
 .TP 5
-.B data \fP[inout] - CUTEST_data_type derived type
-problem-specific private data,
-.TP
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,

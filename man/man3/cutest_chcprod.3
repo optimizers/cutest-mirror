@@ -5,7 +5,7 @@ CUTEST_chcprod \- CUTEst tool to form the matrix-vector product of a vector with
 the Hessian matrix of constraint part of the Lagrangian.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_chcprod( data, status, n, m, goth, X, Y, VECTOR, RESULT )
+CALL CUTEST_chcprod( status, n, m, goth, X, Y, VECTOR, RESULT )
 .SH DESCRIPTION
 The CUTEST_chcprod subroutine forms the product of a vector with the Hessian
 matrix of the constraint part of the Lagrangian function 
@@ -66,9 +66,6 @@ all constraint functions are partially separable.
 .SH ARGUMENTS
 The arguments of CUTEST_chcprod are as follows
 .TP 5
-.B data \fP[inout] - CUTEST_data_type derived type
-problem-specific private data,
-.TP
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,

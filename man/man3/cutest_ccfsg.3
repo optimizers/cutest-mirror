@@ -2,10 +2,10 @@
 .TH cutest_ccfsg 3M "4 Dec 2012" "CUTEst user documentation" "CUTEst user documentation"
 .SH NAME
 CUTEST_ccfsg \- CUTEst tool to evaluate constraint functions values and
-possibly gradients in sparse format.
+possibly their gradients in sparse format.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_ccfsg( data, status, n, m, X, C, 
+CALL CUTEST_ccfsg( status, n, m, X, C, 
 nnzj, lj, J_val, J_var, J_fun, grad )
 .SH DESCRIPTION
 The CUTEST_ccfsg subroutine evaluates the values of the constraint functions of
@@ -60,9 +60,6 @@ all constraint functions are partially separable.
 .SH ARGUMENTS
 The arguments of CUTEST_ccfsg are as follows
 .TP 5
-.B data \fP[inout] - CUTEST_data_type derived type
-problem-specific private data,
-.TP
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,

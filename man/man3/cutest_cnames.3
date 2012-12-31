@@ -4,7 +4,7 @@
 CUTEST_cnames \- CUTEst tool to obtain the names of the problem and its variables.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_cnames( data, status, n, m, pname, VNAMES, CNAMES )
+CALL CUTEST_cnames( status, n, m, pname, VNAMES, CNAMES )
 .SH DESCRIPTION
 The CUTEST_cnames subroutine obtains the names of the problem, its
 variables and general constraints.
@@ -56,9 +56,6 @@ all constraint functions are partially separable.
 .SH ARGUMENTS
 The arguments of CUTEST_cnames are as follows
 .TP 5
-.B data \fP[inout] - CUTEST_data_type derived type
-problem-specific private data,
-.TP
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,

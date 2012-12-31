@@ -5,7 +5,7 @@ CUTEST_usetup \- CUTEst tool to set up the data structures
 for unconstrained or bound-constrained minimization.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_usetup( data, status, input, out, io_buffer, n, X, X_l, X_u )
+CALL CUTEST_usetup( status, input, out, io_buffer, n, X, X_l, X_u )
 .SH DESCRIPTION
 The CUTEST_usetup subroutine sets up the correct data structures for
 subsequent computations in the case where the only possible
@@ -34,9 +34,6 @@ The objective function is group-partially separable.
 .SH ARGUMENTS
 The arguments of CUTEST_usetup are as follows
 .TP 5
-.B data \fP[inout] - CUTEST_data_type derived type
-problem-specific private data,
-.TP
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,

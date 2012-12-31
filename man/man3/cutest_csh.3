@@ -5,7 +5,7 @@ CUTEST_csh \- CUTEst tool to evaluate the Hessian of the Lagrangian, in
 sparse format.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_csh( data, status, n, m, X, Y,
+CALL CUTEST_csh( status, n, m, X, Y,
 nnzh, lh, H_val, H_row, H_col )
 .SH DESCRIPTION
 The CUTEST_csh subroutine evaluates the Hessian of the Lagrangian function
@@ -67,9 +67,6 @@ all constraint functions are partially separable.
 .SH ARGUMENTS
 The arguments of CUTEST_csh are as follows
 .TP 5
-.B data \fP[inout] - CUTEST_data_type derived type
-problem-specific private data,
-.TP
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,

@@ -6,7 +6,7 @@ matrix of gradients of the objective function and constraints, in
 sparse format.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_cdimsj( data, status, nnzj )
+CALL CUTEST_cdimsj( status, nnzj )
 .SH DESCRIPTION
 The CUTEST_cdimsj subroutine determines the number of nonzero elements
 required to store the matrix of gradients of the objective function
@@ -59,9 +59,6 @@ functions are partially separable.
 .SH ARGUMENTS
 The arguments of CUTEST_cdimsj are as follows
 .TP 5
-.B data \fP[inout] - CUTEST_data_type derived type
-problem-specific private data,
-.TP
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,

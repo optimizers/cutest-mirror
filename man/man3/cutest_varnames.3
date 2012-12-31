@@ -4,7 +4,7 @@
 CUTEST_varnames \- CUTEst tool to obtain the names of the problem variables.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_varnames( data, status, n, VNAME )
+CALL CUTEST_varnames( status, n, VNAME )
 .SH DESCRIPTION
 The CUTEST_varnames subroutine obtains the names of the problem variables.
 
@@ -55,9 +55,6 @@ and all constraint functions are partially separable.
 .SH ARGUMENTS
 The arguments of CUTEST_varnames are as follows
 .TP 5
-.B data \fP[inout] - CUTEST_data_type derived type
-problem-specific private data,
-.TP
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,

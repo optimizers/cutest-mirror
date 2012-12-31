@@ -4,7 +4,7 @@
 CUTEST_uvartype \- CUTEst tool to determine the type of each variable.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_uvartype( data, status, n, X_type )
+CALL CUTEST_uvartype( status, n, X_type )
 .SH DESCRIPTION
 The CUTEST_uvartype subroutine determines the type (continuous, 0-1,
 integer) of each variable involved in the problem decoded
@@ -33,9 +33,6 @@ The objective function is group-partially separable.
 .SH ARGUMENTS
 The arguments of CUTEST_uvartype are as follows
 .TP 5
-.B data \fP[inout] - CUTEST_data_type derived type
-problem-specific private data,
-.TP
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,
