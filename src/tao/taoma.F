@@ -22,6 +22,7 @@ c *** for statistical information
       
       CHARACTER ( LEN = 30 ) :: rfilename = 'TAORES.d'
       INTEGER :: rfiledevice = 47
+      INTEGER :: io_buffer = 11
 
       TAO_SOLVER       tao
       TAO_APPLICATION  myapp
@@ -88,7 +89,8 @@ c *** outfile = 6  -> standard output
 
 
 c *** Get the dimension size 
-      call udimen(infile,n)
+      call CUTEST_udimen(infile,info,n)
+      IF ( info /= 0 ) GO TO 910
       allocate( xnames( n ), STAT =iores )
       
       IF ( iores /= 0 ) THEN 
@@ -114,8 +116,10 @@ c     of x, use x_array(x_index+n) (using 1-based arrays)
       call VecGetArray(xu,xu_array,xu_index,info)
       call VecGetArray(g,g_array,g_index,info)
 
-      call usetup(infile, outfile, n, x_array(x_index+1),                 &
-     &            xl_array(xl_index+1), xu_array(xu_index+1), n)
+      call CUTEST_usetup(info,infile, outfile, io_buffern,                   &
+     &                   x_array(x_index+1), xl_array(xl_index+1),             &
+     &                   xu_array(xu_index+1) )
+      IF ( info /= 0 ) GO TO 910
       
       do i=1,n
          if (xl_array(xl_index+i) .gt. xu_array(xu_index+i)) then
@@ -128,8 +132,9 @@ c     of x, use x_array(x_index+n) (using 1-based arrays)
          endif
       enddo
 
-       CALL UNAMES( n, pname, xnames )
-       WRITE( rfiledevice, "( A10, I6 )", advance = 'no' ) pname, n
+      CALL CUTEST_unames( info, n, pname, xnames )
+      IF ( info /= 0 ) GO TO 910
+      WRITE( rfiledevice, "( A10, I6 )", advance = 'no' ) pname, n
 
 c *** Count the free and binding variables, gradient projection norm
       call uofg(n,x_array(x_index+1), f, g_array(g_index+1),.true.)
@@ -145,7 +150,8 @@ c *** Count the free and binding variables, gradient projection norm
       call VecRestoreArray(g,g_array,g_index,info)
 
 c *** Get the number of nonzeros and create the hessian
-      call udimsh(nnzh)
+      call CUTEST_udimsh(info, nnzh)
+      IF ( info /= 0 ) GO TO 910
       call MatCreateSeqAIJ(PETSC_COMM_SELF,n,n,2*nnzh/n,                &
      &                     PETSC_NULL_INTEGER,H,info)
       call MatSetOption(H,MAT_SYMMETRIC,.true.,info)
@@ -208,10 +214,11 @@ c     of x, use x_array(x_index+n) (using 1-based arrays)
       call VecGetArray(xu,xu_array,xu_index,info)
       call VecGetArray(g,g_array,g_index,info)
 
-      call uofg(n,x_array(x_index+1), f, g_array(g_index+1),.true.)
-
-      call getstats(n,x_array(x_index+1),xl_array(xl_index+1),              &
-     &             xu_array(xu_index+1),g_array(g_index+1),nfree,nbind,     &
+      call CUTEST_uofg(info,n,x_array(x_index+1), f,                         &
+     &                 g_array(g_index+1), .true.)
+      IF ( info /= 0 ) GO TO 910
+      call getstats(n,x_array(x_index+1),xl_array(xl_index+1),                 &
+     &             xu_array(xu_index+1),g_array(g_index+1),nfree,nbind,        &
      &             gnorm)
 
       call VecRestoreArray(x,x_array,x_index,info)
@@ -224,7 +231,8 @@ c     of x, use x_array(x_index+n) (using 1-based arrays)
 
 !     write(6,*) nfev,ngrad,nhes
 
-      call ureprt(calls,time)
+      call CUTEST_ureport(info,calls,time)
+      IF ( info /= 0 ) GO TO 910
       write (outfile,3000) time(1), time(2)
       call TaoView(tao,info)
 
@@ -277,6 +285,15 @@ c     of x, use x_array(x_index+n) (using 1-based arrays)
 
       call TaoFinalize(info)
       call PetscFinalize(info)
+
+      call CUTEST_uterminate( info )
+      return
+
+  910 continue
+      write( errout, "( ' cutest error, status = ', i0, ', stopping' )") 
+     +   info
+      return
+      
 
  1000 format (
      +        ' Number of variables                         ',i12,/,
@@ -364,8 +381,9 @@ c     of x, use x_array(x_index+n) (using 1-based arrays)
       call VecGetArray(X,x_array,x_index,info)
 
 c *** Get sparse hessian at x
-      call ush(n,x_array(x_index+1),nnzh,nnzh,h_array,rowindex,colindex)
-
+      call CUTEST_ush(info,n,x_array(x_index+1),nnzh,nnzh,h_array,             &
+     &                rowindex,colindex)
+      IF ( info /= 0 ) RETURN
       call VecRestoreArray(X,x_array,x_index,info)
 
 c *** Convert the sparse hessian to the petsc matrix
@@ -378,11 +396,11 @@ C *** Insert diagonal values into the sparse Hessian matrix
       enddo
 
       do i=1,nnzh
-         call MatSetValue(H,rowindex(i)-1,colindex(i)-1,h_array(i),         &
+         call MatSetValue(H,rowindex(i)-1,colindex(i)-1,h_array(i),            &
      &                    INSERT_VALUES, info)
 
          if (rowindex(i) .ne. colindex(i)) then
-            call MatSetValue(H,colindex(i)-1,rowindex(i)-1,h_array(i),        &
+            call MatSetValue(H,colindex(i)-1,rowindex(i)-1,h_array(i),         &
      &                    INSERT_VALUES, info)
          endif
       enddo
@@ -443,7 +461,8 @@ c     of x, use x_array(x_index+n) (using 1-based arrays)
 
       call VecGetArray(X,x_array,x_index,info)
 
-      call ufn(n,x_array(x_index+1),f)
+      call CUTEST_ufn(info,n,x_array(x_index+1),f)
+      IF ( info /= 0 ) RETURN
       f_val = f
       call VecRestoreArray(X,x_array,x_index,info)
 
@@ -503,7 +522,7 @@ c     of x, use x_array(x_index+n) (using 1-based arrays)
       call VecGetArray(X,x_array,x_index,info)
       call VecGetArray(G,g_array,g_index,info)
 
-      call ugr(n,x_array(x_index+1),g_array(g_index+1))
+      call ugr(info,n,x_array(x_index+1),g_array(g_index+1))
 
 
       g_val = 0.0d0
@@ -576,8 +595,9 @@ c     of x, use x_array(x_index+n) (using 1-based arrays)
       call VecGetArray(X,x_array,x_index,info)
       call VecGetArray(G,g_array,g_index,info)
 
-      call uofg(n,x_array(x_index+1), f, g_array(g_index+1),.true.)
-
+      call CUTEST_uofg(info,n,x_array(x_index+1), f,                           &
+     &                 g_array(g_index+1),.true.)
+      IF ( info /= 0 ) RETURN
       f_val = f
       g_val = 0.0d0
       do i = 1, n
@@ -666,7 +686,7 @@ C#include "finclude/petsctime.h"
 
       call PetscGetTime(now,info)
       if (now .gt. tlimit) then
-         call ureprt(calls,time)
+         call CUTEST_ureport(info,calls,time)
          WRITE( rfiledevice, 
      &    "( ES16.8, ES9.1, bn, 2I7, I9, ' :', F9.2, I5 )" )               &
      &    f_val, g_val, - INT( calls(2) ),                                 & 

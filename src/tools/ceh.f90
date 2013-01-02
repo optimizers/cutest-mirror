@@ -357,14 +357,14 @@
 !  check that HE_row and HE_val are large enough
 
       IF ( lhe_row < HE_row_ptr( ne + 1 ) - 1 ) THEN
-        IF ( data%out > 0 ) WRITE( data%out, "( ' ** SUBROUTINE UEH: ',        &
+        IF ( data%out > 0 ) WRITE( data%out, "( ' ** SUBROUTINE CEH: ',        &
        &  'Increase the dimension of HE_row to ',  I0 )" )                     &
              HE_row_ptr( ne + 1 ) - 1 
         status = 2 ; RETURN
       END IF
 
       IF ( lhe_val < HE_val_ptr( ne + 1 ) - 1 ) THEN
-        IF ( data%out > 0 ) WRITE( data%out, "( ' ** SUBROUTINE UEH: ',        &
+        IF ( data%out > 0 ) WRITE( data%out, "( ' ** SUBROUTINE CEH: ',        &
        &  'Increase the dimension of HE_val to ',  I0 )" )                     &
              HE_val_ptr( ne + 1 ) - 1 
         status = 2 ; RETURN

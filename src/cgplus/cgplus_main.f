@@ -1,33 +1,27 @@
-C     ( Last modified on 30 Jul 2004 at 16:31:38 )
+C     ( Last modified on 2 Jan 2013 at 15:10:00 )
       PROGRAM          CGPMA
 C
 C  CG+ test driver for problems derived from SIF files.
 C
 C  Nick Gould, for CGT Productions.
 C  July 2004
+C  Revised for CUTEst, January 2013
 C
-      INTEGER          NMAX  , IOUT  , N , INPUT , MAXIT 
+      INTEGER          IOUT  , N , INPUT , MAXIT 
       INTEGER          LP    , MP, I , METHOD, ITER  , NFUN, IREST
       INTEGER          IFLAG , INSPEC, IPRINT( 2 )
-CS    REAL             F, EPS, GNORM , BIGINF, ZERO, TLEV
-CD    DOUBLE PRECISION F, EPS, GNORM , BIGINF, ZERO, TLEV
+      INTEGER :: io_buffer = 11
+      DOUBLE PRECISION F, EPS, GNORM , BIGINF, ZERO, TLEV
       LOGICAL          BOUNDS, FINISH
-CBIG  PARAMETER      ( NMAX = 100000 )
-CMED  PARAMETER      ( NMAX =  10000 )
-CTOY  PARAMETER      ( NMAX =   1000 )
-CCUS  PARAMETER      ( NMAX =  50000 )
       PARAMETER      ( IOUT  = 6 )
       PARAMETER      ( INPUT = 55, INSPEC = 56 )
-CS    PARAMETER      ( BIGINF = 9.0E+19, ZERO = 0.0E0 )
-CD    PARAMETER      ( BIGINF = 9.0D+19, ZERO = 0.0D0 )
-CS    REAL             X     ( NMAX ), G     ( NMAX ),
-CD    DOUBLE PRECISION X     ( NMAX ), G     ( NMAX ),
-     *                 D     (NMAX ), GOLD  ( NMAX ), W     ( NMAX )
-      CHARACTER * 10   XNAMES( NMAX ), PNAME, SPCDAT
-      INTRINSIC        DABS   , MAX
+      PARAMETER      ( BIGINF = 9.0D+19, ZERO = 0.0D0 )
+      DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: X, G, D, GOLD, W
+      CHARACTER ( LEN = 10 ) :: PNAME, SPCDAT
+      CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : )  :: XNAMES
       COMMON / CGDD /  MP, LP
       COMMON / RUNINF / ITER, NFUN
-      REAL             CPU( 2 ), CALLS( 4 )
+      DOUBLE PRECISION :: CPU( 2 ), CALLS( 4 )
 C     
 C  Open the Spec file for the method.
 C
@@ -59,19 +53,22 @@ C
 C
 C  Check to see if there is sufficient room
 C
-      CALL UDIMEN( INPUT, N )
-      IF ( N .GT. NMAX ) THEN
-        WRITE( IOUT, 2040 ) 'X     ', 'NMAX  ', N
-        STOP
-      END IF
+      CALL CUTEST_udimen( INPUT, status, N )
+      IF ( status /= 0 ) GO TO 910
+
+      ALLOCATE( X( n ), G( n ), D( n ), GOLD( n ), W( n ), XNAMES( n ), 
+     *          STAT = status )
+      IF ( status /= 0 ) GO TO 990
 C
 C  Set up SIF data.
 C
-      CALL USETUP( INPUT, IOUT, N, X, W, GOLD, NMAX )
+      CALL CUTEST_usetup( status, INPUT, IOUT, io_buffer, N, X, W, GOLD )
+      IF ( status /= 0 ) GO TO 910
 C
 C  Obtain variable names.
 C
-      CALL UNAMES( N, PNAME, XNAMES )
+      CALL CUTEST_unames( status, N, PNAME, XNAMES )
+      IF ( status /= 0 ) GO TO 910
 C
 C  Set up algorithmic input data.
 C
@@ -94,7 +91,8 @@ C
 C
 C  Evaluate the function and gradient
 C
-         CALL UOFG( N, X, F, G, .TRUE. )
+         CALL CUTEST_uofg( status, N, X, F, G, .TRUE. )
+         IF ( status /= 0 ) GO TO 910
 C
 C  Call the optimizer.
 C
@@ -111,9 +109,9 @@ C
 C Termination Test.  The user may replace it by some other test. However, 
 C the parameter 'FINISH' must be set to 'TRUE' when the test is satisfied.
 C
-           TLEV = EPS * ( 1.0D+0 + DABS( F ) )
+           TLEV = EPS * ( 1.0D+0 + ABS( F ) )
            DO 40 I = 1, N
-              IF( DABS( G( I ) ) .GT. TLEV ) GO TO 30
+              IF( ABS( G( I ) ) .GT. TLEV ) GO TO 30
   40       CONTINUE
            FINISH = .TRUE.
            GO TO 30
@@ -123,10 +121,11 @@ C
 C
 C  Terminal exit.
 C
-      CALL UREPRT( CALLS, CPU )
+      CALL CUTEST_ureport( status, CALLS, CPU )
+      IF ( status /= 0 ) GO TO 910
       GNORM    = ZERO
       DO 110 I  = 1, N
-         GNORM = MAX( GNORM, DABS( G( I ) ) )
+         GNORM = MAX( GNORM, ABS( G( I ) ) )
   110 CONTINUE
       WRITE ( IOUT, 2010 ) F, GNORM
 C      DO 120 I = 1, N
@@ -135,6 +134,16 @@ C  120 CONTINUE
       WRITE ( IOUT, 2000 ) PNAME, N, INT( CALLS(1) ), INT( CALLS(2) ),
      *                     IFLAG, F, CPU(1), CPU(2) 
       CLOSE( INPUT  )
+      CALL CUTEST_uterminate( status )
+      STOP
+
+  910 CONTINUE
+      WRITE( iout, "( ' CUTEst error, status = ', i0, ', stopping' )") 
+     *   status
+      STOP
+
+  990 CONTINUE
+      WRITE( out, "( ' Allocation error, status = ', I0 )" ) status
       STOP
 C
 C  Non-executable statements.
@@ -158,8 +167,4 @@ C
  2030 FORMAT(  /, ' ** Warning from CGPMA. The problem as stated',
      *            ' includes simple bounds. ', /,
      *            '    These bounds will be ignored. ' )
- 2040 FORMAT( /, ' ** ERROR from CGPMA. The declared array ', A6, 
-     *           ' is too small to hold the problem data.', /, 
-     *           ' Increase ', A6, ' in CGPMA to be at least ', I6, 
-     *           ' and recompile. Stopping ' )
       END

@@ -19,7 +19,7 @@ C  Scalar arguments
 
       INTEGER INPUT, IIN, IOUT, OUTPUT, OUTRHS, N, M, NMAX, MMAX, MATMAX
       INTEGER NA, NE, NH, NJ, NV, PLAST, NROW, NCOL, NNZ, COLMAX
-      INTEGER I, J , NTOTAL, LV
+      INTEGER I, J , NTOTAL, LV, status
 CS    REAL             F, BIGINF, PENLTY, ZERO, ONE
 CD    DOUBLE PRECISION F, BIGINF, PENLTY, ZERO, ONE
       LOGICAL HB, RB
@@ -329,8 +329,8 @@ C  The matrix is unassembled
 
 C  Evaluate the Hessian of the Lagrangian function at the initial point
 
-            CALL CEH( N, M, X, LV, V, NE, ROW, MATMAX, COLMAX, IP, 
-     *                VAL, MATMAX, COL, .TRUE. )
+            CALL CUTEST_ceh( status, N, M, X, V, NE, COLMAX, IP, COL, 
+     *                       MATMAX, ROW, MATMAX, VAL, .TRUE. )
 
 C  Include terms representing penalties
 

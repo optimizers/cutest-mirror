@@ -331,13 +331,13 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
 
       grlagf = .TRUE.
       WRITE( out, "( ' CALL CSGRSH with grlagf = .TRUE.' )" )
-      CALL CSGRSH( n, m, X, grlagf, m, Y, J_ne, l_j, J_val,         &
+      CALL CSGRSH( n, m, X, grlagf, m, Y, J_ne, l_j, J_val,                    &
                    J_var, J_fun, H_ne, l_h, H_val, H_row, H_col )
       CALL WRITE_J_sparse( out, J_ne, l_j, J_val, J_fun, J_var )
       CALL WRITE_H_sparse( out, H_ne, l_h, H_val, H_row, H_col )
       grlagf = .FALSE.
       WRITE( out, "( ' CALL CSGRSH with grlagf = .FALSE.' )" )
-      CALL CSGRSH( n, m, X, grlagf, m, Y, J_ne, l_j, J_val,         &
+      CALL CSGRSH( n, m, X, grlagf, m, Y, J_ne, l_j, J_val,                    &
                    J_var, J_fun, H_ne, l_h, H_val, H_row, H_col )
       CALL WRITE_J_sparse( out, J_ne, l_j, J_val, J_fun, J_var )
       CALL WRITE_H_sparse( out, H_ne, l_h, H_val, H_row, H_col )

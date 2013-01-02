@@ -1,43 +1,32 @@
-C     ( Last modified on 6 Sep 2004 at 13:20:00 )
+C     ( Last modified on 2 Jan 2013 at 13:40:00 )
       PROGRAM          TRNMA
 C
 C  TRON test driver for problems derived from SIF files.
 C
 C  Nick Gould, for CGT Productions.
-C  September 2004
+C  September 2004.
+C  Revised for CUTEst, January 2013
 C
-      INTEGER          NMAX  , LH, I, IOUT, N , M , INPUT, LB,
+      INTEGER          NMAX  , LH, I, IOUT, N , INPUT
      *                 LP, MP, LW, J, MAXIT   , L , NA   , P,
-     *                 IFLAG , INSPEC, PMAX, NNZH, NNZH2, LL
-CS    REAL             F, EPS, GTOL  , GNORM , ZERO, ONE,
-CD    DOUBLE PRECISION F, EPS, GTOL  , GNORM , ZERO, ONE,
+     *                 IFLAG , INSPEC, PMAX, NNZH, NNZH2
+     *                 status, ISAVE( 3 )
+      INTEGER :: io_buffer = 11
+      DOUBLE PRECISION F, EPS, GTOL  , GNORM , ZERO, ONE, DSAVE( 3 ),
      *                 FRTOL, FATOL, FMIN, CGTOL, DELTA, GNORM0
-      CHARACTER * 60   TASK
-CCUS  PARAMETER      ( NMAX = 100000, LH = 1000000, PMAX = 25 )
-CBIG  PARAMETER      ( NMAX = 100000, LH = 1000000, PMAX = 25 )
-CMED  PARAMETER      ( NMAX =  10000, LH =  100000, PMAX = 25 )
-CTOY  PARAMETER      ( NMAX =   1000, LH =   10000, PMAX = 25 )
-      PARAMETER      ( LB = LH, LL = NMAX * PMAX )
+      CHARACTER ( LEN = 60 ) :: TASK
       PARAMETER      ( IOUT  = 6 )
-      INTEGER          HPTR( NMAX + 1 ), HROW( LH ), 
-     *                 LPTR( NMAX + 1 ), LROW( LL ),
-     *                 BPTR( NMAX + 1 ), BROW( LB ),
-     *                 IFREE( NMAX ), IWA( 3 * NMAX ), ISAVE( 3 )
-CS    REAL             X( NMAX ), XL( NMAX ), XU( NMAX ), G( NMAX ), 
-CD    DOUBLE PRECISION X( NMAX ), XL( NMAX ), XU( NMAX ), G( NMAX ), 
-     *                 XC( NMAX ), S( NMAX ), WA( 7 * NMAX ),
-     *                 HVAL( LH ), HDIAG( NMAX ), LVAL( LL ), 
-     *                 LDIAG( NMAX ), BVAL( LB ), BDIAG( NMAX ),
-     *                 DSAVE( 3 ) 
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: HPTR, HROW, LPTR, LROW,
+     *                 BPTR, BROW, IFREE, IWA
+      DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: X, XL, XU, G, 
+     *                 XC, S, WA, HVAL, HDIAG, LVAL, LDIAG, BVAL, BDIAG
       PARAMETER      ( INPUT = 55, INSPEC = 56 )
-CS    PARAMETER      ( ZERO = 0.0E0, ONE = 1.0E0 )
-CD    PARAMETER      ( ZERO = 0.0D0, ONE = 1.0D0 )
-      CHARACTER * 10   XNAMES( NMAX ), PNAME, SPCDAT
-      REAL             CPU( 2 ), CALLS( 4 )
-CS    REAL             SGPNRM2, SNRM2
-CD    DOUBLE PRECISION DGPNRM2, DNRM2
-CS    EXTERNAL         STRON, SGPNRM2
-CD    EXTERNAL         DTRON, DGPNRM2
+      PARAMETER      ( ZERO = 0.0D0, ONE = 1.0D0 )
+      CHARACTER ( LEN = 10 ) :: PNAME, SPCDAT
+      CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : )  :: XNAMES
+      DOUBLE PRECISION :: CPU( 2 ), CALLS( 4 )
+      DOUBLE PRECISION DGPNRM2, DNRM2
+      EXTERNAL         DTRON, DGPNRM2
 C     
 C  Open the Spec file for the method.
 C
@@ -56,7 +45,7 @@ C     FMIN     : a lower bound for the function
 C     CGTOL    : the relative CG decrease required per iteration
 C     GTOL     : the required norm of the projected gradient
 C
-      READ ( INSPEC, 1000 ) M, MAXIT, FATOL, FRTOL, FMIN, CGTOL, GTOL
+      READ ( INSPEC, 1000 ) P, MAXIT, FATOL, FRTOL, FMIN, CGTOL, GTOL
 C
 C  Close input file.
 C
@@ -69,31 +58,37 @@ C
 C
 C  Check to see if there is sufficient room
 C
-      CALL UDIMEN( INPUT, N )
-      IF ( N .GT. NMAX ) THEN
-        WRITE( IOUT, 2040 ) 'X     ', 'NMAX  ', N
-        STOP
-      END IF
-      IF ( P .GT. PMAX ) THEN
-        WRITE( IOUT, 2040 ) 'L     ', 'PMAX  ', P
-        STOP
-      END IF
+      CALL CUTEST_udimen( INPUT, status, N )
+      IF ( status /= 0 ) GO TO 910
+
+      ALLOCATE( HPTR( n + 1 ), LPTR( n + 1 ), LROW( n * p ),
+     *          BPTR( n + 1 ), IFREE( n ), IWA( 3 * n ),
+     *          X( n ), XL( n ), XU( n ), G( n ), 
+     *          XC( n ), S( n ), WA( 7 * n ),
+     *          HDIAG( n ), LVAL( n * p ), 
+     *          LDIAG( n ), BDIAG( n ), XNAMES( n ),
+     *          STAT = status )
+      IF ( status /= 0 ) GO TO 990
 C
 C  Set up SIF data.
 C
-      CALL USETUP( INPUT, IOUT, N, X, XL, XU, NMAX )
+      CALL CUTEST_usetup( status, INPUT, IOUT, io_buffer, N, X, XL, XU )
+      IF ( status /= 0 ) GO TO 910
 C
 C  Check to see if there is sufficient room for the matrices
 C
-      CALL UDIMSH( NNZH )
-      IF ( NNZH .GT. LH ) THEN
-        WRITE( IOUT, 2040 ) 'H     ', 'LH    ', NNZH
-        STOP
-      END IF
+      CALL CUTEST_udimsh( status, NNZH )
+      IF ( status /= 0 ) GO TO 910
+
+      ALLOCATE( HROW( nnzh ), BROW( nnzh ),
+     *          HVAL( nnzh ), BVAL( nnzh ), STAT = status )
+      IF ( status /= 0 ) GO TO 990
+      lh = nnzh
 C
 C  Obtain variable names.
 C
-      CALL UNAMES( N, PNAME, XNAMES )
+      CALL UNAMES( status, N, PNAME, XNAMES )
+      IF ( status /= 0 ) GO TO 910
 C
 C  Set up algorithmic input data.
 C
@@ -110,7 +105,8 @@ C  Evaluate the function, F
 C
          IF (TASK( 1: 1 ) .EQ. 'F' .OR. 
      *       TASK( 1: 5 ) .EQ. 'START' ) THEN
-            CALL UFN( N, X, F )
+            CALL CUTEST_ufn( status, N, X, F )
+            IF ( status /= 0 ) GO TO 910
          END IF
 C
 C  Evaluate the gradient, G, and Hessian, H. 
@@ -119,7 +115,9 @@ C  and the row indices are stored in BROW
 C
          IF (TASK( 1: 2 ) .EQ. 'GH' .OR. 
      *       TASK( 1: 5 ) .EQ. 'START' ) THEN
-            CALL UGRSH( N, X, G, NNZH, LH, HVAL, BROW, HROW  )
+            CALL CUTEST_ugrsh( status, N, X, G, NNZH, LH, HVAL, 
+     *                         BROW, HROW  )
+            IF ( status /= 0 ) GO TO 910
 C
 C  Separate the diagonal of the Hessian from its off diagonal
 C
@@ -181,7 +179,8 @@ C          IF ( GNORM .LE. GTOL * GNORM0 ) THEN
 C
 C  Terminal exit.
 C
-      CALL UREPRT( CALLS, CPU )
+      CALL UREPRT( status, CALLS, CPU )
+      IF ( status /= 0 ) GO TO 910
       GNORM = DGPNRM2( N, X, XL, XU, G )
       WRITE ( IOUT, 2010 ) F, GNORM
       DO 120 I = 1, N
@@ -191,6 +190,15 @@ C
       WRITE ( IOUT, 2000 ) PNAME, N, INT( CALLS(1) ), INT( CALLS(2) ),
      *                     IFLAG, F, CPU(1), CPU(2) 
       CLOSE( INPUT  )
+      CALL CUTEST_uterminate( status )      STOP
+
+  910 CONTINUE
+      WRITE( iout, "( ' CUTEst error, status = ', i0, ', stopping' )") 
+     *   status
+      STOP
+
+  990 CONTINUE
+      WRITE( out, "( ' Allocation error, status = ', I0 )" ) status
       STOP
 C
 C  Non-executable statements.
@@ -212,10 +220,6 @@ C
      *        //, '                XL           X        XU', 
      *           '           G ' )
  2020 FORMAT(  1X, A10, 1P, 4D12.4 )
- 2040 FORMAT( /, ' ** ERROR from TRNMA. The declared array ', A6, 
-     *           ' is too small to hold the problem data.', /, 
-     *           ' Increase ', A6, ' in TRNMA to be at least ', I6, 
-     *           ' and recompile. Stopping ' )
       END
 
       SUBROUTINE REORDA( NC, NNZ, IRN, JCN, A, IP, IW )

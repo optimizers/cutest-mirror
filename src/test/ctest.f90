@@ -122,7 +122,7 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
       WRITE( out, "( ' CALL CUTEST_cgr with grlagf = .TRUE. and ',             &
      &               'jtrans = .TRUE.' )" )
       CALL CUTEST_cgr( status, n, m, X, Y, grlagf, G, jtrans,                  &
-                l_j2_1, l_j2_2, J2_val )
+                       l_j2_1, l_j2_2, J2_val )
       IF ( status /= 0 ) GO to 900
       CALL WRITE_G( out, n, G )
       CALL WRITE_JT_dense( out, n, m, l_j2_1, l_j2_2, J2_val )
@@ -130,7 +130,7 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
       WRITE( out, "( ' CALL CUTEST_cgr with grlagf = .TRUE. and ',             &
      &               'jtrans = .FALSE.' )" )
       CALL CUTEST_cgr( status, n, m, X, Y, grlagf, G, jtrans,                  &
-                l_j2_1, l_j2_2, J2_val )
+                       l_j2_1, l_j2_2, J2_val )
       IF ( status /= 0 ) GO to 900
       CALL WRITE_G( out, n, G )
       CALL WRITE_J_dense( out, n, m, l_j2_1, l_j2_2, J2_val )
@@ -138,7 +138,7 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
       WRITE( out, "( ' CALL CUTEST_cgr with grlagf = .FALSE. and ',            &
      &               'jtrans = .TRUE.' )" )
       CALL CUTEST_cgr( status, n, m, X, Y, grlagf, G, jtrans,                  &
-                l_j2_1, l_j2_2, J2_val )
+                       l_j2_1, l_j2_2, J2_val )
       IF ( status /= 0 ) GO to 900
       CALL WRITE_G( out, n, G )
       CALL WRITE_JT_dense( out, n, m, l_j2_1, l_j2_2, J2_val )
@@ -146,7 +146,7 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
       WRITE( out, "( ' CALL CUTEST_cgr with grlagf = .FALSE. and ',            &
      &               'jtrans = .FALSE.' )" )
       CALL CUTEST_cgr( status, n, m, X, Y, grlagf, G, jtrans,                  &
-                l_j2_1, l_j2_2, J2_val )
+                       l_j2_1, l_j2_2, J2_val )
       IF ( status /= 0 ) GO to 900
       CALL WRITE_G( out, n, G )
       CALL WRITE_J_dense( out, n, m, l_j2_1, l_j2_2, J2_val )
@@ -417,7 +417,6 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
       IF ( status /= 0 ) GO to 900
       CALL WRITE_H_element( out, HE_nel, lhe_ptr, HE_row_ptr,                  &
                             HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val )
-
 
 !  compute the gradient and element Hessian values
 
