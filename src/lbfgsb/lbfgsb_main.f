@@ -1,36 +1,28 @@
-C     ( Last modified on 12 Sep 2007 at 11:20:00 )
+C     ( Last modified on 2 Jan 2013 at 13:40:00 )
       PROGRAM          LBFGSB_main
 C
 C  LBFGSB test driver for problems derived from SIF files.
 C
 C  Nick Gould, for CGT Productions.
 C  September 2004
+C  Revised for CUTEst, January 2013
 C
       INTEGER          NMAX  , LH, I, IOUT, N , M , INPUT,
-     *                 LP, MP, LW, J, MAXIT   , L , NA   , 
-     *                 IFLAG , INSPEC, MMAX, IPRINT, LWA, LIWA
-CS    REAL             F, EPS, GTOL  , GNORM , ZERO, ONE,
-CD    DOUBLE PRECISION F, EPS, GTOL  , GNORM , ZERO, ONE,
-     *                 PGTOL, FACTR, INFTY
-      CHARACTER * 60   TASK, CSAVE
+     *                 LP, MP, LW, J, MAXIT   , L , NA   ,  status,
+     *                 IFLAG , INSPEC, IPRINT, LWA, LIWA, ISAVE( 44 )
+      INTEGER :: io_buffer = 11
+      DOUBLE PRECISION F, EPS, GTOL  , GNORM , ZERO, ONE,
+     *                 PGTOL, FACTR, INFTY, DSAVE( 29 )
+      CHARACTER ( LEN = 60 ) :: TASK, CSAVE
       LOGICAL          LSAVE( 4 )
-CCUS  PARAMETER      ( NMAX = 100000, MMAX = 25 )
-CBIG  PARAMETER      ( NMAX = 100000, MMAX = 25 )
-CMED  PARAMETER      ( NMAX =  10000, MMAX = 25 )
-CTOY  PARAMETER      ( NMAX =   1000, MMAX = 25 )
-      PARAMETER      ( LIWA = 3 * NMAX )
-      PARAMETER      ( LWA  = 2 * MMAX * NMAX + 4 * NMAX + 
-     *                 12 * MMAX *MMAX + 12 * MMAX )
       PARAMETER      ( IOUT  = 6 )
-      INTEGER          NBD( NMAX ), IWA( LIWA ), ISAVE( 44 )
-CS    REAL             X( NMAX ), XL( NMAX ), XU( NMAX ), G( NMAX ), 
-CD    DOUBLE PRECISION X( NMAX ), XL( NMAX ), XU( NMAX ), G( NMAX ), 
-     +                 WA( LWA ), DSAVE( 29 )
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: NBD, IWA
+      DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: X, XL, XU, G, WA
       PARAMETER      ( INPUT = 55, INSPEC = 56 )
-CS    PARAMETER      ( ZERO = 0.0E0, ONE = 1.0E0, INFTY = 1.0E+19 )
-CD    PARAMETER      ( ZERO = 0.0D0, ONE = 1.0D0, INFTY = 1.0D+19 )
-      CHARACTER * 10   XNAMES( NMAX ), PNAME, SPCDAT
-      REAL             CPU( 2 ), CALLS( 4 )
+      PARAMETER      ( ZERO = 0.0D0, ONE = 1.0D0, INFTY = 1.0D+19 )
+      CHARACTER ( LEN = 10 ) :: PNAME, SPCDAT
+      CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : )  :: XNAMES
+      DOUBLE PRECISION :: CPU( 2 ), CALLS( 4 )
       EXTERNAL         SETULB
 C     
 C  Open the Spec file for the method.
@@ -70,15 +62,18 @@ C
 C
 C  Check to see if there is sufficient room
 C
-      CALL UDIMEN( INPUT, N )
-      IF ( N .GT. NMAX ) THEN
-        WRITE( IOUT, 2040 ) 'X     ', 'NMAX  ', N
-        STOP
-      END IF
-C
+      CALL CUTEST_udimen( INPUT, status, N )
+      IF ( status /= 0 ) GO TO 910
+
+      liwa = 3 * n
+      lwa  = 2 * m * n + 4 * n + 12 * m *m + 12 * m
+      ALLOCATE( NBD( n ), IWA( liwa ), X( n ), XL( n ), XU( n ), G( n ), 
+     +          WA( lwa ), XNAMES( n ), STAT = status )
+      IF ( status /= 0 ) GO TO 990C
 C  Set up SIF data.
 C
-      CALL USETUP( INPUT, IOUT, N, X, XL, XU, NMAX )
+      CALL CUTEST_usetup( status, INPUT, IOUT, io_buffer, N, X, XL, XU )
+      IF ( status /= 0 ) GO TO 910
 C
 C  Set bound constraint status
 C
@@ -100,7 +95,8 @@ C
 C
 C  Obtain variable names.
 C
-      CALL UNAMES( N, PNAME, XNAMES )
+      CALL CUTEST_unames( status, N, PNAME, XNAMES )
+      IF ( status /= 0 ) GO TO 910
 C
 C  Set up algorithmic input data.
 C
@@ -121,7 +117,8 @@ C
 C  Evaluate the function, f, and gradient, G
 C
          IF (TASK( 1: 2 ) .EQ. 'FG' ) THEN
-            CALL UOFG( N, X, F, G, .TRUE. )
+            CALL CUTEST_uofg( status, N, X, F, G, .TRUE. )
+            IF ( status /= 0 ) GO TO 910
             GO TO 30
 C
 C  Test for convergence
@@ -146,7 +143,8 @@ C
 C
 C  Terminal exit.
 C
-      CALL UREPRT( CALLS, CPU )
+      CALL CUTEST_ureport( status, CALLS, CPU )
+      IF ( status /= 0 ) GO TO 910
       GNORM = DSAVE( 13 )
       WRITE ( IOUT, 2010 ) F, GNORM
       DO 120 I = 1, N
@@ -156,6 +154,16 @@ C
       WRITE ( IOUT, 2000 ) PNAME, N, INT( CALLS(1) ), INT( CALLS(2) ),
      *                     IFLAG, F, CPU(1), CPU(2) 
       CLOSE( INPUT  )
+      CALL CUTEST_uterminate( status )
+      STOP
+
+  910 CONTINUE
+      WRITE( iout, "( ' CUTEst error, status = ', i0, ', stopping' )") 
+     *   status
+      STOP
+
+  990 CONTINUE
+      WRITE( out, "( ' Allocation error, status = ', I0 )" ) status
       STOP
 C
 C  Non-executable statements.
@@ -177,10 +185,6 @@ C
      *        //, '                XL           X        XU', 
      *           '           G ' )
  2020 FORMAT(  1X, A10, 1P, 4D12.4 )
- 2040 FORMAT( /, ' ** ERROR from LBBMA. The declared array ', A6, 
-     *           ' is too small to hold the problem data.', /, 
-     *           ' Increase ', A6, ' in LBBMA to be at least ', I6, 
-     *           ' and recompile. Stopping ' )
       END
 
       SUBROUTINE REORDA( NC, NNZ, IRN, JCN, A, IP, IW )

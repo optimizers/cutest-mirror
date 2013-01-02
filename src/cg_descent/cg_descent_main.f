@@ -1,42 +1,39 @@
-C     ( Last modified on 30 Jul 2004 at 16:31:38 )
+C     ( Last modified on 2 Jan 2013 at 15:10:00 )
       PROGRAM          CGDMA
 C
 C  CG_DESCENT test driver for problems derived from SIF files.
 C
 C  Nick Gould, for CGT Productions.
 C  July 2004
+C  Revised for CUTEst, January 2013
 C
 C  A number of updates to the structure of the SPEC file
 C  to accomodate version 1.4 of CG_DESCENT.
 C  Dominique Orban, July 2007
 C
       IMPLICIT NONE
-      INTEGER          NMAX  , IOUT  , N , M , INPUT , MSAVE, IOUTCP
+      INTEGER          IOUT  , N , M , INPUT , MSAVE, IOUTCP
       INTEGER          LP    , MP, I , METHOD, ITER  , NF, NG
       INTEGER          STAT  , ICALL , INSPEC, IPRINT( 2 )
-CS    REAL             F, TOL, GNORM , BIGINF, ZERO,
-CD    DOUBLE PRECISION F, TOL, GNORM , BIGINF, ZERO,
+      INTEGER :: io_buffer = 11
+      DOUBLE PRECISION F, TOL, GNORM , BIGINF, ZERO,
      *                 STPMIN, STPMAX, TLEV
       LOGICAL          BOUNDS
-CS    REAL             DELTA, SIGMA, EPSILON, THETA, GAMMA,STOPFA,
-CD    DOUBLE PRECISION DELTA, SIGMA, EPSILON, THETA, GAMMA,STOPFA,
+      DOUBLE PRECISION DELTA, SIGMA, EPSILON, THETA, GAMMA,STOPFA,
      *                 RHO, ETA, PSI0, PSI1, PSI2, QUADCU, RSTRTF, 
      *                 MAXITF, FEPS, AWLFFCT, QDECAY
       INTEGER          NXPAND, NSECNT
       LOGICAL          QUADST, PRNTLV, PRNTFI, STRULE, ERULE, AWOLFE, 
      *                 STEP, PRTRUL, DEBUG
-CBIG  PARAMETER      ( NMAX = 100000 )
-CMED  PARAMETER      ( NMAX =  10000 )
-CTOY  PARAMETER      ( NMAX =   1000 )
-CCUS  PARAMETER      ( NMAX =  50000 )
       PARAMETER      ( IOUT  = 6 )
       PARAMETER      ( INPUT = 55, INSPEC = 56, IOUTCP = 57 )
-CS    PARAMETER      ( BIGINF = 9.0E+19, ZERO = 0.0E0 )
-CD    PARAMETER      ( BIGINF = 9.0D+19, ZERO = 0.0D0 )
-CS    REAL             X     ( NMAX ), G     ( NMAX ),
-CD    DOUBLE PRECISION X     ( NMAX ), G     ( NMAX ),
-     *                 D     ( NMAX ), XTEMP  ( NMAX ), GTEMP  ( NMAX )
-      CHARACTER * 10   XNAMES( NMAX ), PNAME
+      PARAMETER      ( BIGINF = 9.0D+19, ZERO = 0.0D0 )
+ 
+      DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: X, G, D, XTEMP, GTEMP
+      CHARACTER ( LEN = 10 ) :: PNAME
+      CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : )  :: XNAMES
+
+ 
       CHARACTER * 17   CGPARM
       PARAMETER      ( CGPARM = 'cg_descent_f.parm' )
       CHARACTER * 15   SPCDAT
@@ -82,19 +79,22 @@ C
 C
 C  Check to see if there is sufficient room
 C
-      CALL UDIMEN( INPUT, N )
-      IF ( N .GT. NMAX ) THEN
-        WRITE( IOUT, 2040 ) 'X     ', 'NMAX  ', N
-        STOP
-      END IF
+      CALL CUTEST_udimen( INPUT, status, N )
+      IF ( status /= 0 ) GO TO 910
+
+      ALLOCATE( X( n ), G( n ), D( n ), XTEMP( n ), GTEMP( n ), 
+     *          XNAMES( n ), STAT = status )
+      IF ( status /= 0 ) GO TO 990
 C
 C  Set up SIF data.
 C
-      CALL USETUP( INPUT, IOUT, N, X, XTEMP, GTEMP, NMAX )
+      CALL CUTEST_usetup( status, INPUT, IOUT, N, X, XTEMP, GTEMP )
+      IF ( status /= 0 ) GO TO 910
 C
 C  Obtain variable names.
 C
-      CALL UNAMES( N, PNAME, XNAMES )
+      CALL CUTEST_unames( status, N, PNAME, XNAMES )
+      IF ( status /= 0 ) GO TO 910
 C
 C  Set up algorithmic input data.
 C
@@ -126,7 +126,8 @@ C
 C
 C  Terminal exit.
 C
-      CALL UREPRT( CALLS, CPU )
+      CALL CUTEST_ureport( status, CALLS, CPU )
+      IF ( status /= 0 ) GO TO 910
       WRITE ( IOUT, 2010 ) F, GNORM
 C      DO 120 I = 1, N
 C         WRITE( IOUT, 2020 ) XNAMES( I ), X( I ), G( I )
@@ -134,6 +135,16 @@ C  120 CONTINUE
       WRITE ( IOUT, 2000 ) PNAME, N, INT( CALLS(1) ), INT( CALLS(2) ),
      *                     STAT, F, CPU(1), CPU(2) 
       CLOSE( INPUT  )
+      CALL CUTEST_uterminate( status )
+      STOP
+
+  910 CONTINUE
+      WRITE( iout, "( ' CUTEst error, status = ', i0, ', stopping' )") 
+     *   status
+      STOP
+
+  990 CONTINUE
+      WRITE( out, "( ' Allocation error, status = ', I0 )" ) status
       STOP
 C
 C  Non-executable statements.
@@ -154,14 +165,10 @@ C
  2010 FORMAT( ' Final objective function value  = ', 1P, D12.4, 
      *        /, ' Final norm of gradient          = ', 1P, D12.4,
      *        //, '                 X         G ' )
- 2020 FORMAT(  1X, A10, 1P, 2D12.4 )
+C2020 FORMAT(  1X, A10, 1P, 2D12.4 )
  2030 FORMAT(  /, ' ** Warning from CGDMA. The problem as stated',
      *            ' includes simple bounds. ', /,
      *            '    These bounds will be ignored. ' )
- 2040 FORMAT( /, ' ** ERROR from CGDMA. The declared array ', A6, 
-     *           ' is too small to hold the problem data.', /, 
-     *           ' Increase ', A6, ' in CGDMA to be at least ', I6, 
-     *           ' and recompile. Stopping ' )
 C 2100 FORMAT( 1P, D10.3, 4X, 
 C     * 'delta        Wolfe line search parameter',
 C     * /, 1P, D10.3, 4X, 
@@ -221,9 +228,12 @@ CS    REAL             F
 CD    DOUBLE PRECISION F
 CS    REAL             X( N )
 CD    DOUBLE PRECISION X( N )
-      EXTERNAL UFN
+      EXTERNAL CUTEST_ufn
 
-      CALL UFN( N, X, F )
+      INTEGER :: status
+
+      CALL CUTEST_ufn( status, N, X, F )
+      IF ( status /= 0 ) STOP
 
       RETURN
       END
@@ -235,9 +245,12 @@ C  Evaluate the gradiuent of the objective function
       INTEGER N
 CS    REAL             X( N ), G( N )
 CD    DOUBLE PRECISION X( N ), G( N )
-      EXTERNAL UGR
+      EXTERNAL CUTEST_ugr
 
-      CALL UGR( N, X, G )
+      INTEGER :: status
+
+      CALL CUTEST_ugr( status, N, X, G )
+      IF ( status /= 0 ) STOP
 
       RETURN
       END

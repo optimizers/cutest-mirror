@@ -1,5 +1,5 @@
 C
-C MATLAB gateway routine to unconstrained CUTEr tools
+C MATLAB gateway routine to unconstrained CUTEst tools
 C
       SUBROUTINE  MEXFUNCTION( NLHS, PLHS, NRHS, PRHS )
       INTEGER*4   NLHS, NRHS
@@ -20,8 +20,8 @@ CTOY  PARAMETER     ( NMAX =  10 )
       PARAMETER     ( NNZMAX = 10*NMAX )
       INTEGER*4       LBANDH
       PARAMETER     ( LBANDH = ( NMAX / 2 ) + 1 )
-      INTEGER*4       INPUT , IOUT
-      PARAMETER     ( INPUT = 55, IOUT = 6 )
+      INTEGER*4       INPUT , IOUT, io_buffer
+      PARAMETER     ( INPUT = 55, IOUT = 6, io_buffer = 11 )
 C
 C  End of Parameters which may be changed by the user.
 C
@@ -46,7 +46,7 @@ C
 C  Local variables
 C
       INTEGER*4       PR, PR2, IR, JC, IERR, IPTR, N, NN, NP1, NSEMP1,
-     *                I, J, K
+     *                I, J, K, status, maxsbw
       INTEGER*4       IVARTY( NMAX )
       REAL*8          IVARTY_real( NMAX )
       REAL*8          WORKN( NMAX*10 ), N_real
@@ -66,7 +66,7 @@ C  Check for at least one input argument,
 C  which is the name of the tool to be called.
 C
       IF ( NRHS .EQ. 0 ) THEN
-         MSG = 'UTOOLS REQUIRES AT LEAST ONE INPUT ARGUMENT.'
+         MSG = 'UTOOLS requires at least one input argument.'
          CALL MEXERRMSGTXT( MSG )
       END IF
 C
@@ -78,27 +78,27 @@ C
          TOOL = NULLSTR( TOOL )
          TOOL = UPPER  ( TOOL )
       ELSE
-         MSG = 'ERROR COPYING TOOL NAME FROM FIRST INPUT ARGUMENT.'
+         MSG = 'ERROR copying tool name from first input argument.'
          CALL MEXERRMSGTXT( MSG )
       END IF
 C
 C  Set up tool names.
 C
-      TSETUP = NULLSTR( 'USETUP' )
-      TNAMES = NULLSTR( 'UNAMES' )
-      TFN    = NULLSTR( 'UFN' )
-      TGR    = NULLSTR( 'UGR' )
-      TOFG   = NULLSTR( 'UOFG' )
-      TDH    = NULLSTR( 'UDH' )
-      TGRDH  = NULLSTR( 'UGRDH' )
-      TSH    = NULLSTR( 'USH' )
-      TGRSH  = NULLSTR( 'UGRSH' )
-      TPROD  = NULLSTR( 'UPROD' )
-      TBANDH = NULLSTR( 'UBANDH' )
-      TDIMEN = NULLSTR( 'UDIMEN' )
-      TDIMSH = NULLSTR( 'UDIMSH' )
-      TVARTY = NULLSTR( 'UVARTY' )
-      TREPRT = NULLSTR( 'UREPRT' )
+      TSETUP = NULLSTR( 'CUTEST_usetup' )
+      TNAMES = NULLSTR( 'CUTEST_unames' )
+      TFN    = NULLSTR( 'CUTEST_ufn' )
+      TGR    = NULLSTR( 'CUTEST_ugr' )
+      TOFG   = NULLSTR( 'CUTEST_uofg' )
+      TDH    = NULLSTR( 'CUTEST_udh' )
+      TGRDH  = NULLSTR( 'CUTEST_ugrdh' )
+      TSH    = NULLSTR( 'CUTEST_ush' )
+      TGRSH  = NULLSTR( 'CUTEST_ugrsh' )
+      TPROD  = NULLSTR( 'CUTEST_uhprod' )
+      TBANDH = NULLSTR( 'CUTEST_ubandh' )
+      TDIMEN = NULLSTR( 'CUTEST_udimen' )
+      TDIMSH = NULLSTR( 'CUTEST_udimsh' )
+      TVARTY = NULLSTR( 'CUTEST_uvartype' )
+      TREPRT = NULLSTR( 'CUTEST_ureport' )
 C
 C  Call the requested tool.
 C
@@ -107,7 +107,7 @@ C
 C  Check number of output arguments.
 C
          IF ( NLHS .NE. 3 ) THEN
-            MSG = 'USETUP RETURNS THREE OUTPUT ARGUMENTS.'
+            MSG = 'CUTEST_usetup returns three output arguments.'
             CALL MEXERRMSGTXT( MSG )
          END IF
 C
@@ -125,7 +125,8 @@ C
 C
 C  Set up the problem data structures.
 C
-         CALL USETUP( INPUT, IOUT, NVAR, X, BL, BU, NMAX )
+         CALL CUTEST_usetup( status, INPUT, IOUT, io_buffer, 
+     *                       NVAR, X, BL, BU, NMAX )
 C
 C  Copy X.
 C
@@ -152,11 +153,11 @@ C
 C  Check number of input and output arguments.
 C
          IF ( NRHS .NE. 1 .AND. NRHS .NE. 2 ) THEN
-            MSG = 'UNAMES REQUIRES ZERO OR ONE INPUT ARGUMENTS.'
+            MSG = 'CUTEST_unames requires zero or one input arguments.'
             CALL MEXERRMSGTXT( MSG )
          END IF
          IF ( NLHS .NE. 2 ) THEN
-            MSG = 'UNAMES RETURNS TWO OUTPUT ARGUMENTS.'
+            MSG = 'CUTEST_unames returns two output arguments.'
             CALL MEXERRMSGTXT( MSG )
          END IF
 C
@@ -166,11 +167,11 @@ C
          IF ( NRHS. EQ. 2 ) THEN
             N = NINT( MXGETSCALAR( PRHS( 2 ) ) )
             IF ( N .LT. 1 .OR. N .GT. NVAR ) THEN
-               MSG = 'INVALID NUMBER OF VARIABLE NAMES REQUESTED.'
+               MSG = 'invalid number of variable names requested.'
                CALL MEXERRMSGTXT( MSG )
             END IF
          END IF
-         CALL UNAMES( NVAR, PNAME, XNAMES )
+         CALL CUTEST_unames( status, NVAR, PNAME, XNAMES )
 C
 C  Copy PNAME and XNAMES.  First convert XNAMES to a REAL*8 array.
 C
@@ -186,11 +187,11 @@ C
 C  Check number of input and output arguments.
 C
          IF ( NRHS .NE. 2 ) THEN
-            MSG = 'UFN REQUIRES CURRENT ITERATE AS INPUT.'
+            MSG = 'CUTEST_ufn requires current iterate as input.'
             CALL MEXERRMSGTXT( MSG )
          END IF
          IF ( NLHS .NE. 1 ) THEN
-            MSG = 'UFN RETURNS ONE OUTPUT ARGUMENT.'
+            MSG = 'CUTEST_ufn returns one output argument.'
             CALL MEXERRMSGTXT( MSG )
          END IF
 C
@@ -201,7 +202,7 @@ C
 C
 C  Get the objective function value.
 C
-         CALL UFN( N, X, F )
+         CALL CUTEST_ufn( status, N, X, F )
 C
 C  Copy F. 
 C
@@ -214,11 +215,11 @@ C
 C  Check number of input and output arguments.
 C
          IF ( NRHS .NE. 2 ) THEN
-            MSG = 'UGR REQUIRES CURRENT ITERATE AS INPUT.'
+            MSG = 'CUTEST_ugr requires current iterate as input.'
             CALL MEXERRMSGTXT( MSG )
          END IF
          IF ( NLHS .NE. 1 ) THEN
-            MSG = 'UGR RETURNS ONE OUTPUT ARGUMENT.'
+            MSG = 'CUTEST_ugr returns one output argument.'
             CALL MEXERRMSGTXT( MSG )
          END IF
 C
@@ -229,7 +230,7 @@ C
 C
 C  Get the gradient of the objective function.
 C
-         CALL UGR( N, X, G )
+         CALL CUTEST_ugr( status, N, X, G )
 C
 C  Copy G.
 C
@@ -242,11 +243,11 @@ C
 C  Check number of input and output arguments.
 C
          IF ( NRHS .NE. 2 ) THEN
-            MSG = 'UOFG REQUIRES CURRENT ITERATE AS INPUT.'
+            MSG = 'CUTEST_uofg requires current iterate as input.'
             CALL MEXERRMSGTXT( MSG )
          END IF
          IF ( NLHS .NE. 1 .AND. NLHS .NE. 2 ) THEN
-	    MSG = 'UOFG RETURNS ONE OR TWO OUTPUT ARGUMENTS.'
+	    MSG = 'CUTEST_uofg returns one or two output arguments.'
             CALL MEXERRMSGTXT( MSG )
          END IF
 C
@@ -262,7 +263,7 @@ C
 C
 C  Get the value of the objective function, and possibly its gradient.
 C
-         CALL UOFG( N, X, F, G, GRAD )
+         CALL CUTEST_uofg( status, N, X, F, G, GRAD )
 C
 C  Copy F.
 C
@@ -283,11 +284,11 @@ C
 C  Check number of input and output arguments.
 C
          IF ( NRHS .NE. 2 ) THEN
-            MSG = 'UDH REQUIRES CURRENT ITERATE AS INPUT.'
+            MSG = 'CUTEST_udh requires current iterate as input.'
             CALL MEXERRMSGTXT( MSG )
          END IF
          IF ( NLHS .NE. 1 ) THEN
-            MSG = 'UDH RETURNS ONE OUTPUT ARGUMENT.'
+            MSG = 'CUTEST_udh returns one output argument.'
             CALL MEXERRMSGTXT( MSG )
          END IF
 C
@@ -298,7 +299,7 @@ C
 C
 C  Get the dense Hessian evaluated at X.
 C
-         CALL UDH( N, X, N, DH )
+         CALL CUTEST_udh( status, N, X, N, DH )
 C
 C  Copy H.
 C
@@ -312,11 +313,11 @@ C
 C  Check number of input and output arguments.
 C
          IF ( NRHS .NE. 2 ) THEN
-            MSG = 'UGRDH REQUIRES CURRENT ITERATE AS INPUT.'
+            MSG = 'CUTEST_ugrdh requires current iterate as input.'
             CALL MEXERRMSGTXT( MSG )
          END IF
          IF ( NLHS .NE. 2 ) THEN
-            MSG = 'UGRDH RETURNS TWO OUTPUT ARGUMENTS.'
+            MSG = 'CUTEST_ugrdh returns two output arguments.'
             CALL MEXERRMSGTXT( MSG )
          END IF
 C
@@ -327,7 +328,7 @@ C
 C
 C  Get the gradient and dense Hessian evaluated at X.
 C
-         CALL UGRDH( N, X, G, N, DH )
+         CALL CUTEST_ugrdh( status, N, X, G, N, DH )
 C
 C  Copy G.
 C
@@ -347,11 +348,11 @@ C
 C  Check number of input and output arguments.
 C
          IF ( NRHS .NE. 2 ) THEN
-            MSG = 'USH REQUIRES CURRENT ITERATE AS INPUT.'
+            MSG = 'CUTEST_ush requires current iterate as input.'
             CALL MEXERRMSGTXT( MSG )
          END IF
          IF ( NLHS .NE. 1 ) THEN
-            MSG = 'USH RETURNS ONE OUTPUT ARGUMENT.'
+            MSG = 'CUTEST_ush returns one output argument.'
             CALL MEXERRMSGTXT( MSG )
          END IF
 C
@@ -362,13 +363,14 @@ C
 C
 C  Get the sparse Hessian evaluated at X.
 C
-         CALL USH( N, X, NNZSH, NNZMAX, SH, IRNSH, ICNSH )
+         CALL CUTEST_ush( status, N, X, NNZSH, NNZMAX, SH, 
+     *                    IRNSH, ICNSH )
 C
 C  Make sure NNZMAX is big enough.
 C
          IF ( NNZSH .GT. NNZMAX ) THEN
-            MSG = 'NUMBER OF NONZEROS IN SPARSE HESSIAN EXCEEDS DECLARED
-     * SIZE OF SPARSE HESSIAN IN MEX-FILE.'
+            MSG = 'number of nonzeros in sparse hessian exceeds declared
+     * size of sparse hessian in MEX-file.'
             CALL MEXERRMSGTXT( MSG )
          END IF
 C
@@ -389,8 +391,8 @@ C
   111    CONTINUE
          NNZSH = J
          IF ( NNZ .GT. NNZMAX ) THEN
-            MSG = 'NUMBER OF NONZEROS IN SPARSE HESSIAN EXCEEDS DECLARED
-     * SIZE OF SPARSE HESSIAN IN MEX-FILE.'
+            MSG = 'number of nonzeros in sparse hessian exceeds declared
+     * size of sparse hessian in MEX-file.'
             CALL MEXERRMSGTXT( MSG )
          END IF
 C
@@ -429,11 +431,11 @@ C
 C  Check number of input and output arguments.
 C
          IF ( NRHS .NE. 2 ) THEN
-            MSG = 'UGRSH REQUIRES CURRENT ITERATE AS INPUT.'
+            MSG = 'CUTEST_ugrsh requires current iterate as input.'
             CALL MEXERRMSGTXT( MSG )
          END IF
          IF ( NLHS .NE. 2 ) THEN
-            MSG = 'UGRSH RETURNS TWO OUTPUT ARGUMENTS.'
+            MSG = 'CUTEST_ugrsh returns two output arguments.'
             CALL MEXERRMSGTXT( MSG )
          END IF
 C
@@ -444,13 +446,14 @@ C
 C
 C  Get the gradient and sparse Hessian evaluated at X.
 C
-         CALL UGRSH( N, X, G, NNZSH, NNZMAX, SH, IRNSH, ICNSH )
+         CALL CUTEST_ugrsh( status, N, X, G, NNZSH, NNZMAX, SH, 
+     *                      IRNSH, ICNSH )
 C
 C  Make sure NNZMAX is big enough.
 C
          IF ( NNZSH .GT. NNZMAX ) THEN
-            MSG = 'NUMBER OF NONZEROS IN SPARSE HESSIAN EXCEEDS DECLARED
-     * SIZE OF SPARSE HESSIAN IN MEX-FILE.'
+            MSG = 'number of nonzeros in sparse Hessian exceeds declared
+     * size of sparse hessian in MEX-file.'
             CALL MEXERRMSGTXT( MSG )
          END IF
 C
@@ -471,8 +474,8 @@ C
   113    CONTINUE
          NNZSH = J
          IF ( NNZ .GT. NNZMAX ) THEN
-            MSG = 'NUMBER OF NONZEROS IN SPARSE HESSIAN EXCEEDS DECLARED
-     * SIZE OF SPARSE HESSIAN IN MEX-FILE.'
+            MSG = 'number of nonzeros in sparse hessian exceeds declared
+     * size of sparse Hessian in MEX-file.'
             CALL MEXERRMSGTXT( MSG )
          END IF
 C
@@ -517,12 +520,12 @@ C
 C  Check number of input and output arguments.
 C
          IF ( NRHS .NE. 3 .AND. NRHS .NE. 4 ) THEN
-            MSG = 'UPROD REQUIRES CURRENT ITERATE AND ANOTHER VECTOR AS 
-     *INPUT.  THE GOTH FLAG IS OPTIONAL.'
+            MSG = 'CUTEST_uhprod requires current iterate and another vector as 
+     *input.  the goth flag is optional.'
             CALL MEXERRMSGTXT( MSG )
          END IF
          IF ( NLHS .NE. 1 ) THEN
-            MSG = 'UPROD RETURNS ONE OUTPUT ARGUMENT.'
+            MSG = 'CUTEST_uhprod RETURNS ONE OUTPUT ARGUMENT.'
             CALL MEXERRMSGTXT( MSG )
          END IF
 C
@@ -534,8 +537,8 @@ C
          IPTR = PRHS( 3 )
          CALL GETVEC( IPTR, P, NVAR, NN )
          IF ( N .NE. NN ) THEN
-            MSG = 'CURRENT ITERATE AND VECTOR TO BE MULTIPLIED MUST HAVE
-     * SAME LENGTH.'
+            MSG = 'current iterate and vector to be multiplied must have
+     * same length.'
             CALL MEXERRMSGTXT( MSG )
          END IF
 C
@@ -549,7 +552,7 @@ C
 C
 C  Get the product of the Hessian with P.
 C
-         CALL UPROD( N, GOTH, X, P, Q )
+         CALL CUTEST_uhprod( status, N, GOTH, X, P, Q )
 C
 C  Copy Q.
 C
@@ -562,12 +565,12 @@ C
 C  Check number of input and output arguments.
 C
          IF ( NRHS .NE. 3 .AND. NRHS .NE. 4 ) THEN
-            MSG = 'UBANDH REQUIRES CURRENT ITERATE AND REQUIRED SEMI-BAN
-     *DWIDTH AS INPUT.  THE GOTH FLAG IS OPTIONAL.'
+            MSG = 'CUTEST_ubandh requires current iterate and required semi-ban
+     *dwidth as input.  The goth flag is optional.'
             CALL MEXERRMSGTXT( MSG )
          END IF
          IF ( NLHS .NE. 1 ) THEN
-            MSG = 'UBANDH RETURNS ONE OUTPUT ARGUMENT.'
+            MSG = 'CUTEST_ubandh returns one output argument.'
             CALL MEXERRMSGTXT( MSG )
          END IF
 C
@@ -588,7 +591,8 @@ C
 C  Get the elements of the Hessian that lie within a give semi-bandwidth
 C  of its diagonal.
 C
-         CALL UBANDH( N, GOTH, X, NSEMIB, BANDH, NSEMIB )
+         CALL CUTEST_ubandh( status, N, X, NSEMIB, BANDH, NSEMIB, 
+     *                       maxsbw )
 C
 C  Copy BANDH.
 C
@@ -603,11 +607,11 @@ C
 C  Check number of input and output arguments.
 C
          IF ( NRHS .NE. 1 ) THEN
-            MSG = 'UDIMEN DOES NOT REQUIRE AN INPUT ARGUMENT.'
+            MSG = 'CUTEST_udimen does not require an input argument.'
             CALL MEXERRMSGTXT( MSG )
          END IF
          IF ( NLHS .NE. 1 ) THEN
-            MSG = 'UDIMEN RETURNS ONE OUTPUT ARGUMENT.'
+            MSG = 'CUTEST_udimen returns one output argument.'
             CALL MEXERRMSGTXT( MSG )
          END IF
 C
@@ -621,9 +625,9 @@ C
      *          STATUS = 'OLD' )
 	 REWIND INPUT
 C
-C  Call UDIMEN
+C  Call CUTEST_udimen
 C
-	 CALL UDIMEN( INPUT, N )
+	 CALL CUTEST_udimen( INPUT, status, N )
 
 	 N_real = N
 
@@ -638,18 +642,18 @@ C
 C  Check number of input and output arguments.
 C
          IF ( NRHS .NE. 1 ) THEN
-            MSG = 'UDIMSH DOES NOT REQUIRE AN INPUT ARGUMENT.'
+            MSG = 'CUTEST_udimsh does not require an input argument.'
             CALL MEXERRMSGTXT( MSG )
          END IF
          IF ( NLHS .NE. 1 ) THEN
-            MSG = 'UDIMSH RETURNS ONE OUTPUT ARGUMENT.'
+            MSG = 'CUTEST_udimsh returns one output argument.'
             CALL MEXERRMSGTXT( MSG )
          END IF
 
 C
-C  Call UDIMSH
+C  Call CUTEST_udimsh
 C
-	 CALL UDIMSH( N )
+	 CALL CUTEST_udimsh( status, N )
 
 	 N_real = N
 
@@ -662,17 +666,17 @@ C
 C  Check number of input and output arguments.
 C
          IF ( NRHS .NE. 1 ) THEN
-            MSG = 'UVARTY DOES NOT REQUIRE AN INPUT ARGUMENT.'
+            MSG = 'CUTEST_uvartype does not require an input argument.'
             CALL MEXERRMSGTXT( MSG )
          END IF
          IF ( NLHS .NE. 1 ) THEN
-            MSG = 'UVARTY RETURNS ONE OUTPUT ARGUMENT.'
+            MSG = 'CUTEST_uvartype returns one output argument.'
             CALL MEXERRMSGTXT( MSG )
          END IF
 C
-C  Call UVARTY
+C  Call CUTEST_uvartype
 C
-	 CALL UVARTY( NVAR, IVARTY )
+	 CALL CUTEST_uvartype( status, NVAR, IVARTY )
 C
 C  Convert to real
 C
@@ -695,17 +699,17 @@ C
 C  Check number of input and output arguments.
 C
          IF ( NRHS .NE. 1 ) THEN
-            MSG = 'UREPRT DOES NOT REQUIRE AN INPUT ARGUMENT.'
+            MSG = 'CUTEST_ureport does not require an input argument.'
             CALL MEXERRMSGTXT( MSG )
          END IF
          IF ( NLHS .NE. 1 ) THEN
-            MSG = 'UREPRT RETURNS ONE OUTPUT ARGUMENT.'
+            MSG = 'CUTEST_ureport returns one output argument.'
             CALL MEXERRMSGTXT( MSG )
          END IF
 C
-C  Call UREPRT
+C  Call CUTEST_ureport
 C
-	 CALL UREPRT( TIME, CALLS )
+	 CALL CUTEST_ureport( status, TIME, CALLS )
 C
 C  Make room for output - only report CALLS
 C
@@ -717,7 +721,7 @@ C
 	 CALL MXCOPYREAL8TOPTR( CALLS, PR, 4 )
 
       ELSE
-         MSG = 'REQUESTED UNCONSTRAINED TOOL DOES NOT EXIST:  '//TOOL
+         MSG = 'requested unconstrained tool does not exist:  '//TOOL
          CALL MEXERRMSGTXT( MSG )
       END IF
       RETURN
