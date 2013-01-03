@@ -9,7 +9,7 @@
 !   fortran 77 version originally released in CUTEr, 26th August 1999
 !   fortran 2003 version released in CUTEst, 19th November 2012
 
-      SUBROUTINE CUTEST_udimen( input, status, n )
+      SUBROUTINE CUTEST_udimen( status, input, n )
 
 !  dummy arguments
 

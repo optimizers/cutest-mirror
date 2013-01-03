@@ -54,7 +54,7 @@
 !  allocate basic arrays
 
       WRITE( out, "( ' Call CUTEST_udimen ' )" )
-      CALL CUTEST_udimen( input, status, n )
+      CALL CUTEST_udimen( status, input, n )
       WRITE( out, "( ' * n = ', I0 )" ) n
       l_h2_1 = n
       ALLOCATE( X( n ), X_l( n ), X_u( n ), G( n ), VECTOR( n ), RESULT( n ),  &

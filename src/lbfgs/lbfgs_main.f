@@ -54,7 +54,7 @@ C
 C
 C  Check to see if there is sufficient room
 C
-      CALL CUTEST_udimen( INPUT, status, N )
+      CALL CUTEST_udimen( status, INPUT, N )
       IF ( status /= 0 ) GO TO 910
 
       lw  = n * ( 2 * m + 1 ) + 2 * m
