@@ -627,7 +627,7 @@ C
 C
 C  Call CUTEST_udimen
 C
-	 CALL CUTEST_udimen( INPUT, status, N )
+	 CALL CUTEST_udimen( status, INPUT, N )
 
 	 N_real = N
 

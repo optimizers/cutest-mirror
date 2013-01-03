@@ -79,7 +79,7 @@ C
 C
 C  Check to see if there is sufficient room
 C
-      CALL CUTEST_udimen( INPUT, status, N )
+      CALL CUTEST_udimen( status, INPUT, N )
       IF ( status /= 0 ) GO TO 910
 
       ALLOCATE( X( n ), G( n ), D( n ), XTEMP( n ), GTEMP( n ), 

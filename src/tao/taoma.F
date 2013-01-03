@@ -89,7 +89,7 @@ c *** outfile = 6  -> standard output
 
 
 c *** Get the dimension size 
-      call CUTEST_udimen(infile,info,n)
+      call CUTEST_udimen(info,infile,n)
       IF ( info /= 0 ) GO TO 910
       allocate( xnames( n ), STAT =iores )
       
