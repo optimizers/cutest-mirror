@@ -1,5 +1,5 @@
-                  CUTEr vs CUTEst equivalences
-                  ----------------------------
+                  CUTEr vs CUTEst equivalences and changes
+                  ----------------------------------------
 
 We describe the differences between how tools were called 
 in CUTEr and how they are now called in CUTEst via
@@ -20,9 +20,9 @@ arguments in CUTEr and CUTEst have the same functionality.
                    -------------------
 
 .............................................................................
-        UDIMEN( input,         n )
+        UDIMEN(         input, n )
 -->
- CUTEST_udimen( input, status, n )
+ CUTEST_udimen( status, input, n )
 .............................................................................
 
 .............................................................................
@@ -153,9 +153,9 @@ new tool:
                      -----------------
 
 .............................................................................
-        CDIMEN( input,         n, m )
+        CDIMEN(         input, n, m )
 -->
- CUTEST_cdimen( input, status, n, m )
+ CUTEST_cdimen( status, input, n, m )
 .............................................................................
 
 .............................................................................
@@ -167,7 +167,7 @@ new tool:
 .............................................................................
 
 .............................................................................
- CNAMES( n, m, p_name, X_names, C_names )
+        CNAMES( n, m, p_name, X_names, C_names )
 -->
  CUTEST_cnames( status, n, m, p_name, X_names, C_names )
 .............................................................................
@@ -345,3 +345,14 @@ or equivalently
 new tool:
 
  CUTEST_cterminate( status )
+
+Package support removed
+-----------------------
+
+The following interfaces have been removed for the reasons given:
+
+va15 is equivalent to lbfgs that in turn has been superceded by lbfgsb.
+ve14 has been superceded by GALAHAD's qpb with its own CUTEet interface.
+ve09 is no longer available from HSL.
+hsl_ve12 has been superceded by GALAHAD's qpb with its own CUTEet interface.
+osl was withdran by IBM in 2004 and is no longer available.
