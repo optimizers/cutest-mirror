@@ -1,35 +1,38 @@
 #!/bin/csh
 
-foreach pack ( cutest_ccfg cutest_ccfsg cutest_ccifg cutest_ccifsg cutest_cdh \
-               cutest_cdimen cutest_cdimse cutest_cdimsh cutest_cdimsj \
-               cutest_ceh cutest_cfn cutest_cgr cutest_cgrdh cutest_chcprod \
-               cutest_chprod cutest_cidh cutest_cish cutest_cjprod \
-               cutest_cnames cutest_cofg cutest_connames cutest_creport \
-               cutest_csetup cutest_csgr \
-               cutest_csgreh cutest_csgrsh cutest_csh cutest_cshc \
-               cutest_cvartype cutest_probname cutest_ubandh cutest_udh \
-               cutest_udimen cutest_udimse cutest_udimsh cutest_ueh \
-               cutest_ufn cutest_ugr cutest_ugrdh cutest_ugreh cutest_ugrsh \
-               cutest_uhprod cutest_unames cutest_uofg cutest_ureport \
-               cutest_usetup cutest_ush cutest_uvartype cutest_varnames \
-               cutest_ccfg_threaded cutest_ccfsg_threaded \
-               cutest_ccifg_threaded cutest_ccifsg_threaded \
-               cutest_cdh_threaded cutest_ceh_threaded \
-               cutest_cfn_threaded cutest_cgr_threaded \
-               cutest_cgrdh_threaded cutest_chcprod_threaded \
-               cutest_chprod_threaded cutest_cidh_threaded \
-               cutest_cish_threaded cutest_cjprod_threaded \
-               cutest_cofg_threaded cutest_creport_threaded \
-               cutest_csetup_threaded cutest_csgr_threaded \
-               cutest_csgreh_threaded cutest_csgrsh_threaded \
-               cutest_csh_threaded cutest_cshc_threaded \
-               cutest_ubandh_threaded cutest_udh_threaded \
-               cutest_ueh_threaded cutest_ufn_threaded \
-               cutest_ugr_threaded cutest_ugrdh_threaded \
-               cutest_ugreh_threaded cutest_ugrsh_threaded \
-               cutest_uhprod_threaded cutest_uofg_threaded \
-               cutest_ureport_threaded cutest_usetup_threaded \
-               cutest_ush_threaded cutest )
+#foreach pack ( cutest_ccfg cutest_ccfsg cutest_ccifg cutest_ccifsg cutest_cdh \
+#               cutest_cdimen cutest_cdimse cutest_cdimsh cutest_cdimsj \
+#               cutest_ceh cutest_cfn cutest_cgr cutest_cgrdh cutest_chcprod \
+#               cutest_chprod cutest_cidh cutest_cish cutest_cjprod \
+#               cutest_cnames cutest_cofg cutest_connames cutest_creport \
+#               cutest_csetup cutest_csgr \
+#               cutest_csgreh cutest_csgrsh cutest_csh cutest_cshc \
+#               cutest_cvartype cutest_probname cutest_ubandh cutest_udh \
+#               cutest_udimen cutest_udimse cutest_udimsh cutest_ueh \
+#               cutest_ufn cutest_ugr cutest_ugrdh cutest_ugreh cutest_ugrsh \
+#               cutest_uhprod cutest_unames cutest_uofg cutest_ureport \
+#               cutest_usetup cutest_ush cutest_uvartype cutest_varnames \
+#               cutest_ccfg_threaded cutest_ccfsg_threaded \
+#               cutest_ccifg_threaded cutest_ccifsg_threaded \
+#               cutest_cdh_threaded cutest_ceh_threaded \
+#               cutest_cfn_threaded cutest_cgr_threaded \
+#               cutest_cgrdh_threaded cutest_chcprod_threaded \
+#               cutest_chprod_threaded cutest_cidh_threaded \
+#               cutest_cish_threaded cutest_cjprod_threaded \
+#               cutest_cofg_threaded cutest_creport_threaded \
+#               cutest_csetup_threaded cutest_csgr_threaded \
+#               cutest_csgreh_threaded cutest_csgrsh_threaded \
+#               cutest_csh_threaded cutest_cshc_threaded \
+#               cutest_ubandh_threaded cutest_udh_threaded \
+#               cutest_ueh_threaded cutest_ufn_threaded \
+#               cutest_ugr_threaded cutest_ugrdh_threaded \
+#               cutest_ugreh_threaded cutest_ugrsh_threaded \
+#               cutest_uhprod_threaded cutest_uofg_threaded \
+#               cutest_ureport_threaded cutest_usetup_threaded \
+#               cutest_ush_threaded cutest )
+
+foreach pack ( cutest_cdimen cutest_udimen )
+
 #foreach pack ( cutest )
 #foreach pack ( cutest_ccfg )
 #foreach pack ( cutest_ccfsg )

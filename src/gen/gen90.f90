@@ -1,79 +1,76 @@
 !     ( Last modified on 23 Dec 2000 at 22:01:38 )
 
-Module Generic_Driver
+MODULE Generic_Driver
 
-  Use CUTEr_precis
-  Implicit None
-  Private
-  Public :: GEN, GENSPC, GETINFO
+  IMPLICIT NONE
+  PRIVATE
+  PUBLIC :: GEN, GENSPC, GETINFO
+  INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
 Contains
 
-  Subroutine GEN( DUMMY )
+  SUBROUTINE GEN( dummy )
 
-    Real( Kind = wp ) :: DUMMY
+    REAL( KIND = wp ) :: dummy
 
-    Write( *, * ) ' ********************************'
-    Write( *, * )' *                              *'
-    Write( *, * )' *      HELLO FROM GEN90!       *'
-!S      WRITE( *, * )' *     (SINGLE PRECISION)       *'
-!D      WRITE( *, * )' *     (DOUBLE PRECISION)       *'
-    Write( *, * )' *                              *'
-    Write( *, * )' ********************************'
-    Write( *, * )' '
-!S      DUMMY = 41.9999995555555E0
-!D      DUMMY = 41.9999999999999D0
-    Write( *, * ) ' OPTIMAL SOLUTION FOUND'
-    Write( *, * ) ' THE ANSWER IS ', DUMMY
-    Return
-  End Subroutine GEN
+    WRITE( *, * ) ' ********************************'
+    WRITE( *, * )' *                              *'
+    WRITE( *, * )' *      Hello from GEN90!       *'
+    WRITE( *, * )' *     (Working precision)      *'
+    WRITE( *, * )' *                              *'
+    WRITE( *, * )' ********************************'
+    WRITE( *, * )' '
+    dummy = REAL( 41.9999999999999D0, wp )
+    WRITE( *, * ) ' Optimal solution found'
+    WRITE( *, * ) ' The answer is ', dummy
+    RETURN
+  END SUBROUTINE GEN
 
-  Subroutine GENSPC( FUNIT, FNAME )
+  SUBROUTINE GENSPC( funit, fname )
 
-    ! This is a dummy routine to read a spec file
-    ! possibly, this routine contains precision-dependent directives
+! This is a dummy routine to read a spec file
+! possibly, this routine contains precision-dependent directives
 
-    Integer :: FUNIT
-    Integer, Parameter :: FERROR = 6
-    Character( len = 7 ) :: FNAME
+    INTEGER :: funit
+    INTEGER, PARAMETER :: ferror = 6
+    CHARACTER( LEN = 7 ) :: FNAME
 
-    Open( UNIT=FUNIT, FILE=FNAME, STATUS='UNKNOWN', ERR=100 )
-    Rewind( FUNIT )
+    OPEN( UNIT=funit, FILE=fname, STATUS='UNKNOWN', ERR=100 )
+    REWIND( funit )
 
-    !     READ COMMANDS...
+!     READ COMMANDS...
 
-    Close( FUNIT )
-    Return
+    CLOSE( funit )
+    RETURN
 
-100 Write( FERROR, '(A,A7)' ) 'Failure while reading ', FNAME
-    Return
-  End Subroutine GENSPC
+100 WRITE( FERROR, '(A,A7)' ) 'Failure while reading ', FNAME
+    RETURN
+  END SUBROUTINE GENSPC
 
-  Subroutine GETINFO(N, M, BL, BU, EQUATN, LINEAR, NLIN, NEQ, NBNDS)
+  SUBROUTINE GETINFO( n, m, BL, BU, EQUATN, LINEAR, nlin, neq, nbnds )
     !
     ! Input/Output variables
     !
-    Integer, Intent( IN  ) :: N, M
-    Integer, Intent( OUT ) :: NLIN, NEQ, NBNDS
-    Real( Kind = wp ), Dimension( N ), Intent( IN ) :: BL, BU
-    Logical, Dimension( M ), Intent( IN ) :: EQUATN, LINEAR
+    INTEGER, INTENT( IN  ) :: n, m
+    INTEGER, INTENT( OUT ) :: nlin, neq, nbnds
+    REAL( KIND = wp ), DIMENSION( n ), INTENT( IN ) :: BL, BU
+    LOGICAL, DIMENSION( m ), INTENT( IN ) :: EQUATN, LINEAR
 !
 !     Local variables
 !
-!S  Real( Kind = wp ), Parameter :: INFTY = 1.0E+20
-!D  Real( Kind = wp ), Parameter :: INFTY = 1.0D+20
-    Integer :: I
+    REAL( KIND = wp ), PARAMETER :: infty = 1.0D+20
+    INTEGER :: i
 
-    NLIN  = 0 ; NEQ   = 0 ; NBNDS = 0
+    nlin = 0 ; neq = 0 ; nbnds = 0
 
-    Do I = 1, M
-       If( EQUATN( I ) ) NEQ  = NEQ  + 1
-       If( LINEAR( I ) ) NLIN = NLIN + 1
+    DO i = 1, m
+      IF ( EQUATN( i ) ) neq  = neq  + 1
+      IF ( LINEAR( i ) ) nlin = nlin + 1
     End Do
 
-    Do I = 1, N
-       If( BL( I ) .Gt. -INFTY .Or. BU( I ) .Lt. INFTY ) NBNDS = NBNDS + 1
-    End Do
-  End Subroutine GETINFO
+    DO i = 1, n
+      IF ( BL( i ) > - infty .OR. BU( i ) < infty ) nbnds = nbnds + 1
+    END DO
+  END SUBROUTINE GETINFO
 
-End Module Generic_Driver
+END MODULE Generic_Driver

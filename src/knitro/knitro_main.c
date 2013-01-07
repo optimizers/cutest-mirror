@@ -1,6 +1,6 @@
 
 /* ====================================================
- * CUTEr interface to KNITRO 7           April 14, 2011
+ * CUTEst interface to KNITRO 7           April 14, 2011
  *
  * D. Orban
  *
@@ -22,11 +22,11 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
 
   logical somethingTrue = TRUE_;
   logical somethingFalse = FALSE_;
-  integer CUTEr_nvar;        /* number of variables */
-  integer CUTEr_ncon;        /* number of constraints */
-  integer CUTEr_lcjac;       /* length of Jacobian arrays */
-  integer CUTEr_nnzj;        /* number of nonzeros in Jacobian */
-  integer CUTEr_nnzh;        /* number of nonzeros in upper triangular
+  integer CUTEst_nvar;        /* number of variables */
+  integer CUTEst_ncon;        /* number of constraints */
+  integer CUTEst_lcjac;       /* length of Jacobian arrays */
+  integer CUTEst_nnzj;        /* number of nonzeros in Jacobian */
+  integer CUTEst_nnzh;        /* number of nonzeros in upper triangular
                                 part of the Hessian of the Lagrangian */
   integer *jacIndexVars, *jacIndexCons, *hessIndexRows, *hessIndexCols;
   doublereal *CUTEr_Jac, *CUTEr_Hess, *Hv, f;
@@ -59,14 +59,14 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
     }
 
     if (CUTEr_ncon > 0) {
-      CFN(&CUTEr_nvar, &CUTEr_ncon, x, obj, &CUTEr_ncon, c);
-      //for (i = 0; i < CUTEr_nvar; i++)
+      CUTEST_cfn( status,&CUTEr_nvar, &CUTEr_ncon, x, obj, &CUTEr_ncon, c);
+      //for (i = 0; i < CUTEst_nvar; i++)
       //    printf(" x = %5d  %22.15e\n", i, x[i]);
       //printf(" f = %22.15e\n", obj[0]);
-      //for (i = 0; i < CUTEr_ncon; i++)
+      //for (i = 0; i < CUTEst_ncon; i++)
       //    printf(" c = %5d  %22.15e\n", i, c[i]);
     } else {
-      UFN(&CUTEr_nvar, x, obj);
+      CUTEST_ufn( status,&CUTEr_nvar, x, obj);
     }
 
     return 0;
@@ -101,22 +101,22 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
 
     if (CUTEr_ncon > 0) {
 
-      CSGR(&CUTEr_nvar, &CUTEr_ncon, &somethingFalse, &CUTEr_ncon, lambda,
-           x, &CUTEr_nnzj, &CUTEr_lcjac, CUTEr_Jac, jacIndexVars, jacIndexCons);
-      for (i = 0; i < CUTEr_nvar; i++) objGrad[i] = 0.0;
-      for (i = 0; i < CUTEr_nnzj; i++)
+      CUTEST_csgr( status,&CUTEr_nvar, &CUTEr_ncon, &somethingFalse, &CUTEr_ncon, lambda,
+           x, &CUTEr_nnzj, &CUTEr_lcjac, CUTEst_Jac, jacIndexVars, jacIndexCons);
+      for (i = 0; i < CUTEst_nvar; i++) objGrad[i] = 0.0;
+      for (i = 0; i < CUTEst_nnzj; i++)
         if (jacIndexCons[i] == 0)
-          objGrad[ (int)(jacIndexVars[i])-1] = CUTEr_Jac[i];
+          objGrad[ (int)(jacIndexVars[i])-1] = CUTEst_Jac[i];
         else
-          jac[i] = CUTEr_Jac[i];
+          jac[i] = CUTEst_Jac[i];
       //CCFSG(&CUTEr_nvar, &CUTEr_ncon, x, &CUTEr_ncon, c, &CUTEr_nnzj,
       //      &CUTEr_lcjac, jac, jacIndexVars, jacIndexCons, &somethingTrue);
       //COFG(&CUTEr_nvar, x, &f, objGrad, &somethingTrue);
 
     } else
-      UGR(&CUTEr_nvar, x, objGrad);
+      CUTEST_ugr( status,&CUTEr_nvar, x, objGrad);
 
-    // for (i = 0; i < CUTEr_nvar; i++)
+    // for (i = 0; i < CUTEst_nvar; i++)
     //  printf(" g = %22.15e\n", objGrad[i]);
 
     return 0;
@@ -146,15 +146,15 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
     if (evalRequestCode == KTR_RC_EVALH) {
 
       if (CUTEr_ncon > 0) {
-        CSH(&CUTEr_nvar, &CUTEr_ncon, x, &CUTEr_ncon, lambda, &CUTEr_nnzh,
+        CUTEST_csh( status,&CUTEr_nvar, &CUTEr_ncon, x, &CUTEr_ncon, lambda, &CUTEr_nnzh,
              &CUTEr_nnzh, hessian, hessIndexRows, hessIndexCols);
       } else {
-        USH(&CUTEr_nvar, x, &CUTEr_nnzh,
+        CUTEST_ush( status,&CUTEr_nvar, x, &CUTEr_nnzh,
              &CUTEr_nnzh, hessian, hessIndexRows, hessIndexCols);
       }
 
       /* Adjust indices to be zero-based. */
-      for (i = 0; i < CUTEr_nnzh; i++) {
+      for (i = 0; i < CUTEst_nnzh; i++) {
           hessIndexRows[i] = (int)(hessIndexRows[i] - 1);
           hessIndexCols[i] = (int)(hessIndexCols[i] - 1);
           //printf(" H = %5d  %5d  %22.15e\n", hessIndexRows[i],
@@ -164,15 +164,15 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
 
     } else if (evalRequestCode == KTR_RC_EVALHV) {
 
-      if (! Hv) MALLOC(Hv, CUTEr_nvar, doublereal);
+      if (! Hv) MALLOC(Hv, CUTEst_nvar, doublereal);
 
       if (CUTEr_ncon > 0)
-        CPROD(&CUTEr_nvar, &CUTEr_ncon, &somethingTrue, x, &CUTEr_ncon, \
+        CUTEST_chprod( status,&CUTEr_nvar, &CUTEr_ncon, &somethingTrue, x, &CUTEr_ncon, \
               lambda, hessVector, Hv);
       else
-        UPROD(&CUTEr_nvar, &somethingTrue, x, hessVector, Hv);
+        CUTEST_uhprod( status,&CUTEr_nvar, &somethingTrue, x, hessVector, Hv);
 
-      for (i = 0; i < CUTEr_nvar; i++) hessVector[i] = Hv[i];
+      for (i = 0; i < CUTEst_nvar; i++) hessVector[i] = Hv[i];
 
     } else {
       fprintf(stderr, "*** callbackEvalHess incorrectly called with code %d\n",
@@ -189,7 +189,7 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
 
   int MAINENTRY(void) {
 
-    char *fname = "OUTSDIF.d"; /* CUTEr data file */
+    char *fname = "OUTSDIF.d"; /* CUTEst data file */
     integer funit = 42;        /* FORTRAN unit number for OUTSDIF.d */
     integer iout = 6;          /* FORTRAN unit number for error output */
     integer ierr;              /* Exit flag from OPEN and CLOSE */
@@ -224,26 +224,26 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
     }
 
     /* Determine problem size */
-    CDIMEN(&funit, &CUTEr_nvar, &CUTEr_ncon);
+    CUTEST_cdimen( status,&funit, &CUTEr_nvar, &CUTEr_ncon);
 
     /* Determine whether to call constrained or unconstrained tools */
     if (CUTEr_ncon) constrained = TRUE_;
 
     /* Seems to be needed for some Solaris C compilers */
-    ncon_dummy = CUTEr_ncon + 1;
+    ncon_dummy = CUTEst_ncon + 1;
 
     /* Reserve memory for variables, bounds, and multipliers */
-    /* and call appropriate initialization routine for CUTEr */
-    MALLOC(x,      CUTEr_nvar, doublereal);
-    MALLOC(bl,     CUTEr_nvar, doublereal);
-    MALLOC(bu,     CUTEr_nvar, doublereal);
+    /* and call appropriate initialization routine for CUTEst */
+    MALLOC(x,      CUTEst_nvar, doublereal);
+    MALLOC(bl,     CUTEst_nvar, doublereal);
+    MALLOC(bu,     CUTEst_nvar, doublereal);
     if (constrained) {
-      MALLOC(equatn, CUTEr_ncon+1,            logical   );
-      MALLOC(linear, CUTEr_ncon+1,            logical   );
-      MALLOC(v,      CUTEr_ncon+CUTEr_nvar+1, doublereal);
-      MALLOC(cl,     CUTEr_ncon+1,            doublereal);
-      MALLOC(cu,     CUTEr_ncon+1,            doublereal);
-      CSETUP(&funit, &iout, &CUTEr_nvar, &CUTEr_ncon, x, bl, bu,
+      MALLOC(equatn, CUTEst_ncon+1,            logical   );
+      MALLOC(linear, CUTEst_ncon+1,            logical   );
+      MALLOC(v,      CUTEst_ncon+CUTEr_nvar+1, doublereal);
+      MALLOC(cl,     CUTEst_ncon+1,            doublereal);
+      MALLOC(cu,     CUTEst_ncon+1,            doublereal);
+      CUTEST_csetup( status,&funit, &iout, &CUTEr_nvar, &CUTEr_ncon, x, bl, bu,
               &CUTEr_nvar, equatn, linear, v, cl, cu, &ncon_dummy,
               &efirst, &lfirst, &nvfrst);
     } else {
@@ -251,19 +251,19 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
       MALLOC(linear, 1,            logical   );
       MALLOC(cl,     1,            doublereal);
       MALLOC(cu,     1,            doublereal);
-      MALLOC(v,      CUTEr_nvar+1, doublereal);
-      USETUP(&funit, &iout, &CUTEr_nvar, x, bl, bu, &CUTEr_nvar);
+      MALLOC(v,      CUTEst_nvar+1, doublereal);
+      CUTEST_usetup( status,&funit, &iout, &CUTEr_nvar, x, bl, bu, &CUTEr_nvar);
     }
 
     /* Get problem name */
     MALLOC(pname, FSTRING_LEN+1, char);
-    MALLOC(vnames, CUTEr_nvar*FSTRING_LEN, char);
+    MALLOC(vnames, CUTEst_nvar*FSTRING_LEN, char);
     if (constrained) {
-      MALLOC(gnames, CUTEr_ncon*FSTRING_LEN, char);
-      CNAMES(&CUTEr_nvar, &CUTEr_ncon, pname, vnames, gnames);
+      MALLOC(gnames, CUTEst_ncon*FSTRING_LEN, char);
+      CUTEST_cnames( status,&CUTEr_nvar, &CUTEr_ncon, pname, vnames, gnames);
       FREE(gnames);
     } else
-      UNAMES(&CUTEr_nvar, pname, vnames);
+      CUTEST_unames( status,&CUTEr_nvar, pname, vnames);
     FREE(vnames);
 
     /* Make sure to null-terminate problem name */
@@ -276,7 +276,7 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
     /* Obtain basic info on problem */
     /*
     if (constrained)
-      GETINFO(CUTEr_nvar, CUTEr_ncon, bl, bu, cl, cu, equatn, linear, &vtypes);
+      GETINFO(CUTEr_nvar, CUTEst_ncon, bl, bu, cl, cu, equatn, linear, &vtypes);
     else {
       equatn[0] = FALSE_;
       linear[0] = FALSE_;
@@ -310,22 +310,22 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
 
       // Constrained problem.
 
-      CDIMSJ(&CUTEr_lcjac);
+      CUTEST_cdimsj( status,&CUTEr_lcjac);
 
-      MALLOC(jacIndexVars, CUTEr_lcjac + 1, integer   );
-      MALLOC(jacIndexCons, CUTEr_lcjac + 1, integer   );
-      MALLOC(CUTEr_Jac,    CUTEr_lcjac + 1, doublereal);
+      MALLOC(jacIndexVars, CUTEst_lcjac + 1, integer   );
+      MALLOC(jacIndexCons, CUTEst_lcjac + 1, integer   );
+      MALLOC(CUTEr_Jac,    CUTEst_lcjac + 1, doublereal);
 
-      MALLOC(c, CUTEr_ncon, doublereal);
+      MALLOC(c, CUTEst_ncon, doublereal);
 
-      CCFSG(&CUTEr_nvar, &CUTEr_ncon, x, &CUTEr_ncon, c, &CUTEr_nnzj,
-            &CUTEr_lcjac, CUTEr_Jac, jacIndexVars, jacIndexCons, &somethingTrue);
-      CFN(&CUTEr_nvar, &CUTEr_ncon, x, &f, &CUTEr_ncon, c);
+      CUTEST_ccfsg( status,&CUTEr_nvar, &CUTEr_ncon, x, &CUTEr_ncon, c, &CUTEr_nnzj,
+            &CUTEr_lcjac, CUTEst_Jac, jacIndexVars, jacIndexCons, &somethingTrue);
+      CUTEST_cfn( status,&CUTEr_nvar, &CUTEr_ncon, x, &f, &CUTEr_ncon, c);
 
       FREE(c);
 
       /* Convert to 0-based indexing */
-      for (i = 0; i < CUTEr_nnzj; i++) {
+      for (i = 0; i < CUTEst_nnzj; i++) {
         jacIndexVars[i] = (int)(jacIndexVars[i] - 1);
         jacIndexCons[i] = (int)(jacIndexCons[i] - 1);
         //   printf("jacIndexVars[%d]=%d\n", i, jacIndexVars[i]);
@@ -338,25 +338,25 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
 
       jacIndexVars = NULL;
       jacIndexCons = NULL;
-      CUTEr_Jac = NULL;
-      UFN(&CUTEr_nvar, x, &f);
+      CUTEst_Jac = NULL;
+      CUTEST_ufn( status,&CUTEr_nvar, x, &f);
     }
 
     /* Obtain Hessian sparsity pattern */
 #ifdef KNIT_DEBUG
     fprintf(stderr, "Obtaining Hessian sparsity pattern...\n");
 #endif
-    CDIMSH(&CUTEr_nnzh);
+    CUTEST_cdimsh( status,&CUTEr_nnzh);
 
-    MALLOC(hessIndexRows, CUTEr_nnzh, integer   );
-    MALLOC(hessIndexCols, CUTEr_nnzh, integer   );
-    MALLOC(CUTEr_Hess,    CUTEr_nnzh, doublereal);
+    MALLOC(hessIndexRows, CUTEst_nnzh, integer   );
+    MALLOC(hessIndexCols, CUTEst_nnzh, integer   );
+    MALLOC(CUTEr_Hess,    CUTEst_nnzh, doublereal);
 
-    CSH(&CUTEr_nvar, &CUTEr_ncon, x, &CUTEr_ncon, v, &CUTEr_nnzh, &CUTEr_nnzh,
-         CUTEr_Hess, hessIndexRows, hessIndexCols);
+    CUTEST_csh( status,&CUTEr_nvar, &CUTEr_ncon, x, &CUTEr_ncon, v, &CUTEr_nnzh, &CUTEr_nnzh,
+         CUTEst_Hess, hessIndexRows, hessIndexCols);
 
     /* Convert to 0-based indexing */
-    for (i = 0; i < CUTEr_nnzh; i++) {
+    for (i = 0; i < CUTEst_nnzh; i++) {
       hessIndexRows[i] = (int)(hessIndexRows[i] - 1);
       hessIndexCols[i] = (int)(hessIndexCols[i] - 1);
       // printf("hessIndexRows[%d]=%d\n", i, hessIndexRows[i]);
@@ -382,11 +382,11 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
       }
 
     // Convert infinite bounds.
-    for (i = 0; i < CUTEr_nvar; i++) {
+    for (i = 0; i < CUTEst_nvar; i++) {
         if (bl[i] == -CUTE_INF) bl[i] = -KTR_INFBOUND;
         if (bu[i] ==  CUTE_INF) bu[i] =  KTR_INFBOUND;
     }
-    for (i = 0; i < CUTEr_ncon; i++) {
+    for (i = 0; i < CUTEst_ncon; i++) {
         if (cl[i] == -CUTE_INF) cl[i] = -KTR_INFBOUND;
         if (cl[i] ==  CUTE_INF) cu[i] =  KTR_INFBOUND;
     }
@@ -395,7 +395,7 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
     fprintf(stderr, "Initializing KNITRO data structure...\n");
 #endif
     ExitCode = KTR_init_problem(KnitroData,
-                                 CUTEr_nvar,
+                                 CUTEst_nvar,
                                  KTR_OBJGOAL_MINIMIZE,
                                  KTR_OBJTYPE_GENERAL,
                                  bl, bu,
@@ -426,14 +426,14 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
     if (KTR_free(&KnitroData))
       fprintf(stderr, "Knitro-CUTEr:: Error freeing Knitro data structure\n");
 
-    /* Get CUTEr statistics */
-    CREPRT(calls, cpu);
+    /* Get CUTEst statistics */
+    CUTEST_creport( status,calls, cpu);
 
-    printf("\n\n ************************ CUTEr statistics ************************\n\n");
+    printf("\n\n ************************ CUTEst statistics ************************\n\n");
     printf(" Code used               : %-15s\n", szVersion);
     printf(" Problem                 : %-s\n", pname);
-    printf(" # variables             = %-10d\n", CUTEr_nvar);
-    printf(" # constraints           = %-10d\n", CUTEr_ncon);
+    printf(" # variables             = %-10d\n", CUTEst_nvar);
+    printf(" # constraints           = %-10d\n", CUTEst_ncon);
     /*
     printf(" # linear constraints    = %-10d\n", vtypes.nlin);
     printf(" # equality constraints  = %-10d\n", vtypes.neq);

@@ -66,7 +66,7 @@ C  Open the relevant file
 C  Set up the data structures necessary to hold the group partially
 C  separable function
 
-      CALL CSETUP( INPUT, IOUT, N, M, X, BL, BU, NMAX, EQUATN,
+      CALL CUTEST_csetup( status, INPUT, IOUT, N, M, X, BL, BU, NMAX, EQUATN,
      *             LINEAR, V, CL, CU, MMAX, .FALSE., .FALSE., .FALSE. ) 
 
 C  Determine whether Harwell-Boeing or Rutherford-Boeing format is required
@@ -120,7 +120,7 @@ C  Determine required matrix format
 
 C  Determine the names of the problem, variables and constraints
 
-      CALL CNAMES( N, M, PNAME, VNAMES, GNAMES )
+      CALL CUTEST_cnames( status, N, M, PNAME, VNAMES, GNAMES )
       DO 50 PLAST = 8, 1, - 1
          IF ( PNAME( PLAST : PLAST ) .NE. ' ' ) GO TO 60
    50 CONTINUE
@@ -182,7 +182,7 @@ C  Move X into the feasible region
 
 C  Evaluate the constant terms of the objective and constraint functions
 
-      CALL CFN( N, M, X, F, MMAX, B )
+      CALL CUTEST_cfn( status, N, M, X, F, MMAX, B )
 
       DO 120 I = 1, M
          B( I ) = - B( I )
@@ -197,7 +197,7 @@ c  Use IW to store positions of diagonal entries. Initialize IW as 0
 C  Evaluate the linear terms of the objective and constraint functions
 C  in a sparse format
 
-      CALL CSGR( N, M, .FALSE., MMAX, V, X, NJ, MATMAX, VAL, COL, ROW )
+      CALL CUTEST_csgr( status, N, M, .FALSE., MMAX, V, X, NJ, MATMAX, VAL, COL, ROW )
       
       DO 210 I = 1, M
          SLACK( I ) = ONE
@@ -260,7 +260,7 @@ C  The matrix is to be assembled
 
 C  Evaluate the Hessian of the Lagrangian function at the initial point
 
-            CALL CSH( N, M, X, LV, V, NH, MATMAX - NA, VAL( NA + 1 ),
+            CALL CUTEST_csh( status, N, M, X, LV, V, NH, MATMAX - NA, VAL( NA + 1 ),
      *                ROW( NA + 1 ), COL( NA + 1 ) )
 
 C  Remove zero entries

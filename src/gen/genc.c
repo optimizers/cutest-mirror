@@ -9,12 +9,12 @@
 extern "C" {   /* To prevent C++ compilers from mangling symbols */
 #endif
 
-#include "cuter.h"
+#include "cutest.h"
 
     doublereal genc( doublereal dummy ) {
 
 	printf( "\n\tThis is the generic C solver" );
-	printf( "\n\thooked to CUTEr." );
+	printf( "\n\thooked to CUTEst." );
 	printf( "\n\tThe magic number is 41.9999995555555\n" );
 	return 41.9999995555555;
 
@@ -42,8 +42,8 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
     }
 
     void getinfo( integer n, integer m, doublereal *bl, doublereal *bu,
-				  doublereal *cl, doublereal *cu, logical *equatn, logical *linear,
-				  VarTypes *vartypes ) {
+		  doublereal *cl, doublereal *cu, logical *equatn, 
+                  logical *linear, VarTypes *vartypes ) {
 
 	int i;
 

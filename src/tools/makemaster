@@ -13,6 +13,8 @@ FFLAGSN   = $(BASIC) $(NOOPTIMIZATION) $(DEBUG) $(MODULES) $(F90)
 FFLAGS77  = $(BASIC) $(OPTIMIZATION) $(DEBUG) $(MODULES) $(F77) $(USUAL)
 FFLAGS77S = $(BASIC) $(OPTIMIZATION) $(DEBUG) $(MODULES) $(F77) $(SPECIAL)
 RUNFFLAGS =          $(OPTIMIZATION) $(DEBUG) $(MODULES)
+CFLAGS    = $(CCBASIC) $(OPTIMIZATION) $(CCDEBUG) -I$(CUTEST)/include
+CFLAGSN   = $(CCBASIC) $(NOOPTIMIZATION) $(CCDEBUG) -I$(CUTEST)/include
 
 #  names of random libraries
 
@@ -58,7 +60,8 @@ CSEDS = $(CUTEST)/seds/cutersize.sed
 #  compilation agenda
 
 BASICS = $(LCS)(cutest.o) $(LCS)(probname.o) $(LCS)(varnames.o) \
-         $(LCS)(newthread.o) 
+         $(LCS)(newthread.o) $(LCS)(problem.o) $(LCS)(fortran_ops.o) \
+         $(LCS)(ccutest.o) 
 
 UCUTESTS = $(LCS)(usetup.o) $(LCS)(udimen.o) $(LCS)(udimse.o) $(LCS)(udimsh.o) \
            $(LCS)(unames.o) $(LCS)(uvartype.o) $(LCS)(ufn.o) $(LCS)(ugr.o) \
@@ -77,7 +80,8 @@ CCUTESTS = $(LCS)(csetup.o) $(LCS)(cdimen.o) $(LCS)(cdimse.o) $(LCS)(cdimsh.o) \
            $(LCS)(cterminate.o) 
 
 BASICD = $(LCD)(cutest.o) $(LCD)(probname.o) $(LCD)(varnames.o) \
-         $(LCD)(newthread.o) 
+         $(LCD)(newthread.o) $(LCD)(problem.o) $(LCD)(fortran_ops.o) \
+         $(LCD)(ccutest.o) 
 
 UCUTESTD = $(LCD)(usetup.o) $(LCD)(udimen.o) $(LCD)(udimse.o) $(LCD)(udimsh.o) \
            $(LCD)(unames.o) $(LCD)(uvartype.o) $(LCD)(ufn.o) $(LCD)(ugr.o) \
@@ -111,7 +115,7 @@ cutest_silent_single: $(CUTESTS)
 cutest_silent_double: $(CUTESTD)
 
 cutest: cutest_$(PRECIS)
-	@printf ' %-21s\n' "CUTEST: tools packages ($(PRECIS) $(SUCC)" 
+	@printf ' %-21s\n' "CUTEST: tools ($(PRECIS) $(SUCC)" 
 cutest_single: $(CUTESTS)
 	$(RANLIB) $(LCS)
 cutest_double: $(CUTESTD)
@@ -122,7 +126,7 @@ cutest_unconstrained_silent_single: $(BASICS) $(UCUTESTS)
 cutest_unconstrained_silent_double: $(BASICD) $(UCUTESTD)
 
 cutest_unconstrained: cutest_unconstrained_$(PRECIS)
-	@printf ' %-21s\n' "CUTEST: unconstrained tools packages \
+	@printf ' %-21s\n' "CUTEST: unconstrained tools \
           ($(PRECIS) $(SUCC)" 
 cutest_unconstrained_single: $(BASICS) $(UCUTESTS)
 	$(RANLIB) $(LCS)
@@ -134,7 +138,7 @@ cutest_constrained_silent_single: $(BASICS) $(CCUTESTS)
 cutest_constrained_silent_double: $(BASICD) $(CCUTESTD)
 
 cutest_constrained: cutest_constrained_$(PRECIS)
-	@printf ' %-21s\n' "CUTEST: unconstrained tools packages \
+	@printf ' %-21s\n' "CUTEST: constrained tools \
           ($(PRECIS) $(SUCC)" 
 cutest_constrained_single: $(BASICS) $(CCUTESTS)
 	$(RANLIB) $(LCS)
@@ -852,6 +856,42 @@ $(LC)(newthread.o): ../tools/newthread.f90
                 || ( printf ' %-26s' "=> Disabling optimization " ; \
                    $(FORTRAN) -o newthread.o $(FFLAGSN) newthread.f90 )
 	cd $(OBJ); $(ARR) newthread.o; $(RM) newthread.f90 newthread.o
+#	$(MVMODS)
+	@printf '[ OK ]\n'
+
+problem.o: $(LC)(problem.o)
+
+$(LC)(problem.o): ../tools/problem.f90
+	@printf ' %-9s %-15s\t\t' "Compiling" "problem" 
+	$(SED) -f $(SEDS) ../tools/problem.f90 > $(OBJ)/problem.f90
+	cd $(OBJ); $(FORTRAN) -o problem.o $(FFLAGS) problem.f90 \
+                || ( printf ' %-26s' "=> Disabling optimization " ; \
+                   $(FORTRAN) -o problem.o $(FFLAGSN) problem.f90 )
+	cd $(OBJ); $(ARR) problem.o; $(RM) problem.f90 problem.o
+#	$(MVMODS)
+	@printf '[ OK ]\n'
+
+fortran_ops.o: $(LC)(fortran_ops.o)
+
+$(LC)(fortran_ops.o): ../tools/fortran_ops.f90
+	@printf ' %-9s %-15s\t\t' "Compiling" "fortran_ops" 
+	$(SED) -f $(SEDS) ../tools/fortran_ops.f90 > $(OBJ)/fortran_ops.f90
+	cd $(OBJ); $(FORTRAN) -o fortran_ops.o $(FFLAGS) fortran_ops.f90 \
+                || ( printf ' %-26s' "=> Disabling optimization " ; \
+                   $(FORTRAN) -o fortran_ops.o $(FFLAGSN) fortran_ops.f90 )
+	cd $(OBJ); $(ARR) fortran_ops.o; $(RM) fortran_ops.f90 fortran_ops.o
+#	$(MVMODS)
+	@printf '[ OK ]\n'
+
+ccutest.o: $(LC)(ccutest.o)
+
+$(LC)(ccutest.o): ../tools/ccutest.c
+	@printf ' %-9s %-15s\t\t' "Compiling" "ccutest" 
+	$(SED) -f $(SEDS) ../tools/ccutest.c > $(OBJ)/ccutest.c
+	cd $(OBJ); $(CC) -o ccutest.o $(CFLAGS) ccutest.c \
+                || ( printf ' %-26s' "=> Disabling optimization " ; \
+                   $(CC) -o ccutest.o $(CFLAGSN) ccutest.c )
+	cd $(OBJ); $(ARR) ccutest.o; $(RM) ccutest.o ccutest.o
 #	$(MVMODS)
 	@printf '[ OK ]\n'
 

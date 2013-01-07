@@ -7,7 +7,7 @@ C  Nick Gould, for CGT Productions.
 C  September 2004
 C  Revised for CUTEst, January 2013
 C
-      INTEGER          NMAX  , LH, I, IOUT, N , M , INPUT,
+      INTEGER          NMAX  , LH, I, out, N , M , INPUT,
      *                 LP, MP, LW, J, MAXIT   , L , NA   ,  status,
      *                 IFLAG , INSPEC, IPRINT, LWA, LIWA, ISAVE( 44 )
       INTEGER :: io_buffer = 11
@@ -15,7 +15,7 @@ C
      *                 PGTOL, FACTR, INFTY, DSAVE( 29 )
       CHARACTER ( LEN = 60 ) :: TASK, CSAVE
       LOGICAL          LSAVE( 4 )
-      PARAMETER      ( IOUT  = 6 )
+      PARAMETER      ( out  = 6 )
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: NBD, IWA
       DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: X, XL, XU, G, WA
       PARAMETER      ( INPUT = 55, INSPEC = 56 )
@@ -69,10 +69,11 @@ C
       lwa  = 2 * m * n + 4 * n + 12 * m *m + 12 * m
       ALLOCATE( NBD( n ), IWA( liwa ), X( n ), XL( n ), XU( n ), G( n ), 
      +          WA( lwa ), XNAMES( n ), STAT = status )
-      IF ( status /= 0 ) GO TO 990C
+      IF ( status /= 0 ) GO TO 990
+C
 C  Set up SIF data.
 C
-      CALL CUTEST_usetup( status, INPUT, IOUT, io_buffer, N, X, XL, XU )
+      CALL CUTEST_usetup( status, INPUT, out, io_buffer, N, X, XL, XU )
       IF ( status /= 0 ) GO TO 910
 C
 C  Set bound constraint status
@@ -100,8 +101,8 @@ C
 C
 C  Set up algorithmic input data.
 C
-      LP     = IOUT
-      MP     = IOUT
+      LP     = out
+      MP     = out
       IFLAG  = 0
 C
 C  Optimization loo
@@ -127,14 +128,14 @@ C
             IFLAG = 0
          ELSE IF (  TASK( 1: 4 ) .EQ. 'ABNO' ) THEN
             IFLAG = 1
-            WRITE( IOUT, "( ' Abnormal exit ' )" )
+            WRITE( out, "( ' Abnormal exit ' )" )
          ELSE IF (  TASK( 1: 5 ) .EQ. 'ERROR' ) THEN
             IFLAG = 2
-            WRITE( IOUT, "( ' Error exit ' )" )
+            WRITE( out, "( ' Error exit ' )" )
          ELSE IF (  TASK( 1: 5 ) .EQ. 'NEW_X' ) THEN
             IF ( ISAVE( 30 ) .GT. MAXIT ) THEN
               IFLAG = 3
-              WRITE( IOUT, 
+              WRITE( out, 
      *           "( ' Maximum number of iterations exceeded ' )" )
             ELSE
                GO TO 30
@@ -146,19 +147,19 @@ C
       CALL CUTEST_ureport( status, CALLS, CPU )
       IF ( status /= 0 ) GO TO 910
       GNORM = DSAVE( 13 )
-      WRITE ( IOUT, 2010 ) F, GNORM
+      WRITE ( out, 2010 ) F, GNORM
       DO 120 I = 1, N
-         WRITE( IOUT, 2020 ) XNAMES( I ), XL( I ), X( I ), XU( I ), 
+         WRITE( out, 2020 ) XNAMES( I ), XL( I ), X( I ), XU( I ), 
      *                       G( I )
   120 CONTINUE
-      WRITE ( IOUT, 2000 ) PNAME, N, INT( CALLS(1) ), INT( CALLS(2) ),
+      WRITE ( out, 2000 ) PNAME, N, INT( CALLS(1) ), INT( CALLS(2) ),
      *                     IFLAG, F, CPU(1), CPU(2) 
       CLOSE( INPUT  )
       CALL CUTEST_uterminate( status )
       STOP
 
   910 CONTINUE
-      WRITE( iout, "( ' CUTEst error, status = ', i0, ', stopping' )") 
+      WRITE( out, "( ' CUTEst error, status = ', i0, ', stopping' )") 
      *   status
       STOP
 
@@ -191,8 +192,7 @@ C
       INTEGER NC, NNZ
       INTEGER IRN( NNZ  ), JCN( NNZ )
       INTEGER IW( NC + 1 ), IP( NC + 1 )
-CS    REAL              A( NNZ )
-CD    DOUBLE PRECISION  A( NNZ )
+      DOUBLE PRECISION  A( NNZ )
 
 C  Sort a sparse matrix from arbitrary order to column order
 
@@ -200,8 +200,7 @@ C  Nick Gould
 C  7th November, 1990
 
       INTEGER I, J, K, L, IC, NCP1, ITEMP, JTEMP,  LOCAT
-CS    REAL             ANEXT , ATEMP
-CD    DOUBLE PRECISION ANEXT , ATEMP
+      DOUBLE PRECISION ANEXT , ATEMP
 
 C  Initialize the workspace as zero
 
@@ -290,12 +289,8 @@ C  End of REORDA
 
 C  CPU timer
 
-CS    REAL             TTIME
-CD    DOUBLE PRECISION TTIME
-      REAL             CPUTIM, DUM
-      EXTERNAL         CPUTIM
+      DOUBLE PRECISION TTIME
 
-      TTIME = CPUTIM( DUM )
-
+      CALL CPU_TIME( TTIME )
       RETURN
-      END LBFGSB_main
+      END

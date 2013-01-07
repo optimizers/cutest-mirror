@@ -661,7 +661,7 @@
        &      ' Other tools may be preferable' )" )
       IF ( SIZE( Y ) < m ) THEN
         CLOSE( input )
-        IF ( out > 0 ) WRITE( out, 2000 ) 'V', m
+        IF ( out > 0 ) WRITE( out, 2000 ) 'Y', m
         status = 2 ; RETURN
       END IF
       IF ( SIZE( C_l ) < m ) THEN

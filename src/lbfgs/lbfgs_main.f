@@ -6,20 +6,19 @@ C
 C  Nick Gould and Ph. Toint, for CGT Productions.
 C  Revised for CUTEst, January 2013
 C
-      INTEGER          IOUT  , N , M , INPUT
-      INTEGER          LP    , MP    , LW, I , MAXIT
-      INTEGER          IFLAG , ICALL , INSPEC, IPRINT( 2 )
-      INTEGER :: io_buffer = 11
+      INTEGER :: N, M, status, LP, MP, LW, I MAXIT, iflag
+      INTEGER :: icall, IPRINT( 2 )
+      INTEGER, PARAMETER :: input = 55, out = 6 , inspec = 46
+      INTEGER, PARAMETER :: io_buffer = 11
       DOUBLE PRECISION F, EPS, XTOL, GTOL  , GNORM , BIGINF, DMACHR,
      *                 ZERO  , STPMIN, STPMAX
       LOGICAL          DIAGCO, BOUNDS
-      PARAMETER      ( IOUT  = 6 )
+      PARAMETER      ( out  = 6 )
       PARAMETER      ( INPUT = 55, INSPEC = 56 )
       PARAMETER      ( BIGINF = 9.0D+19, ZERO = 0.0D0 )
-      DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: X, G, DIAG, W
       CHARACTER ( LEN = 10 ) :: PNAME, SPCDAT
+      DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: X, G, DIAG, W
       CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : )  :: XNAMES
-      INTRINSIC        ABS   , MAX
       EXTERNAL         LB2
       COMMON         / LB3 / MP, LP, GTOL, STPMIN, STPMAX
       DOUBLE PRECISION :: CPU( 2 ), CALLS( 4 )
@@ -30,7 +29,6 @@ C
       OPEN ( INSPEC, FILE = SPCDAT, FORM = 'FORMATTED',
      *      STATUS = 'OLD' )
       REWIND INSPEC
-C                                                                               
 C
 C  Read input Spec data.
 C
@@ -52,10 +50,12 @@ C
       OPEN ( INPUT, FILE = 'OUTSDIF.d', FORM = 'FORMATTED',
      *       STATUS = 'OLD' )
 C
-C  Check to see if there is sufficient room
+C  Find the problem dimension
 C
-      CALL CUTEST_udimen( status, INPUT, N )
+      CALL CUTEST_udimen( status, INPUT, n )
       IF ( status /= 0 ) GO TO 910
+
+C  Allocate workspace
 
       lw  = n * ( 2 * m + 1 ) + 2 * m
       ALLOCATE( X( n ), G( n ), DIAG( n ), W( lw ), XNAMES( n ),
@@ -64,7 +64,8 @@ C
 C
 C  Set up SIF data.
 C
-      CALL CUTEST_usetup( status, INPUT, IOUT, N, X, W, W( n + 1 ) )
+      CALL CUTEST_usetup( status, INPUT, out, io_buffer, N, X, W, 
+     *                    W( n + 1 ) )
       IF ( status /= 0 ) GO TO 910
 C
 C  Obtain variable names.
@@ -78,9 +79,9 @@ C
          IF ( W( I ) > - BIGINF .OR. W( n + i ) < BIGINF )
      *      BOUNDS = .TRUE.
    10 CONTINUE
-      IF ( BOUNDS ) WRITE( IOUT, 2030 )
-      LP     = IOUT
-      MP     = IOUT
+      IF ( BOUNDS ) WRITE( out, 2030 )
+      LP     = out
+      MP     = out
       ICALL  = 0
       IFLAG  = 0
       DIAGCO = .FALSE.
@@ -112,18 +113,18 @@ C
       DO 30 I  = 1, N
          GNORM = MAX( GNORM, ABS( G( I ) ) )
    30 CONTINUE
-      WRITE ( IOUT, 2010 ) F, GNORM
+      WRITE ( out, 2010 ) F, GNORM
       DO 40 I = 1, N
-         WRITE( IOUT, 2020 ) XNAMES( I ), X( I ), G( I )
+         WRITE( out, 2020 ) XNAMES( I ), X( I ), G( I )
    40 CONTINUE
-      WRITE ( IOUT, 2000 ) PNAME, N, INT( CALLS(1) ), INT( CALLS(2) ),
+      WRITE ( out, 2000 ) PNAME, N, INT( CALLS(1) ), INT( CALLS(2) ),
      *                     IFLAG, F, CPU(1), CPU(2) 
       CLOSE( INPUT  )
       CALL CUTEST_uterminate( status )
       STOP
 
   910 CONTINUE
-      WRITE( iout, "( ' CUTEst error, status = ', i0, ', stopping' )") 
+      WRITE( out, "( ' CUTEst error, status = ', i0, ', stopping' )") 
      *   status
       STOP
 
@@ -152,5 +153,5 @@ C
  2030 FORMAT(  /, ' ** Warning from LBFGS_main. The problem as stated',
      *            ' includes simple bounds. ', /,
      *            '    These bounds will be ignored. ' )
-      END LBFGS_main
+      END PROGRAM LBFGS_main
 

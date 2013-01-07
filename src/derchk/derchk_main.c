@@ -1,11 +1,13 @@
 
 /* ====================================================
- * CUTEr interface to derivative checker   May 25, 2011
+ * CUTEst interface to derivative checke   Jan, 3, 2013
  *
- * D. Orban
+ * D. Orban (with CUTEst tweaks by Nick Gould)
+ * CUTEr version, June 2011
+ * CUTEst version: January 2013 
  *
- * Take a look at $CUTER/common/include/cuter.h     and
- * $CUTER/common/src/tools/loqoma.c  for more examples.
+ * Take a look at $CUTER/common/include/cuter.h  and
+ * $CUTER/common/src/tools/loqoma.c  for more examples
  * ====================================================
  */
 
@@ -31,18 +33,20 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
                   doublereal*, doublereal*, logical*, logical*,
                   VarTypes* );
 
-    integer CUTEr_nvar;        /* number of variables */
-    integer CUTEr_ncon;        /* number of constraints */
-    integer CUTEr_nnzj;        /* number of nonzeros in Jacobian */
-    integer CUTEr_nnzh;        /* number of nonzeros in upper triangular
+    integer CUTEst_nvar;        /* number of variables */
+    integer CUTEst_ncon;        /* number of constraints */
+    integer CUTEst_nnzj;        /* number of nonzeros in Jacobian */
+    integer CUTEst_nnzh;        /* number of nonzeros in upper triangular
                                   part of the Hessian of the Lagrangian */
 
     int MAINENTRY(void) {
 
-        char *fname = "OUTSDIF.d"; /* CUTEr data file */
+        char *fname = "OUTSDIF.d"; /* CUTEst data file */
         integer funit = 42;        /* FORTRAN unit number for OUTSDIF.d */
+        integer io_buffer = 11;    /* FORTRAN unit for internal i/o */
         integer iout = 6;          /* FORTRAN unit number for error output */
         integer ierr;              /* Exit flag from OPEN and CLOSE */
+        integer status;            /* Exit flag from CUTEst tools */
 
         VarTypes vtypes;
 
@@ -55,7 +59,7 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
         logical efirst = FALSE_, lfirst = FALSE_, nvfrst = FALSE_, grad;
         logical constrained = FALSE_;
 
-        real calls[7], cpu[2];
+        doublereal calls[7], cpu[2];
         integer nlin = 0, nbnds = 0, neq = 0;
         doublereal dummy;
         integer ExitCode;
@@ -74,51 +78,74 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
         }
 
         /* Determine problem size */
-        CDIMEN(&funit, &CUTEr_nvar, &CUTEr_ncon);
+        CUTEST_cdimen( &status, &funit, &CUTEr_nvar, &CUTEr_ncon);
+        if (status) {
+            printf("CUTEst error.\nAborting.\n");
+            exit(2);
+        }
 
         /* Determine whether to call constrained or unconstrained tools */
         if (CUTEr_ncon) constrained = TRUE_;
 
         /* Seems to be needed for some Solaris C compilers */
-        ncon_dummy = CUTEr_ncon + 1;
+        ncon_dummy = CUTEst_ncon + 1;
 
         /* Reserve memory for variables, bounds, and multipliers */
-        /* and call appropriate initialization routine for CUTEr */
-        MALLOC(x,      CUTEr_nvar, doublereal);
-        MALLOC(bl,     CUTEr_nvar, doublereal);
-        MALLOC(bu,     CUTEr_nvar, doublereal);
+        /* and call appropriate initialization routine for CUTEst */
+        MALLOC(x,      CUTEst_nvar, doublereal);
+        MALLOC(bl,     CUTEst_nvar, doublereal);
+        MALLOC(bu,     CUTEst_nvar, doublereal);
         if (constrained) {
-            MALLOC(equatn, CUTEr_ncon+1, logical);
-            MALLOC(linear, CUTEr_ncon+1, logical);
-            MALLOC(v,      CUTEr_ncon+1, doublereal);
-            MALLOC(cl,     CUTEr_ncon+1, doublereal);
-            MALLOC(cu,     CUTEr_ncon+1, doublereal);
-            CSETUP(&funit, &iout, &CUTEr_nvar, &CUTEr_ncon, x, bl, bu,
-                &CUTEr_nvar, equatn, linear, v, cl, cu, &ncon_dummy,
+            MALLOC(equatn, CUTEst_ncon+1, logical);
+            MALLOC(linear, CUTEst_ncon+1, logical);
+            MALLOC(v,      CUTEst_ncon+1, doublereal);
+            MALLOC(cl,     CUTEst_ncon+1, doublereal);
+            MALLOC(cu,     CUTEst_ncon+1, doublereal);
+            CUTEST_csetup( &status, &funit, &iout, &io_buffer,
+                &CUTEr_nvar, &CUTEr_ncon, x, bl, bu,
+                v, cl, cu, equatn, linear, 
                 &efirst, &lfirst, &nvfrst);
+            if (status) {
+                printf("CUTEst error.\nAborting.\n");
+                exit(2);
+            }
         } else {
             MALLOC(equatn, 1, logical);
             MALLOC(linear, 1, logical);
             MALLOC(cl, 1, doublereal);
             MALLOC(cu, 1, doublereal);
-            USETUP(&funit, &iout, &CUTEr_nvar, x, bl, bu, &CUTEr_nvar);
+            CUTEST_usetup( &status, &funit, &iout, &io_buffer, &CUTEr_nvar, 
+                           x, bl, bu);
+            if (status) {
+                printf("CUTEst error.\nAborting.\n");
+                exit(2);
+            }
         }
 
         /* Get problem, variables and constraints names */
         MALLOC(pname, FSTRING_LEN+1, char);
-            MALLOC(vnames, CUTEr_nvar * FSTRING_LEN, char);  /* For Fortran */
-            MALLOC(Vnames, CUTEr_nvar, char*);          /* Array of strings */
-            for (i = 0; i < CUTEr_nvar; i++)
+            MALLOC(vnames, CUTEst_nvar * FSTRING_LEN, char);  /* For Fortran */
+            MALLOC(Vnames, CUTEst_nvar, char*);          /* Array of strings */
+            for (i = 0; i < CUTEst_nvar; i++)
             MALLOC(Vnames[i], FSTRING_LEN+1, char);
 
         if (constrained) {
-            MALLOC(gnames, CUTEr_ncon * FSTRING_LEN, char);   /* For Fortran */
-            MALLOC(Gnames, CUTEr_ncon, char*);        /* Array of strings */
-            for (i = 0; i < CUTEr_ncon; i++)
+            MALLOC(gnames, CUTEst_ncon * FSTRING_LEN, char);   /* For Fortran */
+            MALLOC(Gnames, CUTEst_ncon, char*);        /* Array of strings */
+            for (i = 0; i < CUTEst_ncon; i++)
                 MALLOC(Gnames[i], FSTRING_LEN+1, char);
-            CNAMES(&CUTEr_nvar, &CUTEr_ncon, pname, vnames, gnames);
+            CUTEST_cnames( &status,&CUTEr_nvar, &CUTEr_ncon, 
+                           pname, vnames, gnames);
+            if (status) {
+                printf("CUTEst error.\nAborting.\n");
+                exit(2);
+            }
         } else {
-            UNAMES(&CUTEr_nvar, pname, vnames);
+            CUTEST_unames( &status,&CUTEr_nvar, pname, vnames);
+            if (status) {
+                printf("CUTEst error.\nAborting.\n");
+                exit(2);
+            }
         }
 
         /* Make sure to null-terminate problem name */
@@ -128,7 +155,7 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
          * null-terminated strings.
          * If you know of a simpler way to do this portably, let me know!
          */
-        for (i = 0; i < CUTEr_nvar; i++) {
+        for (i = 0; i < CUTEst_nvar; i++) {
           cptr = vnames + i * FSTRING_LEN;
           for (j = 0; j < FSTRING_LEN; j++) {
             Vnames[i][j] = *cptr;
@@ -137,7 +164,7 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
           Vnames[i][FSTRING_LEN] = '\0';
         }
 
-        for (i = 0; i < CUTEr_ncon; i++) {
+        for (i = 0; i < CUTEst_ncon; i++) {
           cptr = vnames + i * FSTRING_LEN;
           for (j = 0; j < FSTRING_LEN; j++) {
             Gnames[i][j] = *cptr;
@@ -152,43 +179,67 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
 
     /* Obtain basic info on problem */
     if (constrained) {
-        GETINFO( CUTEr_nvar, CUTEr_ncon, bl, bu, cl, cu, equatn,
+        GETINFO( CUTEst_nvar, CUTEst_ncon, bl, bu, cl, cu, equatn,
              linear, &vtypes );
     } else {
         equatn[0] = FALSE_;
         linear[0] = FALSE_;
-        GETINFO( CUTEr_nvar, 1, bl, bu, cl, cu, equatn,
+        GETINFO( CUTEst_nvar, 1, bl, bu, cl, cu, equatn,
              linear, &vtypes );
     }
 
     /* Scramble initial point. */
-    for (i = 0; i < CUTEr_nvar; i++)
+    for (i = 0; i < CUTEst_nvar; i++)
         x[i] = pow(-1,i) * (2*i+1);
 
     /* Evaluate gradient at initial point. */
-    MALLOC(g, CUTEr_nvar, doublereal);
-    UGR(&CUTEr_nvar, x, g);
+    MALLOC(g, CUTEst_nvar, doublereal);
+    CUTEST_ugr( &status,&CUTEr_nvar, x, g);
+    if (status) {
+        printf("CUTEst error.\nAborting.\n");
+        exit(2);
+    }
 
     /* Check first derivatives of objective and constraints. */
     h = 1.0e-8;
     if (constrained) {
-        MALLOC(cxp, CUTEr_ncon+1, doublereal);
-        MALLOC(cxm, CUTEr_ncon+1, doublereal);
+        MALLOC(cxp, CUTEst_ncon+1, doublereal);
+        MALLOC(cxm, CUTEst_ncon+1, doublereal);
     }
     fprintf(stderr, "%10s  %22s  %22s  %7s\n",
             "Variable", "AD", "Numerical", "Error");
-    for (i = 0; i < CUTEr_nvar; i++) {
+    for (i = 0; i < CUTEst_nvar; i++) {
         xi = x[i];
         x[i] = xi + h;
-        if (constrained)
-            CFN(&CUTEr_nvar, &CUTEr_ncon, x, &fxp, &CUTEr_ncon, cxp);
-        else
-            UFN(&CUTEr_nvar, x, &fxp);
+        if (constrained) {
+            CUTEST_cfn( &status,&CUTEr_nvar, &CUTEr_ncon, 
+                        x, &fxp, cxp);
+            if (status) {
+                printf("CUTEst error.\nAborting.\n");
+                exit(2);
+            }
+         } else {
+            CUTEST_ufn( &status,&CUTEr_nvar, x, &fxp);
+            if (status) {
+                printf("CUTEst error.\nAborting.\n");
+                exit(2);
+            }
+        }
         x[i] = xi - h;
-        if (constrained)
-            CFN(&CUTEr_nvar, &CUTEr_ncon, x, &fxm, &CUTEr_ncon, cxm);
-        else
-            UFN(&CUTEr_nvar, x, &fxm);
+        if (constrained) {
+            CUTEST_cfn( &status,&CUTEr_nvar, &CUTEr_ncon, 
+                        x, &fxm, cxm);
+            if (status) {
+              printf("CUTEst error.\nAborting.\n");
+              exit(2);
+            }
+          } else {
+                CUTEST_ufn( &status,&CUTEr_nvar, x, &fxm);
+            if (status) {
+              printf("CUTEst error.\nAborting.\n");
+              exit(2);
+            }
+          }  
         x[i] = xi;      /* Restore x */
 
         /* Check i-th derivative of objective */
@@ -206,10 +257,14 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
         FREE(cxm);
     }
 
-    /* Get CUTEr statistics */
-    CREPRT(calls, cpu);
+    /* Get CUTEst statistics */
+    CUTEST_creport( &status,calls, cpu);
+    if (status) {
+      printf("CUTEst error.\nAborting.\n");
+      exit(2);
+    }
 
-    printf("\n\n ************************ CUTEr statistics");
+    printf("\n\n ************************ CUTEst statistics");
     printf(" ************************\n\n");
     printf(" Code used               : GENC\n");
     printf(" Problem                 : %-s\n", pname);
@@ -246,11 +301,11 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
     FREE(linear);
 
     /* Free memory for variable names */
-    for (i = 0; i < CUTEr_nvar; i++) FREE(Vnames[i]);
+    for (i = 0; i < CUTEst_nvar; i++) FREE(Vnames[i]);
     FREE(Vnames);
 
     /* Free memory for constraint names */
-    for (i = 0; i < CUTEr_ncon; i++) FREE(Gnames[i]);
+    for (i = 0; i < CUTEst_ncon; i++) FREE(Gnames[i]);
     if (constrained) FREE(Gnames);
 
     return 0;

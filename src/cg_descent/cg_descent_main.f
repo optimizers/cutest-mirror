@@ -12,7 +12,7 @@ C  to accomodate version 1.4 of CG_DESCENT.
 C  Dominique Orban, July 2007
 C
       IMPLICIT NONE
-      INTEGER          IOUT  , N , M , INPUT , MSAVE, IOUTCP
+      INTEGER          out  , N , M , INPUT , MSAVE, outcp, status
       INTEGER          LP    , MP, I , METHOD, ITER  , NF, NG
       INTEGER          STAT  , ICALL , INSPEC, IPRINT( 2 )
       INTEGER :: io_buffer = 11
@@ -25,11 +25,12 @@ C
       INTEGER          NXPAND, NSECNT
       LOGICAL          QUADST, PRNTLV, PRNTFI, STRULE, ERULE, AWOLFE, 
      *                 STEP, PRTRUL, DEBUG
-      PARAMETER      ( IOUT  = 6 )
-      PARAMETER      ( INPUT = 55, INSPEC = 56, IOUTCP = 57 )
+      PARAMETER      ( out  = 6 )
+      PARAMETER      ( INPUT = 55, INSPEC = 56, outcp = 57 )
       PARAMETER      ( BIGINF = 9.0D+19, ZERO = 0.0D0 )
  
-      DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: X, G, D, XTEMP, GTEMP
+      DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: X, G, D
+      DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: XTEMP, GTEMP
       CHARACTER ( LEN = 10 ) :: PNAME
       CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : )  :: XNAMES
 
@@ -37,7 +38,7 @@ C
       CHARACTER * 17   CGPARM
       PARAMETER      ( CGPARM = 'cg_descent_f.parm' )
       CHARACTER * 15   SPCDAT
-      REAL             CPU( 2 ), CALLS( 4 )
+      DOUBLE PRECISION CPU( 2 ), CALLS( 4 )
       EXTERNAL         EVALF, EVALG
 C     
 C  Open the Spec file for the method.
@@ -62,15 +63,15 @@ C
 C
 C  Create the required data input file
 C
-      OPEN ( IOUTCP, FILE = CGPARM, FORM = 'FORMATTED',
+      OPEN ( outcp, FILE = CGPARM, FORM = 'FORMATTED',
      *       STATUS = 'UNKNOWN' )
-      REWIND IOUTCP
-      WRITE( IOUTCP, 1001 ) DELTA, SIGMA, EPSILON, GAMMA, RHO, ETA,
+      REWIND outcp
+      WRITE( outcp, 1001 ) DELTA, SIGMA, EPSILON, GAMMA, RHO, ETA,
      *                      PSI0, PSI1, PSI2, QUADCU, STOPFA, AWLFFCT,
      *                      RSTRTF, MAXITF, FEPS, QDECAY, NXPAND,
      *                      NSECNT, PRTRUL, QUADST, PRNTLV, PRNTFI,
      *                      STRULE, AWOLFE, STEP, DEBUG
-      CLOSE ( IOUTCP )
+      CLOSE ( outcp )
 C
 C  Open the relevant file.
 C
@@ -88,7 +89,7 @@ C
 C
 C  Set up SIF data.
 C
-      CALL CUTEST_usetup( status, INPUT, IOUT, N, X, XTEMP, GTEMP )
+      CALL CUTEST_usetup( status, INPUT, out, N, X, XTEMP, GTEMP )
       IF ( status /= 0 ) GO TO 910
 C
 C  Obtain variable names.
@@ -103,15 +104,16 @@ C
          IF ( XTEMP( I ) .GT. - BIGINF .OR. GTEMP( I ) .LT. BIGINF )
      *      BOUNDS = .TRUE.
    10 CONTINUE
-      IF ( BOUNDS ) WRITE( IOUT, 2030 )
-      LP     = IOUT
-      MP     = IOUT
+      IF ( BOUNDS ) WRITE( out, 2030 )
+      LP     = out
+      MP     = out
 C
 C  Set up initial step length if requested
 C
       IF( STEP ) THEN
          IF( GNORM .LE. 0.0D+0 ) THEN
-             CALL UGR( N, X, G )
+             CALL CUTEST_ugr( status, N, X, G )
+             IF ( status /= 0 ) GO TO 910
              GNORM = 0.0D+0
              DO 11 I = 1, N
                 GNORM = MAX( GNORM, DABS(G(I)) )
@@ -128,18 +130,18 @@ C  Terminal exit.
 C
       CALL CUTEST_ureport( status, CALLS, CPU )
       IF ( status /= 0 ) GO TO 910
-      WRITE ( IOUT, 2010 ) F, GNORM
+      WRITE ( out, 2010 ) F, GNORM
 C      DO 120 I = 1, N
-C         WRITE( IOUT, 2020 ) XNAMES( I ), X( I ), G( I )
+C         WRITE( out, 2020 ) XNAMES( I ), X( I ), G( I )
 C  120 CONTINUE
-      WRITE ( IOUT, 2000 ) PNAME, N, INT( CALLS(1) ), INT( CALLS(2) ),
+      WRITE ( out, 2000 ) PNAME, N, INT( CALLS(1) ), INT( CALLS(2) ),
      *                     STAT, F, CPU(1), CPU(2) 
       CLOSE( INPUT  )
       CALL CUTEST_uterminate( status )
       STOP
 
   910 CONTINUE
-      WRITE( iout, "( ' CUTEst error, status = ', i0, ', stopping' )") 
+      WRITE( out, "( ' CUTEst error, status = ', i0, ', stopping' )") 
      *   status
       STOP
 

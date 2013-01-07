@@ -68,11 +68,11 @@ C
 C
 C  Set up SIF data.
 C
-      CALL USETUP( INPUT, IOUT, N, X, BL, BU, NMAX )
+      CALL CUTEST_usetup( status, INPUT, IOUT, N, X, BL, BU, NMAX )
 C
 C  Obtain variable names.
 C
-      CALL UNAMES( N, PNAME, XNAMES )
+      CALL CUTEST_unames( status, N, PNAME, XNAMES )
 C
 C  Set up algorithmic input data.
 C
@@ -95,7 +95,7 @@ CS    CALL STUMCS( N, X, NZ, IRN, LIRN, ICN, LICN, UFN, UGR,
      *             IOUT, METHOD, GRDFLG, HSNFLG, NDIGIT, MSG, XPLS, 
      *             FPLS, GPLS, HESS, WRK, LWRK, IWRK, LIWRK, TERMCD, 
      *             BL, INFORM )
-      CALL UREPRT( CALLS, CPU )
+      CALL CUTEST_ureport( status, CALLS, CPU )
       GNORM    = ZERO
       DO 20 I  = 1, N
          GNORM = MAX( GNORM, ABS( GPLS( I ) ) )
@@ -113,7 +113,7 @@ C
 C  Non-executable statements.
 C
  1000 FORMAT( I10, /, D10.3, 2(/,I10), 2(/,D10.3), 3(/,I10) )
- 2000 FORMAT( /, 24('*'), ' CUTEr statistics ', 24('*') //
+ 2000 FORMAT( /, 24('*'), ' CUTEst statistics ', 24('*') //
      *    ,' Code used               :  STENMIN',  /
      *    ,' Problem                 :  ', A10,    /
      *    ,' # variables             =      ', I10 /

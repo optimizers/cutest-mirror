@@ -565,6 +565,7 @@ echo 'CC        = '$CC                                             >> $MAKEFILE
 echo 'CCBASIC   = '$CCBASIC                                        >> $MAKEFILE
 echo 'CCONDEF   = '$CCONDEF                                        >> $MAKEFILE
 echo 'CCDEBUG   = '$CCDEBUG                                        >> $MAKEFILE
+echo 'CCFFLAGS  = '$CCFFLAGS                                       >> $MAKEFILE
 echo ' '                                                           >> $MAKEFILE
 echo '#  Special flags'                                            >> $MAKEFILE
 echo ' '                                                           >> $MAKEFILE

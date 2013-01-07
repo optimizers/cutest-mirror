@@ -7,13 +7,13 @@ C  Nick Gould, for CGT Productions.
 C  July 2004
 C  Revised for CUTEst, January 2013
 C
-      INTEGER          IOUT  , N , INPUT , MAXIT 
+      INTEGER          out  , N , INPUT , MAXIT, status 
       INTEGER          LP    , MP, I , METHOD, ITER  , NFUN, IREST
       INTEGER          IFLAG , INSPEC, IPRINT( 2 )
       INTEGER :: io_buffer = 11
       DOUBLE PRECISION F, EPS, GNORM , BIGINF, ZERO, TLEV
       LOGICAL          BOUNDS, FINISH
-      PARAMETER      ( IOUT  = 6 )
+      PARAMETER      ( out  = 6 )
       PARAMETER      ( INPUT = 55, INSPEC = 56 )
       PARAMETER      ( BIGINF = 9.0D+19, ZERO = 0.0D0 )
       DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: X, G, D, GOLD, W
@@ -62,7 +62,7 @@ C
 C
 C  Set up SIF data.
 C
-      CALL CUTEST_usetup( status, INPUT, IOUT, io_buffer, N, X, W, GOLD )
+      CALL CUTEST_usetup( status, INPUT, out, io_buffer, N, X, W, GOLD )
       IF ( status /= 0 ) GO TO 910
 C
 C  Obtain variable names.
@@ -77,9 +77,9 @@ C
          IF ( W( I ) .GT. - BIGINF .OR. GOLD( I ) .LT. BIGINF )
      *      BOUNDS = .TRUE.
    10 CONTINUE
-      IF ( BOUNDS ) WRITE( IOUT, 2030 )
-      LP     = IOUT
-      MP     = IOUT
+      IF ( BOUNDS ) WRITE( out, 2030 )
+      LP     = out
+      MP     = out
       ITER  = - 1
       IFLAG  = 0
       FINISH = .FALSE.
@@ -127,18 +127,18 @@ C
       DO 110 I  = 1, N
          GNORM = MAX( GNORM, ABS( G( I ) ) )
   110 CONTINUE
-      WRITE ( IOUT, 2010 ) F, GNORM
+      WRITE ( out, 2010 ) F, GNORM
 C      DO 120 I = 1, N
-C         WRITE( IOUT, 2020 ) XNAMES( I ), X( I ), G( I )
+C         WRITE( out, 2020 ) XNAMES( I ), X( I ), G( I )
 C  120 CONTINUE
-      WRITE ( IOUT, 2000 ) PNAME, N, INT( CALLS(1) ), INT( CALLS(2) ),
+      WRITE ( out, 2000 ) PNAME, N, INT( CALLS(1) ), INT( CALLS(2) ),
      *                     IFLAG, F, CPU(1), CPU(2) 
       CLOSE( INPUT  )
       CALL CUTEST_uterminate( status )
       STOP
 
   910 CONTINUE
-      WRITE( iout, "( ' CUTEst error, status = ', i0, ', stopping' )") 
+      WRITE( out, "( ' CUTEst error, status = ', i0, ', stopping' )") 
      *   status
       STOP
 

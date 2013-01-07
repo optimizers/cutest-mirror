@@ -59,12 +59,12 @@ CSEDS = $(CUTEST)/seds/cutersize.sed
 
 #  compilation agenda
 
-#U_TEST = u_elfun.o u_group.o u_range.o u_exter.o
-#C_TEST = c_elfun.o c_group.o c_range.o c_exter.o
-U_TEST = u_elfun.o u_group.o u_range.o
-C_TEST = c_elfun.o c_group.o c_range.o
+#U_TEST = $(OBJ)/u_elfun.o $(OBJ)/u_group.o $(OBJ)/u_range.o $(OBJ)/u_exter.o
+#C_TEST = $(OBJ)/c_elfun.o $(OBJ)/c_group.o $(OBJ)/c_range.o $(OBJ)/c_exter.o
+U_TEST = $(OBJ)/u_elfun.o $(OBJ)/u_group.o $(OBJ)/u_range.o
+C_TEST = $(OBJ)/c_elfun.o $(OBJ)/c_group.o $(OBJ)/c_range.o
 
-SUCC = precision version) run successfully
+SUCC = precision version) compiled successfully
 
 #  main compilations and runs
 
@@ -179,7 +179,7 @@ ctools:
 
 #  individual compilations
 
-u_elfun.o: ../test/u_elfun.f
+$(OBJ)/u_elfun.o: ../test/u_elfun.f
 	@printf ' %-9s %-15s\t\t' "Compiling" "u_elfun" 
 	$(SED) -f $(SEDS) ../test/u_elfun.f > $(OBJ)/u_elfun.f
 	cd $(OBJ); $(FORTRAN) -o u_elfun.o $(FFLAGS77) u_elfun.f \
@@ -188,7 +188,7 @@ u_elfun.o: ../test/u_elfun.f
 	$(RM) $(OBJ)/u_elfun.f
 	@printf '[ OK ]\n'
 
-u_group.o: ../test/u_group.f
+$(OBJ)/u_group.o: ../test/u_group.f
 	@printf ' %-9s %-15s\t\t' "Compiling" "u_group" 
 	$(SED) -f $(SEDS) ../test/u_group.f > $(OBJ)/u_group.f
 	cd $(OBJ); $(FORTRAN) -o u_group.o $(FFLAGS77) u_group.f \
@@ -197,7 +197,7 @@ u_group.o: ../test/u_group.f
 	$(RM) $(OBJ)/u_group.f
 	@printf '[ OK ]\n'
 
-u_range.o: ../test/u_range.f
+$(OBJ)/u_range.o: ../test/u_range.f
 	@printf ' %-9s %-15s\t\t' "Compiling" "u_range" 
 	$(SED) -f $(SEDS) ../test/u_range.f > $(OBJ)/u_range.f
 	cd $(OBJ); $(FORTRAN) -o u_range.o $(FFLAGS77) u_range.f \
@@ -206,7 +206,7 @@ u_range.o: ../test/u_range.f
 	$(RM) $(OBJ)/u_range.f
 	@printf '[ OK ]\n'
 
-u_exter.o: ../test/u_exter.f
+$(OBJ)/u_exter.o: ../test/u_exter.f
 	@printf ' %-9s %-15s\t\t' "Compiling" "u_exter" 
 	$(SED) -f $(SEDS) ../test/u_exter.f > $(OBJ)/u_exter.f
 	cd $(OBJ); $(FORTRAN) -o u_exter.o $(FFLAGS77) u_exter.f \
@@ -215,7 +215,7 @@ u_exter.o: ../test/u_exter.f
 	$(RM) $(OBJ)/u_exter.f
 	@printf '[ OK ]\n'
 
-c_elfun.o: ../test/c_elfun.f
+$(OBJ)/c_elfun.o: ../test/c_elfun.f
 	@printf ' %-9s %-15s\t\t' "Compiling" "c_elfun" 
 	$(SED) -f $(SEDS) ../test/c_elfun.f > $(OBJ)/c_elfun.f
 	cd $(OBJ); $(FORTRAN) -o c_elfun.o $(FFLAGS77) c_elfun.f \
@@ -224,7 +224,7 @@ c_elfun.o: ../test/c_elfun.f
 	$(RM) $(OBJ)/c_elfun.f
 	@printf '[ OK ]\n'
 
-c_group.o: ../test/c_group.f
+$(OBJ)/c_group.o: ../test/c_group.f
 	@printf ' %-9s %-15s\t\t' "Compiling" "c_group" 
 	$(SED) -f $(SEDS) ../test/c_group.f > $(OBJ)/c_group.f
 	cd $(OBJ); $(FORTRAN) -o c_group.o $(FFLAGS77) c_group.f \
@@ -233,7 +233,7 @@ c_group.o: ../test/c_group.f
 	$(RM) $(OBJ)/c_group.f
 	@printf '[ OK ]\n'
 
-c_range.o: ../test/c_range.f
+$(OBJ)/c_range.o: ../test/c_range.f
 	@printf ' %-9s %-15s\t\t' "Compiling" "c_range" 
 	$(SED) -f $(SEDS) ../test/c_range.f > $(OBJ)/c_range.f
 	cd $(OBJ); $(FORTRAN) -o c_range.o $(FFLAGS77) c_range.f \
@@ -242,7 +242,7 @@ c_range.o: ../test/c_range.f
 	$(RM) $(OBJ)/c_range.f
 	@printf '[ OK ]\n'
 
-c_exter.o: ../test/c_exter.f
+$(OBJ)/c_exter.o: ../test/c_exter.f
 	@printf ' %-9s %-15s\t\t' "Compiling" "c_exter" 
 	$(SED) -f $(SEDS) ../test/c_exter.f > $(OBJ)/c_exter.f
 	cd $(OBJ); $(FORTRAN) -o c_exter.o $(FFLAGS77) c_exter.f \
