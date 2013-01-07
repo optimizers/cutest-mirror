@@ -1,21 +1,17 @@
 C     ( Last modified on 23 Dec 2000 at 22:01:38 )
       SUBROUTINE GEN( DUMMY )
 C
-CS  THIS IS THE SINGLE PRECISION VERSION OF THE GENERIC PACKAGE
-CD  THIS IS THE DOUBLE PRECISION VERSION OF THE GENERIC PACKAGE
+C   THIS IS THE DOUBLE PRECISION VERSION OF THE GENERIC PACKAGE
 C
-CS      REAL              DUMMY
-CD      DOUBLE PRECISION  DUMMY
+      DOUBLE PRECISION  DUMMY
       WRITE(*,*)' ********************************'
       WRITE(*,*)' *                              *'
       WRITE(*,*)' *       HELLO FROM GEN!        *'
-CS      WRITE(*,*)' *     (SINGLE PRECISION)       *'
-CD      WRITE(*,*)' *     (DOUBLE PRECISION)       *'
+      WRITE(*,*)' *     (DOUBLE PRECISION)       *'
       WRITE(*,*)' *                              *'
       WRITE(*,*)' ********************************'
       WRITE(*,*)' '
-CS      DUMMY = 41.9999995555555E0
-CD      DUMMY = 41.9999999999999D0
+      DUMMY = 41.9999999999999D0
       WRITE( *, * ) ' OPTIMAL SOLUTION FOUND'
       WRITE( *, * ) ' THE ANSWER IS ', DUMMY
       RETURN
@@ -48,12 +44,9 @@ C
 C     Input/Output variables
 C
       INTEGER N, M, NLIN, NEQ, NBNDS
-CS      REAL             BL( N ), BU( N )
-CS      REAL             INFTY
-CS      PARAMETER      ( INFTY = 1.0E+20 )
-CD      DOUBLE PRECISION BL( N ), BU( N )
-CD      DOUBLE PRECISION INFTY
-CD      PARAMETER      ( INFTY = 1.0D+20 )
+      DOUBLE PRECISION BL( N ), BU( N )
+      DOUBLE PRECISION INFTY
+      PARAMETER      ( INFTY = 1.0D+20 )
       LOGICAL EQUATN( M ), LINEAR( M )
 C
 C     Local variables
@@ -71,7 +64,7 @@ C
 
       DO 300 I = 1, N
          IF( BL( I ) .GT. -INFTY .OR. BU( I ) .LT. INFTY ) 
-     .        NBNDS = NBNDS + 1
+     *       NBNDS = NBNDS + 1
  300  CONTINUE
 
       END

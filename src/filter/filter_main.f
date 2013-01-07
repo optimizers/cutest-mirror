@@ -1,4 +1,4 @@
-C     ( Last modified on 23 Dec 2000 at 22:01:38 )
+C     ( Last modified on 3 Jan 2013 at 14:50:00 )
       PROGRAM FILMA
       
 C     --------------------------------------------------------------
@@ -12,6 +12,7 @@ C     The problems solved are defined using CUTE.
 C     --------------------------------------------------------------
 C
 C  CUTEr interface by Roger Fletcher and Sven Leyffer (U. Dundee)
+C  Revised for CUTEst, Nick Gould, January 2013
 
 C     ... internal constants
       INTEGER    NMAX,      MMAX,      MAXA,        KMX

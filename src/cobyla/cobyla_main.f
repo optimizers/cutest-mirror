@@ -1,4 +1,4 @@
-C     ( Last modified on 23 Dec 2000 at 22:01:38 )
+C     ( Last modified on 3 Jan 2013 at 13:40:00 )
       PROGRAM COBMA
 C
 C  COBYLA test driver for problems derived from SIF files.
@@ -6,41 +6,53 @@ C
 C  A. R. Conn and Ph. Toint (based upon Nick Gould's vf13ma.f)
 C  January 1995.
 C
-      INTEGER          NMAX, MMAX, M, N, MAXFUN, MCON, LW, LIW
+      INTEGER          M, N, MAXFUN, MCON, LW, LIW
       INTEGER          IPRINT, I, MGEQ, INDR, INPUT, IOUT, NFIX
-CTOY  PARAMETER      ( NMAX =  10, MMAX =  10 )
-CMED  PARAMETER      ( NMAX = 100, MMAX = 100 )
-CBIG  PARAMETER      ( NMAX = 500, MMAX = 500 )
-CCUS  PARAMETER      ( NMAX = 200, MMAX = 100 )
-      PARAMETER      ( LW   = NMAX * ( 3 * NMAX + 2 * MMAX + 11 )
-     *                        + 4 * MMAX + 6  )
-      PARAMETER      ( LIW  = NMAX + 1 )
-      INTEGER          IW( LIW )
-CS    REAL             X( NMAX ), BL( NMAX ), BU( NMAX ),
-CD    DOUBLE PRECISION X( NMAX ), BL( NMAX ), BU( NMAX ),
-     *                 C( MMAX ), CL( MMAX ), CU( MMAX ),
-     *                 W( LW ), RHOBEG, RHOEND, F
-      REAL             CPU( 2 ), CALLS( 7 )
-      LOGICAL          EQUATN( MMAX ), LINEAR( MMAX )
-      CHARACTER * 10   PNAME, VNAME( NMAX ), CNAME( MMAX )
+      INTEGER :: io_buffer = 11
+      DOUBLE PRECISION RHOBEG, RHOEND, F
+    
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: IW
+      DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: X, BL, BU, C
+      DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: CL, CU, W
+      LOGICAL, ALLOCATABLE, DIMENSION( : ) :: EQUATN, LINEAR
+
+      DOUBLE PRECISION CPU( 2 ), CALLS( 4 )
+
+      CHARACTER ( LEN = 10 ) :: PNAME
+      CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : )  :: VNAME
+      CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : )  :: CNAME
 
       PARAMETER      ( INPUT = 55, INDR = 46, IOUT = 6 )
-CS    REAL             BIGINF
-CD    DOUBLE PRECISION BIGINF
-CS    PARAMETER      ( BIGINF = 9.0E+19 )
-CD    PARAMETER      ( BIGINF = 9.0D+19 )
+      DOUBLE PRECISION BIGINF
+      PARAMETER      ( BIGINF = 9.0D+19 )
       COMMON / FCOBFN /  BL, BU, CL, CU, MGEQ, MCON
 C
 C  Open the relevant file.
 C
+
       OPEN ( INPUT, FILE = 'OUTSDIF.d', FORM = 'FORMATTED', 
      *       STATUS = 'OLD' )
       REWIND INPUT
+
+C  allocate space
+
+      CALL CUTEST_udimen( status, INPUT, N, MCON )
+      IF ( status /= 0 ) GO TO 910
+
+      lw = n * ( 3 * n + 2 * mcon + 11 ) + 4 * mcon + 6
+      liw  = n + 1
+      ALLOCATE( X( n ), BL( n ), BU( n ), C( mcon ), CL( mcon ), 
+     *          CU( mcon ), IW( liw ), W( lw ), EQUATN( MCON ), 
+     *          LINEAR( MCON ), VNAME( N ), CNAME( MCON ), 
+     *          STAT = status )
+      IF ( status /= 0 ) GO TO 990
 C
 C  Set up the data structures necessary to hold the problem functions.
 C
-      CALL CSETUP ( INPUT, IOUT, N, MCON, X, BL, BU, NMAX, EQUATN,
-     *              LINEAR, C, CL, CU, MMAX, .TRUE., .FALSE., .FALSE. )
+      CALL CUTEST_csetup( status, INPUT, IOUT, io_buffer, n, mcon, 
+     *                     X, BL, BU, C, CL, CU, EQUATN, LINEAR,      
+     *                    .TRUE., .FALSE., .FALSE. )
+      IF ( status /= 0 ) GO TO 910
       CLOSE ( INPUT )
 C
 C  Count the number of general equality constraints and ignore them by
@@ -80,12 +92,6 @@ C
    50 CONTINUE
       IF ( NFIX .GT. 0 ) WRITE( 6, 3020 ) NFIX
 C
-      IF ( M .GT. MMAX ) THEN
-         IF ( IOUT .GT. 0 )
-     *      WRITE( IOUT, 3000 ) 'EQUATN', 'MMAX  ', M - MMAX
-         STOP
-      END IF
-C
 C  Open the Spec file for the method.
 C
       OPEN( INDR, FILE = 'COBYLA.SPC', FORM = 'FORMATTED', 
@@ -111,9 +117,11 @@ C
 C  Perform the minimization.
 C
       CALL COBYLA( N, M, X, RHOBEG, RHOEND, IPRINT, MAXFUN, W, IW)
-      CALL CREPRT ( CALLS, CPU )
+      CALL CUTEST_creport( status, CALLS, CPU )
+      IF ( status /= 0 ) GO TO 910
 C
-      CALL CNAMES( N, MCON, PNAME, VNAME, CNAME )
+      CALL CUTEST_cnames( status, N, MCON, PNAME, VNAME, CNAME )
+      IF ( status /= 0 ) GO TO 910
       CALL CALCFC( N, X, F, C )
       WRITE( 6, 2110 ) ( I, VNAME( I ), X( I ), BL( I ), BU( I ),
      *                      I = 1, N )
@@ -123,10 +131,18 @@ C
      *     CPU(1), CPU(2)
       STOP
 
+  910 CONTINUE
+      WRITE( 6, "( ' CUTEst error, status = ', i0, ', stopping' )") 
+     *  status
+      STOP
+
+  990 CONTINUE
+      WRITE( 6, "( ' Allocation error, status = ', I0 )" ) status
+      STOP
 C
 C  Non-executable statements
 C
- 2000 FORMAT( /, 24('*'), ' CUTEr statistics ', 24('*') //
+ 2000 FORMAT( /, 24('*'), ' CUTEst statistics ', 24('*') //
      *    ,' Code used               :  COBYLA ',  /
      *    ,' Problem                 :  ', A10,    /
      *    ,' # variables             =      ', I10 /
@@ -162,31 +178,23 @@ C
       SUBROUTINE CALCFC( N, X, F, C )
 C
 C  Evaluates the objective function value in a format compatible with COBYLA,
-C  but using the CUTEr tools.
+C  but using the CUTEst tools.
 C
 C  A. R. Conn and Ph. Toint
 C  January 1995.
 C
-      INTEGER            NMAX, MMAX
-CTOY  PARAMETER        ( NMAX =  10, MMAX =  10 )
-CMED  PARAMETER        ( NMAX = 100, MMAX = 100 )
-CBIG  PARAMETER        ( NMAX = 500, MMAX = 500 )
-CCUS  PARAMETER        ( NMAX = 200, MMAX = 100 )
       INTEGER            N, MGEQ, MCON, I, MT
-CS    REAL               F, X( N ), C( MMAX ), BL( NMAX ), BU( NMAX )
-CD    DOUBLE PRECISION   F, X( N ), C( MMAX ), BL( NMAX ), BU( NMAX )
-CS    REAL               CL( MMAX ), CU( MMAX )
-CD    DOUBLE PRECISION   CL( MMAX ), CU( MMAX )
+      DOUBLE PRECISION   F, X( N ), C( MCON ), BL( n ), BU( n )
+      DOUBLE PRECISION   CL( MCON ), CU( MCON )
       COMMON /FCOBFN/    BL, BU, CL, CU, MGEQ, MCON
 C
-CS    REAL               BIGINF
-CD    DOUBLE PRECISION   BIGINF
-CS    PARAMETER        ( BIGINF = 9.0E+19 )
-CD    PARAMETER        ( BIGINF = 9.0D+19 )
+      DOUBLE PRECISION   BIGINF
+      PARAMETER        ( BIGINF = 9.0D+19 )
 C
 C  Evaluate the objective function and constraints.
 C
-      CALL CFN ( N, MCON, X, F, MMAX, C )
+      CALL CUTEST_cfn( status, N, MCON, X, F, C )
+      IF ( status /= 0 ) GO TO 910
 C
 C  If there are equality constraints, ignore them
 C  and shift all the inequality constraint values.
@@ -230,6 +238,11 @@ C
          END IF
    50 CONTINUE
       RETURN
+
+  910 CONTINUE
+      WRITE( 6, "( ' CUTEst error, status = ', i0, ', stopping' )") status
+      STOP
+
 C
 C  End of CALCFC.
 C

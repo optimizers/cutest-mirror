@@ -1,183 +1,180 @@
-!     ( Last modified on 23 Dec 2000 at 22:01:38 )
-Program GENMA
-  !
-  Use CUTEr_precis
-  Use CUTEr_interfaces
-  Use Generic_Driver
-  !
-  !  Generic package driver (example) for applying package GEN90 to problems
-  !  from SIF files. This driver also demonstrates how to dynamically
-  !  allocate arrays to be used with CUTEr.
-  !
-  !  D. Orban, August 2002, strongly inspired by Philippe's original driver.
-  !
+!     ( Last modified on 3 Jan 2013 at 16:20:00 )
+
+PROGRAM GENMA
+
+  USE Generic_Driver
+
+!  Generic package driver (example) for applying package GEN90 to problems
+!  from SIF files. This driver also demonstrates how to dynamically
+!  allocate arrays to be used with CUTEst.
+!
+!  D. Orban, August 2002, strongly inspired by Philippe's original driver.
+!  CUTEst evolution, Nick Gould January 2013
   Implicit None
-  Integer :: N, M, NLIN, NEQ, NBNDS, EXITCODE
-  Integer, Parameter :: INSPEC = 46, INPUT = 47, IOUT = 6
-  Real( Kind = wp ) :: DUMMY
-  Real( Kind = wp ), Dimension( : ), Allocatable :: X, BL, BU, V, CL, CU, C
-  Real, Dimension( 2 ) :: CPU( 2 )
-  Real, Dimension( 7 ) :: CALLS( 7 )
-  Character( len = 10 ) ::  PNAME
-  Character( len = 10 ), Dimension( : ), Allocatable :: VNAMES, GNAMES
-  Logical :: EFIRST, LFIRST, NVFRST
-  Logical, Dimension( : ), Allocatable :: EQUATN, LINEAR
-  Logical ::  CONSTRAINED
-  !
-  !  Open the Spec file for the method (typically called METHOD.SPC)
-  !
-  Call GENSPC( INSPEC, 'GEN.SPC' )
-  !
-  !  Open the relevant problem file.
-  !
-  Open ( INPUT, FILE = 'OUTSDIF.d', FORM = 'FORMATTED', STATUS = 'OLD' )
-  Rewind INPUT
-  !
-  !  Get problem dimensions and determine which tools to use
-  !
-  CONSTRAINED = .False.
-  Call CDIMEN( INPUT, N, M )
-  If( M > 0 ) Then
-     CONSTRAINED = .True.
-  Else If( M < 0 ) Then
-     Write( 6, '(A)' ) 'Error reading OUTSDIF.d'
-     Stop
-  Endif
-  !
-  !  Set up parameters
-  !
-  EFIRST = .True. ; LFIRST = .False. ; NVFRST = .False.
-  !
-  !  Set up SIF data from the problem file
-  !
-  Allocate( X( N ), BL( N ), BU( N ) )
+  INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+  INTEGER :: n, m, nlin, neq, nbnds, exitcode, status
+  INTEGER :: io_buffer = 11
+  INTEGER, PARAMETER :: inspec = 46, input = 47, out = 6
+  REAL ( KIND = wp ) :: DUMMY
+  REAL ( KIND = wp ), Dimension( : ), Allocatable :: X, BL, BU, V, CL, CU, C
+  REAL ( KIND = wp ), DIMENSION( 2 ) :: CPU( 2 )
+  REAL ( KIND = wp ), DIMENSION( 7 ) :: CALLS( 7 )
+  CHARACTER( LEN = 10 ) ::  PNAME
+  CHARACTER( LEN = 10 ), Dimension( : ), Allocatable :: VNAMES, GNAMES
+  LOGICAL :: efirst, lfirst, nvfrst
+  LOGICAL, DIMENSION( : ), ALLOCATABLE :: EQUATN, LINEAR
+  LOGICAL ::  constrained
+!
+!  Open the Spec file for the method (typically called METHOD.SPC)
+!
+  Call GENSPC( inspec, 'GEN.SPC' )
+!
+!  Open the relevant problem file.
+!
+  OPEN( input, FILE = 'OUTSDIF.d', FORM = 'FORMATTED', STATUS = 'OLD' )
+  REWIND input
+!
+!  Get problem dimensions and determine which tools to use
+!
+  constrained = .FALSE.
+  CALL CUTEST_cdimen( status, input, n, m )
+  If ( m > 0 ) Then
+    constrained = .TRUE.
+  ELSE IF ( m < 0 ) THEN
+    Write( 6, '(A)' ) 'Error reading OUTSDIF.d'
+    Stop
+  END IF
+
+!  Set up parameters
+
+  efirst = .TRUE. ; lfirst = .FALSE. ; nvfrst = .FALSE.
+
+!  Set up SIF data from the problem file
+
+  ALLOCATE( X( N ), BL( N ), BU( N ) )
   If( CONSTRAINED ) Then
-     Allocate( V( M+1 ), CL( M+1 ), CU( M+1 ), EQUATN( M+1 ), LINEAR( M+1 ) )
-     Call CSETUP( INPUT, IOUT, N, M, X, BL, BU, N, EQUATN, &
-          LINEAR, V, CL, CU, M+1, EFIRST, LFIRST, NVFRST )
+     ALLOCATE( V( m+1 ), CL( m+1 ), CU( m+1 ), EQUATN( m+1 ), LINEAR( m+1 ) )
+     Call CUTEST_csetup( status, input, out, io_buffer, n, m, X, BL, BU,       &
+          V, CL, CU, EQUATN, LINEAR, efirst, lfirst, nvfrst )
   Else
-     Allocate( EQUATN( 1 ), LINEAR( 1 ) )
-     Call USETUP( INPUT, IOUT, N, X, BL, BU, N )
+     ALLOCATE( EQUATN( 0 ), LINEAR( 0 ) )
+     Call CUTEST_usetup( status, input, out, io_buffer, n, X, BL, BU )
   Endif
-  !
-  !  Obtain problem/variables/constraints names.
-  !
-  Allocate( VNAMES( N ) )
-  If( CONSTRAINED ) Then
-     Allocate( GNAMES( M ) )
-    Call CNAMES( N, M, PNAME, VNAMES, GNAMES )
+
+!  Obtain problem/variables/constraints names.
+
+  ALLOCATE( VNAMES( n ) )
+  IF ( constrained ) THEN
+     Allocate( GNAMES( m ) )
+    CALL CUTEST_cnames( status, n, m, pname, VNAMES, GNAMES )
+  ELSE
+    CALL CUTEST_unames( status, n, pname, VNAMES )
+  END IF
+
+!  Obtain info on the problem
+
+  nlin  = 0 ; neq   = 0 ; nbnds = 0
+  If ( constrained ) Then
+    CALL GETINFO( n, m, BL, BU, EQUATN, LINEAR, nlin, neq, nbnds )
   Else
-     Call UNAMES( N, PNAME, VNAMES )
+!    EQUATN( 1 ) = .False.
+!    LINEAR( 1 ) = .False.
+    CALL GETINFO( n, 0, BL, BU, EQUATN, LINEAR, nlin, neq, nbnds )
   Endif
-  !
-  !  Obtain info on the problem
-  !
-  NLIN  = 0 ; NEQ   = 0 ; NBNDS = 0
-  If( CONSTRAINED ) Then
-     Call GETINFO( N, M, BL, BU, EQUATN, LINEAR, NLIN, NEQ, NBNDS )
-  Else
-     EQUATN( 1 ) = .False.
-     LINEAR( 1 ) = .False.
-     Call GETINFO( N, 1, BL, BU, EQUATN, LINEAR, NLIN, NEQ, NBNDS )
-  Endif
-  !
-  !  Call the optimizer.
-  !
-  Call GEN( DUMMY )
-  EXITCODE = 0
-  !X(1) = 1.267D+4    ! 6000.99220157507
-  !X(2) = 1.2322      ! 2.261550439078105
-  !X(3) = 1.9999D+6   ! 4000000.060299409
-  !X(4) = 10          ! 2.7960026390140182
-  !X(5) = 1.0D-3      ! 0.09473072987605002
-  !X(6) = 1.0D+8      ! 5.000000008277602E+7
-  X = 0.0D+0
-  DUMMY = 0.0D+0
-  Call UFN(N, X, DUMMY)
-  Write(6,*) 'UFN: F(x0) = ', DUMMY
-  !If( ISNAN(DUMMY) ) Write(6,*) 'F(x0) is NaN!'
-  If( DUMMY /= DUMMY ) Write(6,*) 'F(x0) is NaN!'
-  Allocate(C(M))
-  DUMMY = 0.0D+0
-  Call CFN(N,M,X,DUMMY,M,C)
-  Write(6,*) 'CFN: F(x0) = ', DUMMY
-  Write(6,*) 'CFN: C(x0) = ', C
-  Deallocate(C)
-  !
-  !  Close the problem file
-  !
+
+!  Call the "optimizer".
+
+  CALL GEN( dummy )
+  exitcode = 0
+
+!  Get the function value at a trial point
+
+  X = 0.0_wp ; x( 1 ) = 1.0_wp
+  dummy = 0.0D+0
+  If ( constrained ) Then
+    ALLOCATE( C( m ) )
+    CALL CUTEST_cfn( status, n, m, X, dummy, C )
+    Write(6,*) ' CUTEST_cfn: F(x0) = ', dummy
+    Write(6,*) ' CUTEST_cfn: C(x0) = ', C
+    DEALLOCATE( C )
+  ELSE
+    CALL CUTEST_ufn( status, n, X, dummy )
+    Write(6,*) ' CUTEST_ufn: F(x0) = ', dummy
+  END IF
+
+!  Close the problem file
+
   Close( INPUT )
-  !
-  !  Write the standard statistics (of which some may be irrelevant)
-  !
-  !    CALLS( 1 ): number of calls to the objective function
-  !    CALLS( 2 ): number of calls to the objective gradient
-  !    CALLS( 3 ): number of calls to the objective Hessian
-  !    CALLS( 4 ): number of Hessian times vector products
-  !           --constrained problems only--
-  !    CALLS( 5 ): number of calls to the constraint functions
-  !    CALLS( 6 ): number of calls to the constraint gradients
-  !    CALLS( 7 ): number of calls to the constraint Hessians
-  !           -----------------------------
-  !
-  !    CPU( 1 ) : CPU time (in seconds) for USETUP or CSETUP
-  !    CPU( 2 ) : CPU time ( in seconds) since the end of USETUP or CSETUP
-  !
-  !  Note that each constraint function is counted separately.
-  !  Evaluating all the constraints thus results in PNC evaluations, where
-  !  PNC is the number of constraints in the problem.  Note that PNC does not
-  !  include repetitions for constraints having full ranges.
+
+!  Write the standard statistics (of which some may be irrelevant)
+
+!    CALLS( 1 ): number of calls to the objective function
+!    CALLS( 2 ): number of calls to the objective gradient
+!    CALLS( 3 ): number of calls to the objective Hessian
+!    CALLS( 4 ): number of Hessian times vector products
+!           --constrained problems only--
+!    CALLS( 5 ): number of calls to the constraint functions
+!    CALLS( 6 ): number of calls to the constraint gradients
+!    CALLS( 7 ): number of calls to the constraint Hessians
+!           -----------------------------
+
+!    CPU( 1 ) : CPU time (in seconds) for USETUP or CSETUP
+!    CPU( 2 ) : CPU time ( in seconds) since the end of USETUP or CSETUP
+
+!  Note that each constraint function is counted separately.
+!  Evaluating all the constraints thus results in PNC evaluations, where
+!  PNC is the number of constraints in the problem.  Note that PNC does not
+!  include repetitions for constraints having full ranges.
   
-  !  (N, is the dimension of the problem, M is the number of constraints,
-  !   DUMMY is the final value of the objective function)
-  !
-  If( CONSTRAINED ) Then
-     Call CREPRT( CALLS, CPU )      
-  Else
-     Call UREPRT( CALLS, CPU )
-  Endif
-  Write ( IOUT, 2000 ) PNAME, N, M, NLIN, NEQ, M-NEQ, NBNDS,       &
-       CALLS( 1 ), CALLS( 2 ), CALLS( 3 ), CALLS( 5 ), CALLS( 6 ), &
-       CALLS( 7 )
-  Write ( IOUT, 2001 ) EXITCODE, DUMMY, CPU( 1 ), CPU( 2 )
-  !
-  !  Free allocated memory
-  !
+!  (N, is the dimension of the problem, M is the number of constraints,
+!   DUMMY is the final value of the objective function)
+
+  IF ( constrained ) THEN
+     CALL CUTEST_creport( status, CALLS, CPU )      
+  ELSE
+     CALL CUTEST_ureport( status, CALLS, CPU )
+  ENDIF
+  WRITE ( out, 2000 ) pname, n, m, nlin, neq, m-neq, nbnds,                    &
+     CALLS( 1 ), CALLS( 2 ), CALLS( 3 )
+  IF ( constrained ) WRITE( out, 2010 ) CALLS( 5 ), CALLS( 6 ), CALLS( 7 )
+  WRITE ( out, 2020 ) exitcode, dummy, CPU( 1 ), CPU( 2 ) 
+!
+!  Free allocated memory
+!
   Deallocate( X, BU, BL, VNAMES, EQUATN, LINEAR )
   If( CONSTRAINED ) Deallocate( V, CL, CU, GNAMES )
-  !
-  !  Exit
-  !
+!
+!  Exit
+!
   Stop
-  !
-  !  Non-executable statements.
-  !
-  !  The following is the complete standard statistics output format: select
-  !  the items that are relevant to the type of problems solved and adapt the
-  !  name of the code. It is broken in two to comply with compilers
-  !  which want to see no more than 19 continuation lines.
-  !
-2000 Format( /, 24('*'), ' CUTEr statistics ', 24('*') // &
-          ,' Code used                :  GEN90',    / &
-          ,' Variant                  :  name of a variant, if needed',/ &
-          ,' Problem                  :  ', A10,    / &
-          ,' # variables              =      ', I10 / &
-          ,' # constraints            =      ', I10 / &
-          ,' # linear constraints     =      ', I10 / &
-          ,' # equality constraints   =      ', I10 / &
-          ,' # inequality constraints =      ', I10 / &
-          ,' # bounds                 =      ', I10 / &
-          ,' # objective functions    =        ', F8.2 / &
-          ,' # objective gradients    =        ', F8.2 / &
-          ,' # objective Hessians     =        ', F8.2 / &
-          ,' # constraints functions  =        ', F8.2 / &
-          ,' # constraints gradients  =        ', F8.2 / &
+!
+!  Non-executable statements.
+!
+!  The following is the complete standard statistics output format: select
+!  the items that are relevant to the type of problems solved and adapt the
+!  name of the code. It is broken in two to comply with compilers
+!  which want to see no more than 19 continuation lines.
+!
+2000 FORMAT( /, 24('*'), ' CUTEst statistics ', 24('*') //,                    &
+          ' Package used             :  GEN90',    /,                          &
+          ' Variant                  :  name of a variant, if needed',/,       &
+          ' Problem                  :  ', A10,    /,                          &
+          ' # variables              =      ', I10 /,                          &
+          ' # constraints            =      ', I10 /,                          &
+          ' # linear constraints     =      ', I10 /,                          &
+          ' # equality constraints   =      ', I10 /,                          &
+          ' # inequality constraints =      ', I10 /,                          &
+          ' # bounds                 =      ', I10 /,                          &
+          ' # objective functions    =        ', F8.2 /,                       &
+          ' # objective gradients    =        ', F8.2 /,                       &
+          ' # objective Hessians     =        ', F8.2 )
+2010 FORMAT( ' # constraints functions  =        ', F8.2 /                     &
+          ,' # constraints gradients  =        ', F8.2 /                       &
           ,' # constraints Hessians   =        ', F8.2 )
-2001 Format(                                          &
-          ' Exit code                =      ', I10 / &
-          ,' Final f                  = ', E15.7 / &
-          ,' Set up time              =      ', 0P, F10.2, ' seconds'/ &
-          ' Solve time               =      ', 0P, F10.2, ' seconds'// &
+2020 FORMAT( ' Exit code                =      ', I10 /,                       &
+             ' Final f                  = ', E15.7 /,                          &
+             ' Set up time              =      ', 0P, F10.2, ' seconds'/       &
+             ' Solve time               =      ', 0P, F10.2, ' seconds'//      &
           66('*') / )
-End Program GENMA
+END PROGRAM GENMA
 

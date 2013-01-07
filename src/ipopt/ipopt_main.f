@@ -4,7 +4,7 @@ C This code is published under the Common Public License.
 C*******************************************************************************
       PROGRAM           IPOPTMA
 C
-C     IPOPT CUTEr driver.
+C     IPOPT CUTEst driver.
 C     D. Orban,  adapted from Andreas Wachter's CUTE driver.
 C
       IMPLICIT NONE
@@ -15,14 +15,14 @@ C Copyright (C) 2002, Carnegie Mellon University and others.
 C All Rights Reserved.
 C This code is published under the Common Public License.
 C
-C     PARAMETER definitions and COMMON block for CUTEr interface
+C     PARAMETER definitions and COMMON block for CUTEst interface
 C
 
 CB    CUTE_NMAX       maximal number of variables
 CB    CUTE_MMAX       maximal number of constraints
 CB    CUTE_NZMAX      maximal number of nonzero elements
-CB    CUTE_NOLB       constant of CUTEr to indicate -inf as lower bound
-CB    CUTE_NOUB       constant of CUTEr to indicate +inf as upper bound
+CB    CUTE_NOLB       constant of CUTEst to indicate -inf as lower bound
+CB    CUTE_NOUB       constant of CUTEst to indicate +inf as upper bound
 
       INTEGER CUTE_NMAX, CUTE_MMAX, CUTE_NZMAX
 CTOY  PARAMETER( CUTE_NMAX = 1000,  CUTE_MMAX = 1000  )
@@ -36,8 +36,8 @@ CCUS  PARAMETER( CUTE_NZMAX = 10000000 )
       DOUBLE PRECISION CUTE_NOLB, CUTE_NOUB
       PARAMETER( CUTE_NOLB = -1.0D+20, CUTE_NOUB =  1.0D+20 )
 
-CB    CUTE_N          number of variables in CUTEr problem
-CB    CUTE_M          number of constraints in CUTEr problem
+CB    CUTE_N          number of variables in CUTEst problem
+CB    CUTE_M          number of constraints in CUTEst problem
 CB    CUTE_NIQ        number of inequality constraints
 CB    CUTE_NEQ        number of equality constraints
 CB    CUTE_IIQ        indices of inequality constraints
@@ -49,7 +49,7 @@ CB
 CB    Structure of reformulation:
 CB
 CB    X (variables after reformulation) has a first entries all variables
-CB    from original CUTEr problem, followed by the slack variables for the
+CB    from original CUTEst problem, followed by the slack variables for the
 CB    inequality constraints.
 
       integer CUTE_N, CUTE_M, CUTE_NIQ, CUTE_NEQ
@@ -123,7 +123,7 @@ C
 C
 C     Get problem name.
 C
-      CALL CNAMES( CUTE_N, CUTE_M, PNAME, VNAMES, GNAMES )
+      CALL CUTEST_cnames( status, CUTE_N, CUTE_M, PNAME, VNAMES, GNAMES )
 C
 C     Set algorithmic parameters (None :)
 C
@@ -136,14 +136,14 @@ C
      2     EVAL_G, EVAL_A, EVAL_H, EVAL_HESSLAG_V, EVAL_HESSOBJ_V,
      3     EVAL_HESSCON_V, DAT, IDAT, NARGS, ARGS, CARGS)
 C
-C     Display CUTEr statistics
+C     Display CUTEst statistics
 C
-      CALL CREPRT( CALLS, CPU )
+      CALL CUTEST_creport( status, CALLS, CPU )
       WRITE ( IOUT, 2000 ) PNAME, CUTE_N, CUTE_M, CALLS(1), CALLS(2),
      .     CALLS(3), CALLS(4), CALLS(5), CALLS(6), CALLS(7),
      .     IERR, FinalF, CPU(1), CPU(2)
 c
- 2000 FORMAT( /, 24('*'), ' CUTEr statistics ', 24('*') //
+ 2000 FORMAT( /, 24('*'), ' CUTEst statistics ', 24('*') //
      *     ,/,' Code used               :  IPOPT',    /
      *     ,' Problem                 :  ', A10,    /
      *     ,' # variables             =      ', I10 /
@@ -252,14 +252,14 @@ C Copyright (C) 2002, Carnegie Mellon University and others.
 C All Rights Reserved.
 C This code is published under the Common Public License.
 C
-C     PARAMETER definitions and COMMON block for CUTEr interface
+C     PARAMETER definitions and COMMON block for CUTEst interface
 C
 
 CB    CUTE_NMAX       maximal number of variables
 CB    CUTE_MMAX       maximal number of constraints
 CB    CUTE_NZMAX      maximal number of nonzero elements
-CB    CUTE_NOLB       constant of CUTEr to indicate -inf as lower bound
-CB    CUTE_NOUB       constant of CUTEr to indicate +inf as upper bound
+CB    CUTE_NOLB       constant of CUTEst to indicate -inf as lower bound
+CB    CUTE_NOUB       constant of CUTEst to indicate +inf as upper bound
 
       INTEGER CUTE_NMAX, CUTE_MMAX, CUTE_NZMAX
 CTOY  PARAMETER( CUTE_NMAX = 1000,  CUTE_MMAX = 1000  )
@@ -273,8 +273,8 @@ CCUS  PARAMETER( CUTE_NZMAX = 10000000 )
       DOUBLE PRECISION CUTE_NOLB, CUTE_NOUB
       PARAMETER( CUTE_NOLB = -1.0D+20, CUTE_NOUB =  1.0D+20 )
 
-CB    CUTE_N          number of variables in CUTEr problem
-CB    CUTE_M          number of constraints in CUTEr problem
+CB    CUTE_N          number of variables in CUTEst problem
+CB    CUTE_M          number of constraints in CUTEst problem
 CB    CUTE_NIQ        number of inequality constraints
 CB    CUTE_NEQ        number of equality constraints
 CB    CUTE_IIQ        indices of inequality constraints
@@ -286,7 +286,7 @@ CB
 CB    Structure of reformulation:
 CB
 CB    X (variables after reformulation) has a first entries all variables
-CB    from original CUTEr problem, followed by the slack variables for the
+CB    from original CUTEst problem, followed by the slack variables for the
 CB    inequality constraints.
 
       integer CUTE_N, CUTE_M, CUTE_NIQ, CUTE_NEQ
@@ -331,7 +331,7 @@ C
 C
 C     Call CDIMSJ to obtain number of nonzero elements
 C
-         CALL CDIMSJ( NZ )
+         CALL CUTEST_cdimsj( status, NZ )
 C
 C     Substract contribution of (dense) objective function gradient
 C
@@ -341,7 +341,7 @@ C
 C
 C     Call CCFSG to obtain Jacobian for constraints
 C
-         call CCFSG(CUTE_N, CUTE_M, X, CUTE_MMAX, c, nnzj,
+         call CUTEST_ccfsg( status,CUTE_N, CUTE_M, X, CUTE_MMAX, c, nnzj,
      1        NZ, A, AVAR, ACON, .TRUE.)
 C
 C     Augment entries for slacks
@@ -437,14 +437,14 @@ C Copyright (C) 2002, Carnegie Mellon University and others.
 C All Rights Reserved.
 C This code is published under the Common Public License.
 C
-C     PARAMETER definitions and COMMON block for CUTEr interface
+C     PARAMETER definitions and COMMON block for CUTEst interface
 C
 
 CB    CUTE_NMAX       maximal number of variables
 CB    CUTE_MMAX       maximal number of constraints
 CB    CUTE_NZMAX      maximal number of nonzero elements
-CB    CUTE_NOLB       constant of CUTEr to indicate -inf as lower bound
-CB    CUTE_NOUB       constant of CUTEr to indicate +inf as upper bound
+CB    CUTE_NOLB       constant of CUTEst to indicate -inf as lower bound
+CB    CUTE_NOUB       constant of CUTEst to indicate +inf as upper bound
 
       INTEGER CUTE_NMAX, CUTE_MMAX, CUTE_NZMAX
 CTOY  PARAMETER( CUTE_NMAX = 1000,  CUTE_MMAX = 1000  )
@@ -458,8 +458,8 @@ CCUS  PARAMETER( CUTE_NZMAX = 10000000 )
       DOUBLE PRECISION CUTE_NOLB, CUTE_NOUB
       PARAMETER( CUTE_NOLB = -1.0D+20, CUTE_NOUB =  1.0D+20 )
 
-CB    CUTE_N          number of variables in CUTEr problem
-CB    CUTE_M          number of constraints in CUTEr problem
+CB    CUTE_N          number of variables in CUTEst problem
+CB    CUTE_M          number of constraints in CUTEst problem
 CB    CUTE_NIQ        number of inequality constraints
 CB    CUTE_NEQ        number of equality constraints
 CB    CUTE_IIQ        indices of inequality constraints
@@ -471,7 +471,7 @@ CB
 CB    Structure of reformulation:
 CB
 CB    X (variables after reformulation) has a first entries all variables
-CB    from original CUTEr problem, followed by the slack variables for the
+CB    from original CUTEst problem, followed by the slack variables for the
 CB    inequality constraints.
 
       integer CUTE_N, CUTE_M, CUTE_NIQ, CUTE_NEQ
@@ -512,7 +512,7 @@ C
 C
 C     Call CCFG to obtain constraint values, but without slacks
 C
-      call CCFG(CUTE_N, CUTE_M, X, M, C, .FALSE., 1, 1, dummy, .FALSE.)
+      call CUTEST_ccfg( status,CUTE_N, CUTE_M, X, M, C, .FALSE., 1, 1, dummy, .FALSE.)
 C
 C     Add entries for slack variables and constant terms
 C
@@ -614,14 +614,14 @@ C Copyright (C) 2002, Carnegie Mellon University and others.
 C All Rights Reserved.
 C This code is published under the Common Public License.
 C
-C     PARAMETER definitions and COMMON block for CUTEr interface
+C     PARAMETER definitions and COMMON block for CUTEst interface
 C
 
 CB    CUTE_NMAX       maximal number of variables
 CB    CUTE_MMAX       maximal number of constraints
 CB    CUTE_NZMAX      maximal number of nonzero elements
-CB    CUTE_NOLB       constant of CUTEr to indicate -inf as lower bound
-CB    CUTE_NOUB       constant of CUTEr to indicate +inf as upper bound
+CB    CUTE_NOLB       constant of CUTEst to indicate -inf as lower bound
+CB    CUTE_NOUB       constant of CUTEst to indicate +inf as upper bound
 
       INTEGER CUTE_NMAX, CUTE_MMAX, CUTE_NZMAX
 CTOY  PARAMETER( CUTE_NMAX = 1000,  CUTE_MMAX = 1000  )
@@ -635,8 +635,8 @@ CCUS  PARAMETER( CUTE_NZMAX = 10000000 )
       DOUBLE PRECISION CUTE_NOLB, CUTE_NOUB
       PARAMETER( CUTE_NOLB = -1.0D+20, CUTE_NOUB =  1.0D+20 )
 
-CB    CUTE_N          number of variables in CUTEr problem
-CB    CUTE_M          number of constraints in CUTEr problem
+CB    CUTE_N          number of variables in CUTEst problem
+CB    CUTE_M          number of constraints in CUTEst problem
 CB    CUTE_NIQ        number of inequality constraints
 CB    CUTE_NEQ        number of equality constraints
 CB    CUTE_IIQ        indices of inequality constraints
@@ -648,7 +648,7 @@ CB
 CB    Structure of reformulation:
 CB
 CB    X (variables after reformulation) has a first entries all variables
-CB    from original CUTEr problem, followed by the slack variables for the
+CB    from original CUTEst problem, followed by the slack variables for the
 CB    inequality constraints.
 
       integer CUTE_N, CUTE_M, CUTE_NIQ, CUTE_NEQ
@@ -686,7 +686,7 @@ C
 C
 C     Call COFG to obtain value of objective function
 C
-      call COFG( CUTE_N, X, F, dummy, .false.)
+      call CUTEST_cofg( status, CUTE_N, X, F, dummy, .false.)
 
  9999 continue
       return
@@ -769,14 +769,14 @@ C Copyright (C) 2002, Carnegie Mellon University and others.
 C All Rights Reserved.
 C This code is published under the Common Public License.
 C
-C     PARAMETER definitions and COMMON block for CUTEr interface
+C     PARAMETER definitions and COMMON block for CUTEst interface
 C
 
 CB    CUTE_NMAX       maximal number of variables
 CB    CUTE_MMAX       maximal number of constraints
 CB    CUTE_NZMAX      maximal number of nonzero elements
-CB    CUTE_NOLB       constant of CUTEr to indicate -inf as lower bound
-CB    CUTE_NOUB       constant of CUTEr to indicate +inf as upper bound
+CB    CUTE_NOLB       constant of CUTEst to indicate -inf as lower bound
+CB    CUTE_NOUB       constant of CUTEst to indicate +inf as upper bound
 
       INTEGER CUTE_NMAX, CUTE_MMAX, CUTE_NZMAX
 CTOY  PARAMETER( CUTE_NMAX = 1000,  CUTE_MMAX = 1000  )
@@ -790,8 +790,8 @@ CCUS  PARAMETER( CUTE_NZMAX = 10000000 )
       DOUBLE PRECISION CUTE_NOLB, CUTE_NOUB
       PARAMETER( CUTE_NOLB = -1.0D+20, CUTE_NOUB =  1.0D+20 )
 
-CB    CUTE_N          number of variables in CUTEr problem
-CB    CUTE_M          number of constraints in CUTEr problem
+CB    CUTE_N          number of variables in CUTEst problem
+CB    CUTE_M          number of constraints in CUTEst problem
 CB    CUTE_NIQ        number of inequality constraints
 CB    CUTE_NEQ        number of equality constraints
 CB    CUTE_IIQ        indices of inequality constraints
@@ -803,7 +803,7 @@ CB
 CB    Structure of reformulation:
 CB
 CB    X (variables after reformulation) has a first entries all variables
-CB    from original CUTEr problem, followed by the slack variables for the
+CB    from original CUTEst problem, followed by the slack variables for the
 CB    inequality constraints.
 
       integer CUTE_N, CUTE_M, CUTE_NIQ, CUTE_NEQ
@@ -842,7 +842,7 @@ C
 C
 C     Call COFG to obtain gradient of objective function
 C
-      call COFG( CUTE_N, X, f, G, .true.)
+      call CUTEST_cofg( status, CUTE_N, X, f, G, .true.)
 C
 C     Add entries for slack variables
 C
@@ -941,14 +941,14 @@ C Copyright (C) 2002, Carnegie Mellon University and others.
 C All Rights Reserved.
 C This code is published under the Common Public License.
 C
-C     PARAMETER definitions and COMMON block for CUTEr interface
+C     PARAMETER definitions and COMMON block for CUTEst interface
 C
 
 CB    CUTE_NMAX       maximal number of variables
 CB    CUTE_MMAX       maximal number of constraints
 CB    CUTE_NZMAX      maximal number of nonzero elements
-CB    CUTE_NOLB       constant of CUTEr to indicate -inf as lower bound
-CB    CUTE_NOUB       constant of CUTEr to indicate +inf as upper bound
+CB    CUTE_NOLB       constant of CUTEst to indicate -inf as lower bound
+CB    CUTE_NOUB       constant of CUTEst to indicate +inf as upper bound
 
       INTEGER CUTE_NMAX, CUTE_MMAX, CUTE_NZMAX
 CTOY  PARAMETER( CUTE_NMAX = 1000,  CUTE_MMAX = 1000  )
@@ -962,8 +962,8 @@ CCUS  PARAMETER( CUTE_NZMAX = 10000000 )
       DOUBLE PRECISION CUTE_NOLB, CUTE_NOUB
       PARAMETER( CUTE_NOLB = -1.0D+20, CUTE_NOUB =  1.0D+20 )
 
-CB    CUTE_N          number of variables in CUTEr problem
-CB    CUTE_M          number of constraints in CUTEr problem
+CB    CUTE_N          number of variables in CUTEst problem
+CB    CUTE_M          number of constraints in CUTEst problem
 CB    CUTE_NIQ        number of inequality constraints
 CB    CUTE_NEQ        number of equality constraints
 CB    CUTE_IIQ        indices of inequality constraints
@@ -975,7 +975,7 @@ CB
 CB    Structure of reformulation:
 CB
 CB    X (variables after reformulation) has a first entries all variables
-CB    from original CUTEr problem, followed by the slack variables for the
+CB    from original CUTEst problem, followed by the slack variables for the
 CB    inequality constraints.
 
       integer CUTE_N, CUTE_M, CUTE_NIQ, CUTE_NEQ
@@ -1025,7 +1025,7 @@ C
 C
 C     Get number of nonzeros in Hessian of the Lagrangian
 C
-         CALL CDIMSH( NNZH )
+         CALL CUTEST_cdimsh( status, NNZH )
          if( NNZH.gt.CUTE_NZMAX ) then
             write(*,*) 'CUTE_NZMAX = ',CUTE_NZMAX,' too small in cute_h'
             write(*,*) 'Increase to at least ', NNZH
@@ -1036,7 +1036,7 @@ C
 C
 C     Call CSH to obtain Hessian for constraints
 C
-         call CSH(CUTE_N, CUTE_M, X, M, LAM, nnzh2, NNZH, HESS,
+         call CUTEST_csh( status,CUTE_N, CUTE_M, X, M, LAM, nnzh2, NNZH, HESS,
      1        IRNH, ICNH)
       endif
 
@@ -1130,14 +1130,14 @@ C Copyright (C) 2002, Carnegie Mellon University and others.
 C All Rights Reserved.
 C This code is published under the Common Public License.
 C
-C     PARAMETER definitions and COMMON block for CUTEr interface
+C     PARAMETER definitions and COMMON block for CUTEst interface
 C
 
 CB    CUTE_NMAX       maximal number of variables
 CB    CUTE_MMAX       maximal number of constraints
 CB    CUTE_NZMAX      maximal number of nonzero elements
-CB    CUTE_NOLB       constant of CUTEr to indicate -inf as lower bound
-CB    CUTE_NOUB       constant of CUTEr to indicate +inf as upper bound
+CB    CUTE_NOLB       constant of CUTEst to indicate -inf as lower bound
+CB    CUTE_NOUB       constant of CUTEst to indicate +inf as upper bound
 
       INTEGER CUTE_NMAX, CUTE_MMAX, CUTE_NZMAX
 CTOY  PARAMETER( CUTE_NMAX = 1000,  CUTE_MMAX = 1000  )
@@ -1151,8 +1151,8 @@ CCUS  PARAMETER( CUTE_NZMAX = 10000000 )
       DOUBLE PRECISION CUTE_NOLB, CUTE_NOUB
       PARAMETER( CUTE_NOLB = -1.0D+20, CUTE_NOUB =  1.0D+20 )
 
-CB    CUTE_N          number of variables in CUTEr problem
-CB    CUTE_M          number of constraints in CUTEr problem
+CB    CUTE_N          number of variables in CUTEst problem
+CB    CUTE_M          number of constraints in CUTEst problem
 CB    CUTE_NIQ        number of inequality constraints
 CB    CUTE_NEQ        number of equality constraints
 CB    CUTE_IIQ        indices of inequality constraints
@@ -1164,7 +1164,7 @@ CB
 CB    Structure of reformulation:
 CB
 CB    X (variables after reformulation) has a first entries all variables
-CB    from original CUTEr problem, followed by the slack variables for the
+CB    from original CUTEst problem, followed by the slack variables for the
 CB    inequality constraints.
 
       integer CUTE_N, CUTE_M, CUTE_NIQ, CUTE_NEQ
@@ -1208,7 +1208,7 @@ C
          goth = .true.
       endif
 
-      call CPROD(CUTE_N, CUTE_M, goth, X, M, LAM, VIN, VOUT)
+      call CUTEST_chprod( status,CUTE_N, CUTE_M, goth, X, M, LAM, VIN, VOUT)
 C
 C     slacks only appear linear
 C
@@ -1306,14 +1306,14 @@ C Copyright (C) 2002, Carnegie Mellon University and others.
 C All Rights Reserved.
 C This code is published under the Common Public License.
 C
-C     PARAMETER definitions and COMMON block for CUTEr interface
+C     PARAMETER definitions and COMMON block for CUTEst interface
 C
 
 CB    CUTE_NMAX       maximal number of variables
 CB    CUTE_MMAX       maximal number of constraints
 CB    CUTE_NZMAX      maximal number of nonzero elements
-CB    CUTE_NOLB       constant of CUTEr to indicate -inf as lower bound
-CB    CUTE_NOUB       constant of CUTEr to indicate +inf as upper bound
+CB    CUTE_NOLB       constant of CUTEst to indicate -inf as lower bound
+CB    CUTE_NOUB       constant of CUTEst to indicate +inf as upper bound
 
       INTEGER CUTE_NMAX, CUTE_MMAX, CUTE_NZMAX
 CTOY  PARAMETER( CUTE_NMAX = 1000,  CUTE_MMAX = 1000  )
@@ -1327,8 +1327,8 @@ CCUS  PARAMETER( CUTE_NZMAX = 10000000 )
       DOUBLE PRECISION CUTE_NOLB, CUTE_NOUB
       PARAMETER( CUTE_NOLB = -1.0D+20, CUTE_NOUB =  1.0D+20 )
 
-CB    CUTE_N          number of variables in CUTEr problem
-CB    CUTE_M          number of constraints in CUTEr problem
+CB    CUTE_N          number of variables in CUTEst problem
+CB    CUTE_M          number of constraints in CUTEst problem
 CB    CUTE_NIQ        number of inequality constraints
 CB    CUTE_NEQ        number of equality constraints
 CB    CUTE_IIQ        indices of inequality constraints
@@ -1340,7 +1340,7 @@ CB
 CB    Structure of reformulation:
 CB
 CB    X (variables after reformulation) has a first entries all variables
-CB    from original CUTEr problem, followed by the slack variables for the
+CB    from original CUTEst problem, followed by the slack variables for the
 CB    inequality constraints.
 
       integer CUTE_N, CUTE_M, CUTE_NIQ, CUTE_NEQ
@@ -1397,14 +1397,14 @@ C
 
       open(cnr_input,file='OUTSDIF.d',status='old')
 
-      call CSETUP(cnr_input, iout, CUTE_N, CUTE_M,
+      call CUTEST_csetup( status,cnr_input, iout, CUTE_N, CUTE_M,
      1     X, bl, bu, CUTE_NMAX, equatn, linear, v, cl, cu,
      2     CUTE_MMAX, efirst, lfirst, nvfrst)
       close(cnr_input)
 C
 C     Added this:  Compute C in order to initialize slacks better
 C
-      call CCFG(CUTE_N, CUTE_M, X, M, C, .false., 1, 1, dummy, .false.)
+      call CUTEST_ccfg( status,CUTE_N, CUTE_M, X, M, C, .false., 1, 1, dummy, .false.)
 C
       M = CUTE_M
       N = CUTE_N
@@ -1506,14 +1506,14 @@ C Copyright (C) 2002, Carnegie Mellon University and others.
 C All Rights Reserved.
 C This code is published under the Common Public License.
 C
-C     PARAMETER definitions and COMMON block for CUTEr interface
+C     PARAMETER definitions and COMMON block for CUTEst interface
 C
 
 CB    CUTE_NMAX       maximal number of variables
 CB    CUTE_MMAX       maximal number of constraints
 CB    CUTE_NZMAX      maximal number of nonzero elements
-CB    CUTE_NOLB       constant of CUTEr to indicate -inf as lower bound
-CB    CUTE_NOUB       constant of CUTEr to indicate +inf as upper bound
+CB    CUTE_NOLB       constant of CUTEst to indicate -inf as lower bound
+CB    CUTE_NOUB       constant of CUTEst to indicate +inf as upper bound
 
       INTEGER CUTE_NMAX, CUTE_MMAX, CUTE_NZMAX
 CTOY  PARAMETER( CUTE_NMAX = 1000,  CUTE_MMAX = 1000  )
@@ -1527,8 +1527,8 @@ CCUS  PARAMETER( CUTE_NZMAX = 10000000 )
       DOUBLE PRECISION CUTE_NOLB, CUTE_NOUB
       PARAMETER( CUTE_NOLB = -1.0D+20, CUTE_NOUB =  1.0D+20 )
 
-CB    CUTE_N          number of variables in CUTEr problem
-CB    CUTE_M          number of constraints in CUTEr problem
+CB    CUTE_N          number of variables in CUTEst problem
+CB    CUTE_M          number of constraints in CUTEst problem
 CB    CUTE_NIQ        number of inequality constraints
 CB    CUTE_NEQ        number of equality constraints
 CB    CUTE_IIQ        indices of inequality constraints
@@ -1540,7 +1540,7 @@ CB
 CB    Structure of reformulation:
 CB
 CB    X (variables after reformulation) has a first entries all variables
-CB    from original CUTEr problem, followed by the slack variables for the
+CB    from original CUTEst problem, followed by the slack variables for the
 CB    inequality constraints.
 
       integer CUTE_N, CUTE_M, CUTE_NIQ, CUTE_NEQ
@@ -1587,14 +1587,14 @@ C Copyright (C) 2002, Carnegie Mellon University and others.
 C All Rights Reserved.
 C This code is published under the Common Public License.
 C
-C     PARAMETER definitions and COMMON block for CUTEr interface
+C     PARAMETER definitions and COMMON block for CUTEst interface
 C
 
 CB    CUTE_NMAX       maximal number of variables
 CB    CUTE_MMAX       maximal number of constraints
 CB    CUTE_NZMAX      maximal number of nonzero elements
-CB    CUTE_NOLB       constant of CUTEr to indicate -inf as lower bound
-CB    CUTE_NOUB       constant of CUTEr to indicate +inf as upper bound
+CB    CUTE_NOLB       constant of CUTEst to indicate -inf as lower bound
+CB    CUTE_NOUB       constant of CUTEst to indicate +inf as upper bound
 
       INTEGER CUTE_NMAX, CUTE_MMAX, CUTE_NZMAX
 CTOY  PARAMETER( CUTE_NMAX = 1000,  CUTE_MMAX = 1000  )
@@ -1608,8 +1608,8 @@ CCUS  PARAMETER( CUTE_NZMAX = 10000000 )
       DOUBLE PRECISION CUTE_NOLB, CUTE_NOUB
       PARAMETER( CUTE_NOLB = -1.0D+20, CUTE_NOUB =  1.0D+20 )
 
-CB    CUTE_N          number of variables in CUTEr problem
-CB    CUTE_M          number of constraints in CUTEr problem
+CB    CUTE_N          number of variables in CUTEst problem
+CB    CUTE_M          number of constraints in CUTEst problem
 CB    CUTE_NIQ        number of inequality constraints
 CB    CUTE_NEQ        number of equality constraints
 CB    CUTE_IIQ        indices of inequality constraints
@@ -1621,7 +1621,7 @@ CB
 CB    Structure of reformulation:
 CB
 CB    X (variables after reformulation) has a first entries all variables
-CB    from original CUTEr problem, followed by the slack variables for the
+CB    from original CUTEst problem, followed by the slack variables for the
 CB    inequality constraints.
 
       integer CUTE_N, CUTE_M, CUTE_NIQ, CUTE_NEQ

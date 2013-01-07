@@ -1,6 +1,6 @@
 
 /* ====================================================
- * CUTEr interface for LOQO          October 22nd, 2003
+ * CUTEst interface for LOQO          October 22nd, 2003
  *
  * Originally written by Andreas Wachter, IBM TJ Watson
  * Cosmetically rearranged by   D. Orban,  Northwestern
@@ -94,12 +94,12 @@ static int spec = 0;
 
     typedef struct {
 	int i, j, pos;
-    } CUTErentry;
+    } CUTEstentry;
 
-    integer CUTEr_nvar;        /* number of variables */
-    integer CUTEr_ncon;        /* number of constraints */
-    integer CUTEr_nnzj;        /* number of nonzeros in Jacobian */
-    integer CUTEr_nnzh;        /* number of nonzeros in upper triangular part of Hessian
+    integer CUTEst_nvar;        /* number of variables */
+    integer CUTEst_ncon;        /* number of constraints */
+    integer CUTEst_nnzj;        /* number of nonzeros in Jacobian */
+    integer CUTEst_nnzh;        /* number of nonzeros in upper triangular part of Hessian
 				  of Lagrangian */
 
 /* Counters for number of function and derivative evaluations */
@@ -121,7 +121,7 @@ static int spec = 0;
 
     int main( void ) {
 	LOQO *lp;                  /* LOQO data structure */
-	char *fname = "OUTSDIF.d"; /* CUTEr data file */
+	char *fname = "OUTSDIF.d"; /* CUTEst data file */
 	integer funit = 42;        /* FORTRAN unit number for OUTSDIF.d */
 	integer iout = 6;          /* FORTRAN unit number for error output */
 	integer ierr;              /* Exit flag from OPEN and CLOSE */
@@ -152,19 +152,19 @@ static int spec = 0;
 	CDIMEN( &funit, &CUTEr_nvar, &CUTEr_ncon );
 
 	/* Reserve memory for variables, bounds, and multipliers */
-	MALLOC( x,      CUTEr_nvar, doublereal );
-	MALLOC( bl,     CUTEr_nvar, doublereal );
-	MALLOC( bu,     CUTEr_nvar, doublereal );
-	MALLOC( equatn, CUTEr_ncon+1, logical    );
-	MALLOC( linear, CUTEr_ncon+1, logical    );
-	MALLOC( v,      CUTEr_ncon+1, doublereal );
-	MALLOC( cl,     CUTEr_ncon+1, doublereal );
-	MALLOC( cu,     CUTEr_ncon+1, doublereal );
+	MALLOC( x,      CUTEst_nvar, doublereal );
+	MALLOC( bl,     CUTEst_nvar, doublereal );
+	MALLOC( bu,     CUTEst_nvar, doublereal );
+	MALLOC( equatn, CUTEst_ncon+1, logical    );
+	MALLOC( linear, CUTEst_ncon+1, logical    );
+	MALLOC( v,      CUTEst_ncon+1, doublereal );
+	MALLOC( cl,     CUTEst_ncon+1, doublereal );
+	MALLOC( cu,     CUTEst_ncon+1, doublereal );
 
 	/* Seems to be needed for some Solaris C compilers */
-	nconp1 = CUTEr_ncon + 1;
+	nconp1 = CUTEst_ncon + 1;
 
-	/* Call initialization routine for CUTEr */
+	/* Call initialization routine for CUTEst */
 	CSETUP( &funit, &iout, &CUTEr_nvar, &CUTEr_ncon, x, bl, bu,
 		&CUTEr_nvar, equatn, linear, v, cl, cu, &nconp1,
 		&efirst, &lfirst, &nvfrst );
@@ -173,20 +173,20 @@ static int spec = 0;
 	FREE( equatn );
 	FREE( linear );
 
-	if( CUTEr_ncon > 0 )
+	if( CUTEst_ncon > 0 )
 	{
 	    /* Determine number of nonzeros in Jacobian */
-	    CDIMSJ( &CUTEr_nnzj );
-	    /* CUTEr_nnzj -= CUTEr_nvar; */   /* substract dense gradient of objective function */
+	    CUTEST_cdimsj( status, &CUTEr_nnzj );
+	    /* CUTEst_nnzj -= CUTEst_nvar; */   /* substract dense gradient of objective function */
 
 	    /* Get Jacobian at starting point */
-	    MALLOC( c, CUTEr_ncon, doublereal );
-	    MALLOC( J, CUTEr_nnzj, doublereal );
-	    MALLOC( indvar, CUTEr_nnzj, integer );
-	    MALLOC( indfun, CUTEr_nnzj, integer );
+	    MALLOC( c, CUTEst_ncon, doublereal );
+	    MALLOC( J, CUTEst_nnzj, doublereal );
+	    MALLOC( indvar, CUTEst_nnzj, integer );
+	    MALLOC( indfun, CUTEst_nnzj, integer );
 	    grad = TRUE_;
 	    /* Here, idummy will be set to nnzj again */
-	    CCFSG( &CUTEr_nvar, &CUTEr_ncon, x, &CUTEr_ncon, c, &idummy,
+	    CUTEST_ccfsg( status, &CUTEr_nvar, &CUTEr_ncon, x, &CUTEr_ncon, c, &idummy,
 		   &CUTEr_nnzj, J, indvar, indfun, &grad );
 	    FREE( c );
 	    FREE( J );
@@ -198,10 +198,10 @@ static int spec = 0;
 #endif
 
 	    /* Substract nonzero count of dense gradient of Lagrangian */
-	    CUTEr_nnzj -= CUTEr_nvar;
+	    CUTEst_nnzj -= CUTEst_nvar;
 
 	    /* Convert Jacobian sparsity structure */
-	    convert_sparse_format( 0, CUTEr_ncon, CUTEr_nvar, CUTEr_nnzj,
+	    convert_sparse_format( 0, CUTEst_ncon, CUTEst_nvar, CUTEst_nnzj,
 				   indfun, indvar, &i, &iA,
 				   &kA, &Acuter2loqo );
 #ifdef DEBUG
@@ -213,7 +213,7 @@ static int spec = 0;
 
 	    /* LOQO's congrad function also requires the mapping for the 
 	       transpose of the Jacobian */
-	    convert_sparse_format( 0, CUTEr_nvar, CUTEr_ncon, CUTEr_nnzj,
+	    convert_sparse_format( 0, CUTEst_nvar, CUTEst_ncon, CUTEst_nnzj,
 				   indvar, indfun, &i, &iAt,
 				   &kAt, &Atcuter2loqo );
 #ifdef DEBUG
@@ -230,22 +230,22 @@ static int spec = 0;
 	}
 	else
 	{
-	    CUTEr_nnzj = 0;
-	    CALLOC( kA, CUTEr_nvar+1, int );
+	    CUTEst_nnzj = 0;
+	    CALLOC( kA, CUTEst_nvar+1, int );
 	}
 
 	/* Determine number of nonzeros in Hessian of Lagrangian */
 	CDIMSH( &CUTEr_nnzh );
 
-	if( CUTEr_nnzh > 0 )
+	if( CUTEst_nnzh > 0 )
 	{
 	    /* Get Hessian of Lagrangian at starting point */
-	    MALLOC( H, CUTEr_nnzh, doublereal );
-	    MALLOC( irnh, CUTEr_nnzh, integer );
-	    MALLOC( icnh, CUTEr_nnzh, integer );
-	    if( CUTEr_ncon == 0 ) idummy = CUTEr_nnzh; /* for unconstrained problems */
+	    MALLOC( H, CUTEst_nnzh, doublereal );
+	    MALLOC( irnh, CUTEst_nnzh, integer );
+	    MALLOC( icnh, CUTEst_nnzh, integer );
+	    if( CUTEst_ncon == 0 ) idummy = CUTEst_nnzh; /* for unconstrained problems */
 	    /* idummy will be set to nnzh again */
-	    CSH( &CUTEr_nvar, &CUTEr_ncon, x, &CUTEr_ncon,
+	    CUTEST_csh( status, &CUTEr_nvar, &CUTEr_ncon, x, &CUTEr_ncon,
 		 v, &idummy, &CUTEr_nnzh, H, irnh, icnh );
 	    FREE( H );
 
@@ -256,7 +256,7 @@ static int spec = 0;
 #endif
 
 	    /* Convert Hessian sparsity structure */
-	    convert_sparse_format( 1, CUTEr_nvar, CUTEr_nvar, CUTEr_nnzh,
+	    convert_sparse_format( 1, CUTEst_nvar, CUTEst_nvar, CUTEst_nnzh,
 				   irnh, icnh, &qnz, &iQ,
 				   &kQ, &Qcuter2loqo );
 #ifdef DEBUG
@@ -271,7 +271,7 @@ static int spec = 0;
 	}
 	else
 	{
-	    CALLOC( kQ, CUTEr_nvar+1, int );
+	    CALLOC( kQ, CUTEst_nvar+1, int );
 	}
 
 	/* now we can forget the initial multipliers */
@@ -281,11 +281,11 @@ static int spec = 0;
 	lp = openlp();
 
 	/* Problem size */
-	lp->n   = CUTEr_nvar;
-	lp->m   = CUTEr_ncon;
+	lp->n   = CUTEst_nvar;
+	lp->m   = CUTEst_ncon;
 
-	CALLOC( lp->A, CUTEr_nnzj, double );
-	lp->nz = CUTEr_nnzj;
+	CALLOC( lp->A, CUTEst_nnzj, double );
+	lp->nz = CUTEst_nnzj;
 	lp->iA = iA;
 	lp->kA = kA;
 
@@ -296,8 +296,8 @@ static int spec = 0;
 	lp->kQ  = kQ;
 
 	/* Bounds on variables */
-	MALLOC( lp->l, CUTEr_nvar, double );
-	MALLOC( lp->u, CUTEr_nvar, double );
+	MALLOC( lp->l, CUTEst_nvar, double );
+	MALLOC( lp->u, CUTEst_nvar, double );
 	for(i=0;i<CUTEr_nvar;i++)
 	{
 	    if( bl[i] <= -CUTE_INF )
@@ -312,9 +312,9 @@ static int spec = 0;
 	}
 
 	/* Bounds for the constraints */
-	MALLOC( lp->b,  CUTEr_ncon, double );
-	MALLOC( lp->r,  CUTEr_ncon, double );
-	MALLOC( cscale, CUTEr_ncon, double );
+	MALLOC( lp->b,  CUTEst_ncon, double );
+	MALLOC( lp->r,  CUTEst_ncon, double );
+	MALLOC( cscale, CUTEst_ncon, double );
 	for( i=0; i<CUTEr_ncon; i++)
 	{
 	    if( cl[i] <= -CUTE_INF ) /* Scale the constraint by -1 */
@@ -341,7 +341,7 @@ static int spec = 0;
 #endif
 
 	/* Space for the objective function gradient */
-	MALLOC( lp->c, CUTEr_nvar, double );
+	MALLOC( lp->c, CUTEst_nvar, double );
 
 	/* Read algorithmic parameters from spec file */
 	bad_opns = rd_specs( "LOQO.SPC" );
@@ -368,8 +368,8 @@ static int spec = 0;
 
 	/* Get problem name */
 	MALLOC( pname, FSTRING_LEN+1, char );
-	MALLOC( vnames, CUTEr_nvar*FSTRING_LEN, char );
-	MALLOC( gnames, CUTEr_ncon*FSTRING_LEN, char );
+	MALLOC( vnames, CUTEst_nvar*FSTRING_LEN, char );
+	MALLOC( gnames, CUTEst_ncon*FSTRING_LEN, char );
 	CNAMES( &CUTEr_nvar, &CUTEr_ncon, pname, vnames, gnames );
 
 	FREE( vnames );
@@ -381,7 +381,7 @@ static int spec = 0;
 	}
 
 	/* Compute final value of objective function and constraint violation */
-	MALLOC( c, CUTEr_ncon, doublereal );
+	MALLOC( c, CUTEst_ncon, doublereal );
 	CFN( &CUTEr_nvar, &CUTEr_ncon, lp->x, &f, &CUTEr_ncon, c );
 	cmax = 0.;
 	for( i=0; i<CUTEr_ncon; i++)
@@ -411,14 +411,14 @@ static int spec = 0;
 	printf( "# Eval J(x) \t%-6d\n", count_a );
 	printf( "# Eval H(x) \t%-6d\n", count_h );
 										
-	/* Get CUTEr statistics */
+	/* Get CUTEst statistics */
 	CREPRT( calls, cpu );
 
-	printf("\n\n ************************ CUTEr statistics ************************\n\n");
+	printf("\n\n ************************ CUTEst statistics ************************\n\n");
 	printf(" Code used               : LOQO\n");
 	printf(" Problem                 : %-s\n", pname);
-	printf(" # variables             = %-10d\n", CUTEr_nvar);
-	printf(" # constraints           = %-10d\n", CUTEr_ncon);
+	printf(" # variables             = %-10d\n", CUTEst_nvar);
+	printf(" # constraints           = %-10d\n", CUTEst_ncon);
 	printf(" # objective functions   = %-15.7g\n", calls[0]);
 	printf(" # objective gradients   = %-15.7g\n", calls[1]);
 	printf(" # objective Hessians    = %-15.7g\n", calls[2]);
@@ -494,13 +494,13 @@ static int spec = 0;
 
 	count_h++;
 
-	MALLOC( v, CUTEr_ncon, doublereal );
-	MALLOC( h, CUTEr_nnzh, doublereal );
-	MALLOC( irnh, CUTEr_nnzh, integer );
-	MALLOC( icnh, CUTEr_nnzh, integer );
+	MALLOC( v, CUTEst_ncon, doublereal );
+	MALLOC( h, CUTEst_nnzh, doublereal );
+	MALLOC( irnh, CUTEst_nnzh, integer );
+	MALLOC( icnh, CUTEst_nnzh, integer );
 
 	/* Rescale the multipliers according to cscale - also, note that LOQO
-	   uses '-' in the definition of the Lagrangian while CUTEr uses '+' */
+	   uses '-' in the definition of the Lagrangian while CUTEst uses '+' */
 	for( i=0; i<CUTEr_ncon; i++ )
 	    v[i] = -1.*cscale[i]*y[i];
 
@@ -555,10 +555,10 @@ static int spec = 0;
 
 	count_a++;
 
-	MALLOC( c, CUTEr_ncon, doublereal );
-	MALLOC( cjac, CUTEr_nnzj, doublereal );
-	MALLOC( indvar, CUTEr_nnzj, integer );
-	MALLOC( indfun, CUTEr_nnzj, integer );
+	MALLOC( c, CUTEst_ncon, doublereal );
+	MALLOC( cjac, CUTEst_nnzj, doublereal );
+	MALLOC( indvar, CUTEst_nnzj, integer );
+	MALLOC( indfun, CUTEst_nnzj, integer );
 
 	CCFSG( &CUTEr_nvar, &CUTEr_ncon, x, &CUTEr_ncon,
 	       c, &idummy, &CUTEr_nnzj, cjac, indvar, indfun, &grad );
@@ -628,7 +628,7 @@ static int spec = 0;
 	int i, j, icuter;
 	CUTErentry *A;
 
-	MALLOC(A, 2*nnz_in, CUTErentry);   /* we are generous... */
+	MALLOC(A, 2*nnz_in, CUTEstentry);   /* we are generous... */
 
 	/* copy data to sort array */
 	*nnz_out = 0;

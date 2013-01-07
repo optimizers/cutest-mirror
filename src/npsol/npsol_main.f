@@ -2,7 +2,7 @@ C     ( Last modified on 23 Dec 2000 at 22:01:38 )
 C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 C     File npsma.f
 C
-C     Driver for running NPSOL Version 4.06 on CUTEr problems.
+C     Driver for running NPSOL Version 4.06 on CUTEst problems.
 C
 C     May 1993. Peihuang Chen
 C     modified September 1993. Ingrid Bongartz
@@ -109,7 +109,7 @@ C
 C    call to CNAMES.
 C    This fix avoids zero-length array difficulties on the VAX.
       MM = MAX( M, 1 )
-      CALL CNAMES(N, MM, PNAME, VNAME, CNAME)
+      CALL CUTEST_cnames( status,N, MM, PNAME, VNAME, CNAME)
       WRITE ( IOUT, 2080 )  PNAME, N, NCLIN, NCNLN
       IF ( DEBUG ) THEN
          WRITE( IOUT, 2030 ) ( I, X( I ), BLOWER( I ),
@@ -157,7 +157,7 @@ C
      *             INFORM, ITER, ISTATE,
      *             C, CJAC, CLAMDA, F, G, R, X,
      *             IWORK, LIWORK, WORK, LWORK )
-      CALL CREPRT( CALLS, CPU )
+      CALL CUTEST_creport( status, CALLS, CPU )
 C
 C  Print messages about abnormal NPSOL inform codes.
 C
@@ -195,7 +195,7 @@ C
 C
 C  Non-executable statements.
 C
- 2000 FORMAT( /, 24('*'), ' CUTEr statistics ', 24('*') //
+ 2000 FORMAT( /, 24('*'), ' CUTEst statistics ', 24('*') //
      *    ,' Code used               :  NPSOL',    /
      *    ,' Problem                 :  ', A10,    /
      *    ,' # variables             =      ', I10 /
@@ -384,7 +384,7 @@ C
       EFIRST = .FALSE.
       LFIRST = .FALSE.
       NVFRST = .FALSE.
-      CALL CSETUP ( INPUT , IOUT  , N , M , X , BL , BU , NMAX,
+      CALL CUTEST_csetup( status, INPUT , IOUT  , N , M , X , BL , BU , NMAX,
      *              EQUATN, LINEAR, V , CL , CU , MMAX,
      *              EFIRST, LFIRST, NVFRST )
       CLOSE( INPUT )
@@ -564,7 +564,7 @@ C
       ELSE
          GRAD = .TRUE.
       END IF
-      CALL COFG ( N, X, F, G, GRAD )
+      CALL CUTEST_cofg( status, N, X, F, G, GRAD )
 C    gradients are used if requested by setting the gradient to
 C    appropriate NPSOL values.
       IF ( GRAD .AND. FDGRAD ) THEN
@@ -595,7 +595,7 @@ C
       ELSE
          GRAD = .TRUE.
       END IF
-      CALL CCFG ( N, NCNLN, X, LDCJ, C, .FALSE., LDCJ, N, CJAC, GRAD )
+      CALL CUTEST_ccfg( status, N, NCNLN, X, LDCJ, C, .FALSE., LDCJ, N, CJAC, GRAD )
 C    gradients are used if requested by setting the Jacobian to
 C    appropriate NPSOL values.
       IF ( GRAD .AND. FDGRAD ) THEN

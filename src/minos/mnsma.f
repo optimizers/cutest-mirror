@@ -110,7 +110,7 @@ C
      *             HS    , X     , V     , RC    ,
      *             INFORM, MINCOR, NS    , NINF  , SINF  ,
      *             OBJ   , Z     , NWCORE )
-      CALL CREPRT( CALLS, CPU )
+      CALL CUTEST_creport( status, CALLS, CPU )
 C
 C  Try to handle abnormal MINOS inform codes gracefully.
 C
@@ -153,7 +153,7 @@ C
 C  Non-executable statements.
 C
  2010 FORMAT( /, ' ** PROGRAM MINOSMA: No Specs file found.' )
- 2020 FORMAT( /, 24('*'), ' CUTEr statistics ', 24('*') //
+ 2020 FORMAT( /, 24('*'), ' CUTEst statistics ', 24('*') //
      *    ,' Code used               :  MINOS',    /
      *    ,' Problem                 :  ', A10,    /
      *    ,' # variables             =      ', I10 /
@@ -353,11 +353,11 @@ C
       EFIRST = .FALSE.
       LFIRST = .FALSE.
       NVFRST = .TRUE.
-      CALL CSETUP( INPUT , IOUT  , N , M , X , BL , BU , NMAX,
+      CALL CUTEST_csetup( status, INPUT , IOUT  , N , M , X , BL , BU , NMAX,
      *             EQUATN, LINEAR, V , BL( NMAX + 1 ), BU( NMAX + 1 ),
      *             MMAX  , EFIRST, LFIRST, NVFRST)
       CLOSE( INPUT )
-      CALL CNAMES( N, M, PNAME, VNAME, CNAME )
+      CALL CUTEST_cnames( status, N, M, PNAME, VNAME, CNAME )
       NNOBJ = NNOV
       NNJAC = NNJV
 C
@@ -488,7 +488,7 @@ C
 C
 C  Use CGR to find entries in dense Jacobian.
 C
-         CALL CGR ( N , M , X       , .FALSE. , M , V , 
+         CALL CUTEST_cgr( status, N , M , X       , .FALSE. , M , V , 
      *              CWK   , .FALSE. , M  , N  , AA )
 C
 C  Set KA( J ) and HA( J ).
@@ -537,7 +537,7 @@ C  Use CSGR to find entries in sparse Jacobian.
 C  Since CSGR and MINOS use different sparse formats,
 C  store Jacobian temporarily in CWK.
 C
-         CALL CSGR( N   , M      , .FALSE. , M , V , X , NE , NEMAX ,
+         CALL CUTEST_csgr( status, N   , M      , .FALSE. , M , V , X , NE , NEMAX ,
      *              CWK , ICWK( INDV + 1 ) , ICWK( INDF + 1 ) )
          K = NE
 C
@@ -709,7 +709,7 @@ C
       ELSE
          GRAD = .TRUE.
       END IF
-      CALL COFG( N, X, F, G, GRAD )
+      CALL CUTEST_cofg( status, N, X, F, G, GRAD )
 C
       RETURN
       END
@@ -764,12 +764,12 @@ C
 C
 C  Jacobian is stored in dense format.
 C
-         CALL CCFG ( N, M, X, M, F, .FALSE., M, N, G, GRAD )
+         CALL CUTEST_ccfg( status, N, M, X, M, F, .FALSE., M, N, G, GRAD )
       ELSE
 C
 C  Jacobian is stored in sparse format.
 C
-         CALL CCFSG( N, M, X, M, F, NNZJ, NJAC, CWK, 
+         CALL CUTEST_ccfsg( status, N, M, X, M, F, NNZJ, NJAC, CWK, 
      *               ICWK( INDV + 1 ), ICWK( INDF + 1 ), GRAD )
          IF ( GRAD ) THEN
 C

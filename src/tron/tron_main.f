@@ -7,15 +7,15 @@ C  Nick Gould, for CGT Productions.
 C  September 2004.
 C  Revised for CUTEst, January 2013
 C
-      INTEGER          NMAX  , LH, I, IOUT, N , INPUT
+      INTEGER          NMAX  , LH, I, out, N , INPUT
      *                 LP, MP, LW, J, MAXIT   , L , NA   , P,
-     *                 IFLAG , INSPEC, PMAX, NNZH, NNZH2
+     *                 IFLAG , INSPEC, PMAX, NNZH, NNZH2,
      *                 status, ISAVE( 3 )
       INTEGER :: io_buffer = 11
       DOUBLE PRECISION F, EPS, GTOL  , GNORM , ZERO, ONE, DSAVE( 3 ),
      *                 FRTOL, FATOL, FMIN, CGTOL, DELTA, GNORM0
       CHARACTER ( LEN = 60 ) :: TASK
-      PARAMETER      ( IOUT  = 6 )
+      PARAMETER      ( out  = 6 )
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: HPTR, HROW, LPTR, LROW,
      *                 BPTR, BROW, IFREE, IWA
       DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: X, XL, XU, G, 
@@ -72,7 +72,7 @@ C
 C
 C  Set up SIF data.
 C
-      CALL CUTEST_usetup( status, INPUT, IOUT, io_buffer, N, X, XL, XU )
+      CALL CUTEST_usetup( status, INPUT, out, io_buffer, N, X, XL, XU )
       IF ( status /= 0 ) GO TO 910
 C
 C  Check to see if there is sufficient room for the matrices
@@ -87,13 +87,13 @@ C
 C
 C  Obtain variable names.
 C
-      CALL UNAMES( status, N, PNAME, XNAMES )
+      CALL CUTEST_unames( status, N, PNAME, XNAMES )
       IF ( status /= 0 ) GO TO 910
 C
 C  Set up algorithmic input data.
 C
-      LP     = IOUT
-      MP     = IOUT
+      LP     = out
+      MP     = out
       IFLAG  = 0
 C
 C  Optimization loo
@@ -179,21 +179,22 @@ C          IF ( GNORM .LE. GTOL * GNORM0 ) THEN
 C
 C  Terminal exit.
 C
-      CALL UREPRT( status, CALLS, CPU )
+      CALL CUTEST_ureport( status, CALLS, CPU )
       IF ( status /= 0 ) GO TO 910
       GNORM = DGPNRM2( N, X, XL, XU, G )
-      WRITE ( IOUT, 2010 ) F, GNORM
+      WRITE ( out, 2010 ) F, GNORM
       DO 120 I = 1, N
-         WRITE( IOUT, 2020 ) XNAMES( I ), XL( I ), X( I ), XU( I ), 
+         WRITE( out, 2020 ) XNAMES( I ), XL( I ), X( I ), XU( I ), 
      *                       G( I )
   120 CONTINUE
-      WRITE ( IOUT, 2000 ) PNAME, N, INT( CALLS(1) ), INT( CALLS(2) ),
+      WRITE ( out, 2000 ) PNAME, N, INT( CALLS(1) ), INT( CALLS(2) ),
      *                     IFLAG, F, CPU(1), CPU(2) 
       CLOSE( INPUT  )
-      CALL CUTEST_uterminate( status )      STOP
+      CALL CUTEST_uterminate( status )
+      STOP
 
   910 CONTINUE
-      WRITE( iout, "( ' CUTEst error, status = ', i0, ', stopping' )") 
+      WRITE( out, "( ' CUTEst error, status = ', i0, ', stopping' )") 
      *   status
       STOP
 
@@ -226,8 +227,7 @@ C
       INTEGER NC, NNZ
       INTEGER IRN( NNZ  ), JCN( NNZ )
       INTEGER IW( NC + 1 ), IP( NC + 1 )
-CS    REAL              A( NNZ )
-CD    DOUBLE PRECISION  A( NNZ )
+      DOUBLE PRECISION  A( NNZ )
 
 C  Sort a sparse matrix from arbitrary order to column order
 
@@ -235,8 +235,7 @@ C  Nick Gould
 C  7th November, 1990
 
       INTEGER I, J, K, L, IC, NCP1, ITEMP, JTEMP,  LOCAT
-CS    REAL             ANEXT , ATEMP
-CD    DOUBLE PRECISION ANEXT , ATEMP
+      DOUBLE PRECISION ANEXT , ATEMP
 
 C  Initialize the workspace as zero
 

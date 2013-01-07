@@ -1,8 +1,8 @@
 !     ( Last modified on Thu Aug 11 15:46:30 EDT 2005 )
 Program STATSMA
   !
-  Use CUTEr_precis
-  Use CUTEr_interfaces
+  Use CUTEst_precis
+  Use CUTEst_interfaces
   !
   !  Statistics-collecting package for gathering information on
   !  variables and constraints from SIF problems.
@@ -12,26 +12,26 @@ Program STATSMA
   Implicit None
 
   ! Information pertaining to variables
-  Type :: CUTEr_var_type
+  Type :: CUTEst_var_type
      Integer :: nvar
      Integer :: nfixed, nbelow, nabove, n2sided, nfree, nbnds
-  End Type CUTEr_var_type
+  End Type CUTEst_var_type
 
   ! Information pertaining to constraints
-  Type :: CUTEr_con_type
+  Type :: CUTEst_con_type
      Integer :: ncon
      Integer :: nlle, nlge, nlrange, nleq, nlin
      Integer :: nnlle, nnlge, nnlrange, nnleq, nnlin
-  End Type CUTEr_con_type
+  End Type CUTEst_con_type
 
-  Type :: CUTEr_db_type
+  Type :: CUTEst_db_type
      Integer :: nfr, nfx, n1s, n2s  ! # free, fixed, 1-sided, 2-sided bounds
      Integer :: m1sl, m2sl, meql ! # 1 and 2-sided ineq, equalities (linear)
      Integer :: m1sg, m2sg, meqg ! # 1 and 2-sided ineq, equalities (general)
      Character( Len = 86 ) :: var_str
      Character( Len = 76 ) :: lcon_str, gcon_str
      Character( Len = 99 ) :: classf_db_str
-  End Type CUTEr_db_type
+  End Type CUTEst_db_type
 
   ! Dynamic allocation flag
   Integer :: alloc_stat
@@ -47,9 +47,9 @@ Program STATSMA
   Logical, Dimension( : ), Allocatable :: equatn, linear
   Logical :: constrained
   !
-  Type( CUTEr_var_type ) :: vars
-  Type( CUTEr_con_type ) :: cons
-  Type( CUTEr_db_type  ) :: db
+  Type( CUTEst_var_type ) :: vars
+  Type( CUTEst_con_type ) :: cons
+  Type( CUTEst_db_type  ) :: db
   !
   !  Open the relevant problem file.
   !
@@ -58,7 +58,7 @@ Program STATSMA
   !
   !  Get problem dimensions and determine which tools to use
   !
-  Call CDIMEN( input, vars%nvar, cons%ncon )
+  Call CUTEST_cdimen( status, input, vars%nvar, cons%ncon )
   If( cons%ncon < 0 ) Then
      Close( input )
      Write( iout, '(A)' ) 'Error reading OUTSDIF.d'
@@ -118,7 +118,7 @@ Program STATSMA
      !
      !  If all ok, initialize problem data
      !
-     Call CSETUP( input, iout, vars%nvar, cons%ncon,             &
+     Call CUTEST_csetup( status, input, iout, vars%nvar, cons%ncon,             &
                   x, bl, bu, vars%nvar, equatn, linear,          &
                   v, cl, cu, cons%ncon+1, efirst, lfirst, nvfrst )
   Else
@@ -132,12 +132,12 @@ Program STATSMA
         Write( iout, 3000 ) 'LINEAR', 1
         Goto 900
      End If
-     Call USETUP( input, iout, vars%nvar, x, bl, bu, vars%nvar )
+     Call CUTEST_usetup( status, input, iout, vars%nvar, x, bl, bu, vars%nvar )
   Endif
   !
   !  Obtain problem name.
   !
-  Call PBNAME( vars%nvar, pname )
+  Call CUTEST_probname( status, vars%nvar, pname )
   !
   !  Initialize data on variables
   !

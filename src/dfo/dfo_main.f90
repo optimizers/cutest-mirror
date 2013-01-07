@@ -1,8 +1,9 @@
-!
+!     ( Last modified on 3 Jan 2013 at 14:40:00 )
 !  Main CUTEst driver for DFO 2.0.0.
 !  Original version by K. C. Dang, 2008
 !  Fortran 90 version by D. Orban, 2009
-!
+!  Revised for CUTEst, Nick Gould, January 2013
+
 Program DFO_main
   Use CUTEst_precis
   Use CUTEst_interfaces
@@ -10,7 +11,9 @@ Program DFO_main
   !
   !  Variable declarations
   !
-  Integer :: N, M, NCLIN, NCNLN, NLIN, NEQ, NBNDS
+  Integer :: N, M, NCLIN, NCNLN, NLIN, NEQ, NBNDS, status
+  INTEGER :: io_buffer = 11
+  Integer, Parameter :: INPUT = 55, INDR = 46, IOUT = 6
   Real(Kind = wp), Dimension(:), Allocatable :: X0, BL, BU, V, CL, CU
   Logical, Dimension(:), Allocatable :: EQUATN, LINEAR
   Logical :: EFIRST, LFIRST, NVFRST, IFINIV, CONSTRAINED
@@ -22,8 +25,8 @@ Program DFO_main
   Integer :: NX, MAXIT, MAXNF,STPCRTR, IPRINT, SCALE
   !      LOGICAL IFINTV
   Real(Kind = wp) :: DELMIN, DELTA, CNSTOL, PP, STPTHR
-  !     - Variables for CUTEr report
-  Real :: CPU(2), CALLS(7)
+  !     - Variables for CUTEst report
+  Real(Kind = wp) :: CPU(2), CALLS(7)
   !     - Variables for working space
   Integer :: LDA
   Integer :: IT, NF, INFO
@@ -39,7 +42,8 @@ Program DFO_main
   !  Allocate working vectors.
   !
   CONSTRAINED = .False.
-  Call CDIMEN(INPUT, N, M)
+  Call CUTEST_cdimen( status,INPUT, N, M)
+  IF ( status /= 0 ) GO TO 910
   If( M > 0 ) Then
      CONSTRAINED = .True.
   Else If( M < 0 ) Then
@@ -50,25 +54,30 @@ Program DFO_main
   !  Set up SIF data.
   !
   EFIRST = .False. ; LFIRST = .True. ; NVFRST = .False.
-  Allocate(X0(N)) ; Allocate(BL(N)) ; Allocate(BU(N))
+  Allocate(X0(N), BL(N), BU(N),  STAT = status )
+  IF ( status /= 0 ) GO TO 990
   If( CONSTRAINED ) Then
-     Allocate(C(M))
-     Allocate(V(M), CL(M), CU(M), EQUATN(M), LINEAR(M) )
-     Call CSETUP( INPUT, IOUT, N, M, X0, BL, BU, N, EQUATN, &
-          LINEAR, V, CL, CU, M, EFIRST, LFIRST, NVFRST )
+     Allocate(C(M), V(M), CL(M), CU(M), EQUATN(M), LINEAR(M), STAT = status )
+     IF ( status /= 0 ) GO TO 990
+     Call CUTEST_csetup( status, INPUT, IOUT, io_buffer,N, M, X0, BL, BU,      &
+                         V, CL, CU, EQUATN, LINEAR, EFIRST, LFIRST, NVFRST )
   Else
-     Call USETUP( INPUT, IOUT, N, X0, BL, BU, N )
+     Call CUTEST_usetup( status, INPUT, IOUT, io_buffer, N, X0, BL, BU )
   Endif
+  IF ( status /= 0 ) GO TO 910
   !
   !  Obtain problem, variables and constraint names.
   !
-  Allocate(VNAMES(N))
+  Allocate(VNAMES(N),  STAT = status)
+  IF ( status /= 0 ) GO TO 990
   If( CONSTRAINED ) Then
-     Allocate(GNAMES(M))
-    Call CNAMES(N, M, PNAME, VNAMES, GNAMES)
+    Allocate(GNAMES(M),  STAT = status)
+    IF ( status /= 0 ) GO TO 990
+    Call CUTEST_cnames( status,N, M, PNAME, VNAMES, GNAMES)
   Else
-     Call UNAMES(N, PNAME, VNAMES)
+     Call CUTEST_unames( status,N, PNAME, VNAMES)
   Endif
+  IF ( status /= 0 ) GO TO 910
   !
   !  Obtain info on the problem
   !
@@ -116,10 +125,11 @@ Program DFO_main
   !  Evaluate initial objective and constraint values
   !
   If( CONSTRAINED ) Then
-     Call CFN(N, M, X0, F0, M, C)
+     Call CUTEST_cfn( status,N, M, X0, F0, M, C)
   Else
-     Call UFN(N, X0, F0)
+     Call CUTEST_ufn( status,N, X0, F0)
   Endif
+  IF ( status /= 0 ) GO TO 910
   If( NX == 1 ) Then
      Call DCOPY(N, X0, 1, X(1:N), 1)
      FX(1) = F0
@@ -127,11 +137,13 @@ Program DFO_main
   Else
      If( CONSTRAINED ) Then
         Do I = 1, NX
-           Call CFN(N, M, X((I-1)*N + 1:I*N), FX(I), M, CONX((I-1)*M + 1:I*M))
+           Call CUTEST_cfn( status,N, M, X((I-1)*N + 1:I*N), FX(I), M, CONX((I-1)*M + 1:I*M))
+           IF ( status /= 0 ) GO TO 910
         End Do
      Else
         Do I = 1, NX
-           Call UFN(N, X((I-1)*N + 1:I*N), FX(I))
+           Call CUTEST_ufn( status,N, X((I-1)*N + 1:I*N), FX(I))
+           IF ( status /= 0 ) GO TO 910
         End Do
      Endif
   Endif
@@ -144,7 +156,8 @@ Program DFO_main
   !
   !  Write out statistics
   !
-  Call CREPRT(CALLS, CPU)
+  Call CUTEST_creport( status,CALLS, CPU)
+  IF ( status /= 0 ) GO TO 910
   Write(IOUT, 2000) PNAME, N, M, NLIN, NEQ, M-NEQ, NBNDS, CALLS(1), CALLS(5)
   Write(IOUT, 2001) INFO, FX(1), CPU(1), CPU(2)
   !
@@ -178,11 +191,21 @@ Program DFO_main
   Deallocate(X)
   Deallocate(FX)
   Deallocate(ALIN)
+  STOP
+
+  910 CONTINUE
+      WRITE( 6, "( ' CUTEst error, status = ', i0, ', stopping' )") status
+      STOP
+
+  990 CONTINUE
+      WRITE( out, "( ' Allocation error, status = ', I0 )" ) status
+      STOP
+
   !
   !  Non-executable statements
   !
 1000 Format(4(I10, /), 5(D10.3, /), 1(I10, /), I10)
-2000 Format( /, 24('*'), ' CUTEr statistics ', 24('*') // &
+2000 Format( /, 24('*'), ' CUTEst statistics ', 24('*') // &
           ,' Code used                :  DFO',    / &
           ,' Problem                  :  ', A10,    / &
           ,' # variables              =      ', I10 / &
@@ -221,7 +244,7 @@ Subroutine FUN(N, M, X, F, C, IFERR)
   !
   !  Evaluate objective and constraint values at X
   !
-  Use CUTEr_precis
+  Use CUTEst_precis
   Implicit None
 
   Integer, Intent(In) :: N, M
@@ -231,25 +254,30 @@ Subroutine FUN(N, M, X, F, C, IFERR)
   Logical, Intent(Out) :: IFERR
   !Intrinsic :: ISNAN           ! Only in GFortran >= 4.3
 
-  Integer :: i
+  Integer :: i, status
 
   IFERR = .False.
 
   If( M > 0 ) Then
-     Call CFN(N,M,X,F,M,C)
+     Call CUTEST_cfn( status,N,M,X,F,M,C)
   Else
-     Call UFN(N,X,F)
+     Call CUTEST_ufn( status,N,X,F)
   Endif
+  IF ( status /= 0 ) THEN
+    Write(6,*) 'CUTEst : evaluation failed with status = ', status
+    IFERR = .True.
+    GO TO 3000
+  END IF
   If( F /= F ) Then             ! If( ISNAN(F) ) Then
      IFERR = .True.
-     Write(6,*) 'CUTEr : Function value is NaN!'
+     Write(6,*) 'CUTEst : Function value is NaN!'
      Write(6,*) 'X = ', X
      Goto 3000
   Endif
   Do i = 1, M
       If( C(i) /= C(i) ) Then   ! If( ISNAN(C(i)) ) Then
         IFERR = .True.
-        Write(6,*) 'CUTEr : Constraint value is NaN!'
+        Write(6,*) 'CUTEst : Constraint value is NaN!'
         Write(6,*) 'X = ', X
         Goto 3000
      Endif
@@ -264,7 +292,7 @@ End Subroutine FUN
     !
     ! Input/Output variables
     !
-    Use CUTEr_precis
+    Use CUTEst_precis
     Implicit None
     Integer, Intent( IN  ) :: N, M
     Integer, Intent( OUT ) :: NLIN, NEQ, NBNDS

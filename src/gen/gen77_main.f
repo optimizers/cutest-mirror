@@ -1,31 +1,25 @@
-C     ( Last modified on 23 Dec 2000 at 22:01:38 )
+C     ( Last modified on 3 Jan 2013 at 16:20:00 )
+
       PROGRAM GENMA
 C
 C  Generic package driver (example) for applying package GEN to problems
 C  from SIF files.
 C
-C  Ph. Toint, December 2000 / D. Orban, August 2002
+C  Ph. Toint, December 2000 / D. Orban, August 2002 / Nick Gould January 2013
 C
       IMPLICIT NONE
-      INTEGER           NMAX, MMAX
-CTOY  PARAMETER       ( NMAX =   10, MMAX = 10   )
-CMED  PARAMETER       ( NMAX =  100, MMAX = 100  )
-CBIG  PARAMETER       ( NMAX = 3500, MMAX = 3500 )
-CCUS  PARAMETER       ( NMAX =  200, MMAX = 200  )
-      INTEGER           INSPEC, INPUT, IOUT, N, M
-      PARAMETER       ( INSPEC = 46, INPUT = 47, IOUT = 6 )
-      INTEGER           NLIN, NEQ, NBNDS, EXITCODE
-CS    REAL              DUMMY
-CS    REAL              X(NMAX), BL(NMAX), BU(NMAX)
-CS    REAL              V(MMAX), CL(MMAX), CU(MMAX)
-      REAL              CPU( 2 ), CALLS( 7 )
-CD    DOUBLE PRECISION  DUMMY
-CD    DOUBLE PRECISION  X(NMAX), BL(NMAX), BU(NMAX)
-CD    DOUBLE PRECISION  V(MMAX), CL(MMAX), CU(MMAX)
-      CHARACTER*10      PNAME, VNAMES(NMAX), GNAMES(MMAX)
-      LOGICAL           EFIRST, LFIRST, NVFRST
-      LOGICAL           EQUATN(MMAX), LINEAR(MMAX)
-      LOGICAL           CONSTRAINED
+      INTEGER :: io_buffer = 11
+      INTEGER :: n, m, status
+      INTEGER, PARAMETER :: inspec = 46, input = 47, iout = 6
+      INTEGER :: nlin, neq, nbnds, exitcode
+      LOGICAL :: efirst, lfirst, nvfrst, constrained
+      CHARACTER ( LEN = 10 ) :: PNAME
+      DOUBLE PRECISION dummy, CPU( 2 ), CALLS( 7 )
+      DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: X, BL, BU
+      DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: V, CL, CU
+      CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : )  :: VNAMES
+      CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : )  :: GNAMES
+      LOGICAL, ALLOCATABLE, DIMENSION( : ) :: EQUATN, LINEAR
 C
 C  Open the Spec file for the method (typically called METHOD.SPC)
 C
@@ -34,65 +28,75 @@ C
 C  Open the relevant problem file.
 C
       OPEN ( INPUT, FILE = 'OUTSDIF.d', FORM = 'FORMATTED',
-     .       STATUS = 'OLD' )
+     *       STATUS = 'OLD' )
       REWIND INPUT
 C
 C  Get problem dimensions and determine which tools to use
 C
-      CALL CDIMEN( INPUT, N, M )
-      IF( M .EQ. 0 ) THEN
-         CONSTRAINED = .FALSE.
-      ELSE IF( M .GT. 0 ) THEN
-         CONSTRAINED = .TRUE.
+      CALL CUTEST_cdimen( status, input, n, m )
+      IF ( status /= 0 ) GO TO 910
+
+      ALLOCATE( X( n ), BL( n ), BU( n ), V( m ), CL( m ), 
+     *          CU( m ), EQUATN( m ), LINEAR( m ), VNAMES( n ), 
+     *          GNAMES( m ), STAT = status )
+      IF ( status /= 0 ) GO TO 990
+
+      IF ( m == 0 ) THEN
+        constrained = .FALSE.
+      ELSE IF ( m > 0 ) THEN
+        constrained = .TRUE.
       ELSE
-         WRITE( 6, '(A)' ) 'Error reading OUTSDIF.d'
-         STOP
-      ENDIF
+        WRITE( 6, '(A)' ) 'Error reading OUTSDIF.d'
+        STOP
+      END IF
 C
 C  Set up parameters
 C
-      EFIRST = .TRUE.
-      LFIRST = .FALSE.
-      NVFRST = .FALSE.
+      efirst = .TRUE.
+      lfirst = .FALSE.
+      nvfrst = .FALSE.
 C
 C  Set up SIF data from the problem file
 C
-      IF( CONSTRAINED ) THEN
-         CALL CSETUP( INPUT, IOUT, N, M, X, BL, BU, NMAX, EQUATN,
-     .        LINEAR, V, CL, CU, MMAX, EFIRST, LFIRST, NVFRST )
+      IF ( constrained ) THEN
+        CALL CUTEST_csetup( status, input, iout, io_buffer, n, m, X, BL, 
+     *        BU, V, CL, CU, EQUATN, LINEAR, efirst, lfirst, nvfrst )
       ELSE
-         CALL USETUP( INPUT, IOUT, N, X, BL, BU, NMAX )
+        CALL CUTEST_usetup( status, input, iout, io_buffer, n, X, BL, 
+     *        BU )
       ENDIF
+      IF ( status /= 0 ) GO TO 910
 C
 C  Obtain problem/variables/constraints names.
 C
-      IF( CONSTRAINED ) THEN
-         CALL CNAMES( N, M, PNAME, VNAMES, GNAMES )
+      IF ( constrained ) THEN
+         CALL CUTEST_cnames( status, n, m, pname, VNAMES, GNAMES )
       ELSE
-         CALL UNAMES( N, PNAME, VNAMES )
+         CALL CUTEST_unames( status, n, pname, VNAMES )
       ENDIF
+      IF ( status /= 0 ) GO TO 910
 C
 C  Obtain info on the problem
 C
-      NLIN  = 0
-      NEQ   = 0
-      NBNDS = 0
-      IF( CONSTRAINED ) THEN
-         CALL GETINFO( N, M, BL, BU, EQUATN, LINEAR, NLIN, NEQ, NBNDS )
+      nlin  = 0
+      neq   = 0
+      nbnds = 0
+      IF ( constrained ) THEN
+         CALL GETINFO( n, m, BL, BU, EQUATN, LINEAR, nlin, neq, nbnds )
       ELSE
-         EQUATN( 1 ) = .FALSE.
-         LINEAR( 1 ) = .FALSE.
-         CALL GETINFO( N, 1, BL, BU, EQUATN, LINEAR, NLIN, NEQ, NBNDS )
+C         EQUATN( 1 ) = .FALSE.
+C         LINEAR( 1 ) = .FALSE.
+         CALL GETINFO( n, 0, BL, BU, EQUATN, LINEAR, nlin, neq, nbnds )
       ENDIF
 C
 C  Call the optimizer.
 C
-      CALL GEN( DUMMY )
-      EXITCODE = 0
+      CALL GEN( dummy )
+      exitcode = 0
 C
 C  Close the problem file
 C
-      CLOSE( INPUT  )
+      CLOSE( input  )
 C
 C  Write the standard statistics (of which some may be irrelevant)
 C
@@ -117,18 +121,29 @@ C  include repetitions for constraints having full ranges.
 C  (N, is the dimension of the problem, M is the number of constraints,
 C   DUMMY is the final value of the objective function)
 C
-      IF( CONSTRAINED ) THEN
-         CALL CREPRT( CALLS, CPU )      
+      IF ( constrained ) THEN
+        CALL CUTEST_creport( status, CALLS, CPU )      
       ELSE
-         CALL UREPRT( CALLS, CPU )
+        CALL CUTEST_ureport( status, CALLS, CPU )
       ENDIF
-      WRITE ( IOUT, 2000 ) PNAME, N, M, NLIN, NEQ, M-NEQ, NBNDS,
-     .     CALLS( 1 ), CALLS( 2 ), CALLS( 3 ), CALLS( 5 ), CALLS( 6 ),
-     .     CALLS( 7 )
-      WRITE ( IOUT, 2001 ) EXITCODE, DUMMY, CPU( 1 ), CPU( 2 ) 
+      IF ( status /= 0 ) GO TO 910
+      WRITE ( iout, 2000 ) pname, n, m, nlin, neq, m-neq, nbnds,
+     *     CALLS( 1 ), CALLS( 2 ), CALLS( 3 )
+      IF ( constrained ) WRITE( iout, 2010 ) 
+     *     CALLS( 5 ), CALLS( 6 ), CALLS( 7 )
+      WRITE ( iout, 2020 ) exitcode, dummy, CPU( 1 ), CPU( 2 ) 
 C
 C  Exit
 C
+      STOP
+
+  910 CONTINUE
+      WRITE( iout, "( ' CUTEst error, status = ', i0, ', stopping' )") 
+     *   status
+      STOP
+
+  990 CONTINUE
+      WRITE( iout, "( ' Allocation error, status = ', I0 )" ) status
       STOP
 C
 C  Non-executable statements.
@@ -140,8 +155,8 @@ C
 C  The only reason for breaking the format in two is for compilers
 C  which do not accept more than 19 continuation lines.
 C
- 2000 FORMAT( /, 24('*'), ' CUTEr statistics ', 24('*') //
-     *    ,' Code used                :  GEN',    /
+ 2000 FORMAT( /, 24('*'), ' CUTEst statistics ', 24('*') //
+     *    ,' Package used             :  GEN',    /
      *    ,' Variant                  :  name of a variant, if needed',/
      *    ,' Problem                  :  ', A10,    /
      *    ,' # variables              =      ', I10 /
@@ -152,11 +167,11 @@ C
      *    ,' # bounds                 =      ', I10 /
      *    ,' # objective functions    =        ', F8.2 /
      *    ,' # objective gradients    =        ', F8.2 / 
-     *    ,' # objective Hessians     =        ', F8.2 /
-     *    ,' # constraints functions  =        ', F8.2 /
+     *    ,' # objective Hessians     =        ', F8.2 )
+ 2010 FORMAT( ' # constraints functions  =        ', F8.2 /
      *    ,' # constraints gradients  =        ', F8.2 /
      *    ,' # constraints Hessians   =        ', F8.2 )
- 2001 FORMAT(
+ 2020 FORMAT(
      *     ' Exit code                =      ', I10 /
      *    ,' Final f                  = ', E15.7 /
      *    ,' Set up time              =      ', 0P, F10.2, ' seconds'/

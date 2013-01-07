@@ -1,6 +1,7 @@
-C     ( Last modified on 23 Dec 2000 at 22:01:38 )
-      PROGRAM LA04MA
-C
+C     ( Last modified on 6 Jan 2013 at 13:00:00 )
+
+      PROGRAM LA04_main
+
 C  --------------------------------------------------------------------
 C
 C  Solve the linear program
@@ -15,524 +16,569 @@ C  using the HSL code LA04.
 C
 C  Nick Gould.
 C  December 1991.
+C  Revised for CUTEst, January 2013
 C
 C  --------------------------------------------------------------------
-C
-      INTEGER          NMAX, MMAX, NPMMAX, NPLUS, N, M, INSPEC
-      INTEGER          INPUT, IOUT, I, ITERN, NTOTAL, OUTSOL, NV
-      INTEGER          NA, NS, NNZJ, IND, JOB, MAXIT, LIP
-      INTEGER          LV, LA, NT1, LWS, LIWS, II, NFREE, IORES
-      INTEGER          NBOTH, NNONEG, NLOWER, L, IR, IC, J, MM, IOUNIT
-      LOGICAL          WRITES, PNAMEE
-      CHARACTER * 5    STATE
-      CHARACTER * 10   PNAME
-      CHARACTER * 14   PNAMES
-CS    REAL             ONE, ZERO, BIGINF, VL, VU, VX, VM, OBJF
-CD    DOUBLE PRECISION ONE, ZERO, BIGINF, VL, VU, VX, VM, OBJF
-      PARAMETER      ( IOUT  = 6 )
-      PARAMETER      ( INPUT = 55, INSPEC = 56, OUTSOL = 57 )
-CTOY  PARAMETER      ( NMAX = 100, MMAX = 100 )
-CTOY  PARAMETER      ( LA = 10000, LWS = 10000, LIWS = 10000 )
-CMED  PARAMETER      ( NMAX = 1000, MMAX = 1000 )
-CMED  PARAMETER      ( LA = 100000, LWS = 100000, LIWS = 100000 )
-CBIG  PARAMETER      ( NMAX =50000, MMAX = 50000 )
-CBIG  PARAMETER      ( LA = 1000000, LWS = 2000000, LIWS = 3500000 )
-CCUS  PARAMETER      ( NMAX = 3000, MMAX = 3000 )
-CCUS  PARAMETER      ( LA = 200000, LWS = 150000, LIWS = 200000 )
-      PARAMETER      ( NPMMAX = NMAX + MMAX, NPLUS = NPMMAX + 1 )
-      INTEGER          IPERM( NMAX ), INVPRM( NMAX )
-      INTEGER          IX( MMAX ), JX( NMAX )
-      INTEGER          IWS( LIWS ), IRNA( LA ), IP( NPLUS )
-CS    REAL             A( LA ), BND( 2, NMAX )
-CS    REAL             X( NPMMAX ), X0( NMAX ), Z( NMAX ), CNTL( 15 )
-CS    REAL             BLOWER( NPMMAX ), BUPPER( NPMMAX ), WS( LWS )
-CS    REAL             C( NMAX ), B( MMAX ), G( NMAX ), RINFO( 40 )
-CD    DOUBLE PRECISION A( LA ), BND( 2, NMAX )
-CD    DOUBLE PRECISION X( NPMMAX ), X0( NMAX ), Z( NMAX ), CNTL( 15 )
-CD    DOUBLE PRECISION BLOWER( NPMMAX ), BUPPER( NPMMAX ), WS( LWS )
-CD    DOUBLE PRECISION C( NMAX ), B( MMAX ), G( NMAX ), RINFO( 40 )
-      LOGICAL          EQUATN( MMAX ), LINEAR( MMAX )
-      CHARACTER * 10   VNAME( NMAX ), CNAME( MMAX )
-CS    PARAMETER      ( ZERO  = 0.0E+0, ONE  = 1.0E+0 )
-CD    PARAMETER      ( ZERO  = 0.0D+0, ONE  = 1.0D+0 )
-CS    PARAMETER      ( BIGINF = 1.0E+10 )
-CD    PARAMETER      ( BIGINF = 1.0D+10 )
-      REAL             CPU( 2 ), CALLS( 7 )
-C     
-C  Open the Spec file for the method.
-C
-      OPEN ( INSPEC, FILE = 'LA04.SPC', FORM = 'FORMATTED',
-     *       STATUS = 'OLD' )
-      REWIND INSPEC
-C
-C  Read input Spec data.
-C
+
+      INTEGER :: npm, nplus, n, m
+      INTEGER :: i, itern, ntotal, nv, na, ns, nnzj, ind, job, maxit 
+      INTEGER :: lip, la, nt1, lws, liws, ii, nfree, iores
+      INTEGER :: nboth, nnoneg, nlower, l, ir, ic, j, iounit, status
+      INTEGER, PARAMETER :: out = 6, input = 55
+      INTEGER, PARAMETER :: inspec = 56, outsol = 57
+      INTEGER, PARAMETER :: io_buffer = 11
+      DOUBLE PRECISION, PARAMETER :: one = 1.0D+0, zero = 0.0D+0
+      DOUBLE PRECISION, PARAMETER :: biginf = 9.0D+19
+      DOUBLE PRECISION :: vl, vu, vx, vm, objf
+      DOUBLE PRECISION :: CPU( 2 ), CALLS( 7 )
+      DOUBLE PRECISION :: CNTL( 15 ), RINFO( 40 )
+      LOGICAL :: writes, pnamee
+      CHARACTER ( LEN = 5 ) :: state
+      CHARACTER ( LEN = 10 ) :: pname
+      CHARACTER ( LEN = 14 ) :: pnames
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: IPERM, INVPRM, IX, JX
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: IRNA, IP, IWS
+      DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: A, X, Z
+      DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: C, B, G, WS
+      DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: BLOWER, BUPPER
+      DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : , : ) :: BND
+      LOGICAL, ALLOCATABLE, DIMENSION( : ) :: EQUATN, LINEAR
+      CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : )  :: VNAME
+      CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : )  :: CNAME
+
+C  open the Spec file for the method
+
+      OPEN( inspec, FILE = 'LA04.SPC', FORM = 'FORMATTED',
+     *      STATUS = 'OLD' )
+      REWIND( inspec )
+
+C  read input Spec data
+
 C     MAXIT : the maximum number of iterations
 C     WRITES: write solution to "problem".sol if true
-C
-      READ ( INSPEC, 1000 ) MAXIT, IOUNIT, WRITES
-C
-C  Close input file.
-C
-      CLOSE ( INSPEC )
-C
-C  Open the relevant file.
-C
-      OPEN ( INPUT, FILE = 'OUTSDIF.d', FORM = 'FORMATTED',
+
+      READ ( inspec, 1000 ) MAXIT, IOUNIT, WRITES
+
+C  close input file
+
+      CLOSE( inspec )
+
+C  open the relevant file
+
+      OPEN( input, FILE = 'OUTSDIF.d', FORM = 'FORMATTED',
      *       STATUS = 'OLD' )
-      REWIND INPUT
-C
-C  Set up the data structures necessary to hold the group partially
-C  separable function.
-C
-      LV = MIN( LWS, MMAX )
-      CALL CSETUP ( INPUT, IOUT, N, M, X0, BLOWER( 1 ),
-     *              BUPPER( 1 ), NMAX, EQUATN, LINEAR,
-     *              WS, BLOWER( NMAX + 1 ),
-     *              BUPPER( NMAX + 1 ), LV, .FALSE., .FALSE., .FALSE. )
-C
-C  Determine the names of the problem, variables and constraints.
-C
-      MM = MAX( M, 1 )
-      CALL CNAMES ( N, MM, PNAME, VNAME, CNAME )
-C
-C   Open the solution file if needed
-C
-      IF ( WRITES ) THEN
-         DO 1 I = 1, 10
-           IF ( PNAME( I : I ) .NE. ' ' ) THEN
-             PNAMES( I : I ) = PNAME( I : I )
-             J = I
+      REWIND( input )
+
+C  compute problem dimensions
+
+      CALL CUTEST_cdimen( status, input, n, m )
+      IF ( status /= 0 ) GO TO 910
+
+C  allocate space 
+
+      ALLOCATE( BLOWER( n + m ), BUPPER( n + m ),
+     *          WS( n + m ), EQUATN( m ), LINEAR( m ), VNAME( n ), 
+     *          CNAME( m ), STAT = status )
+      IF ( status /= 0 ) GO TO 990
+
+C  set up the data structures necessary to hold the group partially
+C  separable function
+
+      CALL CUTEST_csetup( status, input, out, io_buffer, n, m, 
+     *              WS( 1 ), BLOWER( 1 ), BUPPER( 1 ),
+     *              WS( n + 1 ), BLOWER( n + 1 ), 
+     *              BUPPER( n + 1 ), EQUATN, LINEAR, 
+     *              .FALSE., .FALSE., .FALSE. )
+      IF ( status /= 0 ) GO TO 910
+
+C  determine the names of the problem, variables and constraints
+
+      CALL CUTEST_cnames( status, n, m, pname, VNAME, CNAME )
+      IF ( status /= 0 ) GO TO 910
+
+C  compute the total number of variables
+
+      ntotal = n
+      DO 10 i = 1, m
+        IF ( .NOT. EQUATN( i ) ) ntotal = ntotal + 1
+   10 CONTINUE
+
+C   open the solution file if needed
+
+      IF ( writes ) THEN
+         DO 1 i = 1, 10
+           IF ( PNAME( i : i ) .NE. ' ' ) THEN
+             pnames( i : i ) = pname( i : i )
+             j = I
            END IF
     1    CONTINUE
-         PNAMES( J + 1 : J + 4 ) = '.sol'
-         J = J + 4
-         INQUIRE( FILE = PNAMES, EXIST = PNAMEE )
-         IF ( PNAMEE ) THEN
-           OPEN( OUTSOL, FILE = PNAMES, FORM = 'FORMATTED',
-     *           STATUS = 'OLD', IOSTAT = IORES )
+         pnames( j + 1 : j + 4 ) = '.sol'
+         j = j + 4
+         INQUIRE( FILE = pnames( 1 : j ), EXIST = pnamee )
+         IF ( pnamee ) THEN
+           OPEN( outsol, FILE = pnames( 1 : j ), FORM = 'FORMATTED',
+     *           STATUS = 'OLD', IOSTAT = iores )
         ELSE
-           OPEN( OUTSOL, FILE = PNAMES, FORM = 'FORMATTED',
-     *           STATUS = 'NEW', IOSTAT = IORES )
+           OPEN( outsol, FILE = pnames( 1 : j ), FORM = 'FORMATTED',
+     *           STATUS = 'NEW', IOSTAT = iores )
         END IF
-        IF ( IORES .NE. 0 ) THEN 
-           WRITE( 6, 2160 ) IORES, PNAMES( : J )
+        IF ( iores .NE. 0 ) THEN 
+           WRITE( out, 2160 ) iores, pnames( 1 : j )
            STOP
         END IF
       END IF
-C
+
+C  compute the number of nonzeros in the constraint Jacobian
+
+      CALL CUTEST_cdimsj( status, la )
+      IF ( status /= 0 ) GO TO 910
+
+C  allocate more space 
+
+      la = la + ntotal - n
+      ntotal = n + m
+      npm = ntotal + m
+      nplus = npm + 1
+      ALLOCATE( IPERM( ntotal ), INVPRM( ntotal ), IX( m ), 
+     *          JX( ntotal ), IRNA( la ), IP( nplus ), A( la ), 
+     *          X( npm ), Z( ntotal ), C( ntotal ), 
+     *          BND( 2, ntotal ), B( m ), G( ntotal ), STAT = status )
+      IF ( status /= 0 ) GO TO 990
+
+      ib = 10 * la
+      lws = MAX( ntotal, ib + 3 * m + 1 ) + 3
+      liws = 2 * ib + 10 * m + 12
+      DEALLOCATE( WS, STAT = status )
+      IF ( status /= 0 ) GO TO 990
+      ALLOCATE( IWS( liws ), WS( lws ), STAT = status )
+      IF ( status /= 0 ) GO TO 990
+
 C  Set up the initial estimate of the solution, SOL, and
 C  right-hand-side, RHS, of the Kuhn-Tucker system.
-C
-C
+
 C  Set X to zero to determine the constant terms for
 C  the problem functions.
-C
-      DO 30 I = 1, N
-         X( I ) = ZERO
-         C( I ) = ZERO
+
+      DO 30 i = 1, N
+        X( i ) = zero
+        C( i ) = zero
    30 CONTINUE
-C
+
 C  Evaluate the constant terms of the objective and constraint functions.
-C
-      CALL CFN( N , M , X, OBJF, MM, B )
-      NS = NA
-      DO 40 I = 1, M
-C       B( I ) = - B( I )
-        BLOWER( NMAX + I ) = BLOWER( NMAX + I ) - B( I )
-        BUPPER( NMAX + I ) = BUPPER( NMAX + I ) - B( I )
-        B( I ) = ZERO
+
+      CALL CUTEST_cfn( status, n, m, X, objf, B )
+      IF ( status /= 0 ) GO TO 910
+
+C     ns = na
+      DO 40 i = 1, m
+        BLOWER( n + i ) = BLOWER( n + i ) - B( i )
+        BUPPER( n + i ) = BUPPER( n + i ) - B( i )
+        B( i ) = zero
    40 CONTINUE
-C
+
 C  The variables will be permuted, before being passed to
 C  the optimizer, so that the first NBOTH variables are
 C  bounded on both sides and the last NTOTAL - NFREE + 1 satisfy
-C  nonnegativity restrictions (the remaining variables are
-C  free).
-C
+C  nonnegativity restrictions (the remaining variables are free)
+
 C  On exit from the minimizer, the i-th original variable
 C  will have the value X( IPERM( i ) ).
-C
-      NTOTAL = N
-      NA     = 0
-      NBOTH  = 0
-      NFREE  = 0
-C
+
+      ntotal = n
+      na     = 0
+      nboth  = 0
+      nfree  = 0
+
 C  Determine the status of each problem variable.
-C
-      DO 5 I = 1, N
-         IF ( BUPPER( I ) .GT. BIGINF ) THEN
-            IF ( BLOWER( I ) .LT. - BIGINF ) THEN
-               NFREE = NFREE + 1
-               IWS( I ) = 0
-            ELSE IF ( BLOWER( I ) .EQ. ZERO ) THEN
-               IWS( I ) = 1
-            ELSE
-               NBOTH = NBOTH + 1
-               IWS( I ) = 2
-            END IF
-         ELSE
-            NBOTH = NBOTH + 1
-            IWS( I ) = 2
-         END IF
+
+      DO 5 i = 1, n
+        IF ( BUPPER( i ) .GT. biginf ) THEN
+          IF ( BLOWER( i ) .LT. - biginf ) THEN
+            nfree = nfree + 1
+            IWS( i ) = 0
+          ELSE IF ( BLOWER( i ) .EQ. zero ) THEN
+            IWS( i ) = 1
+          ELSE
+            nboth = nboth + 1
+            IWS( i ) = 2
+          END IF
+        ELSE
+          nboth = nboth + 1
+          IWS( i ) = 2
+        END IF
     5 CONTINUE
-C
+
 C  Determine the status of each slack variable.
-C
-      DO 10 I = 1, M
-         IF ( .NOT. EQUATN( I ) ) THEN
-            NTOTAL = NTOTAL + 1
-            IF ( ( BLOWER( NMAX + I ) .EQ. ZERO .AND.
-     *             BUPPER( NMAX + I ) .GT. BIGINF ) .OR.
-     *           ( BUPPER( NMAX + I ) .EQ. ZERO .AND.
-     *             BLOWER( NMAX + I ) .LT. - BIGINF ) ) THEN
-               IWS( NTOTAL ) = 1
-            ELSE
-               NBOTH = NBOTH + 1
-               IWS( NTOTAL ) = 2
-            END IF
-         END IF
-   10 CONTINUE
-      NT1 = NTOTAL + 1
-C
-C  Permute the variables.
-C
-      NNONEG = NBOTH  + NFREE
-      NLOWER = NNONEG + 1
-      NFREE  = NBOTH
-      NBOTH  = 0
-      DO 15 I = 1, N
-         IF ( IWS( I ) .EQ. 0 ) THEN
-            NFREE = NFREE + 1
-            IPERM( I ) = NFREE
-         ELSE IF ( IWS( I ) .EQ. 1 ) THEN
-            NNONEG = NNONEG + 1
-            IPERM( I ) = NNONEG
-         ELSE IF ( IWS( I ) .EQ. 2 ) THEN
-            NBOTH = NBOTH + 1
-            IPERM( I ) = NBOTH
-            BND( 1, NBOTH ) = BLOWER( I )
-            BND( 2, NBOTH ) = BUPPER( I )
-         END IF
+
+      DO 12 i = 1, m
+        IF ( .NOT. EQUATN( i ) ) THEN
+          ntotal = ntotal + 1
+          IF ( ( BLOWER( n + i ) .EQ. zero .AND.
+     *           BUPPER( n + i ) .GT. biginf ) .OR.
+     *         ( BUPPER( n + i ) .EQ. zero .AND.
+     *           BLOWER( n + i ) .LT. - biginf ) ) THEN
+             IWS( ntotal ) = 1
+          ELSE
+            nboth = nboth + 1
+            IWS( ntotal ) = 2
+          END IF
+        END IF
+   12 CONTINUE
+      nt1 = ntotal + 1
+
+C  permute the variables
+
+      nnoneg = nboth + nfree
+      nlower = nnoneg + 1
+      nfree  = nboth
+      nboth  = 0
+      DO 15 i = 1, n
+        IF ( IWS( i ) .EQ. 0 ) THEN
+          nfree = nfree + 1
+          IPERM( i ) = nfree
+        ELSE IF ( IWS( i ) .EQ. 1 ) THEN
+          nnoneg = nnoneg + 1
+          IPERM( i ) = nnoneg
+        ELSE IF ( IWS( i ) .EQ. 2 ) THEN
+          nboth = nboth + 1
+          IPERM( i ) = nboth
+          BND( 1, nboth ) = BLOWER( i )
+          BND( 2, nboth ) = BUPPER( i )
+        END IF
    15 CONTINUE
-C
-C  Introduce slack variables for inequality constraints.
+
+C  introduce slack variables for inequality constraints.
 C  Continue permuting the variables.
-C
-      IF ( NTOTAL .GT. N ) THEN
-         NS = N
-         DO 20 I = 1, M
-            IF ( .NOT. EQUATN( I ) ) THEN
-               NA = NA + 1
-               NS = NS + 1
-               IF ( IWS( NS ) .EQ. 1 ) THEN
-                  NNONEG = NNONEG + 1
-                  IPERM( NS ) = NNONEG
-                  IF ( BLOWER( NMAX + I ) .EQ. ZERO ) THEN
-                     A( NA ) = - ONE
-                  ELSE
-                     A( NA ) = ONE
-                  END IF
-               ELSE IF ( IWS( NS ) .EQ. 2 ) THEN
-                  NBOTH = NBOTH + 1
-                  IPERM( NS ) = NBOTH
-                  BND( 1, NBOTH ) = BLOWER( NMAX + I )
-                  BND( 2, NBOTH ) = BUPPER( NMAX + I )
-                  A( NA ) = - ONE
-               END IF
-               IRNA( NA ) = I
-               IWS( NA ) = IPERM( NS )
+
+      IF ( ntotal .GT. n ) THEN
+        ns = n
+        DO 20 i = 1, m
+          IF ( .NOT. EQUATN( i ) ) THEN
+            na = na + 1
+            ns = ns + 1
+            IF ( IWS( ns ) .EQ. 1 ) THEN
+              nnoneg = nnoneg + 1
+              IPERM( ns ) = nnoneg
+              IF ( BLOWER( n + i ) .EQ. zero ) THEN
+                A( na ) = - one
+              ELSE
+                A( na ) = one
+              END IF
+            ELSE IF ( IWS( ns ) .EQ. 2 ) THEN
+              nboth = nboth + 1
+              IPERM( ns ) = nboth
+              BND( 1, nboth ) = BLOWER( n + i )
+              BND( 2, nboth ) = BUPPER( n + i )
+              A( na ) = - one
             END IF
-   20    CONTINUE
+            IRNA( na ) = i
+            IWS( na ) = IPERM( ns )
+          END IF
+   20   CONTINUE
       END IF
-      NV = NA
-      WRITE( 6, "( ' n, m, k, l ', 4I7 )" ) NTOTAL, M, NBOTH, NFREE + 1
-      DO 25 I = 1, NTOTAL
-         INVPRM( IPERM( I ) ) = I
+      nv = na
+C     WRITE( out, "( ' n, m, k, l ', 4I7 )" ) 
+C    *  ntotal, m, nboth, nfree + 1
+      DO 25 i = 1, ntotal
+        INVPRM( IPERM( i ) ) = i
    25 CONTINUE
-C
+
 C  Evaluate the linear terms of the objective and constraint functions
 C  in a sparse format.
-C
-      CALL CSGR ( N, M, .FALSE., LV, WS, X, NNZJ, LA - NA, A( NA + 1 ),
-     *            IWS( NA + 1 ), IRNA( NA + 1 ) )
-      NS = NA
-      DO 50 I = 1, NNZJ
-         IF ( A( NS + I ) .NE. ZERO ) THEN
-            IF ( IRNA( NS + I ) .GT. 0 ) THEN
-               NA = NA + 1
-               A( NA ) = A( NS + I )
-               IRNA( NA ) = IRNA( NS + I )
-               IWS( NA ) = IPERM( IWS( NS + I ) )
-C              IWS( NA ) = INVPRM( IWS( NS + I ) )
-            ELSE
-               C( IPERM( IWS( NS + I ) ) ) = A( NS + I )
-C              C( INVPRM( IWS( NS + I ) ) ) = A( NS + I )
-            END IF
-         END IF
-   50 CONTINUE
-C     WRITE( 6, "( ( ' row, col, val = ', 2I8, 1PD12.4 ) )" ) 
-C    *  ( IRNA( I ), IWS( I ), A( I ), I = 1, NA )
-C
-C  Change from a co-ordinate storage scheme to a column-wise
-C  scheme.
-C
-      IND = - 1
-      LIP = NT1 + 1
-CS    CALL MC49A ( IND, NTOTAL, M, NA, IRNA, IWS, .TRUE., LA, A,
-CD    CALL MC49AD( IND, NTOTAL, M, NA, IRNA, IWS, .TRUE., LA, A,
-     *             LIP, IP, LIWS - NA, IWS( NA + 1 ), JOB )
-      IP( LIP + 1 ) = IP( LIP )
-C
-C  Initialize CNTL
-C
-CS    CALL LA04I ( CNTL )
-CD    CALL LA04ID( CNTL )
-      CNTL( 7 ) = IOUNIT
-C
-C  Prepare to call LA04
-C
-      JOB = 1
-C
-C  Loop over a sequence of simplex iterations
-C
-      DO 300 ITERN = 1, MAXIT
-CS       CALL LA04A ( A, LA, IRNA, IP, M, NTOTAL, B, C, BND, NBOTH, 
-CD       CALL LA04AD( A, LA, IRNA, IP, M, NTOTAL, B, C, BND, NBOTH, 
-     *                NFREE + 1, JOB, CNTL, IX, JX, X, Z, G, RINFO,
-     *                WS, LWS, IWS, LIWS )
-         IF ( JOB .EQ. 0 ) GO TO 400
-         IF ( JOB .LT. 0 ) GO TO 990
-  300 CONTINUE
-C
-C  End of main iteration loop.
-C
-  400 CONTINUE
-      CALL CREPRT( CALLS, CPU )
-C
-C  Print details of the solution obtained.
-C
-      WRITE( 6, 2010 ) JOB
-      IF ( WRITES ) WRITE( OUTSOL, 2010 ) JOB
-      IF ( JOB .GE. 0 ) THEN
-         L = 4
-         DO 520 J = 1, 2
-            IF ( J .EQ. 1 ) THEN
-               IR = 1
-               IC = MIN( L, N )
-            ELSE
-               IF ( IC. LT. N - L ) WRITE( 6, 2000 )
-               IR = MAX( IC + 1, N - IC + 1 )
-               IC = N
-            END IF
-            DO 510 I = IR, IC
-               II = INVPRM( I )
-               VM = Z( II )
-               IF ( II .LE. NBOTH ) THEN
-                  IF ( JX( II ) .LE. 0 ) THEN
-                     VX = X( II )
-                     STATE = ' FREE'
-                  ELSE IF ( JX( II ) .EQ. 1 ) THEN
-                     VX = X( II ) + BND( 1, II )
-                     STATE = 'LOWER'
-                  ELSE
-                     VX = X( II ) + BND( 2, II )
-                     STATE = 'UPPER'
-                  END IF
-               ELSE
-                  VX = X( II )
-                  STATE = ' FREE'
-                  IF ( I .GT. NFREE .AND. 
-     *                 ABS( VX ) .LT. 1.0D-12 ) STATE = 'LOWER'
-               END IF
-               IF ( II .LE. NBOTH ) THEN
-                  VL = BND( 1, II )
-                  VU = BND( 2, II )
-               ELSE
-                  VU = BIGINF
-                  IF ( I .GE. NLOWER ) THEN
-                     VL = ZERO
-                  ELSE
-                     VL = - BIGINF
-                  END IF
-               END IF
-               WRITE( 6, 2020 ) VNAME( I ), STATE, VX, VL, VU, VM
-  510       CONTINUE
-  520    CONTINUE
-         IF ( WRITES ) THEN
-            DO 540 I = 1, N
-               II = INVPRM( I )
-               VM = Z( II )
-               IF ( II .LE. NBOTH ) THEN
-                  IF ( JX( II ) .LE. 0 ) THEN
-                     VX = X( II )
-                     STATE = ' FREE'
-                  ELSE IF ( JX( II ) .EQ. 1 ) THEN
-                     VX = X( II ) + BND( 1, II )
-                     STATE = 'LOWER'
-                  ELSE
-                     VX = X( II ) + BND( 2, II )
-                     STATE = 'UPPER'
-                  END IF
-               ELSE
-                  VX = X( II )
-                  STATE = ' FREE'
-                  IF ( I .GT. NFREE .AND. 
-     *                 ABS( VX ) .LT. 1.0D-12 ) STATE = 'LOWER'
-               END IF
-               IF ( II .LE. NBOTH ) THEN
-                  VL = BND( 1, II )
-                  VU = BND( 2, II )
-               ELSE
-                  VU = BIGINF
-                  IF ( I .GE. NLOWER ) THEN
-                     VL = ZERO
-                  ELSE
-                     VL = - BIGINF
-                  END IF
-               END IF
-               WRITE( OUTSOL, 2020 ) VNAME( I ), STATE, VX, VL, VU, VM
-  540    CONTINUE
-         END IF
-         IF ( M .GT. 0 ) THEN
-C
-C  Compute the Lagrange multipliers
-C
-            DO 570 J = 1, M
-               I = IX( J )
-               IF ( I .GT. 2 * ( N + M ) ) THEN
-                 I = I - 2 * ( N + M ) 
-               ELSE IF ( I .GT. ( N + M ) ) THEN
-                 I = I - ( N + M ) 
-               END IF
-               WS( J ) = C( I )
-  570       CONTINUE
-            J = 7
-CS          CALL LA04A ( A, LA, IRNA, IP, M, NTOTAL, B, C, BND, NBOTH, 
-CD          CALL LA04AD( A, LA, IRNA, IP, M, NTOTAL, B, C, BND, NBOTH, 
-     *                   NFREE + 1, J, CNTL, IX, JX, X, Z, G, RINFO,
-     *                   WS, LWS, IWS, LIWS )
 
-            DO 580 J = 1, M
-               X( NTOTAL + J ) = WS( J )
-  580       CONTINUE
-C
+      CALL CUTEST_csgr( status, n, m, X, WS, .FALSE., nnzj, la - na, 
+     *                  A( na + 1 ), IWS( na + 1 ), IRNA( na + 1 ) )
+      IF ( status /= 0 ) GO TO 910
+
+      ns = na
+      DO 50 i = 1, nnzj
+        IF ( A( ns + i ) .NE. zero ) THEN
+          IF ( IRNA( ns + i ) .GT. 0 ) THEN
+            na = na + 1
+            A( na ) = A( ns + i )
+            IRNA( na ) = IRNA( ns + i )
+            IWS( na ) = IPERM( IWS( ns + i ) )
+          ELSE
+            C( IPERM( IWS( ns + i ) ) ) = A( ns + i )
+          END IF
+        END IF
+   50 CONTINUE
+C     WRITE( out, "( ( ' row, col, val = ', 2I8, 1PD12.4 ) )" ) 
+C    *  ( IRNA( i ), IWS( i ), A( i ), i = 1, NA )
+
+C  Change from a co-ordinate storage scheme to a column-wise scheme
+
+      ind = - 1
+      lip = nt1 + 1
+      CALL MC49AD( IND, ntotal, m, NA, IRNA, IWS, .TRUE., la, A,
+     *             lip, IP, liws - na, IWS( na + 1 ), JOB )
+      IP( lip + 1 ) = IP( lip )
+
+C  Initialize CNTL
+
+      CALL LA04ID( CNTL )
+      CNTL( 7 ) = iounit
+
+C  Prepare to call LA04
+
+      job = 1
+
+C  Loop over a sequence of simplex iterations
+
+      DO 300 ITERN = 1, MAXIT
+        CALL LA04AD( A, la, IRNA, IP, m, ntotal, B, C, BND, nboth, 
+     *               nfree + 1, job, CNTL, IX, JX, X, Z, G, RINFO,
+     *               WS, lws, IWS, liws )
+        IF ( job .EQ. 0 ) GO TO 400
+        IF ( job .EQ. - 4 ) THEN
+          DEALLOCATE( WS, IWS, STAT = status )
+          IF ( status /= 0 ) GO TO 990
+          ib = 2 * INT( RINFO( 35 ) )
+          lws = MAX( ntotal, ib + 3 * m + 1 ) + 3
+          liws = 2 * ib + 10 * m + 12
+          ALLOCATE( IWS( LIWS ), WS( lws ), STAT = status )
+          IF ( status /= 0 ) GO TO 990
+          job = 1
+        END IF
+        IF ( job .LT. 0 ) GO TO 890
+  300 CONTINUE
+
+C  End of main iteration loop.
+
+  400 CONTINUE
+      CALL CUTEST_creport( status, CALLS, CPU )
+      IF ( status /= 0 ) GO TO 910
+
+C  Print details of the solution obtained.
+
+      WRITE( out, 2010 ) JOB
+      IF ( WRITES ) WRITE( outsol, 2010 ) JOB
+      IF ( job .GE. 0 ) THEN
+        l = 4
+        DO 520 j = 1, 2
+          IF ( j .EQ. 1 ) THEN
+            ir = 1
+            ic = MIN( l, n )
+          ELSE
+            IF ( ic. LT. n - l ) WRITE( out, 2000 )
+            ir = MAX( ic + 1, n - ic + 1 )
+            ic = n
+          END IF
+          DO 510 i = IR, IC
+            ii = INVPRM( i )
+            vm = Z( ii )
+            IF ( ii .LE. nboth ) THEN
+              IF ( JX( ii ) .LE. 0 ) THEN
+                vx = X( ii )
+                state = ' FREE'
+              ELSE IF ( JX( ii ) .EQ. 1 ) THEN
+                vx = X( ii ) + BND( 1, ii )
+                state = 'LOWER'
+              ELSE
+                vx = X( ii ) + BND( 2, ii )
+                state = 'UPPER'
+              END IF
+            ELSE
+             vx = X( ii )
+             state = ' FREE'
+             IF ( i .GT. nfree .AND. 
+     *            ABS( vx ) .LT. 1.0D-12 ) state = 'LOWER'
+            END IF
+            IF ( ii .LE. NBOTH ) THEN
+              vl = BND( 1, ii )
+              vu = BND( 2, ii )
+            ELSE
+              vu = biginf
+               IF ( i .GE. nlower ) THEN
+                 vl = zero
+               ELSE
+                 vl = - biginf
+               END IF
+            END IF
+            WRITE( out, 2020 ) VNAME( i ), state, vx, vl, vu, vm
+  510     CONTINUE
+  520   CONTINUE
+        IF ( writes ) THEN
+          DO 540 i = 1, N
+            ii = INVPRM( i )
+            vm = Z( ii )
+            IF ( ii .LE. nboth ) THEN
+              IF ( JX( ii ) .LE. 0 ) THEN
+                vx = X( ii )
+                state = ' FREE'
+              ELSE IF ( JX( ii ) .EQ. 1 ) THEN
+                vx = X( ii ) + BND( 1, ii )
+                state = 'LOWER'
+              ELSE
+                vx = X( ii ) + BND( 2, ii )
+                state = 'UPPER'
+              END IF
+            ELSE
+              vx = X( ii )
+              state = ' FREE'
+              IF ( i .GT. nfree .AND. 
+     *             ABS( VX ) .LT. 1.0D-12 ) state = 'LOWER'
+            END IF
+            IF ( ii .LE. NBOTH ) THEN
+              vl = BND( 1, ii )
+              vu = BND( 2, ii )
+            ELSE
+              vu = biginf
+              IF ( i .GE. nlower ) THEN
+                vl = zero
+              ELSE
+                vl = - biginf
+              END IF
+            END IF
+            WRITE( outsol, 2020 ) VNAME( i ), state, vx, vl, vu, vm
+  540     CONTINUE
+        END IF
+
+C  Compute the Lagrange multipliers
+
+         IF ( m .GT. 0 ) THEN
+           DO 570 j = 1, m
+             i = IX( j )
+             IF ( i .GT. 2 * ( n + m ) ) THEN
+               i = i - 2 * ( N + M ) 
+             ELSE IF ( i .GT. ( n + m ) ) THEN
+               i = i - ( n + m ) 
+             END IF
+             WS( j ) = C( i )
+  570      CONTINUE
+           j = 7
+           CALL LA04AD( A, la, IRNA, IP, m, ntotal, B, C, BND, nboth, 
+     *                  nfree + 1, j, CNTL, IX, JX, X, Z, G, RINFO,
+     *                  WS, lws, IWS, liws )
+
+           DO 580 j = 1, m
+              X( ntotal + j ) = WS( j )
+  580      CONTINUE
+
 C  Now compute the constrainmt residuals
-C
-            DO 610 I = 1, M
-               WS( I ) = ZERO
+
+            DO 610 i = 1, M
+              WS( i ) = zero
   610       CONTINUE
-            DO 640 J = 1, NTOTAL
-               IF ( INVPRM( J ) .LE. N ) THEN
-               IF ( J .LE. NBOTH ) THEN
-                  IF ( JX( J ) .LE. 0 ) THEN
-                     VX = X( J )
-                  ELSE IF ( JX( J ) .EQ. 1 ) THEN
-                     VX = X( J ) + BND( 1, J )
-                  ELSE
-                     VX = X( J ) + BND( 2, J )
-                     STATE = 'UPPER'
-                  END IF
-               ELSE
-                  VX = X( J )
-               END IF
-               DO 630 I = IP( J ), IP( J + 1 ) - 1
-                  WS( IRNA( I ) ) = WS( IRNA( I ) ) + A( I ) * VX
-  630          CONTINUE
-               END IF
+            DO 640 j = 1, NTOTAL
+              IF ( INVPRM( j ) .LE. n ) THEN
+              IF ( j .LE. nboth ) THEN
+                IF ( JX( j ) .LE. 0 ) THEN
+                   VX = X( j )
+                ELSE IF ( JX( j ) .EQ. 1 ) THEN
+                   VX = X( j ) + BND( 1, j )
+                ELSE
+                   VX = X( j ) + BND( 2, j )
+                   STATE = 'UPPER'
+                END IF
+              ELSE
+                VX = X( j )
+              END IF
+              DO 630 i = IP( j ), IP( j + 1 ) - 1
+                WS( IRNA( i ) ) = WS( IRNA( i ) ) + A( i ) * VX
+  630         CONTINUE
+              END IF
   640       CONTINUE
-            WRITE( 6, 2040 )
-            L = 2
-            DO 660 J = 1, 2
-               IF ( J .EQ. 1 ) THEN
-                  IR = 1
-                  IC = MIN( L, M )
-               ELSE
-                  IF ( IC. LT. M - L ) WRITE( 6, 2000 )
-                  IR = MAX( IC + 1, M - IC + 1 )
-                  IC = M
-               END IF
-               DO 650 I = IR, IC
-                  IF ( EQUATN( I ) ) THEN
-                     STATE = 'EQUAL'
-                  ELSE
-                     STATE = ' FREE'
-                     IF ( ABS( WS( I ) - BLOWER( NMAX + I ) )
-     *                    .LT. 1.0D-12 ) STATE = 'LOWER'
-                     IF ( ABS( WS( I ) - BUPPER( NMAX + I ) )
-     *                    .LT. 1.0D-12 ) STATE = 'UPPER'
-                  END IF
-                  WRITE( 6, 2020 ) CNAME( I ), STATE, WS( I ),
-     *                       BLOWER( NMAX + I),
-     *                       BUPPER( NMAX + I ), X( NTOTAL + I )
-  650          CONTINUE
+            WRITE( out, 2040 )
+            l = 2
+            DO 660 j = 1, 2
+              IF ( j .EQ. 1 ) THEN
+                ir = 1
+                ic = MIN( l, m )
+              ELSE
+                IF ( ic. LT. m - l ) WRITE( out, 2000 )
+                ir = MAX( ic + 1, m - ic + 1 )
+                ic = m
+              END IF
+              DO 650 i = ir, ic
+                IF ( EQUATN( i ) ) THEN
+                  state = 'EQUAL'
+                ELSE
+                  state = ' FREE'
+                  IF ( ABS( WS( i ) - BLOWER( n + i ) )
+     *                 .LT. 1.0D-12 ) state = 'LOWER'
+                  IF ( ABS( WS( i ) - BUPPER( n + i ) )
+     *                 .LT. 1.0D-12 ) state = 'UPPER'
+                END IF
+                WRITE( out, 2020 ) CNAME( i ), state, WS( i ),
+     *            BLOWER( n + i ), BUPPER( n + i ), X( ntotal + i )
+  650         CONTINUE
   660       CONTINUE
-            IF ( WRITES ) THEN
-               WRITE( OUTSOL, 2040 )
-               DO 680 I = 1, M
-                  IF ( EQUATN( I ) ) THEN
-                     STATE = 'EQUAL'
-                  ELSE
-                     STATE = ' FREE'
-                     IF ( ABS( WS( I ) - BLOWER( NMAX + I ) )
-     *                    .LT. 1.0D-12 ) STATE = 'LOWER'
-                     IF ( ABS( WS( I ) - BUPPER( NMAX + I ) )
-     *                    .LT. 1.0D-12 ) STATE = 'UPPER'
-                  END IF
-                  WRITE( OUTSOL, 2020 ) CNAME( I ), STATE, WS( I ),
-     *                       BLOWER( NMAX + I),
-     *                       BUPPER( NMAX + I ), X( NTOTAL + I )
-  680          CONTINUE
+            IF ( writes ) THEN
+              WRITE( outsol, 2040 )
+              DO 680 i = 1, M
+                IF ( EQUATN( i ) ) THEN
+                  state = 'EQUAL'
+                ELSE
+                  state = ' FREE'
+                  IF ( ABS( WS( i ) - BLOWER( n + i ) )
+     *                 .LT. 1.0D-12 ) state = 'LOWER'
+                  IF ( ABS( WS( i ) - BUPPER( n + i ) )
+     *                 .LT. 1.0D-12 ) state = 'UPPER'
+               END IF
+               WRITE( outsol, 2020 ) CNAME( i ), state, WS( i ),
+     *           BLOWER( n + i ), BUPPER( n + i ), X( NTOTAL + i )
+  680         CONTINUE
             END IF
          END IF
-         WRITE( 6, 2030 ) RINFO( 1 ) + OBJF, ITERN
-         IF ( WRITES ) WRITE( OUTSOL, 2030 ) RINFO( 1 ) + OBJF, ITERN
+         WRITE( out, 2030 ) RINFO( 1 ) + objf, itern
+         IF ( WRITES ) WRITE( outsol, 2030 ) RINFO( 1 ) + objf, itern
       END IF
-      WRITE ( 6, 2001 ) PNAME, N, M, (CALLS( I ), I = 1, 3 ),
-     *                  (CALLS( I ), I = 5, 7 ),
-     *                  JOB, RINFO( 1 ) + OBJF, CPU( 1 ), CPU( 2 )
-      CLOSE( INPUT  )
+      WRITE ( out, 2001 ) pname, n, m, (CALLS( i ), i = 1, 3 ),
+     *                  ( CALLS( i ), i = 5, 7 ),
+     *                  JOB, RINFO( 1 ) + objf, CPU( 1 ), CPU( 2 )
+      CLOSE( input )
+      CALL CUTEST_cterminate( status )
+      STOP
+
+  890 CONTINUE
+      WRITE( out, 2050 ) JOB
+      STOP
+
+  910 CONTINUE
+      WRITE( out, "( ' CUTEst error, status = ', I0, ', stopping' )") 
+     *   status
       STOP
 
   990 CONTINUE
-      WRITE( 6, 2050 ) JOB
+      WRITE( out, "( ' Allocation error, status = ', I0 )" ) status
       STOP
-C
-C  Non-executable statements.
-C
+
+C  Non-executable statements
+
  1000 FORMAT( I10, /, I10, /, L10 )
  2000 FORMAT( ' .          .....  ............',
      *        '  ............  ............  ............ ' )
- 2001 FORMAT( /, 24('*'), ' CUTEr statistics ', 24('*') //
-     *    ,' Code used               :  LA04',     /
-     *    ,' Problem                 :  ', A10,    /
-     *    ,' # variables             =      ', I10 /
-     *    ,' # constraints           =      ', I10 /
+ 2001 FORMAT( /, 24('*'), ' CUTEst statistics ', 24('*') //
+     *    ,' Package used            :  LA04',     /
+     *    ,' Problem                 :  ', A,     /
+     *    ,' # variables             =      ', I0 /
+     *    ,' # constraints           =      ', I0 /
      *    ,' # objective functions   =        ', F8.2 /
      *    ,' # objective gradients   =        ', F8.2 / 
      *    ,' # objective Hessians    =        ', F8.2 /
      *    ,' # constraints functions =        ', F8.2 /
      *    ,' # constraints gradients =        ', F8.2 /
      *    ,' # constraints Hessians  =        ', F8.2 /
-     *     ' Exit code               =      ', I10 /
+     *     ' Exit code               =      ', I0 /
      *    ,' Final f                 = ', E15.7 /
      *    ,' Set up time             =      ', 0P, F10.2, ' seconds' /
      *     ' Solve time              =      ', 0P, F10.2, ' seconds' //
      *     66('*') / )
- 2010 FORMAT( ' Stopping with JOB = ',I3 /,
+ 2010 FORMAT( ' Stopping with job = ', I0 /,
      *        ' Solution:', //,
      *        ' name       state     value   ',
      *        '   Lower bound   Upper bound  Dual variable ' )
  2020 FORMAT( 1X, A10, A6, 1P, 4D14.6 )
  2030 FORMAT( /, ' Final objective function value ', 1P, D22.14,
-     *        /, ' Total number of iterations = ', I6 )
+     *        /, ' Total number of iterations = ', I0 )
  2040 FORMAT( /, ' Constraints:', //,
      *        ' name       state     value   ',
      *        '   Lower bound   Upper bound    Multiplier ' )
- 2050 FORMAT( /, ' Error return from LA04. Job = ', I5 )
- 2160 FORMAT( ' IOSTAT = ', I6, ' when opening file ', A14, 
+ 2050 FORMAT( /, ' Error return from LA04, job = ', I0 )
+ 2160 FORMAT( ' iostat = ', I0, ' when opening file ', A, 
      *        '. Stopping ' )
-C
-C  End of LA04MA.
-C
+
+C  End of LA04_main
+
       END

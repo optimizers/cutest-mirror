@@ -7,3 +7,4 @@
 CC=icc
 CCBASIC='-c -ansi'
 CCDEBUG=#-DDEBUG_GALAHAD
+CCFFLAGS=-nofor_main
