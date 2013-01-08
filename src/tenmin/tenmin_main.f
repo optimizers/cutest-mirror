@@ -28,7 +28,7 @@ C  open the Spec file for the method.
 
       OPEN ( inspec, FILE = 'TENMIN.SPC', FORM = 'FORMATTED',
      *       STATUS = 'OLD' )
-      REWIND inspec
+      REWIND( inspec )
 
 C  read input Spec data
 
@@ -54,7 +54,7 @@ C  open the input data file
 
       OPEN ( input, FILE = 'OUTSDIF.d', FORM = 'FORMATTED',
      *       STATUS = 'OLD' )
-      REWIND input
+      REWIND( input )
 
 C  find the problem dimension
 

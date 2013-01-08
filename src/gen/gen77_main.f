@@ -8,8 +8,8 @@ C
 C  Ph. Toint, December 2000 / D. Orban, August 2002 / Nick Gould January 2013
 C
       IMPLICIT NONE
-      INTEGER :: io_buffer = 11
       INTEGER :: n, m, status
+      INTEGER :: io_buffer = 11
       INTEGER, PARAMETER :: inspec = 46, input = 47, iout = 6
       INTEGER :: nlin, neq, nbnds, exitcode
       LOGICAL :: efirst, lfirst, nvfrst, constrained

@@ -146,7 +146,8 @@
 ! Allocate memory for Hessian if required
 !
       IF ( problem%allocate_H ) Then
-         Call CDIMSH( problem%nnzh )
+         Call CUTEST_cdimsh( status, problem%nnzh )
+         IF ( status /= 0 ) RETURN
          ALLOCATE( problem%H_row( problem%nnzh ), STAT = ierr )
          IF ( ierr /= 0 ) Then
             nerr = nerr + 1
