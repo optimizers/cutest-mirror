@@ -13,12 +13,10 @@ C  June 2003
 C  CUTEst evolution January 2013
 C
 C  ------------------------------------------------------
-C
 
-      INTEGER :: LIPAR, LRPAR, NWORK, I
-      INTEGER :: NN, MM, M, N, ITERM, status
-      INTEGER :: NFREE, NNIMAX, IJACV, IKRYSL, KDMAX, IRPRE
-      INTEGER :: IKSMAX, IRESUP, IFDORD, IBTMAX, IETA, IPSOL
+      INTEGER :: lipar, lrpar, nwork, i, nn, mm, m, n, iterm, status
+      INTEGER :: nfree, nnimax, ijacv, ikrysl, kdmax, irpre
+      INTEGER :: iksmax, iresup, ifdord, ibtmax, ieta, ipsol
       INTEGER, PARAMETER :: input = 55, out = 6, inspec = 46
       INTEGER, PARAMETER :: io_buffer = 11
       INTEGER :: NINPUT( 10 ), INFO( 6 )
@@ -27,6 +25,7 @@ C
       DOUBLE PRECISION, PARAMETER :: biginf = 9.0D+19
       DOUBLE PRECISION :: CPU( 2 ), CALLS( 7 )
       CHARACTER ( LEN = 10 ) :: pname
+      LOGICAL :: bound, inequality
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: IPAR
       DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: X, WORK
       DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: RPAR, XFREE
@@ -42,25 +41,25 @@ C  NITSOL printing common block (see nitprint.h)
 
       INTEGER IPLVL, IPUNIT
       COMMON / NITPRINT / IPLVL, IPUNIT
-C
+
 C  NITSOL info common block (see nitprint.h)
-C
+
       INTEGER INSTEP, NEWSTEP, KRYSTAT
       DOUBLE PRECISION AVRATE, FCURNRM, ETA
       COMMON / NITINFO / AVRATE, FCURNRM, ETA, INSTEP, NEWSTEP, KRYSTAT
-C
+
 C  common block to tell when to evluate Jacobian again
-C
+
       LOGICAL JKNOWN
       COMMON / NITJEV / JKNOWN
       JKNOWN = .FALSE.
-C     
-C  Open the Spec file for the method.
-C
+
+C  open the Spec file for the method.
+
       OPEN ( INSPEC, FILE = 'NITSOL.SPC', FORM = 'FORMATTED',
      *       STATUS = 'OLD' )
       REWIND INSPEC
-C
+
 C  Read input Spec data.
 C
 C  NNIMAX = maximum number of nonlinear iterations 
@@ -92,13 +91,13 @@ C  IPSOL  = print solution to output channel
 C           ( 0 => no, 1=> yes )
 C  FTOL   = stopping tolerance on the f-norm
 C  STPTOL = stopping tolerance on the steplength
-C
+
       READ( INSPEC, "( I10, 12( /, I10 ), 2( /, 1P, D10.3 ) )" ) 
      *   NNIMAX, IJACV, IKRYSL, KDMAX, IRPRE, IKSMAX, IRESUP, 
      *   IFDORD, IBTMAX, IETA, IPLVL, IPUNIT, IPSOL, FTOL, STPTOL
-C
-C  Assign values
-C
+
+C  assign values
+
       NINPUT(  1 ) = NNIMAX
       NINPUT(  2 ) = IJACV
       NINPUT(  3 ) = IKRYSL
@@ -109,19 +108,19 @@ C
       NINPUT(  8 ) = IFDORD
       NINPUT(  9 ) = IBTMAX
       NINPUT( 10 ) = IETA
-C
-C  Close input file.
-C
+
+C  close input file
+
       CLOSE ( INSPEC )
-C
-C  Open the relevant file.
-C
+
+C  open the relevant file.
+
       OPEN ( INPUT, FILE = 'OUTSDIF.d', FORM = 'FORMATTED',
      *       STATUS = 'OLD' )
       REWIND INPUT
-C
-C  Determine the number of variables and constraints
-C
+
+C  determine the number of variables and constraints
+
       CALL CUTEST_cdimen( status, input, n, m )
       IF ( status /= 0 ) GO TO 910
 
@@ -138,11 +137,11 @@ C  allocate space
       lipar = n + 2
       lrpar = 2 * n
       ALLOCATE( IPAR( lipar ), X( n ), WORK( nwork ), RPAR( lrpar ), 
-     *          EQUATN( m ), LINEAR( m ), VNAME( n ), 
+     *          XFREE( n ), EQUATN( m ), LINEAR( m ), VNAME( n ), 
      *          CNAME( m ), STAT = status )
       IF ( status /= 0 ) GO TO 990
 
-C  Set up the data structures necessary to hold the group partially
+C  set up the data structures necessary to hold the group partially
 C  separable function.
 
       nn = n
@@ -154,83 +153,89 @@ C  separable function.
      *             .FALSE., .FALSE., .FALSE. )
       IF ( status /= 0 ) GO TO 910
 
-C  Determine the names of the problem, variables and constraints.
+C  determine the names of the problem, variables and constraints
 
       CALL CUTEST_cnames( status, N, M, PNAME, VNAME, CNAME )
       IF ( status /= 0 ) GO TO 910
 
-C  Check that there are no variable bounds
+C  check that there are no variable bounds
 
+      bound = .FALSE.
       nfree = 0
       DO 10 i = 1, n
         IF ( WORK( i ) .GT. - biginf .OR. 
-     *     WORK( n + i ) .LT. biginf ) THEN
-           IF ( WORK( i ) .NE. WORK( n + i ) ) THEN
-              WRITE( out, "( ' Variable ', A10, ' is bounded ',
-     *                     /, ' so NITSOL is not appropriate ' )" )  
-     *           VNAME( i )
-              STOP
-           END IF
+     *    WORK( n + i ) .LT. biginf ) THEN
+          IF ( WORK( i ) .NE. WORK( n + i ) ) THEN
+             bound = .TRUE.
+C            WRITE( out, "( ' Variable ', A10, ' is bounded ',
+C    *                    /, ' so NITSOL is not appropriate ' )" )  
+C    *          VNAME( i )
+C           STOP
+          END IF
         ELSE
           nfree = nfree + 1
         END IF
    10 CONTINUE
-C
-C  Check that all constraints are equalities
-C
+      IF ( bound ) WRITE( out, "( ' Warning: there are bounded',
+     *  ' variables. Bounds ignored.' )" )
+
+C  check that all constraints are equalities
+
+      inequality = .FALSE.
       DO 20 i = 1, m
-         IF ( WORK( 2 * n + i ) .NE.  WORK( 2 * n + m + i ) ) THEN
-            WRITE( out, "( ' Constraint ', A10, ' is an inequality ',
-     *                   /, ' so NITSOL is not appropriate ' )" )  
-     *         CNAME( i )
-            STOP
-         END IF
+        IF ( WORK( 2 * n + i ) .NE.  WORK( 2 * n + m + i ) ) THEN
+          inequality = .TRUE.
+C         WRITE( out, "( ' Constraint ', A10, ' is an inequality ',
+C    *                   /, ' so NITSOL is not appropriate ' )" )  
+C    *       CNAME( i )
+C         STOP
+        END IF
    20 CONTINUE
+      IF ( inequality ) WRITE( out, "( ' Warning: there are inequality',
+     *  ' constraints. Inequalities ignored.' )" )
 
-C  Check that the system is "square"
+C  check that the system is "square"
 
-      IF ( NFREE .NE. M ) THEN
+      IF ( nfree .NE. m ) THEN
          WRITE( out, "( ' n = ', I10, ' /= ', ' m = ', I10,
-     *      /, ' so NITSOL is not appropriate ' )" ) NFREE, M    
+     *      /, ' so NITSOL is not appropriate ' )" ) nfree, m    
          STOP
       END IF
 
-C  Solve the problem
-
-C  No fixed variable case
+C  solve the problem - no fixed variable case
 
       IF ( nfree .EQ. n ) THEN
-        CALL NITSOL( n, X, NITSOL_evalf, NITSOL_evalj, FTOL, STPTOL, 
-     *               NINPUT, INFO, WORK, RPAR, IPAR, ITERM, NITSOL_dot, 
+        CALL NITSOL( n, X, NITSOL_evalf, NITSOL_evalj, ftol, stptol, 
+     *               NINPUT, INFO, WORK, RPAR, IPAR, iterm, NITSOL_dot, 
      *               NITSOL_norm2 )
 
-C  Fixed variable case
+C  fixed variable case
 
       ELSE
         IPAR( 1 ) = n
         IPAR( 2 ) = m
         nfree = 0
         DO 30 I = 1, N
-           IF ( WORK( I ) .NE. WORK( N + I ) ) THEN
-              nfree = nfree + 1
-              IPAR( nfree + 2 ) = i
-              XFREE( nfree ) = X( i )
-           ELSE
-              X( i ) = WORK( i )
-              RPAR( i ) = X( i )
-              RPAR( n + i ) = zero
-           END IF
+          IF ( WORK( I ) .NE. WORK( N + I ) ) THEN
+            nfree = nfree + 1
+            IPAR( nfree + 2 ) = i
+            XFREE( nfree ) = X( i )
+          ELSE
+            X( i ) = WORK( i )
+            RPAR( i ) = X( i )
+            RPAR( n + i ) = zero
+          END IF
    30   CONTINUE
         CALL NITSOL( nfree, XFREE, NITSOL_evalfn, NITSOL_evaljn, FTOL, 
      *               STPTOL, NINPUT, INFO, WORK, RPAR, IPAR, ITERM, 
      *               NITSOL_dot, NITSOL_norm2 )
         DO 40 i = 1, nfree
-           X( IPAR( i + 2 ) ) = XFREE( i )
+          X( IPAR( i + 2 ) ) = XFREE( i )
    40   CONTINUE
       END IF
-C
-C  Write results
-C
+
+C  write results
+
       CALL CUTEST_creport( status, CALLS, CPU )
       IF ( status /= 0 ) GO TO 910
       CALL CUTEST_cfn( status, n, m, X, F, WORK )
@@ -286,6 +291,8 @@ C
 
       END
 
+C  function and Jacobian-vector product  evaluation subroutines
+
       SUBROUTINE NITSOL_evalf( n, X, C, RPAR, IPAR, ITRMF )
       INTEGER N, ITRMF
       INTEGER IPAR( * )
@@ -332,7 +339,7 @@ C
       SUBROUTINE NITSOL_evalfn( nfree, XFREE, C, RPAR, IPAR, itrmf )
       INTEGER nfree, itrmf
       INTEGER IPAR( * )
-      DOUBLE PRECISION f, XFREE( nfree ), C( NFREE ), RPAR( * )
+      DOUBLE PRECISION f, XFREE( nfree ), C( nfree ), RPAR( * )
       INTEGER n, m, i, status
       LOGICAL jknown
       COMMON / NITJEV / jknown

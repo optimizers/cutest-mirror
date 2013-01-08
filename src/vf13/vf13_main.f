@@ -11,10 +11,10 @@ C
       INTEGER :: inf, m, n, maxfun, mcon, lcn, meq, lw, liw, iprint
       INTEGER :: i, j, mgeq, mmax, status
       INTEGER, PARAMETER :: input = 55, out = 6
-      LOGICAL :: FIRSTG, DEBUG
+      LOGICAL :: firstg, debug
       CHARACTER ( LEN = 10 ) :: pname
       DOUBLE PRECISION :: f, acc
-      DOUBLE PRECISION, PARAMETER :: ACCREQ = 1.0D-7
+      DOUBLE PRECISION, PARAMETER :: accreq = 1.0D-7
       DOUBLE PRECISION dummy, CPU( 2 ), CALLS( 7 )
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: IW
       DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: X, BL, BU, G, W

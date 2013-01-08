@@ -1,6 +1,6 @@
 !     ( Last modified on 3 Jan 2013 at 16:20:00 )
 
-PROGRAM GENMA
+PROGRAM GEN90_main
 
   USE Generic_Driver
 
@@ -38,6 +38,7 @@ PROGRAM GENMA
 !
   constrained = .FALSE.
   CALL CUTEST_cdimen( status, input, n, m )
+  IF ( status /= 0 ) GO TO 910
   If ( m > 0 ) Then
     constrained = .TRUE.
   ELSE IF ( m < 0 ) THEN
@@ -51,7 +52,7 @@ PROGRAM GENMA
 
 !  Set up SIF data from the problem file
 
-  ALLOCATE( X( N ), BL( N ), BU( N ) )
+  ALLOCATE( X( n ), BL( n ), BU( n ) )
   If( CONSTRAINED ) Then
      ALLOCATE( V( m+1 ), CL( m+1 ), CU( m+1 ), EQUATN( m+1 ), LINEAR( m+1 ) )
      Call CUTEST_csetup( status, input, out, io_buffer, n, m, X, BL, BU,       &
@@ -60,6 +61,7 @@ PROGRAM GENMA
      ALLOCATE( EQUATN( 0 ), LINEAR( 0 ) )
      Call CUTEST_usetup( status, input, out, io_buffer, n, X, BL, BU )
   Endif
+  IF ( status /= 0 ) GO TO 910
 
 !  Obtain problem/variables/constraints names.
 
@@ -70,6 +72,7 @@ PROGRAM GENMA
   ELSE
     CALL CUTEST_unames( status, n, pname, VNAMES )
   END IF
+  IF ( status /= 0 ) GO TO 910
 
 !  Obtain info on the problem
 
@@ -101,6 +104,7 @@ PROGRAM GENMA
     CALL CUTEST_ufn( status, n, X, dummy )
     Write(6,*) ' CUTEST_ufn: F(x0) = ', dummy
   END IF
+  IF ( status /= 0 ) GO TO 910
 
 !  Close the problem file
 
@@ -134,6 +138,7 @@ PROGRAM GENMA
   ELSE
      CALL CUTEST_ureport( status, CALLS, CPU )
   ENDIF
+  IF ( status /= 0 ) GO TO 910
   WRITE ( out, 2000 ) pname, n, m, nlin, neq, m-neq, nbnds,                    &
      CALLS( 1 ), CALLS( 2 ), CALLS( 3 )
   IF ( constrained ) WRITE( out, 2010 ) CALLS( 5 ), CALLS( 6 ), CALLS( 7 )
@@ -146,7 +151,16 @@ PROGRAM GENMA
 !
 !  Exit
 !
-  Stop
+   CALL CUTEST_uterminate( status )
+   STOP
+
+ 910 CONTINUE
+   WRITE( out, "( ' CUTEst error, status = ', i0, ', stopping' )" )  status
+   STOP
+
+ 990 CONTINUE
+   WRITE( out, "( ' Allocation error, status = ', I0 )" ) status
+   STOP
 !
 !  Non-executable statements.
 !
@@ -176,5 +190,5 @@ PROGRAM GENMA
              ' Set up time              =      ', 0P, F10.2, ' seconds'/       &
              ' Solve time               =      ', 0P, F10.2, ' seconds'//      &
           66('*') / )
-END PROGRAM GENMA
+END PROGRAM GEN90_main
 

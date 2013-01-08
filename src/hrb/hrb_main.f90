@@ -1,805 +1,774 @@
-C  Original release version: 23 Dec 2000 at 22:01:38 GMT
-C  This version: 25 Aug 2004 at 14:00:00 GMT
-C
-C  25/Aug/2004: duplicate diagonal Hessian entries summed and
-C    support for sorted RB format added
-C
-      PROGRAM HRBMA
+!     ( Last modified on 7 Jan 2013 at 10:00:00 )
 
-C  --------------------------------------------------------------------
+    PROGRAM HRB_main
 
-C  Write out CUTE data in Harwell-Boeing or Rutherford-Boeing Format
+!  ----------------------------------------------------------------
 
-C  Nick Gould
-C  October 1996
+!  Write out SIF data in Harwell-Boeing or Rutherford-Boeing Format
 
-C  --------------------------------------------------------------------
+!  Nick Gould, October 1996
+!  CUTEst evolution, January 2013
 
-C  Scalar arguments
+!  ----------------------------------------------------------------
 
-      INTEGER INPUT, IIN, IOUT, OUTPUT, OUTRHS, N, M, NMAX, MMAX, MATMAX
-      INTEGER NA, NE, NH, NJ, NV, PLAST, NROW, NCOL, NNZ, COLMAX
-      INTEGER I, J , NTOTAL, LV, status
-CS    REAL             F, BIGINF, PENLTY, ZERO, ONE
-CD    DOUBLE PRECISION F, BIGINF, PENLTY, ZERO, ONE
-      LOGICAL HB, RB
-      CHARACTER * 1 MATYPE, MAFORM, HRB
-      CHARACTER * 10 PNAME
-      CHARACTER * 12 PRBOUT
-      CHARACTER * 17 PRBRHS
-      CHARACTER * 80 LINE1
-      CHARACTER * 70 LINE2, LINE3
-      CHARACTER * 72 LINE4
-      CHARACTER * 42 LINE5
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
-C  Parameters
+!  scalar arguments
 
-CTOY  PARAMETER ( NMAX = 100 , MMAX = 100, MATMAX = 10000 )
-CMED  PARAMETER ( NMAX = 10000, MMAX = 10000, MATMAX = 100000 )
-CBIG  PARAMETER ( NMAX = 100000, MMAX = 100000, MATMAX = 1000000 )
-CCUS  PARAMETER ( NMAX = 50000, MMAX = 50000, MATMAX = 100000 )
-      PARAMETER ( COLMAX = NMAX + MMAX + 1 )
-      PARAMETER ( IIN = 5, IOUT = 6, INPUT = 55 )
-      PARAMETER ( OUTPUT = 56, OUTRHS = 57 )
-CS    PARAMETER ( ZERO = 0.0E+0, ONE = 1.0E+0 )
-CD    PARAMETER ( ZERO = 0.0D+0, ONE = 1.0D+0 )
-CS    PARAMETER ( BIGINF = 1.0E+19, PENLTY = 1.0E-1 ) 
-CD    PARAMETER ( BIGINF = 1.0D+19, PENLTY = 1.0D-1 ) 
+      INTEGER :: n, m, nmax, mmax, matmax, i, j , ntotal, lv, status
+      INTEGER :: na, ne, nh, nj, nv, plast, nrow, ncol, nnz, colmax
+      INTEGER, PARAMETER :: in = 5, out = 6, input = 55
+      INTEGER, PARAMETER :: output = 56, outrhs = 57
+      INTEGER, PARAMETER :: io_buffer = 11
+      REAL ( KIND = wp ) :: f
+      REAL ( KIND = wp ), PARAMETER :: one = 1.0D+0, zero = 0.0D+0
+      REAL ( KIND = wp ), PARAMETER :: biginf = 1.0D+19, penalty = 1.0D-1
+      LOGICAL :: hb, rb
+      CHARACTER ( LEN = 1 ) :: matype, maform, hrb
+      CHARACTER ( LEN = 10 ) :: pname
+      CHARACTER ( LEN = 12 ) :: prbout
+      CHARACTER ( LEN = 17 ) :: prbrhs
+      CHARACTER ( LEN = 80 ) :: line1
+      CHARACTER ( LEN = 70 ) :: line2, line3
+      CHARACTER ( LEN = 72 ) :: line4
+      CHARACTER ( LEN = 42 ) :: line5
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: ROW, COL, IP, IW
+      REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: X, BL, BU, VAL
+      REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: B, C, Y, CL, CU
+      REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: SLACK
+      CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : )  :: VNAMES
+      CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : )  :: GNAMES
+      LOGICAL, ALLOCATABLE, DIMENSION( : ) :: EQUATN, LINEAR
 
-C  Array arguments
+!  Open the relevant file
 
-      INTEGER ROW( MATMAX ), COL( MATMAX ), IP( COLMAX + 1 ), 
-     *        IW( COLMAX + 1 )
-CS    REAL             X( NMAX ), BL( NMAX ), BU( NMAX ), CL( MMAX ),
-CD    DOUBLE PRECISION X( NMAX ), BL( NMAX ), BU( NMAX ), CL( MMAX ),
-     *                 CU( MMAX ), V( MMAX ), C( MMAX ), VAL( MATMAX ),
-     *                 B( MMAX ), SLACK( MMAX )
-      LOGICAL EQUATN( MMAX ), LINEAR( MMAX )
-      CHARACTER * 10 VNAMES( NMAX ), GNAMES( MMAX )
+      OPEN( input , FILE = 'OUTSDIF.d', FORM = 'FORMATTED', STATUS = 'OLD'  )
+      REWIND( input )
 
-C  Open the relevant file
+!  compute problem dimensions
 
-      OPEN( INPUT , FILE = 'OUTSDIF.d', FORM = 'FORMATTED',
-     *      STATUS = 'OLD'  )
-      REWIND INPUT
+      CALL CUTEST_cdimen( status, input, n, m )
+      IF ( status /= 0 ) GO TO 910
 
-C  Set up the data structures necessary to hold the group partially
-C  separable function
+!  allocate space 
 
-      CALL CUTEST_csetup( status, INPUT, IOUT, N, M, X, BL, BU, NMAX, EQUATN,
-     *             LINEAR, V, CL, CU, MMAX, .FALSE., .FALSE., .FALSE. ) 
+      colmax = n + m + 1
+      ALLOCATE( IP( colmax + 1 ), IW( colmax + 1 ), X( n ), BL( n ), BU( n ),  &
+                CL( m ), CU( m ), Y( m ), C( n ), B( m ), SLACK( m ),          &
+                EQUATN( m ), LINEAR( m ), VNAMES( n ), GNAMES( m ),            &
+                STAT = status )
+      IF ( status /= 0 ) GO TO 990
 
-C  Determine whether Harwell-Boeing or Rutherford-Boeing format is required
+!  Set up the data structures necessary to hold the group partially
+!  separable function
+
+      CALL CUTEST_csetup( status, input, out, io_buffer, N, M, X, BL, BU, Y,   &
+                          CL, CU, EQUATN, LINEAR, .FALSE., .FALSE., .FALSE. ) 
+      IF ( status /= 0 ) GO TO 910
+
+!  compute the numbers of nonzeros in the problem Jacobian and Hessian
+
+      CALL CUTEST_cdimsj( status, nj )
+      IF ( status /= 0 ) GO TO 910
+      CALL CUTEST_cdimsh( status, nh )
+      IF ( status /= 0 ) GO TO 910
+
+!  allocate more space 
+
+      matmax = nj + nh
+      ALLOCATE( ROW( matmax ), COL( matmax ), VAL( MATMAX ), STAT = status )
+      IF ( status /= 0 ) GO TO 990
+
+!  Determine whether Harwell-Boeing or Rutherford-Boeing format is required
 
    10 CONTINUE
-      WRITE( IOUT, 2050 )
-      READ( IIN, 1000 ) HRB
-      IF ( HRB .EQ. 'h' ) HRB = 'H'
-      IF ( HRB .EQ. 'r' ) HRB = 'R'
-      IF ( HRB .NE. 'H' .AND. HRB .NE. 'R' ) THEN
-         WRITE( IOUT, 2060 ) HRB
+      WRITE( out, 2050 )
+      READ( in, 1000 ) hrb
+      IF ( hrb == 'h' ) hrb = 'H'
+      IF ( hrb == 'r' ) hrb = 'R'
+      IF ( hrb /= 'H' .AND. hrb /= 'R' ) THEN
+         WRITE( out, 2060 ) hrb
          GO TO 10
       END IF
-      HB = HRB .EQ. 'H'
-      RB = .NOT. HB
+      hb = hrb == 'H'
+      rb = .NOT. hb
 
-C  Determine required matrix type
+!  Determine required matrix type
 
-      IF ( M .GT. 0 ) THEN
-   20    CONTINUE
-         WRITE( IOUT, 2010 )
-         READ( IIN, 1000 ) MATYPE
-         IF ( MATYPE .EQ. 'a' ) MATYPE = 'A'
-         IF ( MATYPE .EQ. 'h' ) MATYPE = 'H'
-         IF ( MATYPE .EQ. 'j' ) MATYPE = 'J'
-         IF ( MATYPE .EQ. 't' ) MATYPE = 'T'
-         IF ( MATYPE .NE. 'A' .AND. MATYPE .NE. 'H' .AND.
-     *        MATYPE .NE. 'J' .AND. MATYPE .NE. 'T' ) THEN
-            WRITE( IOUT, 2020 ) MATYPE
-            GO TO 20
-         END IF
-         MAFORM = 'A'
+      IF ( M > 0 ) THEN
+   20   CONTINUE
+        WRITE( out, 2010 )
+        READ( in, 1000 ) matype
+        IF ( matype == 'a' ) matype = 'A'
+        IF ( matype == 'h' ) matype = 'H'
+        IF ( matype == 'j' ) matype = 'J'
+        IF ( matype == 't' ) matype = 'T'
+        IF ( matype /= 'A' .AND. matype /= 'H' .AND.                           &
+             matype /= 'J' .AND. matype /= 'T' ) THEN
+           WRITE( out, 2020 ) matype
+           GO TO 20
+        END IF
+        maform = 'A'
       ELSE
-         MATYPE = 'H'
+        matype = 'H'
       END IF
 
-      IF ( MATYPE .EQ. 'H' ) THEN
+      IF ( matype == 'H' ) THEN
 
-C  Determine required matrix format
+!  Determine required matrix format
 
    30    CONTINUE
-         WRITE( IOUT, 2030 )
-         READ( IIN, 1000 ) MAFORM
-         IF ( MAFORM .EQ. 'a' ) MAFORM = 'A'
-         IF ( MAFORM .EQ. 'e' ) MAFORM = 'E'
-         IF ( MAFORM .NE. 'A' .AND. MAFORM .NE. 'E' ) THEN
-            WRITE( IOUT, 2040 ) MAFORM
+         WRITE( out, 2030 )
+         READ( in, 1000 ) maform
+         IF ( maform == 'a' ) maform = 'A'
+         IF ( maform == 'e' ) maform = 'E'
+         IF ( maform /= 'A' .AND. maform /= 'E' ) THEN
+            WRITE( out, 2040 ) maform
             GO TO 30
          END IF
       END IF
 
-C  Determine the names of the problem, variables and constraints
+!  Determine the names of the problem, variables and constraints
 
-      CALL CUTEST_cnames( status, N, M, PNAME, VNAMES, GNAMES )
-      DO 50 PLAST = 8, 1, - 1
-         IF ( PNAME( PLAST : PLAST ) .NE. ' ' ) GO TO 60
-   50 CONTINUE
-   60 CONTINUE
+      CALL CUTEST_cnames( status, n, m, pname, VNAMES, GNAMES )
+      IF ( status /= 0 ) GO TO 910
+      DO plast = 8, 1, - 1
+        IF ( PNAME( plast : plast ) /= ' ' ) EXIT
+      END DO
 
-C  Name output file
+!  Name output file
 
-      PRBOUT = '            '
-      IF ( MATYPE .EQ. 'H' ) THEN
-         IF ( MAFORM .EQ. 'A' ) THEN
-            PRBOUT = PNAME( 1 : PLAST ) // '.hes'
-         ELSE
-            PRBOUT = PNAME( 1 : PLAST ) // '.ele'
-         END IF
-      ELSE IF ( MATYPE .EQ. 'A' ) THEN
-         PRBOUT = PNAME( 1 : PLAST ) // '.aug'
-      ELSE IF ( MATYPE .EQ. 'J' ) THEN
-         PRBOUT = PNAME( 1 : PLAST ) // '.jac'
+      prbout = '            '
+      IF ( matype == 'H' ) THEN
+        IF ( maform == 'A' ) THEN
+          prbout = PNAME( 1 : plast ) // '.hes'
+        ELSE
+          prbout = PNAME( 1 : plast ) // '.ele'
+        END IF
+      ELSE IF ( matype == 'A' ) THEN
+        prbout = PNAME( 1 : plast ) // '.aug'
+      ELSE IF ( matype == 'J' ) THEN
+        prbout = PNAME( 1 : plast ) // '.jac'
       ELSE
-         PRBOUT = PNAME( 1 : PLAST ) // '.jat'
+        prbout = PNAME( 1 : plast ) // '.jat'
       END IF
 
-C  Open output file
+!  Open output file
 
-      OPEN( OUTPUT , FILE = PRBOUT, FORM = 'FORMATTED',
-     *      STATUS = 'UNKNOWN'  )
-      REWIND OUTPUT
+      OPEN( output , FILE = PRBOUT, FORM = 'FORMATTED', STATUS = 'UNKNOWN'  )
+      REWIND( output )
 
-C  For RB format, the RHS is stored separately
+!  For RB format, the RHS is stored separately
 
-      IF ( RB ) THEN
-         IF ( MATYPE .EQ. 'H' ) THEN
-            IF ( MAFORM .EQ. 'A' ) THEN
-               PRBRHS = PNAME( 1 : PLAST ) // '.hes.rhsr'
-            ELSE
-               PRBRHS = PNAME( 1 : PLAST ) // '.ele.rhsr'
-            END IF
-         ELSE IF ( MATYPE .EQ. 'A' ) THEN
-            PRBRHS = PNAME( 1 : PLAST ) // '.aug.rhsr'
-         ELSE IF ( MATYPE .EQ. 'J' ) THEN
-            PRBRHS = PNAME( 1 : PLAST ) // '.jac.rhsr'
-         ELSE
-            PRBRHS = PNAME( 1 : PLAST ) // '.jat.rhsr'
-         END IF
+      IF ( rb ) THEN
+        IF ( matype == 'H' ) THEN
+           IF ( maform == 'A' ) THEN
+              prbrhs = PNAME( 1 : plast ) // '.hes.rhsr'
+           ELSE
+              prbrhs = PNAME( 1 : plast ) // '.ele.rhsr'
+           END IF
+        ELSE IF ( matype == 'A' ) THEN
+           prbrhs = PNAME( 1 : plast ) // '.aug.rhsr'
+        ELSE IF ( matype == 'J' ) THEN
+           prbrhs = PNAME( 1 : plast ) // '.jac.rhsr'
+        ELSE
+           prbrhs = PNAME( 1 : plast ) // '.jat.rhsr'
+        END IF
 
-C  Open output file for RHS
+!  Open output file for RHS
 
-         OPEN( OUTRHS , FILE = PRBRHS, FORM = 'FORMATTED',
-     *         STATUS = 'UNKNOWN'  )
-         REWIND OUTRHS
+        OPEN( outrhs , FILE = PRBRHS, FORM = 'FORMATTED', STATUS = 'UNKNOWN' )
+        REWIND( outrhs )
 
       END IF
 
-C  Move X into the feasible region
+!  Move X into the feasible region
 
-      DO 110 I = 1, N
-         X( I ) = MIN( BU( I ), MAX( BL( I ), X( I ) ) )
-  110 CONTINUE
+      DO i = 1, n
+        X( i ) = MIN( BU( i ), MAX( BL( i ), X( i ) ) )
+      END DO
 
-C  Evaluate the constant terms of the objective and constraint functions
+!  Evaluate the constant terms of the objective and constraint functions
 
-      CALL CUTEST_cfn( status, N, M, X, F, MMAX, B )
+      CALL CUTEST_cfn( status, n, m, X, f, B )
+      IF ( status /= 0 ) GO TO 910
+      B( 1 : m ) = - B( 1 : m )
 
-      DO 120 I = 1, M
-         B( I ) = - B( I )
-  120 CONTINUE
+!  Use IW to store positions of diagonal entries. Initialize IW as 0
 
-c  Use IW to store positions of diagonal entries. Initialize IW as 0
+      IW( 1 : n + m ) = 0
 
-      DO 130 I = 1, N + M
-         IW( I ) = 0
-  130 CONTINUE
+!  Evaluate the linear terms of the objective and constraint functions
+!  in a sparse format
 
-C  Evaluate the linear terms of the objective and constraint functions
-C  in a sparse format
+      CALL CUTEST_csgr( status, n, m, X, Y, .FALSE., nj, matmax, VAL, COL, ROW )
+      IF ( status /= 0 ) GO TO 910
+      SLACK( 1 : m ) = ONE
 
-      CALL CUTEST_csgr( status, N, M, .FALSE., MMAX, V, X, NJ, MATMAX, VAL, COL, ROW )
-      
-      DO 210 I = 1, M
-         SLACK( I ) = ONE
-  210 CONTINUE   
+!  Remove zero entries
 
-C  Remove zero entries
+      na = 0
+      DO i = 1, nj
+        IF ( VAL( i ) /= zero ) THEN
+          IF ( ROW( i ) > 0 ) THEN
+             na = na + 1
+             j = ROW( i )  
+             ROW( na ) = J
+             COL( na ) = COL( i )  
+             VAL( na ) = VAL( i )
+             SLACK( j ) = MAX( SLACK( j ), ABS( VAL( na ) ) )
+          ELSE
+             C( COL( i ) ) = - VAL( i )
+          END IF  
+        END IF
+      END DO
 
-      NA = 0
+!  Determine the status of each slack variable.
+!  Introduce slack variables for inequality constraints
 
-      DO 220 I = 1, NJ
-         IF ( VAL( I ) .NE. ZERO ) THEN
-            IF ( ROW( I ) .GT. 0 ) THEN
-               NA = NA + 1
-               J = ROW( I )  
-               ROW( NA ) = J
-               COL( NA ) = COL( I )  
-               VAL( NA ) = VAL( I )
-               SLACK( J ) = MAX( SLACK( J ), ABS( VAL( NA ) ) )
+      ntotal = n
+      DO i = 1, m
+         IF ( .NOT. EQUATN( i ) ) THEN
+            ntotal = ntotal + 1
+            na = na + 1 ; ROW( na ) = i ; COL( na ) = ntotal 
+            IF ( ( CL( i ) == zero .AND. CU( i ) > biginf ) .OR.               &
+                 ( CU( i ) == zero .AND. CL( i ) < - biginf ) ) THEN
+              IF ( CL( i ) == zero ) THEN
+                VAL( na ) = - SLACK( i )
+              ELSE
+                VAL( na ) = SLACK( i )
+              END IF
             ELSE
-               C( COL( I ) ) = - VAL( I )
-            END IF  
-         END IF
-  220 CONTINUE
-
-C  Determine the status of each slack variable.
-C  Introduce slack variables for inequality constraints
-
-      NTOTAL = N
-      DO 230 I = 1, M
-         IF ( .NOT. EQUATN( I ) ) THEN
-            NTOTAL = NTOTAL + 1
-            NA = NA + 1
-            ROW( NA ) = I
-            COL( NA ) = NTOTAL 
-            IF ( ( CL( I ) .EQ. ZERO .AND. CU( I ) .GT. BIGINF ) .OR.
-     *           ( CU( I ) .EQ. ZERO .AND. CL( I ) .LT. - BIGINF ) ) 
-     *             THEN
-               IF ( CL( I ) .EQ. ZERO ) THEN
-                  VAL( NA ) = - SLACK( I )
-               ELSE
-                  VAL( NA ) = SLACK( I )
-               END IF
-            ELSE
-               VAL( NA ) = - SLACK( I )
+              VAL( na ) = - SLACK( i )
             END IF
          END IF
-  230 CONTINUE
+      END DO
 
-      IF ( MATYPE .EQ. 'H' ) THEN
-         NNZ = 0
+      IF ( matype == 'H' ) THEN
+        nnz = 0
       ELSE
-         NNZ = NA
+        nnz = na
       END IF
 
-      IF ( MATYPE .EQ. 'A' .OR. MATYPE .EQ. 'H' ) THEN
+      IF ( matype == 'A' .OR. matype == 'H' ) THEN
 
-C  The matrix is to be assembled
+!  The matrix is to be assembled
 
-         IF ( MAFORM .EQ. 'A' ) THEN
+        IF ( maform == 'A' ) THEN
 
-C  Evaluate the Hessian of the Lagrangian function at the initial point
+!  Evaluate the Hessian of the Lagrangian function at the initial point
 
-            CALL CUTEST_csh( status, N, M, X, LV, V, NH, MATMAX - NA, VAL( NA + 1 ),
-     *                ROW( NA + 1 ), COL( NA + 1 ) )
+          CALL CUTEST_csh( status, n, m, X, Y, nh, matmax - na,                &
+                           VAL( na + 1 ), ROW( na + 1 ), COL( na + 1 ) )
+          IF ( status /= 0 ) GO TO 910
 
-C  Remove zero entries
+!  Remove zero entries
 
-            DO 310 I = NA + 1, NA + NH
-               IF ( VAL( I ) .NE. ZERO ) THEN
-                  NNZ = NNZ + 1
-                  IF ( ROW( I ) .GE. COL( I ) ) THEN
-                     ROW( NNZ ) = ROW( I )  
-                     COL( NNZ ) = COL( I )  
-                  ELSE
-                     ROW( NNZ ) = COL( I )  
-                     COL( NNZ ) = ROW( I )  
-                  END IF  
-                  IF ( ROW( I ) .EQ. COL( I ) ) IW( ROW( I ) ) = NNZ
-                  VAL( NNZ ) = VAL( I )
-               END IF
-  310       CONTINUE
+          DO i = na + 1, na + nh
+            IF ( VAL( i ) /= zero ) THEN
+              nnz = nnz + 1
+              IF ( ROW( i ) >= COL( i ) ) THEN
+                ROW( nnz ) = ROW( i )  
+                COL( nnz ) = COL( i )  
+              ELSE
+                ROW( nnz ) = COL( i )  
+                COL( nnz ) = ROW( i )  
+              END IF  
+              IF ( ROW( i ) == COL( i ) ) IW( ROW( i ) ) = nnz
+              VAL( nnz ) = VAL( i )
+            END IF
+          END DO
 
-C  Include terms representing penalties
+!  Include terms representing penalties
 
-            DO 320 I = 1, N
-               IF ( BL( I ) .GT. - BIGINF .OR. BU( I ) .LT. BIGINF ) 
-     *              THEN
-                  J = IW( I )
-                  IF ( J .EQ. 0 ) THEN
-                     NNZ = NNZ + 1
-                     ROW( NNZ ) = I
-                     COL( NNZ ) = I
-                     IF ( BL( I ) .GT. - BIGINF .AND. BU( I ) .LT. 
-     *                   BIGINF ) THEN
-                        VAL( NNZ ) = PENLTY + PENLTY
-                     ELSE
-                        VAL( NNZ ) = PENLTY
-                     END IF
-                  ELSE
-                     IF ( BL( I ) .GT. - BIGINF .AND. BU( I ) .LT. 
-     *                   BIGINF ) THEN
-                        VAL( J ) = VAL( J ) + PENLTY + PENLTY
-                     ELSE
-                        VAL( J ) = VAL( J ) + PENLTY
-                     END IF
-                  END IF
-               END IF 
-  320       CONTINUE
+          DO i = 1, n
+            IF ( BL( i ) > - biginf .OR. BU( i ) < biginf ) THEN
+              j = IW( i )
+              IF ( j == 0 ) THEN
+                nnz = nnz + 1 ; ROW( nnz ) = i ; COL( nnz ) = i
+                IF ( BL( i ) > - biginf .AND. BU( i ) < biginf ) THEN
+                  VAL( nnz ) = penalty + penalty
+                ELSE
+                  VAL( nnz ) = penalty
+                END IF
+              ELSE
+                IF ( BL( i ) > - biginf .AND. BU( i ) < biginf ) THEN
+                  VAL( j ) = VAL( j ) + penalty + penalty
+                ELSE
+                  VAL( j ) = VAL( j ) + penalty
+                END IF
+              END IF
+            END IF 
+          END DO
 
-            NTOTAL = N
-            DO 330 I = 1, M
-               IF ( .NOT. EQUATN( I ) ) THEN
-                  NTOTAL = NTOTAL + 1
-                  NNZ = NNZ + 1
-                  ROW( NNZ ) = NTOTAL
-                  COL( NNZ ) = NTOTAL 
-                  IF ( CL( I ) .GT. - BIGINF .AND. CU( I ) .LT. BIGINF ) 
-     *                 THEN
-                     VAL( NNZ ) = PENLTY + PENLTY
-                  ELSE
-                     VAL( NNZ ) = PENLTY
-                  END IF
-               END IF
-  330       CONTINUE
+          ntotal = n
+          DO i = 1, m
+            IF ( .NOT. EQUATN( i ) ) THEN
+              ntotal = ntotal + 1
+              nnz = nnz + 1
+              ROW( nnz ) = NTOTAL
+              COL( nnz ) = NTOTAL 
+              IF ( CL( i ) > - biginf .AND. CU( i ) < biginf ) THEN
+                 VAL( nnz ) = penalty + penalty
+              ELSE
+                 VAL( nnz ) = penalty
+              END IF
+            END IF
+          END DO
 
-C  The matrix is unassembled
+!  The matrix is unassembled
 
-         ELSE
+        ELSE
 
-C  Evaluate the Hessian of the Lagrangian function at the initial point
+!  Evaluate the Hessian of the Lagrangian function at the initial point
 
-            CALL CUTEST_ceh( status, N, M, X, V, NE, COLMAX, IP, COL, 
-     *                       MATMAX, ROW, MATMAX, VAL, .TRUE. )
+          CALL CUTEST_ceh( status, n, m, X, Y, ne, colmax, IP, COL,          &
+                           matmax, ROW, matmax, VAL, .TRUE. )
+          IF ( status /= 0 ) GO TO 910
 
-C  Include terms representing penalties
+!  Include terms representing penalties
 
-            NV = COL( NE + 1 ) - 1
-            DO 340 I = 1, N
-               IF ( BL( I ) .GT. - BIGINF .OR. BU( I ) .LT. BIGINF ) 
-     *              THEN
-                  NE = NE + 1
-                  NV = NV + 1
-                  ROW( IP( NE ) ) = I
-                  IP( NE + 1 ) = IP( NE ) + 1
-                  IF ( BL( I ) .GT. - BIGINF .AND. BU( I ) .LT. BIGINF ) 
-     *                 THEN
-                     VAL( NV ) = PENLTY + PENLTY
-                  ELSE
-                     VAL( NV ) = PENLTY
-                  END IF
-               END IF
-  340       CONTINUE
-            NNZ = IP( NE + 1 ) - 1
-
-         END IF
+          nv = COL( ne + 1 ) - 1
+          DO i = 1, n
+            IF ( BL( i ) > - biginf .OR. BU( i ) < biginf ) THEN
+              ne = ne + 1
+              nv = nv + 1
+              ROW( IP( ne ) ) = i
+              IP( ne + 1 ) = IP( ne ) + 1
+              IF ( BL( i ) > - biginf .AND. BU( i ) < biginf ) THEN
+                 VAL( nv ) = penalty + penalty
+              ELSE
+                 VAL( nv ) = penalty
+              END IF
+            END IF
+          END DO
+          nnz = IP( NE + 1 ) - 1
+        END IF
       END IF
 
-      N = NTOTAL
+      n = NTOTAL
       WRITE( 6, 2000 ) PNAME, N, M
 
       LINE1( 1 : 10 ) = PNAME
-      DO 510 I = 11, 80, 10
-         LINE1( I : I + 9 ) = '          '
-  510 CONTINUE
+      DO i = 11, 80, 10
+         LINE1( i : i + 9 ) = '          '
+      END DO
       LINE1( 73 : 80 ) = PNAME( 1 : 8 )
 
-C  Format header cards
+!  Format header cards
 
-      IF ( MATYPE .EQ. 'A' ) THEN
-
-         NROW = N + M
-         NCOL = NROW
-         LINE1( 12 : 30 ) = 'augmented system - '
-         WRITE( UNIT = LINE1( 31: 38 ), FMT = "( I8 )" ) NROW
-         LINE1( 39 : 43 ) = ' rows'
-
-         DO 520 I = 1, NA
-            ROW( I ) =  ROW( I ) + N 
-  520    CONTINUE
-
-      ELSE IF ( MATYPE .EQ. 'H' ) THEN
-
-         NROW = N
-         NCOL = NROW
-         LINE1( 12 : 21 ) = 'Hessian - '
-         WRITE( UNIT = LINE1( 22: 29 ), FMT = "( I8 )" ) NROW
-         LINE1( 30 : 34 ) = ' rows'
-         IF ( MAFORM .EQ. 'E' ) LINE1( 35 : 51 ) = ' - element format'
-
-      ELSE IF ( MATYPE .EQ. 'J' ) THEN
-
-         NROW = M
-         NCOL = N
-         LINE1( 12 : 22 ) = 'Jacobian - '
-         WRITE( UNIT = LINE1( 23: 30 ), FMT = "( I8 )" ) NROW
-         LINE1( 31 : 35 ) = ' rows'
-         WRITE( UNIT = LINE1( 36: 43 ), FMT = "( I8 )" ) NCOL
-         LINE1( 44 : 51 ) = ' columns'
-
-      ELSE IF ( MATYPE .EQ. 'T' ) THEN
-
-         NROW = N
-         NCOL = M
-         LINE1( 12 : 32 ) = 'Jacobian transpose - '
-         WRITE( UNIT = LINE1( 33: 40 ), FMT = "( I8 )" ) NROW
-         LINE1( 41 : 45 ) = ' rows'
-         WRITE( UNIT = LINE1( 46: 53 ), FMT = "( I8 )" ) NCOL
-         LINE1( 54 : 61 ) = ' columns'
-
-         DO 530 I = 1, NA
-            J = COL( I )
-            COL( I ) =  ROW( I )
-            ROW( I ) = J
-  530    CONTINUE
-
+      IF ( matype == 'A' ) THEN
+        nrow = n + m ; ncol = nrow
+        LINE1( 12 : 30 ) = 'augmented system - '
+        WRITE( UNIT = LINE1( 31: 38 ), FMT = "( I8 )" ) nrow
+        LINE1( 39 : 43 ) = ' rows'
+        ROW( 1 : na ) =  ROW( 1 : na ) + n 
+      ELSE IF ( matype == 'H' ) THEN
+        nrow = n ; ncol = nrow
+        LINE1( 12 : 21 ) = 'Hessian - '
+        WRITE( UNIT = LINE1( 22: 29 ), FMT = "( I8 )" ) nrow
+        LINE1( 30 : 34 ) = ' rows'
+        IF ( maform == 'E' ) LINE1( 35 : 51 ) = ' - element format'
+      ELSE IF ( matype == 'J' ) THEN
+        nrow = m ; ncol = n
+        LINE1( 12 : 22 ) = 'Jacobian - '
+        WRITE( UNIT = LINE1( 23: 30 ), FMT = "( I8 )" ) nrow
+        LINE1( 31 : 35 ) = ' rows'
+        WRITE( UNIT = LINE1( 36: 43 ), FMT = "( I8 )" ) ncol
+        LINE1( 44 : 51 ) = ' columns'
+      ELSE IF ( matype == 'T' ) THEN
+        nrow = n ; ncol = m
+        LINE1( 12 : 32 ) = 'Jacobian transpose - '
+        WRITE( UNIT = LINE1( 33: 40 ), FMT = "( I8 )" ) nrow
+        LINE1( 41 : 45 ) = ' rows'
+        WRITE( UNIT = LINE1( 46: 53 ), FMT = "( I8 )" ) ncol
+        LINE1( 54 : 61 ) = ' columns'
+        DO i = 1, na
+          j = COL( i )
+          COL( i ) =  ROW( i )
+          ROW( i ) = j
+        END DO
       END IF
 
-C  Transform from co-ordinate to column format
+!  Transform from co-ordinate to column format
 
-      IF ( MAFORM .EQ. 'A' )
-     *   CALL REORDA( NCOL, NNZ, ROW, COL, VAL, IP, IW )
+      IF ( maform == 'A' ) CALL REORDER( ncol, nnz, ROW, COL, VAL, IP, IW )
 
-C  Harwell-Boeing format
+!  Harwell-Boeing format
 
-      IF ( HB ) THEN
+      IF ( hb ) THEN
 
-C  Continue formatting header cards
+!  Continue formatting header cards
 
-         IF ( MAFORM .EQ. 'A' ) THEN
-            I = ( NCOL + 10 ) / 10 + ( NNZ  + 9 ) / 10 + 
-     *          ( NNZ  +  2 ) / 3  + ( NROW + 2 ) / 3
-         ELSE
-            I = ( NCOL + 10 ) / 10 + ( NNZ  + 9 ) / 10 + 
-     *          ( NV   +  2 ) / 3  + ( NROW + 2 ) / 3
-         END IF
-         WRITE( UNIT = LINE2( 1: 14 ), FMT = "( I14 )" ) I
-         I = ( NCOL + 10 )/10 
-         WRITE( UNIT = LINE2( 15: 28 ), FMT = "( I14 )" ) I
-         I = ( NNZ + 9 ) / 10
-         WRITE( UNIT = LINE2( 29: 42 ), FMT = "( I14 )" ) I
-         IF ( MAFORM .EQ. 'A' ) THEN
-            I = ( NNZ + 2 ) / 3
-         ELSE
-            I = ( NV + 2 ) / 3
-         END IF
-         WRITE( UNIT = LINE2( 43: 56 ), FMT = "( I14 )" ) I
-         I = ( NROW + 2 ) / 3
-         WRITE( UNIT = LINE2( 57: 70 ), FMT = "( I14 )" ) I
+        IF ( maform == 'A' ) THEN
+          i = ( ncol + 10 ) / 10 + ( nnz + 9 ) / 10 +                          &
+              ( nnz + 2 ) / 3  + ( nrow + 2 ) / 3
+        ELSE
+          i = ( ncol + 10 ) / 10 + ( nnz + 9 ) / 10 +                          &
+              ( nv + 2 ) / 3  + ( nrow + 2 ) / 3
+        END IF
+        WRITE( UNIT = LINE2( 1: 14 ), FMT = "( I14 )" ) i
+        i = ( ncol + 10 )/10 
+        WRITE( UNIT = LINE2( 15: 28 ), FMT = "( I14 )" ) i
+        i = ( nnz + 9 ) / 10
+        WRITE( UNIT = LINE2( 29: 42 ), FMT = "( I14 )" ) i
+        IF ( maform == 'A' ) THEN
+          i = ( nnz + 2 ) / 3
+        ELSE
+          i = ( NV + 2 ) / 3
+        END IF
+        WRITE( UNIT = LINE2( 43: 56 ), FMT = "( I14 )" ) i
+        i = ( nrow + 2 ) / 3
+        WRITE( UNIT = LINE2( 57: 70 ), FMT = "( I14 )" ) i
    
-         LINE3( 1: 1 ) = 'R'
-         IF ( MATYPE .EQ. 'A' .OR. MATYPE .EQ. 'H' ) THEN
-            LINE3( 2: 2 ) = 'S'
-         ELSE
-            LINE3( 2: 2 ) = 'U'
-         END IF
-         IF ( MAFORM .EQ. 'A' ) THEN
-            LINE3( 3: 3 ) = 'A'
-         ELSE
-            LINE3( 3: 3 ) = 'E'
-         END IF
-         WRITE( UNIT = LINE3( 4: 14 ), FMT = "( 11X )" ) 
-         WRITE( UNIT = LINE3( 15: 28 ), FMT = "( I14 )" ) NROW
-         WRITE( UNIT = LINE3( 29 : 42 ), FMT = "( I14 )" ) NCOL
-         WRITE( UNIT = LINE3( 43 : 56 ), FMT = "( I14 )" ) NNZ
-         IF ( MAFORM .EQ. 'A' ) THEN
-            I = 0
-         ELSE
-            I = NV
-         END IF
-         WRITE( UNIT = LINE3( 57 : 70 ), FMT = "( I14 )" ) I
+        LINE3( 1: 1 ) = 'R'
+        IF ( matype == 'A' .OR. matype == 'H' ) THEN
+          LINE3( 2: 2 ) = 'S'
+        ELSE
+          LINE3( 2: 2 ) = 'U'
+        END IF
+        IF ( maform == 'A' ) THEN
+          LINE3( 3: 3 ) = 'A'
+        ELSE
+          LINE3( 3: 3 ) = 'E'
+        END IF
+        WRITE( UNIT = LINE3( 4: 14 ), FMT = "( 11X )" ) 
+        WRITE( UNIT = LINE3( 15: 28 ), FMT = "( I14 )" ) nrow
+        WRITE( UNIT = LINE3( 29 : 42 ), FMT = "( I14 )" ) ncol
+        WRITE( UNIT = LINE3( 43 : 56 ), FMT = "( I14 )" ) nnz
+        IF ( maform == 'A' ) THEN
+           i = 0
+        ELSE
+           i = nv
+        END IF
+        WRITE( UNIT = LINE3( 57 : 70 ), FMT = "( I14 )" ) i
    
-         WRITE( UNIT = LINE4( 1: 16 ), FMT = "( '(10I8)          ' )" ) 
-         WRITE( UNIT = LINE4( 17: 32 ), FMT = "( '(10I8)          ' )" ) 
-CS       WRITE( UNIT = LINE4( 33: 52 ), FMT = "( '(1P, 3E24.16)   ' )" ) 
-CD       WRITE( UNIT = LINE4( 33: 52 ), FMT = "( '(1P, 3D24.16)   ' )" ) 
-CS       WRITE( UNIT = LINE4( 53: 72 ), FMT = "( '(1P, 3E24.16)   ' )" ) 
-CD       WRITE( UNIT = LINE4( 53: 72 ), FMT = "( '(1P, 3D24.16)   ' )" ) 
+        WRITE( UNIT = LINE4( 1: 16 ), FMT = "( '(10I8)          ' )" ) 
+        WRITE( UNIT = LINE4( 17: 32 ), FMT = "( '(10I8)          ' )" ) 
+!S      WRITE( UNIT = LINE4( 33: 52 ), FMT = "( '(1P, 3E24.16)   ' )" ) 
+        WRITE( UNIT = LINE4( 33: 52 ), FMT = "( '(1P, 3D24.16)   ' )" ) 
+!S      WRITE( UNIT = LINE4( 53: 72 ), FMT = "( '(1P, 3E24.16)   ' )" ) 
+        WRITE( UNIT = LINE4( 53: 72 ), FMT = "( '(1P, 3D24.16)   ' )" ) 
    
-         LINE5( 1: 3 ) = 'F  '
-         WRITE( UNIT = LINE5( 4: 14 ), FMT = "( 11X )" ) 
-         I = 1
-         WRITE( UNIT = LINE5( 15: 28 ), FMT = "( I14 )" ) I
-         WRITE( UNIT = LINE5( 29: 42 ), FMT = "( I14 )" ) NROW
+        LINE5( 1: 3 ) = 'F  '
+        WRITE( UNIT = LINE5( 4: 14 ), FMT = "( 11X )" ) 
+        i = 1
+        WRITE( UNIT = LINE5( 15: 28 ), FMT = "( I14 )" ) I
+        WRITE( UNIT = LINE5( 29: 42 ), FMT = "( I14 )" ) nrow
 
-C  Write out the header
+!  Write out the header
 
-         WRITE( OUTPUT, "( A80, /, A70, /, A70, /, A72, /, A42 )" )
-     *          LINE1, LINE2, LINE3, LINE4, LINE5
+        WRITE( output, "( A80, /, A70, /, A70, /, A72, /, A42 )" )             &
+               LINE1, LINE2, LINE3, LINE4, LINE5
 
-C  Rutherford-Boeing format
+!  Rutherford-Boeing format
 
       ELSE
 
-C  Continue formatting header cards
+!  Continue formatting header cards
 
-         IF ( MAFORM .EQ. 'A' ) THEN
-            I = ( NCOL + 10 ) / 10 + ( NNZ  + 9 ) / 10 + 
-     *          ( NNZ  +  2 ) / 3
-         ELSE
-            I = ( NCOL + 10 ) / 10 + ( NNZ  + 9 ) / 10 + 
-     *          ( NV   +  2 ) / 3
-         END IF
-         WRITE( UNIT = LINE2( 1: 14 ), FMT = "( 1X, I13 )" ) I
-         I = ( NCOL + 10 )/10 
-         WRITE( UNIT = LINE2( 15: 28 ), FMT = "( 1X, I13 )" ) I
-         I = ( NNZ + 9 ) / 10
-         WRITE( UNIT = LINE2( 29: 42 ), FMT = "( 1X, I13 )" ) I
-         IF ( MAFORM .EQ. 'A' ) THEN
-            I = ( NNZ + 2 ) / 3
-         ELSE
-            I = ( NV + 2 ) / 3
-         END IF
-         WRITE( UNIT = LINE2( 43: 56 ), FMT = "( 1X, I13 )" ) I
+        IF ( maform == 'A' ) THEN
+           i = ( ncol + 10 ) / 10 + ( nnz  + 9 ) / 10 + ( nnz  +  2 ) / 3
+        ELSE
+           i = ( ncol + 10 ) / 10 + ( nnz  + 9 ) / 10 + ( NV   +  2 ) / 3
+        END IF
+        WRITE( UNIT = LINE2( 1: 14 ), FMT = "( 1X, I13 )" ) I
+        i = ( ncol + 10 )/10 
+        WRITE( UNIT = LINE2( 15: 28 ), FMT = "( 1X, I13 )" ) I
+        i = ( nnz + 9 ) / 10
+        WRITE( UNIT = LINE2( 29: 42 ), FMT = "( 1X, I13 )" ) I
+        IF ( maform == 'A' ) THEN
+          i = ( nnz + 2 ) / 3
+        ELSE
+          i = ( nv + 2 ) / 3
+        END IF
+        WRITE( UNIT = LINE2( 43: 56 ), FMT = "( 1X, I13 )" ) i
    
-         LINE3( 1: 1 ) = 'r'
-         IF ( MATYPE .EQ. 'A' .OR. MATYPE .EQ. 'H' ) THEN
-            LINE3( 2: 2 ) = 's'
-         ELSE
-            LINE3( 2: 2 ) = 'u'
-         END IF
-         IF ( MAFORM .EQ. 'A' ) THEN
-            LINE3( 3: 3 ) = 'a'
-         ELSE
-            LINE3( 3: 3 ) = 'e'
-         END IF
-         WRITE( UNIT = LINE3( 4: 14 ), FMT = "( 11X )" ) 
-         WRITE( UNIT = LINE3( 15: 28 ), FMT = "( 1X, I13 )" ) NROW
-         WRITE( UNIT = LINE3( 29 : 42 ), FMT = "( 1X, I13 )" ) NCOL
-         WRITE( UNIT = LINE3( 43 : 56 ), FMT = "( 1X, I13 )" ) NNZ
-         IF ( MAFORM .EQ. 'A' ) THEN
-            I = 0
-         ELSE
-            I = NV
-         END IF
-         WRITE( UNIT = LINE3( 57 : 70 ), FMT = "( 1X, I13 )" ) I
+        LINE3( 1: 1 ) = 'r'
+        IF ( matype == 'A' .OR. matype == 'H' ) THEN
+           LINE3( 2: 2 ) = 's'
+        ELSE
+           LINE3( 2: 2 ) = 'u'
+        END IF
+        IF ( maform == 'A' ) THEN
+           LINE3( 3: 3 ) = 'a'
+        ELSE
+           LINE3( 3: 3 ) = 'e'
+        END IF
+        WRITE( UNIT = LINE3( 4: 14 ), FMT = "( 11X )" ) 
+        WRITE( UNIT = LINE3( 15: 28 ), FMT = "( 1X, I13 )" ) nrow
+        WRITE( UNIT = LINE3( 29 : 42 ), FMT = "( 1X, I13 )" ) ncol
+        WRITE( UNIT = LINE3( 43 : 56 ), FMT = "( 1X, I13 )" ) nnz
+        IF ( maform == 'A' ) THEN
+          i = 0
+        ELSE
+          i = nv
+        END IF
+        WRITE( UNIT = LINE3( 57 : 70 ), FMT = "( 1X, I13 )" ) I
    
-         WRITE( UNIT = LINE4( 1: 16 ),  FMT = "( '(10I8)          ' )" ) 
-         WRITE( UNIT = LINE4( 17: 32 ), FMT = "( '(10I8)          ' )" ) 
-CS       WRITE( UNIT = LINE4( 33: 52 ), FMT = "( '(1P, 3E25.16)   ' )" ) 
-CD       WRITE( UNIT = LINE4( 33: 52 ), FMT = "( '(1P, 3D25.16)   ' )" ) 
+        WRITE( UNIT = LINE4( 1: 16 ),  FMT = "( '(10I8)          ' )" ) 
+        WRITE( UNIT = LINE4( 17: 32 ), FMT = "( '(10I8)          ' )" ) 
+!S      WRITE( UNIT = LINE4( 33: 52 ), FMT = "( '(1P, 3E25.16)   ' )" ) 
+        WRITE( UNIT = LINE4( 33: 52 ), FMT = "( '(1P, 3D25.16)   ' )" ) 
    
-C  Write out the header
+!  Write out the header
 
-         WRITE( OUTPUT, "( A80, /, A56, /, A70, /, A52 )" )
-     *          LINE1, LINE2( 1 : 56 ), LINE3, LINE4( 1 : 52 )
+        WRITE( OUTPUT, "( A80, /, A56, /, A70, /, A52 )" )                     &
+                 LINE1, LINE2( 1 : 56 ), LINE3, LINE4( 1 : 52 )
 
-C  Do the same for the RHS file
+!  Do the same for the RHS file
 
-         LINE1( 64 : 72 ) = ' - RHS - '
+        LINE1( 64 : 72 ) = ' - RHS - '
 
-         WRITE( UNIT = LINE2( 1: 5 ), FMT = "( 'rhsrd' )" )
-         IF ( MATYPE .EQ. 'A' ) THEN
-              WRITE( UNIT = LINE2( 6: 14 ), FMT = "( ' aug sys ' )" )
-         ELSE IF ( MATYPE .EQ. 'A' ) THEN
-              WRITE( UNIT = LINE2( 6: 14 ), FMT = "( ' hessian ' )" )
-         ELSE IF ( MATYPE .EQ. 'J' ) THEN
-              WRITE( UNIT = LINE2( 6: 14 ), FMT = "( ' jacobian' )" )
-         ELSE IF ( MATYPE .EQ. 'T' ) THEN
-              WRITE( UNIT = LINE2( 6: 14 ), FMT = "( ' jactrans' )" )
-         END IF
+        WRITE( UNIT = LINE2( 1: 5 ), FMT = "( 'rhsrd' )" )
+        IF ( matype == 'A' ) THEN
+             WRITE( UNIT = LINE2( 6: 14 ), FMT = "( ' aug sys ' )" )
+        ELSE IF ( matype == 'A' ) THEN
+             WRITE( UNIT = LINE2( 6: 14 ), FMT = "( ' hessian ' )" )
+        ELSE IF ( matype == 'J' ) THEN
+             WRITE( UNIT = LINE2( 6: 14 ), FMT = "( ' jacobian' )" )
+        ELSE IF ( matype == 'T' ) THEN
+             WRITE( UNIT = LINE2( 6: 14 ), FMT = "( ' jactrans' )" )
+        END IF
 
-         WRITE( UNIT = LINE2( 15: 16 ), FMT = "( ' r' )" )
-         WRITE( UNIT = LINE2( 17: 30 ), FMT = "( 1X, I13 )" ) NROW
-         WRITE( UNIT = LINE2( 31: 44 ), FMT = "( 1X, I13 )" ) 1
-         WRITE( UNIT = LINE2( 45: 58 ), FMT = "( 1X, I13 )" ) NROW
+        WRITE( UNIT = LINE2( 15: 16 ), FMT = "( ' r' )" )
+        WRITE( UNIT = LINE2( 17: 30 ), FMT = "( 1X, I13 )" ) nrow
+        WRITE( UNIT = LINE2( 31: 44 ), FMT = "( 1X, I13 )" ) 1
+        WRITE( UNIT = LINE2( 45: 58 ), FMT = "( 1X, I13 )" ) nrow
 
-         WRITE( UNIT = LINE3( 1: 20 ), FMT = "( '(1P, 3D25.16)', 7X )" ) 
-         WRITE( UNIT = LINE3( 21: 40 ), FMT = "( 20X )" )
-         WRITE( UNIT = LINE3( 41: 60 ), FMT = "( 20X )" )
+        WRITE( UNIT = LINE3( 1: 20 ), FMT = "( '(1P, 3D25.16)', 7X )" ) 
+        WRITE( UNIT = LINE3( 21: 40 ), FMT = "( 20X )" )
+        WRITE( UNIT = LINE3( 41: 60 ), FMT = "( 20X )" )
 
-C  Write out the RHS header
+!  Write out the RHS header
 
-         WRITE( OUTRHS, "( A80, /, A58, /, A60 )" )
-     *          LINE1, LINE2( 1 : 58 ), LINE3( 1 : 60 )
-
+        WRITE( OUTRHS, "( A80, /, A58, /, A60 )" )                             &
+               LINE1, LINE2( 1 : 58 ), LINE3( 1 : 60 )
       END IF
 
-C  Write out the desired matrix
+!  Write out the desired matrix
 
-      IF ( HB ) THEN
-         WRITE( OUTPUT, "( (10I8) )" ) ( IP( I ), I = 1, NCOL + 1 )
-         WRITE( OUTPUT, "( (10I8) )" ) ( ROW( I ), I = 1, NNZ )
-         IF ( MAFORM .EQ. 'A' ) THEN
-CS         WRITE( OUTPUT, "( (1P, 3E24.16) )" ) ( VAL( I ), I = 1, NNZ )
-CD         WRITE( OUTPUT, "( (1P, 3D24.16) )" ) ( VAL( I ), I = 1, NNZ )
-         ELSE
-CS         WRITE( OUTPUT, "( (1P, 3E24.16) )" ) ( VAL( I ), I = 1, NV )
-CD         WRITE( OUTPUT, "( (1P, 3D24.16) )" ) ( VAL( I ), I = 1, NV )
-         END IF
+      IF ( hb ) THEN
+        WRITE( OUTPUT, "( (10I8) )" ) ( IP( i ), i = 1, ncol + 1 )
+        WRITE( OUTPUT, "( (10I8) )" ) ( ROW( i ), i = 1, nnz )
+        IF ( maform == 'A' ) THEN
+!S        WRITE( OUTPUT, "( (1P, 3E24.16) )" ) ( VAL( i ), i = 1, nnz )
+          WRITE( OUTPUT, "( (1P, 3D24.16) )" ) ( VAL( i ), i = 1, nnz )
+        ELSE
+!S        WRITE( OUTPUT, "( (1P, 3E24.16) )" ) ( VAL( i ), i = 1, NV )
+          WRITE( OUTPUT, "( (1P, 3D24.16) )" ) ( VAL( i ), i = 1, NV )
+        END IF
       ELSE
-         WRITE( OUTPUT, "( (10I8) )" ) ( IP( I ), I = 1, NCOL + 1 )
-         WRITE( OUTPUT, "( (10I8) )" ) ( ROW( I ), I = 1, NNZ )
-         IF ( MAFORM .EQ. 'A' ) THEN
-CS         WRITE( OUTPUT, "( (1P, 3E25.16) )" ) ( VAL( I ), I = 1, NNZ )
-CD         WRITE( OUTPUT, "( (1P, 3D25.16) )" ) ( VAL( I ), I = 1, NNZ )
-         ELSE
-CS         WRITE( OUTPUT, "( (1P, 3E25.16) )" ) ( VAL( I ), I = 1, NV )
-CD         WRITE( OUTPUT, "( (1P, 3D25.16) )" ) ( VAL( I ), I = 1, NV )
-         END IF
+        WRITE( OUTPUT, "( (10I8) )" ) ( IP( i ), i = 1, ncol + 1 )
+        WRITE( OUTPUT, "( (10I8) )" ) ( ROW( i ), i = 1, nnz )
+        IF ( maform == 'A' ) THEN
+!S        WRITE( OUTPUT, "( (1P, 3E25.16) )" ) ( VAL( i ), i = 1, nnz )
+          WRITE( OUTPUT, "( (1P, 3D25.16) )" ) ( VAL( i ), i = 1, nnz )
+        ELSE
+!S        WRITE( OUTPUT, "( (1P, 3E25.16) )" ) ( VAL( i ), i = 1, NV )
+          WRITE( OUTPUT, "( (1P, 3D25.16) )" ) ( VAL( i ), i = 1, NV )
+        END IF
       END IF
 
-      IF ( HB ) THEN
-         IF ( MATYPE .EQ. 'A' ) THEN
-CS          WRITE( OUTPUT, "( (1P, 3E24.16) )" ) ( C( I ), I = 1, N ),
-CD          WRITE( OUTPUT, "( (1P, 3D24.16) )" ) ( C( I ), I = 1, N ),
-     *                                           ( B( I ), I = 1, M )
-         ELSE IF ( MATYPE .EQ. 'J' ) THEN
-CS          WRITE( OUTPUT, "( (1P, 3E24.16) )" ) ( B( I ), I = 1, M )
-CD          WRITE( OUTPUT, "( (1P, 3D24.16) )" ) ( B( I ), I = 1, M )
-         ELSE
-CS          WRITE( OUTPUT, "( (1P, 3E24.16) )" ) ( C( I ), I = 1, N )
-CD          WRITE( OUTPUT, "( (1P, 3D24.16) )" ) ( C( I ), I = 1, N )
-         END IF
+      IF ( hb ) THEN
+        IF ( matype == 'A' ) THEN
+!S        WRITE( OUTPUT, "( (1P, 3E24.16) )" ) ( C( i ), i = 1, n ),
+          WRITE( OUTPUT, "( (1P, 3D24.16) )" ) ( C( i ), i = 1, n ),           &
+                                                ( B( i ), i = 1, M )
+        ELSE IF ( matype == 'J' ) THEN
+!S        WRITE( OUTPUT, "( (1P, 3E24.16) )" ) ( B( i ), i = 1, M )
+          WRITE( OUTPUT, "( (1P, 3D24.16) )" ) ( B( i ), i = 1, M )
+        ELSE
+!S        WRITE( OUTPUT, "( (1P, 3E24.16) )" ) ( C( i ), i = 1, n )
+          WRITE( OUTPUT, "( (1P, 3D24.16) )" ) ( C( i ), i = 1, n )
+        END IF
       ELSE
-         IF ( MATYPE .EQ. 'A' ) THEN
-CS          WRITE( OUTRHS, "( (1P, 3E25.16) )" ) ( C( I ), I = 1, N ),
-CD          WRITE( OUTRHS, "( (1P, 3D25.16) )" ) ( C( I ), I = 1, N ),
-     *                                           ( B( I ), I = 1, M )
-         ELSE IF ( MATYPE .EQ. 'J' ) THEN
-CS          WRITE( OUTRHS, "( (1P, 3E25.16) )" ) ( B( I ), I = 1, M )
-CD          WRITE( OUTRHS, "( (1P, 3D25.16) )" ) ( B( I ), I = 1, M )
-         ELSE
-CS          WRITE( OUTRHS, "( (1P, 3E25.16) )" ) ( C( I ), I = 1, N )
-CD          WRITE( OUTRHS, "( (1P, 3D25.16) )" ) ( C( I ), I = 1, N )
-         END IF
+        IF ( matype == 'A' ) THEN
+!S        WRITE( OUTRHS, "( (1P, 3E25.16) )" ) ( C( i ), i = 1, n ),
+          WRITE( OUTRHS, "( (1P, 3D25.16) )" ) ( C( i ), i = 1, n ),           &
+                                               ( B( i ), i = 1, M )
+        ELSE IF ( matype == 'J' ) THEN
+!S        WRITE( OUTRHS, "( (1P, 3E25.16) )" ) ( B( i ), i = 1, M )
+          WRITE( OUTRHS, "( (1P, 3D25.16) )" ) ( B( i ), i = 1, M )
+        ELSE
+!S        WRITE( OUTRHS, "( (1P, 3E25.16) )" ) ( C( i ), i = 1, n )
+          WRITE( OUTRHS, "( (1P, 3D25.16) )" ) ( C( i ), i = 1, n )
+        END IF
       END IF
 
       CLOSE( OUTPUT )
-      IF ( RB ) CLOSE( OUTRHS )
-
+      IF ( rb ) CLOSE( OUTRHS )
+      CALL CUTEST_uterminate( status )
       STOP
-C
-C  Non-executable statements
-C
+
+ 910 CONTINUE
+     WRITE( out, "( ' CUTEst error, status = ', i0, ', stopping' )" )  status
+     STOP
+
+ 990 CONTINUE
+     WRITE( out, "( ' Allocation error, status = ', I0 )" ) status
+     STOP
+
+!  Non-executable statements
+
  1000 FORMAT( A1 )
- 2000 FORMAT( /, ' Problem name: ', A8,
-     *        /, ' Number of variables     = ', I8, 
-     *        /, ' Number of equations     = ', I8 )
- 2010 FORMAT( /, ' Please state required matrix type. ',
-     *        /, ' A (augmented system) or H (Hessian) or',
-     *        /, ' J (Jacobian) or T (Transpose of Jacobian) : ' )
- 2020 FORMAT( /, ' Matrix type ', A1, 
-     *           ' not recognized. Please try again ' )
- 2030 FORMAT( /, ' Please state required matrix format. ',
-     *        /, ' A (assembled) or E (elemental): ' )
- 2040 FORMAT( /, ' Matrix format ', A1, 
-     *           ' not recognized. Please try again ' )
- 2050 FORMAT( /, ' Please state whether you require'
-     *        /, ' Harwell-Boeing or Rutherford-Boeing format. ', /, 
-     *           ' H (Harwell-Boeing) or R (Rutherford-Boeing) : ' )
- 2060 FORMAT( /, ' Your response ', A1, 
-     *           ' not recognized. Please try again ' )
+ 2000 FORMAT( /, ' Problem name: ', A8,                                        &
+              /, ' Number of variables     = ', I8,                            &
+              /, ' Number of equations     = ', I8 )
+ 2010 FORMAT( /, ' Please state required matrix type. ',                       &
+              /, ' A (augmented system) or H (Hessian) or',                    &
+              /, ' J (Jacobian) or T (Transpose of Jacobian) : ' )
+ 2020 FORMAT( /, ' Matrix type ', A1, ' not recognized. Please try again ' )
+ 2030 FORMAT( /, ' Please state required matrix format. ',                     &
+              /, ' A (assembled) or E (elemental): ' )
+ 2040 FORMAT( /, ' Matrix format ', A1, ' not recognized. Please try again ' )
+ 2050 FORMAT( /, ' Please state whether you require'                           &
+              /, ' Harwell-Boeing or Rutherford-Boeing format. ', /,           &
+                 ' H (Harwell-Boeing) or R (Rutherford-Boeing) : ' )
+ 2060 FORMAT( /, ' Your response ', A1, ' not recognized. Please try again ' )
 
-C  End of GETHRB
+    CONTAINS
+  
+      SUBROUTINE REORDER( nc, nnz, IRN, JCN, A, IP, IW )
+      INTEGER :: nc, nnz
+      INTEGER :: IRN( nnz ), JCN( nnz ), IW( nc + 1 ), IP( nc + 1 )
+      REAL ( KIND = wp ) :: A( nnz )
 
-      END
+!  Sort a sparse matrix from arbitrary order to column order
 
-      SUBROUTINE REORDA( NC, NNZ, IRN, JCN, A, IP, IW )
-      INTEGER NC, NNZ
-      INTEGER IRN( NNZ  ), JCN( NNZ )
-      INTEGER IW( NC + 1 ), IP( NC + 1 )
-CS    REAL              A( NNZ )
-CD    DOUBLE PRECISION  A( NNZ )
+!  Nick Gould
+!  7th November, 1990
 
-C  Sort a sparse matrix from arbitrary order to column order
+      INTEGER :: i, j, k, l, ic, ncp1, itemp, jtemp,  locat
+      REAL ( KIND = wp ) :: anext , atemp
 
-C  Nick Gould
-C  7th November, 1990
+!  Initialize the workspace as zero
 
-      INTEGER I, J, K, L, IC, NCP1, ITEMP, JTEMP,  LOCAT
-CS    REAL             ANEXT , ATEMP
-CD    DOUBLE PRECISION ANEXT , ATEMP
+      ncp1 = nc + 1
+      IW( 1 : ncp1 ) = 0
 
-C  Initialize the workspace as zero
+!  Pass 1. Count the number of elements in each column
 
-      NCP1       = NC + 1
-      DO 10 J    = 1, NCP1
-         IW( J ) = 0
-   10 CONTINUE
+      DO k = 1, nnz
+        j  = JCN( k )
+        IW( j ) = IW( j ) + 1
+      END DO
 
-C  Pass 1. Count the number of elements in each column
+!  Put the positions where each column begins in
+!  a compressed collection into IP and IW
 
-      DO 20 K   = 1, NNZ
-        J       = JCN( K )
-        IW( J ) = IW( J ) + 1
-   20 CONTINUE
+      IP( 1 ) = 1
+      DO j = 2, ncp1
+        IP( j ) = IW( j - 1 ) + IP( j - 1 )
+        IW( j - 1 ) = IP( j - 1 )
+      END DO
 
-C  Put the positions where each column begins in
-C  a compressed collection into IP and IW
+!  Pass 2. Reorder the elements into column order. 
+!          Fill in each column in turn
 
-      IP( 1 )       = 1
-      DO 30 J       = 2, NCP1
-        IP( J )     = IW( J - 1 ) + IP( J - 1 )
-        IW( J - 1 ) = IP( J - 1 )
-   30 CONTINUE
+      DO ic = 1, nc
 
-C  Pass 2. Reorder the elements into column order. 
-C          Fill in each column in turn
+!  Consider the next unfilled position in column ic
 
-      DO 70 IC = 1, NC
+        DO k = IW( ic ), IP( ic + 1 ) - 1
 
-C  Consider the next unfilled position in column IC
+!  The entry should be placed in column j
 
-        DO 60 K = IW( IC ), IP( IC + 1 ) - 1
+          i = IRN( K )
+          j = JCN( K )
+          anext = A( K )
 
-C  The entry should be placed in column J
+!  See if the entry is already in place
 
-          I       = IRN( K )
-          J       = JCN( K )
-          ANEXT   = A( K )
-          DO 40 L = 1, NNZ
+          DO l = 1, nnz
+             IF ( j == ic ) EXIT
+             locat = IW( j )
 
-C  See if the entry is already in place
+!  As a new entry is placed in column J, increase the pointer 
+!  IW( j ) by one
 
-             IF ( J .EQ. IC ) GO TO 50
-             LOCAT = IW( J )
+             IW( j  ) = locat + 1
 
-C  As a new entry is placed in column J, increase the pointer 
-C  IW( J ) by one
+!  Record details of the entry which currently occupies location LOCAT
 
-             IW( J  ) = LOCAT + 1
+             itemp = IRN( locat )
+             jtemp = JCN( locat )
+             atemp = A( locat )
 
-C  Record details of the entry which currently occupies location LOCAT
+!  Move the new entry to its correct place
 
-             ITEMP = IRN( LOCAT )
-             JTEMP = JCN( LOCAT )
-             ATEMP = A( LOCAT )
+             IRN( locat ) = i 
+             JCN( locat ) = j  
+             A( locat ) = anext
 
-C  Move the new entry to its correct place
+!  Make the displaced entry the new entry
 
-             IRN( LOCAT ) = I 
-             JCN( LOCAT ) = J  
-             A( LOCAT )   = ANEXT
+             i = itemp
+             j = jtemp
+             anext = atemp
+          END DO
 
-C  Make the displaced entry the new entry
+!  Move the new entry to its correct place 
 
-             I          = ITEMP
-             J          = JTEMP
-             ANEXT      = ATEMP
-   40     CONTINUE
+          JCN( k ) = j
+          IRN( k ) = i
+          A( k ) = anext
+        END DO
+      END DO
 
-C  Move the new entry to its correct place 
+!  Now sort the entries in each column so that their row indices increase
 
-   50     CONTINUE
-          JCN( K ) = J
-          IRN( K ) = I
-          A( K )   = ANEXT
-   60   CONTINUE
-   70 CONTINUE
-
-C  Now sort the entries in each column so that their row
-C  indices increase
-
-      DO 110 I = 1, NC
-         LOCAT = IP( I )
-         IC = IP( I + 1 ) - LOCAT
-         J = MAX( IC, 1 )
-         CALL SORTIN( IC, J, IRN( LOCAT ), A( LOCAT ) )
-  110 CONTINUE
+      DO i = 1, nc
+        locat = IP( i )
+        ic = IP( i + 1 ) - locat
+        j = MAX( ic, 1 )
+        IF ( ic > 0 ) CALL SORT_ascending( ic, j, IRN( locat ), A( locat ) )
+      END DO
       RETURN
 
-C  End of REORDA
+!  End of REORDER
 
-      END
+      END SUBROUTINE REORDER
 
-      SUBROUTINE SORTIN( N, LIND, IND, VAL )
-      INTEGER N, LIND
-      INTEGER IND( LIND )
-CS    REAL             VAL( LIND )
-CD    DOUBLE PRECISION VAL( LIND )
+      SUBROUTINE SORT_ascending( n, lind, IND, VAL )
+      INTEGER :: n, lind
+      INTEGER :: IND( lind )
+      REAL ( KIND = wp ) :: VAL( lind )
 
-C  Sort N numbers into ascending order. Yes, we should use
-C  quicksort but ...well, we are hoping that N won't be too big
+!  Sort n numbers into ascending order. Yes, we should use
+!  quicksort but ...well, we are hoping that n won't be too big
 
-      INTEGER I, J, CURMIN, INDMIN
-CS    REAL             VALMIN
-CD    DOUBLE PRECISION VALMIN
+      INTEGER :: i, j, curmin, indmin
+      REAL ( KIND = wp ) :: valmin
 
-C Find the I-th smallest value
+! Find the I-th smallest value
 
-      DO 100 I = 1, N
-         CURMIN = I
-         INDMIN = IND( CURMIN )
-         DO 90 J = I + 1, N
-            IF ( IND( J ) .LT. INDMIN ) THEN
-               CURMIN = J
-               INDMIN = IND( CURMIN )
-            END IF
-   90    CONTINUE
+      DO i = 1, n
+         curmin = i
+         indmin = IND( curmin )
+         DO j = i + 1, n
+           IF ( IND( j ) < indmin ) THEN
+             curmin = j
+             indmin = IND( curmin )
+           END IF
+         END DO
 
-C If the I-th smallest value is out of place, swap it to poiition CURMIN
+! If the I-th smallest value is out of place, swap it to poiition CURMIN
 
-         IF ( CURMIN .NE. I ) THEN
-            VALMIN = VAL( CURMIN )
-            IND( CURMIN ) = IND( I )
-            VAL( CURMIN ) = VAL( I )
-            IND( I ) = INDMIN
-            VAL( I ) = VALMIN
+         IF ( curmin /= i ) THEN
+           valmin = VAL( curmin )
+           IND( curmin ) = IND( i )
+           VAL( curmin ) = VAL( i )
+           IND( i ) = indmin
+           VAL( i ) = valmin
          END IF
-  100 CONTINUE
+      END DO
       RETURN
 
-C  End of SORTIN
+!  End of SORT_ascending
 
-      END
+      END SUBROUTINE SORT_ascending
+
+!  End of HRB_main
+
+    END PROGRAM HRB_main
