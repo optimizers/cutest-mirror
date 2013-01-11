@@ -56,7 +56,8 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
 	logical *equatn = NULL, *linear = NULL;
 	char *pname, *vnames, *gnames, *cptr;
         char **Vnames, **Gnames; /* vnames and gnames as arrays of strings */
-	logical efirst = FALSE_, lfirst = FALSE_, nvfrst = FALSE_, grad;
+	logical grad;
+	integer e_order = 0, l_order = 0, v_order = 0;
 	logical constrained = FALSE_;
 
 	doublereal calls[7], cpu[2];
@@ -96,7 +97,7 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
 	    CUTEST_csetup( &status, &funit, &iout, &io_buffer,
                     &CUTEst_nvar, &CUTEst_ncon, x, bl, bu,
 		    v, cl, cu, equatn, linear, 
-		    &efirst, &lfirst, &nvfrst );
+		    &e_order, &l_order, &v_order );
 	} else {
 	    MALLOC( equatn, 1, logical    );
 	    MALLOC( linear, 1, logical    );

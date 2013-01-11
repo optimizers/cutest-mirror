@@ -6,10 +6,10 @@ tools       31/12/2012   31/12/2012
 test        31/12/2012   31/12/2012 
 cg_descent   2/01/2013    4/01/2013
 cgplus       2/01/2013    4/01/2013
-cobyla       3/01/2013
-derchk       3/01/2013
+cobyla       3/01/2013    8/01/2013
+derchk       3/01/2013    9/01/2013
 dfo          3/01/2013    7/01/2013
-filter 
+filter       9/01/2013    9/01/2013
 gen          4/01/2013    4/01/2013
 hrb          7/01/2013    7/01/2013
 ipopt 
@@ -21,7 +21,7 @@ loqo
 matlab 
 minos 
 nitsol       6/01/2013    7/01/2013
-npsol 
+npsol       11/01/2013   11/01/2013
 pds          5/01/2013    5/01/2013  (n.b, what are dim and imax?)
 praxis       6/01/2013    6/01/2013  (n.b, praxis common stops allocatables)
 snopt 

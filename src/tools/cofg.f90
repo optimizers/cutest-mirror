@@ -154,7 +154,7 @@
 
 !  evaluate the element function values
 
-      CALL ELFUN( work%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,          &
+      CALL ELFUN( work%FUVALS, X, data%EPVALU, icnt, data%ITYPEE,              &
                   data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,          &
                   data%ISTEP, work%ICALCF, data%ltypee, data%lstaev,           &
                   data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
@@ -164,8 +164,8 @@
 
 !  evaluate the element function derivatives
 
-      IF ( GRAD )                                                              &
-        CALL ELFUN( work%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,        &
+      IF ( grad )                                                              &
+        CALL ELFUN( work%FUVALS, X, data%EPVALU, icnt, data%ITYPEE,            &
                     data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,        &
                     data%ISTEP, work%ICALCF, data%ltypee, data%lstaev,         &
                     data%lelvar, data%lntvar, data%lstadh, data%lstep,         &
@@ -251,7 +251,7 @@
             work%ICALCF( icnt ) = ig
           END IF 
         END DO
-        CALL GROUP( work%GVALS, data%ng, work%FT, data%GPVALU, data%ng,        &
+        CALL GROUP( work%GVALS, data%ng, work%FT, data%GPVALU, icnt,           &
                     data%ITYPEG, data%ISTGP, work%ICALCF, data%ltypeg,         &
                     data%lstgp, data%lcalcf, data%lcalcg, data%lgpvlu,         &
                     .FALSE., igstat )
@@ -291,7 +291,7 @@
 
       IF ( grad ) THEN
         IF ( .NOT. data%altriv ) THEN
-          CALL GROUP( work%GVALS, data%ng, work%FT, data%GPVALU, data%ng,      &
+          CALL GROUP( work%GVALS, data%ng, work%FT, data%GPVALU, icnt,         &
                       data%ITYPEG, data%ISTGP, work%ICALCF, data%ltypeg,       &
                       data%lstgp, data%lcalcf, data%lcalcg, data%lgpvlu,       &
                       .TRUE., igstat )

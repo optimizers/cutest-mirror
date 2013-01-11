@@ -17,7 +17,7 @@ Program DFO_main
   INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
   Real(Kind = wp), Dimension(:), Allocatable :: X0, BL, BU, V, CL, CU
   Logical, Dimension(:), Allocatable :: EQUATN, LINEAR
-  Logical :: EFIRST, LFIRST, NVFRST, IFINIV, constrained
+  Logical :: IFINIV, constrained
   Character(Len = 10) :: pname
   Character(Len = 10), Dimension(:), Allocatable :: VNAMES, GNAMES
   Character(Len = 256) :: pname_256
@@ -57,14 +57,13 @@ Program DFO_main
 
 !  Set up SIF data.
 
-  EFIRST = .False. ; LFIRST = .True. ; NVFRST = .False.
   Allocate(X0(N), BL(N), BU(N),  STAT = status )
   IF ( status /= 0 ) GO TO 990
   If( constrained ) Then
      Allocate(C(M), V(M), CL(M), CU(M), EQUATN(M), LINEAR(M), STAT = status )
      IF ( status /= 0 ) GO TO 990
      Call CUTEST_csetup( status, INPUT, out, io_buffer,N, M, X0, BL, BU,      &
-                         V, CL, CU, EQUATN, LINEAR, EFIRST, LFIRST, NVFRST )
+                         V, CL, CU, EQUATN, LINEAR, 0, 1, 0 )
   Else
      Allocate(C(0), EQUATN(0), LINEAR(0), STAT = status )
      IF ( status /= 0 ) GO TO 990

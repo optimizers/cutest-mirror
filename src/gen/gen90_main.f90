@@ -21,7 +21,6 @@ PROGRAM GEN90_main
   REAL ( KIND = wp ), DIMENSION( 7 ) :: CALLS( 7 )
   CHARACTER( LEN = 10 ) ::  PNAME
   CHARACTER( LEN = 10 ), Dimension( : ), Allocatable :: VNAMES, GNAMES
-  LOGICAL :: efirst, lfirst, nvfrst
   LOGICAL, DIMENSION( : ), ALLOCATABLE :: EQUATN, LINEAR
   LOGICAL ::  constrained
 !
@@ -46,17 +45,13 @@ PROGRAM GEN90_main
     Stop
   END IF
 
-!  Set up parameters
-
-  efirst = .TRUE. ; lfirst = .FALSE. ; nvfrst = .FALSE.
-
 !  Set up SIF data from the problem file
 
   ALLOCATE( X( n ), BL( n ), BU( n ) )
   If( CONSTRAINED ) Then
      ALLOCATE( V( m+1 ), CL( m+1 ), CU( m+1 ), EQUATN( m+1 ), LINEAR( m+1 ) )
      Call CUTEST_csetup( status, input, out, io_buffer, n, m, X, BL, BU,       &
-          V, CL, CU, EQUATN, LINEAR, efirst, lfirst, nvfrst )
+          V, CL, CU, EQUATN, LINEAR, 1, 0, 0 )
   Else
      ALLOCATE( EQUATN( 0 ), LINEAR( 0 ) )
      Call CUTEST_usetup( status, input, out, io_buffer, n, X, BL, BU )

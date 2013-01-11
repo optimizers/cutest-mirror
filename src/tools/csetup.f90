@@ -10,7 +10,7 @@
 
       SUBROUTINE CUTEST_csetup( status, input, out,                            &
                                 io_buffer, n, m, X, X_l, X_u, Y, C_l, C_u,     &
-                                EQUATN, LINEAR, efirst, lfirst, nvfrst )
+                                EQUATN, LINEAR, e_order, l_order, v_order )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
@@ -19,7 +19,7 @@
       INTEGER, INTENT( IN ) :: input, out, io_buffer
       INTEGER, INTENT( INOUT ) :: n, m
       INTEGER, INTENT( OUT ) :: status
-      LOGICAL, INTENT( IN ) :: efirst, lfirst, nvfrst
+      INTEGER, INTENT( IN ) :: e_order, l_order, v_order
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: X, X_l, X_u
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( m ) :: Y, C_l, C_u
       LOGICAL, INTENT( OUT ), DIMENSION( m ) :: EQUATN, LINEAR
@@ -46,7 +46,7 @@
                                      CUTEST_work_global( 1 ),                  &
                                      status, input, out, io_buffer,            &
                                      n, m, X, X_l, X_u, Y, C_l, C_u,           &
-                                     EQUATN, LINEAR, efirst, lfirst, nvfrst )
+                                     EQUATN, LINEAR, e_order, l_order, v_order )
       CUTEST_data_global%threads = 1
       RETURN
 
@@ -74,7 +74,7 @@
       SUBROUTINE CUTEST_csetup_threaded( status, input, out, threads,          &
                                          IO_BUFFERS, n, m, X, X_l, X_u, Y,     &
                                          C_l, C_u, EQUATN, LINEAR,             &
-                                         efirst, lfirst, nvfrst )
+                                         e_order, l_order, v_order )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
@@ -83,7 +83,7 @@
       INTEGER, INTENT( IN ) :: input, out, threads
       INTEGER, INTENT( INOUT ) :: n, m
       INTEGER, INTENT( OUT ) :: status
-      LOGICAL, INTENT( IN ) :: efirst, lfirst, nvfrst
+      INTEGER, INTENT( IN ) :: e_order, l_order, v_order
       INTEGER, INTENT( IN ), DIMENSION( threads ) :: IO_BUFFERS
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: X, X_l, X_u
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( m ) :: Y, C_l, C_u
@@ -115,7 +115,7 @@
                                      CUTEST_work_global( 1 ),                  &
                                      status, input, out, IO_BUFFERS( 1 ),      &
                                      n, m, X, X_l, X_u, Y, C_l, C_u,           &
-                                     EQUATN, LINEAR, efirst, lfirst, nvfrst )
+                                     EQUATN, LINEAR, e_order, l_order, v_order )
       CUTEST_data_global%threads = threads
 
 !  initialize additional thread data
@@ -171,7 +171,7 @@
 
       SUBROUTINE CUTEST_csetup_threadsafe( data, work, status, input, out,     &
                                 io_buffer, n, m, X, X_l, X_u, Y, C_l, C_u,     &
-                                EQUATN, LINEAR, efirst, lfirst, nvfrst )
+                                EQUATN, LINEAR, e_order, l_order, v_order )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
@@ -182,7 +182,7 @@
       INTEGER, INTENT( IN ) :: input, out, io_buffer
       INTEGER, INTENT( INOUT ) :: n, m
       INTEGER, INTENT( OUT ) :: status
-      LOGICAL, INTENT( IN ) :: efirst, lfirst, nvfrst
+      INTEGER, INTENT( IN ) :: e_order, l_order, v_order
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: X, X_l, X_u
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( m ) :: Y, C_l, C_u
       LOGICAL, INTENT( OUT ), DIMENSION( m ) :: EQUATN, LINEAR
@@ -686,7 +686,7 @@
       END IF
       data%numcon = m
 
-      IF ( nvfrst ) THEN
+      IF ( v_order == 1 .OR. v_order == 2 ) THEN
 
 !  set addresses in IWORK to reorder variables
 
@@ -762,51 +762,97 @@
             END DO
           END IF
         END DO
-        IF ( nnlin == 0 .OR. ( data%nnov == n .AND. data%nnjv == n ) ) GO TO 600
-        IF ( nnlin == n ) GO TO 500
+        IF ( nnlin == 0 .OR. ( data%nnov == n .AND. data%nnjv == n ) ) GO TO 300
+        IF ( nnlin == n ) GO TO 200
 
 !  reorder the variables so that all nonlinear variables occur before the
 !  linear ones
 
-        nend = n
+        IF ( v_order == 1 ) THEN
+          nend = n
 
 !  run forward through the variables until a linear variable is encountered
 
-        DO 420 i = 1, n
-          IF ( i > nend ) GO TO 430
-          IF ( data%IWORK( kndv + i ) == 0 ) THEN
+          DO 120 i = 1, n
+            IF ( i > nend ) GO TO 130
 
 !  variable i is linear. Now, run backwards through the variables until a 
 !  nonlinear one is encountered
 
-            DO j = nend, i, - 1
-              IF ( data%IWORK( kndv + j ) > 0 ) THEN 
-                nend = j - 1
+            IF ( data%IWORK( kndv + i ) == 0 ) THEN
+              DO j = nend, i, - 1
+                IF ( data%IWORK( kndv + j ) > 0 ) THEN 
+                  nend = j - 1
 
 !  interchange the data for variables i and j
 
-                itemp = data%IWORK( jwrk + i )
-                data%IWORK( jwrk + i ) = data%IWORK( jwrk + j )
-                data%IWORK( jwrk + j ) = itemp
-                itemp = data%IWORK( kndv + i )
-                data%IWORK( kndv + i ) = data%IWORK( kndv + j )
-                data%IWORK( kndv + j ) = itemp
-                atemp = X_l( i ) ; X_l( i ) = X_l( j ) ; X_l( j ) = atemp
-                atemp = X_u( i ) ; X_u( i ) = X_u( j ) ; X_u( j ) = atemp
-                atemp = X( i ) ; X( i ) = X( j ) ; X( j ) = atemp
-                atemp = data%VSCALE( i )
-                data%VSCALE( i ) = data%VSCALE( j )
-                data%VSCALE( j ) = atemp
-                ctemp = data%VNAMES( i )
-                data%VNAMES( i ) = data%VNAMES( j )
-                data%VNAMES( j ) = ctemp
-                GO TO 420
-              END IF
-            END DO
-            GO TO 430
-          END IF
-  420   CONTINUE
-  430   CONTINUE 
+                  itemp = data%IWORK( jwrk + i )
+                  data%IWORK( jwrk + i ) = data%IWORK( jwrk + j )
+                  data%IWORK( jwrk + j ) = itemp
+                  itemp = data%IWORK( kndv + i )
+                  data%IWORK( kndv + i ) = data%IWORK( kndv + j )
+                  data%IWORK( kndv + j ) = itemp
+                  atemp = X_l( i ) ; X_l( i ) = X_l( j ) ; X_l( j ) = atemp
+                  atemp = X_u( i ) ; X_u( i ) = X_u( j ) ; X_u( j ) = atemp
+                  atemp = X( i ) ; X( i ) = X( j ) ; X( j ) = atemp
+                  atemp = data%VSCALE( i )
+                  data%VSCALE( i ) = data%VSCALE( j )
+                  data%VSCALE( j ) = atemp
+                  ctemp = data%VNAMES( i )
+                  data%VNAMES( i ) = data%VNAMES( j )
+                  data%VNAMES( j ) = ctemp
+                  GO TO 120
+                END IF
+              END DO
+              GO TO 130
+            END IF
+  120     CONTINUE
+  130     CONTINUE 
+
+!  reorder the variables so that all nonlinear variables occur after the
+!  linear ones
+
+        ELSE
+          nend = n
+
+!  run forward through the variables until a nonlinear variable is encountered
+
+          DO 140 i = 1, n
+            IF ( i > nend ) GO TO 150
+
+!  variable i is linear. Now, run backwards through the variables until a 
+!  linear one is encountered
+
+            IF ( data%IWORK( kndv + i ) > 0 ) THEN
+              DO j = nend, i, - 1
+                IF ( data%IWORK( kndv + j ) == 0 ) THEN 
+                  nend = j - 1
+
+!  interchange the data for variables i and j
+
+                  itemp = data%IWORK( jwrk + i )
+                  data%IWORK( jwrk + i ) = data%IWORK( jwrk + j )
+                  data%IWORK( jwrk + j ) = itemp
+                  itemp = data%IWORK( kndv + i )
+                  data%IWORK( kndv + i ) = data%IWORK( kndv + j )
+                  data%IWORK( kndv + j ) = itemp
+                  atemp = X_l( i ) ; X_l( i ) = X_l( j ) ; X_l( j ) = atemp
+                  atemp = X_u( i ) ; X_u( i ) = X_u( j ) ; X_u( j ) = atemp
+                  atemp = X( i ) ; X( i ) = X( j ) ; X( j ) = atemp
+                  atemp = data%VSCALE( i )
+                  data%VSCALE( i ) = data%VSCALE( j )
+                  data%VSCALE( j ) = atemp
+                  ctemp = data%VNAMES( i )
+                  data%VNAMES( i ) = data%VNAMES( j )
+                  data%VNAMES( j ) = ctemp
+                  GO TO 140
+                END IF
+              END DO
+              GO TO 150
+            END IF
+  140     CONTINUE
+  150     CONTINUE 
+        END IF
 
 !  change entries in IELVAR and ICNA to reflect reordering of variables
 
@@ -821,9 +867,9 @@
         DO j = 1, n
            data%IWORK( jwrk + j ) = j
         END DO
-  500   CONTINUE
+  200   CONTINUE
         IF ( ( data%nnov == nnlin .AND. data%nnjv == nnlin )                   &
-           .OR. ( data%nnov == 0 ) .OR. ( data%nnjv == 0 ) ) GO TO 600
+           .OR. ( data%nnov == 0 ) .OR. ( data%nnjv == 0 ) ) GO TO 300
 
 !  reorder the nonlinear variables so that the smaller set (nonlinear objective 
 !  or nonlinear Jacobian) occurs at the beginning of the larger set
@@ -835,13 +881,13 @@
 !  nonlinear variables are treated as  nonlinear objective variables.
 
           data%nnov = nnlin
-          DO 520 i = 1, nnlin 
-            IF ( i > nend ) GO TO 530
-            IF ( data%IWORK( kndv + i ) == 2 ) THEN
+          DO 220 i = 1, nnlin 
+            IF ( i > nend ) GO TO 290
 
 !  variable i is linear in the Jacobian. Now, run backwards through the 
 !  variables until a nonlinear Jacobian variable is encountered
 
+            IF ( data%IWORK( kndv + i ) == 2 ) THEN
               DO j = nend, i, - 1
                 IF ( data%IWORK( kndv + j ) == 1 .OR.                          &
                      data%IWORK( kndv + j ) == 3 ) THEN 
@@ -864,27 +910,26 @@
                   ctemp = data%VNAMES( i )
                   data%VNAMES( i ) = data%VNAMES( j )
                   data%VNAMES( j ) = ctemp
-                  GO TO 520
+                  GO TO 220
                 END IF
               END DO
-              GO TO 530
+              GO TO 290
             END IF
-  520     CONTINUE
-  530     CONTINUE
-        ELSE
+  220     CONTINUE
 
 !  put the nonlinear objective variables first. Reset data%nnjv to indicate all
 !  nonlinear variables are treated as nonlinear Jacobian variables.
 
+        ELSE
           data%nnjv = nnlin
-          DO 550 i = 1, nnlin 
-            IF ( i > nend ) GO TO 560
-            IF ( data%IWORK( kndv + i ) == 1 ) THEN
+          DO 250 i = 1, nnlin 
+            IF ( i > nend ) GO TO 290
 
 !  variable i is linear in the objective. Now, run backwards through the 
 !  variables until a nonlinear objective variable is encountered
 
-              DO 540 j = nend, i, - 1
+            IF ( data%IWORK( kndv + i ) == 1 ) THEN
+              DO 240 j = nend, i, - 1
                  IF ( data%IWORK( kndv + j ) > 1 ) THEN 
                    nend = j - 1
 
@@ -905,17 +950,17 @@
                    ctemp = data%VNAMES( i )
                    data%VNAMES( i ) = data%VNAMES( j )
                    data%VNAMES( j ) = ctemp
-                   GO TO 550
+                   GO TO 250
                  END IF
-  540         CONTINUE
-              GO TO 560
+  240         CONTINUE
+              GO TO 290
             END IF
-  550     CONTINUE
-  560     CONTINUE
+  250     CONTINUE
         END IF
 
 !  change entries in IELVAR and ICNA to reflect reordering of variables
 
+  290   CONTINUE
         DO i = 1, data%nvrels
           j = data%IELVAR( i )
           data%IELVAR( i ) = data%IWORK( jwrk + j ) 
@@ -924,7 +969,7 @@
           j = data%ICNA( i )
           data%ICNA( i ) = data%IWORK( jwrk + j )
         END DO
-  600   CONTINUE
+  300   CONTINUE
       END IF
 
 !  allocate and initialize workspace
@@ -949,7 +994,8 @@
              status, alloc_status, bad_alloc, work%array_status )
       IF ( status /= 0 ) RETURN
 
-      IF ( .NOT. ( efirst .OR. lfirst ) .OR. m == 0 ) GO TO 340
+      IF ( .NOT. ( e_order == 1 .OR. e_order == 2 .OR.                         &
+                   l_order == 1 .OR. l_order == 2 ) .OR. m == 0 ) GO TO 700
 
 !  record which group is associated with each constraint
 
@@ -963,66 +1009,117 @@
           IF ( LINEAR( i ) ) mlin = mlin + 1
         END IF
       END DO
-      IF ( lfirst ) THEN
-        IF ( mlin == 0 .OR. mlin == m ) GO TO 130
+
+!  the constraints are to be reordered to separate linear and nonlinear ones
+
+      IF ( l_order == 1 .OR. l_order == 2 ) THEN
+        IF ( mlin == 0 .OR. mlin == m ) GO TO 390
 
 !  reorder the constraints so that the linear constraints occur before the
 !  nonlinear ones
 
-        mend = m
+        IF ( l_order == 1 ) THEN
+          mend = m
 
 !  run forward through the constraints until a nonlinear constraint is found
 
-        DO 120 i = 1, m
-          IF ( i > mend ) GO TO 130
-          ig = data%IWORK( i )
-          IF ( .NOT. LINEAR( i ) ) THEN
+          DO 320 i = 1, m
+            IF ( i > mend ) GO TO 390
+            ig = data%IWORK( i )
 
 !  constraint i is nonlinear. Now, run backwards through the constraints until 
 !  a linear one is encountered
 
-            DO j = mend, i, - 1
-              jg = data%IWORK( j )
-              IF ( LINEAR( j ) ) THEN
-                 mend = j - 1
+            IF ( .NOT. LINEAR( i ) ) THEN
+              DO j = mend, i, - 1
+                jg = data%IWORK( j )
+                IF ( LINEAR( j ) ) THEN
+                   mend = j - 1
 
 !  interchange the data for constraints i and j
 
-                 data%IWORK( i ) = jg
-                 data%IWORK( j ) = ig
-                 data%KNDOFC( ig ) = j
-                 data%KNDOFC( jg ) = i
-                 ltemp = LINEAR( i )
-                 LINEAR( i ) = LINEAR( j )
-                 LINEAR( j ) = ltemp
-                 ltemp = EQUATN( i )
-                 EQUATN( i ) = EQUATN( j )
-                 EQUATN( j ) = ltemp
-                 atemp = Y( i ) ; Y( i ) = Y( j ) ; Y( j ) = atemp
-                 atemp = C_l( i ) ; C_l( i ) = C_l( j ) ; C_l( j ) = atemp
-                 atemp = C_u( i ) ; C_u( i ) = C_u( j ) ; C_u( j ) = atemp
-                 GO TO 120
-               END IF
-            END DO
-            GO TO 130
-          END IF
-  120   CONTINUE
-  130   CONTINUE
-        IF ( efirst ) THEN
-          IF ( meq == 0 .OR. meq == m ) GO TO 260
+                   data%IWORK( i ) = jg
+                   data%IWORK( j ) = ig
+                   data%KNDOFC( ig ) = j
+                   data%KNDOFC( jg ) = i
+                   ltemp = LINEAR( i )
+                   LINEAR( i ) = LINEAR( j )
+                   LINEAR( j ) = ltemp
+                   ltemp = EQUATN( i )
+                   EQUATN( i ) = EQUATN( j )
+                   EQUATN( j ) = ltemp
+                   atemp = Y( i ) ; Y( i ) = Y( j ) ; Y( j ) = atemp
+                   atemp = C_l( i ) ; C_l( i ) = C_l( j ) ; C_l( j ) = atemp
+                   atemp = C_u( i ) ; C_u( i ) = C_u( j ) ; C_u( j ) = atemp
+                   GO TO 320
+                 END IF
+              END DO
+              GO TO 390
+            END IF
+  320     CONTINUE
+
+!  reorder the constraints so that the nonlinear constraints occur before the
+!  linear ones
+
+        ELSE
+          mend = m
+
+!  run forward through the constraints until a nonlinear constraint is found
+
+          DO 340 i = 1, m
+            IF ( i > mend ) GO TO 390
+            ig = data%IWORK( i )
+
+!  constraint i is nonlinear. Now, run backwards through the constraints until 
+!  a linear one is encountered
+
+            IF ( LINEAR( i ) ) THEN
+              DO j = mend, i, - 1
+                jg = data%IWORK( j )
+                IF ( .NOT. LINEAR( j ) ) THEN
+                   mend = j - 1
+
+!  interchange the data for constraints i and j
+
+                   data%IWORK( i ) = jg
+                   data%IWORK( j ) = ig
+                   data%KNDOFC( ig ) = j
+                   data%KNDOFC( jg ) = i
+                   ltemp = LINEAR( i )
+                   LINEAR( i ) = LINEAR( j )
+                   LINEAR( j ) = ltemp
+                   ltemp = EQUATN( i )
+                   EQUATN( i ) = EQUATN( j )
+                   EQUATN( j ) = ltemp
+                   atemp = Y( i ) ; Y( i ) = Y( j ) ; Y( j ) = atemp
+                   atemp = C_l( i ) ; C_l( i ) = C_l( j ) ; C_l( j ) = atemp
+                   atemp = C_u( i ) ; C_u( i ) = C_u( j ) ; C_u( j ) = atemp
+                   GO TO 340
+                 END IF
+              END DO
+              GO TO 390
+            END IF
+  340     CONTINUE
+        END IF
+
+!  furrther reorderings to separate equality and inequality constraints
+
+  390   CONTINUE
+        IF ( meq == 0 .OR. meq == m ) GO TO 700
 
 !  reorder the linear constraints so that the equations occur before the 
 !  inequalities
 
+        IF ( e_order == 1 ) THEN
           mend = mlin
-          DO 220 i = 1, mlin
-            IF ( i > mend ) GO TO 230
+          DO 420 i = 1, mlin
+            IF ( i > mend ) GO TO 430
             ig = data%IWORK( i )
-            IF ( .NOT. EQUATN( i ) ) THEN
 
 !  constraint i is an inequality. Now, run backwards through the constraints 
 !  until an equation is encountered
 
+            IF ( .NOT. EQUATN( i ) ) THEN
               DO j = mend, i, - 1
                 jg = data%IWORK( j )
                 IF ( EQUATN( j ) ) THEN
@@ -1043,26 +1140,26 @@
                   atemp = Y( i ) ; Y( i ) = Y( j ) ; Y( j ) = atemp
                   atemp = C_l( i ) ; C_l( i ) = C_l( j ) ; C_l( j ) = atemp
                   atemp = C_u( i ) ; C_u( i ) = C_u( j ) ; C_u( j ) = atemp
-                  GO TO 220
+                  GO TO 420
                 END IF
               END DO
-              GO TO 230
+              GO TO 430
             END IF
-  220     CONTINUE
-  230     CONTINUE
+  420     CONTINUE
 
-!  reorder the nonlinear constraints so that the equations occur  before the 
+!  reorder the nonlinear constraints so that the equations occur before the 
 !  inequalities
 
+  430     CONTINUE
           mend = m
-          DO 250 i = mlin + 1, m
-            IF ( i > mend ) GO TO 260
+          DO 450 i = mlin + 1, m
+            IF ( i > mend ) GO TO 700
             ig = data%IWORK( i )
-            IF ( .NOT. EQUATN( i ) ) THEN
 
 !  constraint i is an inequality. Now, run backwards through the constraints 
 !  until an equation is encountered
 
+            IF ( .NOT. EQUATN( i ) ) THEN
               DO j = mend, i, - 1
                 jg = data%IWORK( j )
                 IF ( EQUATN( j ) ) THEN
@@ -1083,29 +1180,108 @@
                   atemp = Y( i ) ; Y( i ) = Y( j ) ; Y( j ) = atemp
                   atemp = C_l( i ) ; C_l( i ) = C_l( j ) ; C_l( j ) = atemp
                   atemp = C_u( i ) ; C_u( i ) = C_u( j ) ; C_u( j ) = atemp
-                  GO TO 250
+                  GO TO 450
                 END IF
               END DO
-              GO TO 260
+              GO TO 700
             END IF
-  250     CONTINUE
-  260     CONTINUE
+  450     CONTINUE
+
+!  reorder the linear constraints so that the inequalities occur before the 
+!  equations
+
+        ELSE IF ( e_order == 2 ) THEN
+          mend = mlin
+          DO 520 i = 1, mlin
+            IF ( i > mend ) GO TO 530
+            ig = data%IWORK( i )
+
+!  constraint i is an equation. Now, run backwards through the constraints 
+!  until an inequality is encountered
+
+            IF ( EQUATN( i ) ) THEN
+              DO j = mend, i, - 1
+                jg = data%IWORK( j )
+                IF ( .NOT. EQUATN( j ) ) THEN
+                  mend = j - 1
+
+!  interchange the data for constraints i and j
+
+                  data%IWORK( i ) = jg
+                  data%IWORK( j ) = ig
+                  data%KNDOFC( ig ) = j
+                  data%KNDOFC( jg ) = i
+                  ltemp = LINEAR( i )
+                  LINEAR( i ) = LINEAR( j )
+                  LINEAR( j ) = ltemp
+                  ltemp = EQUATN( i )
+                  EQUATN( i ) = EQUATN( j )
+                  EQUATN( j ) = ltemp
+                  atemp = Y( i ) ; Y( i ) = Y( j ) ; Y( j ) = atemp
+                  atemp = C_l( i ) ; C_l( i ) = C_l( j ) ; C_l( j ) = atemp
+                  atemp = C_u( i ) ; C_u( i ) = C_u( j ) ; C_u( j ) = atemp
+                  GO TO 520
+                END IF
+              END DO
+              GO TO 530
+            END IF
+  520     CONTINUE
+
+!  reorder the nonlinear constraints so that the inequalties occur before the 
+!  equations
+
+  530     CONTINUE
+          mend = m
+          DO 550 i = mlin + 1, m
+            IF ( i > mend ) GO TO 700
+            ig = data%IWORK( i )
+
+!  constraint i is an equation. Now, run backwards through the constraints 
+!  until an inequality is encountered
+
+            IF ( EQUATN( i ) ) THEN
+              DO j = mend, i, - 1
+                jg = data%IWORK( j )
+                IF ( .NOT. EQUATN( j ) ) THEN
+                  mend = j - 1
+
+!  interchange the data for constraints i and j
+
+                  data%IWORK( i ) = jg
+                  data%IWORK( j ) = ig
+                  data%KNDOFC( ig ) = j
+                  data%KNDOFC( jg ) = i
+                  ltemp = LINEAR( i )
+                  LINEAR( i ) = LINEAR( j )
+                  LINEAR( j ) = ltemp
+                  ltemp = EQUATN( i )
+                  EQUATN( i ) = EQUATN( j )
+                  EQUATN( j ) = ltemp
+                  atemp = Y( i ) ; Y( i ) = Y( j ) ; Y( j ) = atemp
+                  atemp = C_l( i ) ; C_l( i ) = C_l( j ) ; C_l( j ) = atemp
+                  atemp = C_u( i ) ; C_u( i ) = C_u( j ) ; C_u( j ) = atemp
+                  GO TO 550
+                END IF
+              END DO
+              GO TO 700
+            END IF
+  550     CONTINUE
         END IF
       ELSE
-        IF ( efirst ) THEN
-          IF ( meq == 0 .OR. meq == m ) GO TO 330
+        IF ( meq == 0 .OR. meq == m ) GO TO 700
 
 !  reorder the constraints so that the equations occur before the inequalities
 
+        IF ( e_order == 1 ) THEN
           mend = m
-          DO 320 i = 1, m
-            IF ( i > mend ) GO TO 330
+          DO 620 i = 1, m
+            IF ( i > mend ) GO TO 700
             ig = data%IWORK( i )
-            IF ( .NOT. EQUATN( i ) ) THEN
 
 !  constraint i is an inequality. Now, run backwards through the constraints 
 !  until an equation is encountered
 
+            IF ( .NOT. EQUATN( i ) ) THEN
               DO j = mend, i, - 1
                 jg = data%IWORK( j )
                 IF ( EQUATN( j ) ) THEN
@@ -1126,19 +1302,57 @@
                   atemp = Y( i ) ; Y( i ) = Y( j ) ; Y( j ) = atemp
                   atemp = C_l( i ) ; C_l( i ) = C_l( j ) ; C_l( j ) = atemp
                   atemp = C_u( i ) ; C_u( i ) = C_u( j ) ; C_u( j ) = atemp
-                  GO TO 320
+                  GO TO 620
                 END IF
               END DO
-              GO TO 330
+              GO TO 700
             END IF
-  320     CONTINUE
-  330     CONTINUE
+  620     CONTINUE
+
+!  reorder the constraints so that the inequalities occur before the equations 
+
+        ELSE IF ( e_order == 2 ) THEN
+          mend = m
+          DO 650 i = 1, m
+            IF ( i > mend ) GO TO 700
+            ig = data%IWORK( i )
+
+!  constraint i is an equation. Now, run backwards through the constraints 
+!  until an inequality is encountered
+
+            IF ( EQUATN( i ) ) THEN
+              DO j = mend, i, - 1
+                jg = data%IWORK( j )
+                IF ( .NOT. EQUATN( j ) ) THEN
+                  mend = j - 1
+
+!  interchange the data for constraints i and j
+
+                  data%IWORK( i ) = jg
+                  data%IWORK( j ) = ig
+                  data%KNDOFC( ig ) = j
+                  data%KNDOFC( jg ) = i
+                  ltemp = LINEAR( i )
+                  LINEAR( i ) = LINEAR( j )
+                  LINEAR( j ) = ltemp
+                  ltemp = EQUATN( i )
+                  EQUATN( i ) = EQUATN( j )
+                  EQUATN( j ) = ltemp
+                  atemp = Y( i ) ; Y( i ) = Y( j ) ; Y( j ) = atemp
+                  atemp = C_l( i ) ; C_l( i ) = C_l( j ) ; C_l( j ) = atemp
+                  atemp = C_u( i ) ; C_u( i ) = C_u( j ) ; C_u( j ) = atemp
+                  GO TO 650
+                END IF
+              END DO
+              GO TO 700
+            END IF
+  650     CONTINUE
         END IF
       END IF
 
 !  initialize the performance counters and variables
 
- 340  CONTINUE
+  700 CONTINUE
       work%nc2of = 0 ; work%nc2og = 0 ; work%nc2oh = 0
       work%nc2cf = 0 ; work%nc2cg = 0 ; work%nc2ch = 0 ; work%nhvpr = 0
       work%pnc = m

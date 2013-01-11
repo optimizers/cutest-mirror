@@ -204,7 +204,8 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
     doublereal *v = NULL, *cl = NULL, *cu = NULL;
     logical *equatn = NULL, *linear = NULL;
     char *pname, *vnames, *gnames;
-    logical efirst = TRUE_, lfirst = TRUE_, nvfrst = FALSE_, grad;
+    integer e_order = 1, l_order = 1, v_order = 0;
+    logical grad;
     logical constrained = FALSE_;
 
     doublereal *c, f;
@@ -245,7 +246,7 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
       MALLOC(cu,     CUTEst_ncon+1,            doublereal);
       CUTEST_csetup( status,&funit, &iout, &CUTEr_nvar, &CUTEr_ncon, x, bl, bu,
               &CUTEr_nvar, equatn, linear, v, cl, cu, &ncon_dummy,
-              &efirst, &lfirst, &nvfrst);
+              &e_order, &l_order, &v_order);
     } else {
       MALLOC(equatn, 1,            logical   );
       MALLOC(linear, 1,            logical   );

@@ -1,171 +1,157 @@
-C     ( Last modified on 23 Dec 2000 at 22:01:38 )
-C
-C***********************************************************************
-C
-C     File  MNOSMA
-C
-C     MNOSMA   MINSSE   FUNOBJ   FUNCON
-C
+C     ( Last modified on 11 Jan 2013 at 14:30:00 )
+
 C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 C
-      PROGRAM           MNOSMA
+C     Main program for MINOS using CUTEst
+C
+C     Ingrid Bongartz, August 1992
+C     CUTEst evolution, Nick Gould, January 2013
+C
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+      PROGRAM           MINOS_main
       INTEGER           NWCORE
 CBIG  PARAMETER       ( NWCORE = 1000000 )
-CMED  PARAMETER       ( NWCORE =  200000 )
-CTOY  PARAMETER       ( NWCORE =   50000 )
-CCUS  PARAMETER       ( NWCORE =  500000 )
-CS    REAL              Z( NWCORE )
-CD    DOUBLE PRECISION  Z( NWCORE )
-      INTEGER           MMAX  , NMAX  , NEMAX , NBMAX 
+CMED  PARAMETER       ( NWCORE = 200000 )
+CTOY  PARAMETER       ( NWCORE = 50000 )
+CCUS  PARAMETER       ( NWCORE = 500000 )
+      DOUBLE PRECISION  Z( NWCORE )
+      INTEGER :: ispecs, iprint, isumm, ns, nin, i, nnden
+      INTEGER :: m, n, ne, nb, nncon, nnjac, nnobj, iobj, inform, mincor
+      INTEGER, PARAMETER :: input = 55, out = 6
+      DOUBLE PRECISION :: objadd, sinf, obj
+      DOUBLE PRECISION, PARAMETER :: zero = 0.0D+0
+      DOUBLE PRECISION :: CPU( 2 ), CALLS( 7 )
+
+      INTEGER           MMAX, NMAX, NEMAX, NBMAX 
 CBIG  PARAMETER       ( MMAX = 5000 )
-CMED  PARAMETER       ( MMAX =  500 )
-CTOY  PARAMETER       ( MMAX =  100 )
+CMED  PARAMETER       ( MMAX = 500 )
+CTOY  PARAMETER       ( MMAX = 100 )
 CCUS  PARAMETER       ( MMAX = 1000 )
       PARAMETER       ( NMAX = 3 * MMAX, NEMAX = 5 * NMAX,
      *                  NBMAX = NMAX + MMAX )
       INTEGER           NAME1( 1 ), NAME2 ( 1 )
-CS    REAL              
-CD    DOUBLE PRECISION              
-     *                  AA   ( NEMAX ), X     ( NBMAX ), BL( NBMAX ),
+      DOUBLE PRECISION  AA   ( NEMAX ), X     ( NBMAX ), BL( NBMAX ),
      *                  BU   ( NBMAX ), V     ( MMAX  ), RC( NBMAX )
       INTEGER * 4       HA   ( NEMAX ), HS    ( NBMAX )
       INTEGER           KA   ( NMAX + 1 )
       LOGICAL           EQUATN( MMAX ), LINEAR( MMAX )
       CHARACTER * 10    VNAME( NMAX ), CNAME( MMAX )
-      CHARACTER * 8     START , NAMES( 5 )
-      INTEGER           INPUT , IOUT
-      PARAMETER       ( INPUT = 55, IOUT = 6 )
-      INTEGER           ISPECS, IPRINT, ISUMM
-      INTEGER           M , N , NE    , NB    , NNCON , NNJAC , NNOBJ ,
-     *                  IOBJ  , INFORM, MINCOR, NS    , NINF  , I
-CS    REAL              OBJADD, SINF  , OBJ
-CD    DOUBLE PRECISION  OBJADD, SINF  , OBJ
-C
-C MINOS common block
-C
-      INTEGER           NCOM  , NDEN  , NLAG  , NMAJOR, NMINOR
-CS    REAL              PENPAR, ROWTOL
-CD    DOUBLE PRECISION  PENPAR, ROWTOL
-      COMMON   /M8AL1 / PENPAR, ROWTOL, NCOM  , NDEN  , NLAG  ,
-     *                  NMAJOR, NMINOR
-C
-C  Local variables
-C
-      INTEGER           NNDEN
-      REAL              CPU( 2 ), CALLS( 7 )
-CS    REAL              ZERO
-CD    DOUBLE PRECISION  ZERO
-CS    PARAMETER       ( ZERO = 0.0E+0 )
-CD    PARAMETER       ( ZERO = 0.0D+0 )
-C
-C  Open the relevant file.
-C
-      OPEN ( INPUT, FILE = 'OUTSDIF.d', FORM = 'FORMATTED',
-     *       STATUS = 'OLD' )
-      REWIND INPUT
-C
-C  Set up the unit numbers for the MINOS files.
-C  ISPECS is the Specifications file.
-C  IPRINT is the Print file.
-C  ISUMM  is the Summary file.
-C
-      ISPECS = 4
-      IPRINT = 9
-      ISUMM  = 0
-      call m1open( ISPECS, 1, 'IN' )
-      call m1open( IPRINT, 2, 'OUT' )
+      CHARACTER * 8     START, NAMES( 5 )
 
-C
-C  Set options to default values and read Specs file.
-C
-      CALL MISPEC( ISPECS , IPRINT , ISUMM , NWCORE , INFORM )
-      IF ( INFORM .GE. 2 ) THEN
-         IF ( IOUT .GT. 0 ) WRITE( IOUT, 2010 )
-         STOP
+C  MINOS common block
+
+      INTEGER ::  ncom, nden, nlag, nmajor, nminor
+      DOUBLE PRECISION  :: penpar, rowtol
+      COMMON   /M8AL1 / penpar, rowtol, ncom, nden, nlag, nmajor, nminor
+
+C  Open the relevant file.
+
+      OPEN ( input, FILE = 'OUTSDIF.d', FORM = 'FORMATTED',
+     *       STATUS = 'OLD' )
+      REWIND( input )
+
+C  Set up the unit numbers for the MINOS files:
+C  ispecs is the Specifications file
+C  iprint is the Print file
+C  isumm is the Summary file
+
+      ispecs = 4
+      iprint = 9
+      isumm  = 0
+      CALL m1open( ispecs, 1, 'IN' )
+      CALL m1open( iprint, 2, 'OUT' )
+
+C  Set options to default values and read Specs file
+
+      CALL MISPEC( ispecs, iprint, isumm, nwcore, inform )
+      IF ( inform .GE. 2 ) THEN
+        IF ( out .GT. 0 ) WRITE( out, 2010 )
+        STOP
       END IF
-      NNDEN = NDEN
-C
-C  Input problem data using MINSSE, which calls CSETUP.
-C
-      CALL MINSSE( INPUT , IOUT  , MMAX  , NMAX  , NEMAX ,
-     *             NBMAX , NNDEN , M     , N     , NE    ,
-     *             NNCON , NNJAC , NNOBJ , IOBJ  ,
-     *             OBJADD, HA    , KA    , AA    ,
-     *             X     , BL    , BU    , V     ,
-     *             NAMES , VNAME , CNAME , EQUATN, LINEAR )
+      nnden = nden
+
+C  input problem data using MINOS_setup, which calls CSETUP
+
+      CALL MINOS_setup( input, out, MMAX, NMAX, NEMAX,
+     *             NBMAX, NNDEN, M, N, NE,
+     *             NNCON, NNJAC, NNOBJ, IOBJ,
+     *             OBJADD, HA, KA, AA,
+     *             X, BL, BU, V,
+     *             NAMES, VNAME, CNAME, EQUATN, LINEAR )
       NB = N + M
       DO 10 I = 1, NB
          HS( I ) = 0
-         RC( I ) = ZERO
+         RC( I ) = zero
    10 CONTINUE
-C
-C  Call MINOS as a subroutine. 
-C
+
+C  Call MINOS as a subroutine
+
       START = 'COLD'
-      CALL MINOSS( START , M , N , NB    , NE    , 1    ,
-     *             NNCON , NNOBJ , NNJAC ,
-     *             IOBJ  , OBJADD, NAMES ,
-     *             AA    , HA    , KA    , BL    , BU    ,
-     *             NAME1 , NAME2 , 
-     *             HS    , X     , V     , RC    ,
-     *             INFORM, MINCOR, NS    , NINF  , SINF  ,
-     *             OBJ   , Z     , NWCORE )
+      CALL MINOSS( START, M, N, NB, NE, 1,
+     *             NNCON, NNOBJ, NNJAC,
+     *             IOBJ, OBJADD, NAMES,
+     *             AA, HA, KA, BL, BU,
+     *             NAME1, NAME2, 
+     *             HS, X, V, RC,
+     *             INFORM, MINCOR, NS, NINF, SINF,
+     *             OBJ, Z, NWCORE )
       CALL CUTEST_creport( status, CALLS, CPU )
-C
-C  Try to handle abnormal MINOS inform codes gracefully.
-C
+
+C  Try to handle abnormal MINOS inform codes gracefully
+
       IF ( INFORM .GE. 20 .AND.
      *  ( IPRINT .GT. 0 .OR. ISUMM .GT. 0 ) ) THEN
          IF ( IPRINT .GT. 0 ) WRITE ( IPRINT, 3000 ) INFORM
-         IF ( ISUMM  .GT. 0 ) WRITE ( ISUMM , 3000 ) INFORM
+         IF ( ISUMM  .GT. 0 ) WRITE ( ISUMM, 3000 ) INFORM
          IF ( INFORM .EQ. 20 ) THEN
             IF ( IPRINT .GT. 0 ) WRITE ( IPRINT, 3020 )
-            IF ( ISUMM  .GT. 0 ) WRITE ( ISUMM , 3020 )
+            IF ( ISUMM  .GT. 0 ) WRITE ( ISUMM, 3020 )
          ELSE IF ( INFORM .EQ. 21 ) THEN
             IF ( IPRINT .GT. 0 ) WRITE ( IPRINT, 3021 )
-            IF ( ISUMM  .GT. 0 ) WRITE ( ISUMM , 3021 )
+            IF ( ISUMM  .GT. 0 ) WRITE ( ISUMM, 3021 )
          ELSE IF ( INFORM .EQ. 22 ) THEN
             IF ( IPRINT .GT. 0 ) WRITE ( IPRINT, 3022 )
-            IF ( ISUMM  .GT. 0 ) WRITE ( ISUMM , 3022 )
+            IF ( ISUMM  .GT. 0 ) WRITE ( ISUMM, 3022 )
          ELSE IF ( INFORM .EQ. 32 ) THEN
             IF ( IPRINT .GT. 0 ) WRITE ( IPRINT, 3032 )
-            IF ( ISUMM  .GT. 0 ) WRITE ( ISUMM , 3032 )
+            IF ( ISUMM  .GT. 0 ) WRITE ( ISUMM, 3032 )
          ELSE IF ( INFORM .EQ. 42 ) THEN
             IF ( IPRINT .GT. 0 ) WRITE ( IPRINT, 3042 )
-            IF ( ISUMM  .GT. 0 ) WRITE ( ISUMM , 3042 )
+            IF ( ISUMM  .GT. 0 ) WRITE ( ISUMM, 3042 )
          END IF
       END IF
-      IF ( IOUT .GT. 0 ) THEN
-         WRITE( IOUT, 2110 ) OBJ, ( I, VNAME( I ), X( I ), BL( I ), 
+      IF ( out .GT. 0 ) THEN
+         WRITE( out, 2110 ) OBJ, ( I, VNAME( I ), X( I ), BL( I ), 
      *                    BU( I ), RC( I ), I = 1, N )
-         IF ( M .GT. 1 ) WRITE( IOUT, 2120 ) ( I, CNAME( I ), 
+         IF ( M .GT. 1 ) WRITE( out, 2120 ) ( I, CNAME( I ), 
      *        X( N + I ), BL( N + I ), BU( N + I ), V( I ), 
      *        EQUATN( I ), LINEAR( I ), I = 1, M - 1 )
       END IF
       IF ( ISUMM  .GT. 0 ) 
-     *  WRITE ( ISUMM , 2020 ) NAMES(1), N, M, CALLS(1), 
+     *  WRITE ( ISUMM, 2020 ) NAMES(1), N, M, CALLS(1), 
      *                         CALLS(2), CALLS(5), CALLS(6), INFORM,
      *                         OBJ, CPU(1), CPU(2)
       CLOSE( ISPECS )
       CLOSE( IPRINT )
       STOP
-C
-C  Non-executable statements.
-C
+
+C  Non-executable statements
+
  2010 FORMAT( /, ' ** PROGRAM MINOSMA: No Specs file found.' )
  2020 FORMAT( /, 24('*'), ' CUTEst statistics ', 24('*') //
-     *    ,' Code used               :  MINOS',    /
-     *    ,' Problem                 :  ', A10,    /
-     *    ,' # variables             =      ', I10 /
-     *    ,' # constraints           =      ', I10 /
-     *    ,' # objective functions   =        ', F8.2 /
-     *    ,' # objective gradients   =        ', F8.2 / 
-     *    ,' # constraints functions =        ', F8.2 /
-     *    ,' # constraints gradients =        ', F8.2 /
-     *    ,' Exit code               =      ', I10 /
-     *    ,' Final f                 = ', E15.7 /
-     *    ,' Set up time             =      ', 0P, F10.2, ' seconds' /
-     *    ,' Solve time              =      ', 0P, F10.2, ' seconds' //
+     *,' Code used               :  MINOS',    /
+     *,' Problem                 :  ', A10,    /
+     *,' # variables             =    ', I10 /
+     *,' # constraints           =    ', I10 /
+     *,' # objective functions   =      ', F8.2 /
+     *,' # objective gradients   =      ', F8.2 / 
+     *,' # constraints functions =      ', F8.2 /
+     *,' # constraints gradients =      ', F8.2 /
+     *,' Exit code               =    ', I10 /
+     *,' Final f                 = ', E15.7 /
+     *,' Set up time             =    ', 0P, F10.2, ' seconds' /
+     *,' Solve time              =    ', 0P, F10.2, ' seconds' //
      *     66('*') / )
  2110 FORMAT( /, ' the objective function value: ', 1P, D12.4, /,
      *        /, ' the variables:', //,
@@ -188,37 +174,29 @@ C
  3042 FORMAT(    ' Not enough storage to solve the problem.',
      *        /, ' Reduce parameters in MINOS.SPC file or increase',
      *           ' NWCORE in MINOSMA.' )
-C     End of MAIN.
       END
-C
-C  THIS VERSION: 25/08/1994 AT 12:05:16 PM.
-      SUBROUTINE MINSSE( INPUT , IOUT  , MMAX  , NMAX  , NEMAX ,
-     *                   NBMAX , NDEN  , M     , N     , NE    ,
-     *                   NNCON , NNJAC , NNOBJ , IOBJ  ,
-     *                   OBJADD, HA    , KA    , AA    ,
-     *                   X     , BL    , BU    , V     ,
-     *                   NAMES , VNAME , CNAME , EQUATN, LINEAR )
-      INTEGER            INPUT , IOUT  , MMAX  , NMAX  , NEMAX ,
-     *                   NBMAX , NDEN  , M     , N     , NE    ,
-     *                   NNCON , NNJAC , NNOBJ , IOBJ
-      INTEGER            HA( NEMAX ) , KA( NMAX + 1 )
-CS    REAL               OBJADD
-CD    DOUBLE PRECISION   OBJADD
-CS    REAL               
-CD    DOUBLE PRECISION   
-     *                   AA( NEMAX ), X ( NBMAX ), BL( NBMAX ), 
-     *                   BU( NBMAX ), V ( MMAX  )
-      CHARACTER * 8      NAMES ( 5 )
-      CHARACTER * 10    PNAME, VNAME( NMAX ), CNAME( MMAX )
-      LOGICAL            EQUATN( MMAX  ), LINEAR( MMAX  )
+
+      SUBROUTINE MINOS_setup( input, out, MMAX, NMAX, NEMAX,
+     *                   NBMAX, NDEN, M, N, NE,
+     *                   NNCON, NNJAC, NNOBJ, IOBJ,
+     *                   OBJADD, HA, KA, AA,
+     *                   X, BL, BU, V,
+     *                   NAMES, VNAME, CNAME, EQUATN, LINEAR )
+      INTEGER :: input, out, mmax, nmax, nemax, nbmax, nden, m, n
+      INTEGER :: ne, nncon, nnjac, nnobj, iobj
+      INTEGER :: HA( nemax ), KA( nmax + 1 )
+      DOUBLE PRECISION :: objadd
+      DOUBLE PRECISION :: AA( nemax ), X ( nbmax ), BL( nbmax ), 
+     *                    BU( nbmax ), V ( mmax )
+      CHARACTER ( LEN = 8 ) :: NAMES ( 5 )
+      CHARACTER ( LEN = 10 ) :: pname, VNAME( nmax ), CNAME( mmax )
+      LOGICAL :: EQUATN( mmax  ), LINEAR( mmax  )
 C
 C  Set up the input data for MINOS.
 C
-C  Ingrid Bongartz
-C  April 1992.
 C  Modified November 1992 to call CSETUP.
 C
-      INTEGER            LIWK  , LWK   , LFUVAL, LLOGIC, LCHARA
+      INTEGER            LIWK, LWK, LFUVAL, LLOGIC, LCHARA
 C
 C  ---------------------------------------------------------------------
 C
@@ -235,12 +213,10 @@ C  ---------------------------------------------------------------------
 C
 C#{sizing}
       INTEGER                IWK( LIWK    )
-CS    REAL                   WK ( LWK     )
-CD    DOUBLE PRECISION       WK ( LWK     )
+      DOUBLE PRECISION       WK ( LWK     )
       LOGICAL              LOGI ( LLOGIC  )
       CHARACTER * 10       CHA  ( LCHARA  )
-CS    REAL              FUVALS  ( LFUVAL  )
-CD    DOUBLE PRECISION  FUVALS  ( LFUVAL  )
+      DOUBLE PRECISION  FUVALS  ( LFUVAL  )
 C
 C  ---------------------------------------------------------------------
 C
@@ -250,113 +226,108 @@ C  ---------------------------------------------------------------------
 C
 C  integer variables from the GLOBAL common block.
 C
-      INTEGER            NG    , NELNUM, NGEL  , NVARS , NNZA  , NGPVLU
-      INTEGER            NEPVLU, NG1   , NEL1  , ISTADG, ISTGP , ISTADA
-      INTEGER            ISTAEV, ISTEP , ITYPEG, KNDOFC, ITYPEE
-      INTEGER            IELING, IELVAR, ICNA  , ISTADH, INTVAR, IVAR
-      INTEGER            ICALCF, ITYPEV, IWRK  , A     , B     
-      INTEGER            U     , GPVALU, EPVALU
-      INTEGER            ESCALE, GSCALE, VSCALE, GVALS , XT    , DGRAD 
-      INTEGER            Q     , WRK   , INTREP, GXEQX , GNAMES, VNAMES
-      INTEGER            LO    , CH    , LIWORK, LWORK , NGNG  , FT    
+      INTEGER            NG, NELNUM, NGEL, NVARS, NNZA, NGPVLU
+      INTEGER            NEPVLU, NG1, NEL1, ISTADG, ISTGP, ISTADA
+      INTEGER            ISTAEV, ISTEP, ITYPEG, KNDOFC, ITYPEE
+      INTEGER            IELING, IELVAR, ICNA, ISTADH, INTVAR, IVAR
+      INTEGER            ICALCF, ITYPEV, IWRK, A, B     
+      INTEGER            U, GPVALU, EPVALU
+      INTEGER            ESCALE, GSCALE, VSCALE, GVALS, XT, DGRAD 
+      INTEGER            Q, WRK, INTREP, GXEQX, GNAMES, VNAMES
+      INTEGER            LO, CH, LIWORK, LWORK, NGNG, FT    
       INTEGER            LA, LB, NOBJGR, LU, LELVAR
       INTEGER            LSTAEV, LSTADH, LNTVAR, LCALCF
       INTEGER            LELING, LINTRE, LFT, LGXEQX, LSTADG, LGVALS
-      INTEGER            LICNA , LSTADA, LKNDOF, LGPVLU, LEPVLU
+      INTEGER            LICNA, LSTADA, LKNDOF, LGPVLU, LEPVLU
       INTEGER            LGSCAL, LESCAL, LVSCAL, LCALCG
 C
 C  integer variables from the LOCAL common block.
 C
-      INTEGER            LFXI  , LGXI  , LHXI  , LGGFX , LDX   , LGRJAC
-      INTEGER            LQGRAD, LBREAK, LP    , LXCP  , LX0   , LGX0  
-      INTEGER            LDELTX, LBND  , LWKSTR, LSPTRS, LSELTS, LINDEX
+      INTEGER            LFXI, LGXI, LHXI, LGGFX, LDX, LGRJAC
+      INTEGER            LQGRAD, LBREAK, LP, LXCP, LX0, LGX0  
+      INTEGER            LDELTX, LBND, LWKSTR, LSPTRS, LSELTS, LINDEX
       INTEGER            LSWKSP, LSTAGV, LSTAJC, LIUSED, LFREEC
       INTEGER            LNNONZ, LNONZ2, LSYMMD, LSYMMH
       INTEGER            LSLGRP, LSVGRP, LGCOLJ, LVALJR, LSEND 
       INTEGER            LNPTRS, LNELTS, LNNDEX, LNWKSP, LNSTGV
       INTEGER            LNSTJC, LNIUSE, LNFREC, LNNNON, LNNNO2, LNSYMD
       INTEGER            LNSYMH, LNLGRP, LNVGRP, LNGCLJ, LNVLJR, LNQGRD
-      INTEGER            LNBRAK, LNP   , LNBND , LNFXI , LNGXI , LNGUVL
-      INTEGER            LNHXI , LNHUVL, LNGGFX, LNDX  , LNGRJC, LIWK2 
-      INTEGER            LWK2  , MAXSIN, NINVAR, MAXSEL
-      INTEGER            NTYPE , NSETS , LSTYPE, LSSWTR, LSSIWT, LSIWTR
+      INTEGER            LNBRAK, LNP, LNBND, LNFXI, LNGXI, LNGUVL
+      INTEGER            LNHXI, LNHUVL, LNGGFX, LNDX, LNGRJC, LIWK2 
+      INTEGER            LWK2, MAXSIN, NINVAR, MAXSEL
+      INTEGER            NTYPE, NSETS, LSTYPE, LSSWTR, LSSIWT, LSIWTR
       INTEGER            LSWTRA, LNTYPE, LNSWTR, LNSIWT, LNIWTR
       INTEGER            LNWTRA, LSISET, LSSVSE, LNISET, LNSVSE
       LOGICAL            ALTRIV, FIRSTG
-      COMMON / GLOBAL /  IWK   , WK    , FUVALS, LOGI,  
-     *                   NG    , NELNUM, NGEL  , NVARS , NNZA  , NGPVLU,
-     *                   NEPVLU, NG1   , NEL1  , ISTADG, ISTGP , ISTADA,
-     *                   ISTAEV, ISTEP , ITYPEG, KNDOFC, ITYPEE, 
-     *                   IELING, IELVAR, ICNA  , ISTADH, INTVAR, IVAR  ,
-     *                   ICALCF, ITYPEV, IWRK  , A     , B     , 
-     *                   U     , GPVALU, EPVALU, 
-     *                   ESCALE, GSCALE, VSCALE, GVALS , XT    , DGRAD ,
-     *                   Q     , WRK   , INTREP, GXEQX , GNAMES, VNAMES,
-     *                   LO    , CH    , LIWORK, LWORK , NGNG  , FT    ,
+      COMMON / GLOBAL /  IWK, WK, FUVALS, LOGI,  
+     *                   NG, NELNUM, NGEL, NVARS, NNZA, NGPVLU,
+     *                   NEPVLU, NG1, NEL1, ISTADG, ISTGP, ISTADA,
+     *                   ISTAEV, ISTEP, ITYPEG, KNDOFC, ITYPEE, 
+     *                   IELING, IELVAR, ICNA, ISTADH, INTVAR, IVAR,
+     *                   ICALCF, ITYPEV, IWRK, A, B, 
+     *                   U, GPVALU, EPVALU, 
+     *                   ESCALE, GSCALE, VSCALE, GVALS, XT, DGRAD,
+     *                   Q, WRK, INTREP, GXEQX, GNAMES, VNAMES,
+     *                   LO, CH, LIWORK, LWORK, NGNG, FT,
      *                   ALTRIV, FIRSTG,
      *                   LA, LB, NOBJGR, LU, LELVAR,
      *                   LSTAEV, LSTADH, LNTVAR, LCALCF,
      *                   LELING, LINTRE, LFT, LGXEQX, LSTADG, LGVALS,
-     *                   LICNA , LSTADA, LKNDOF, LGPVLU, LEPVLU,
+     *                   LICNA, LSTADA, LKNDOF, LGPVLU, LEPVLU,
      *                   LGSCAL, LESCAL, LVSCAL, LCALCG
       COMMON / CHARA /   CHA
-      COMMON / LOCAL /   LFXI  , LGXI  , LHXI  , LGGFX , LDX   , LGRJAC,
-     *                   LQGRAD, LBREAK, LP    , LXCP  , LX0   , LGX0  ,
-     *                   LDELTX, LBND  , LWKSTR, LSPTRS, LSELTS, LINDEX,
+      COMMON / LOCAL /   LFXI, LGXI, LHXI, LGGFX, LDX, LGRJAC,
+     *                   LQGRAD, LBREAK, LP, LXCP, LX0, LGX0,
+     *                   LDELTX, LBND, LWKSTR, LSPTRS, LSELTS, LINDEX,
      *                   LSWKSP, LSTAGV, LSTAJC, LIUSED, LFREEC,
      *                   LNNONZ, LNONZ2, LSYMMD, LSYMMH,
-     *                   LSLGRP, LSVGRP, LGCOLJ, LVALJR, LSEND ,
+     *                   LSLGRP, LSVGRP, LGCOLJ, LVALJR, LSEND,
      *                   LNPTRS, LNELTS, LNNDEX, LNWKSP, LNSTGV,
      *                   LNSTJC, LNIUSE, LNFREC, LNNNON, LNNNO2, LNSYMD,
      *                   LNSYMH, LNLGRP, LNVGRP, LNGCLJ, LNVLJR, LNQGRD,
-     *                   LNBRAK, LNP   , LNBND , LNFXI , LNGXI , LNGUVL,
-     *                   LNHXI , LNHUVL, LNGGFX, LNDX  , LNGRJC, LIWK2 ,
-     *                   LWK2  , MAXSIN, NINVAR, MAXSEL, NTYPE ,
-     *                   NSETS , LSTYPE, LSSWTR, LSSIWT, LSIWTR,
+     *                   LNBRAK, LNP, LNBND, LNFXI, LNGXI, LNGUVL,
+     *                   LNHXI, LNHUVL, LNGGFX, LNDX, LNGRJC, LIWK2,
+     *                   LWK2, MAXSIN, NINVAR, MAXSEL, NTYPE,
+     *                   NSETS, LSTYPE, LSSWTR, LSSIWT, LSIWTR,
      *                   LSWTRA, LNTYPE, LNSWTR, LNSIWT, LNIWTR, 
      *                   LNWTRA, LSISET, LSSVSE, LNISET, LNSVSE
-      INTEGER            NNOV  , NNJV 
-      COMMON / NNVARS /  NNOV  , NNJV 
+      INTEGER            NNOV, NNJV 
+      COMMON / NNVARS /  NNOV, NNJV 
       SAVE             / GLOBAL /, / LOCAL /, / CHARA /, / NNVARS /
 C
 C  Sparse Jacobian common block 
 C
-      INTEGER            LICWK , LCWK
+      INTEGER            LICWK, LCWK
 C    to accommodate increased MMAX for large installations.
 CBIG  PARAMETER        ( LICWK = 165001 )
-CMED  PARAMETER        ( LICWK =  16501 )
-CTOY  PARAMETER        ( LICWK =   3301 )
+CMED  PARAMETER        ( LICWK = 16501 )
+CTOY  PARAMETER        ( LICWK = 3301 )
 CCUS  PARAMETER        ( LICWK = 165001 )
       INTEGER            ICWK( LICWK )
 C    to accommodate increased MMAX for large installations.
-CBIG  PARAMETER        ( LCWK  =  75000 )
-CMED  PARAMETER        ( LCWK  =   7500 )
-CTOY  PARAMETER        ( LCWK  =   1500 )
-CCUS  PARAMETER        ( LCWK  =  75000 )
-CS    REAL               CWK ( LCWK )
+CBIG  PARAMETER        ( LCWK  = 75000 )
+CMED  PARAMETER        ( LCWK  = 7500 )
+CTOY  PARAMETER        ( LCWK  = 1500 )
+CCUS  PARAMETER        ( LCWK  = 75000 )
 CD    DOUBLE PRECISION   CWK ( LCWK )
-      INTEGER            JSTRT , INDV  , INDF 
-      COMMON / SPJAC /   CWK   , ICWK  , JSTRT , INDV  , INDF
+      INTEGER            JSTRT, INDV, INDF 
+      COMMON / SPJAC /   CWK, ICWK, JSTRT, INDV, INDF
       SAVE             / SPJAC /
 C
 C  Local variable declarations
 C
-      INTEGER            I , II, IG, J , JG, K , JSLACK, MEND , NJAC
-      LOGICAL            EFIRST, LFIRST, NVFRST, LTEMP
-CS    REAL               ATEMP , ZERO , BIG
-CD    DOUBLE PRECISION   ATEMP , ZERO , BIG
-CS    PARAMETER        ( ZERO = 0.0E+0, BIG = 1.0E+20 )
-CD    PARAMETER        ( ZERO = 0.0D+0, BIG = 1.0D+20 )
+      INTEGER            I, II, IG, J, JG, K, JSLACK, MEND, NJAC
+      LOGICAL            LTEMP
+      DOUBLE PRECISION   ATEMP
+      DOUBLE PRECISION, PARAMETER :: zero = 0.0D+0, big = 1.0D+20
 C
-C  Input problem data using csetup.
+C  input problem data using csetup.
 C
-      EFIRST = .FALSE.
-      LFIRST = .FALSE.
-      NVFRST = .TRUE.
-      CALL CUTEST_csetup( status, INPUT , IOUT  , N , M , X , BL , BU , NMAX,
-     *             EQUATN, LINEAR, V , BL( NMAX + 1 ), BU( NMAX + 1 ),
-     *             MMAX  , EFIRST, LFIRST, NVFRST)
-      CLOSE( INPUT )
+
+      CALL CUTEST_csetup( status, input, out, N, M, X, BL, BU, 
+     *             V, BL( NMAX + 1 ), BU( NMAX + 1 ), EQUATN, LINEAR, 
+     *             0, 0, 1 )
+      CLOSE( input )
       CALL CUTEST_cnames( status, N, M, PNAME, VNAME, CNAME )
       NNOBJ = NNOV
       NNJAC = NNJV
@@ -372,8 +343,8 @@ C
             IWK( LSEND + I ) = IG
             IF ( .NOT. LINEAR( I ) ) NNCON = NNCON + 1
             IF ( EQUATN( I ) ) THEN
-               BL( N + I ) = ZERO
-               BU( N + I ) = ZERO
+               BL( N + I ) = zero
+               BU( N + I ) = zero
             ELSE
                IF ( NMAX .GT. N ) THEN 
                   BL( N + I ) = - BU( NMAX + I )
@@ -455,8 +426,8 @@ C  If the objective function has a linear part, set IOBJ to M.
 C
       M           = M + 1
       BL( N + M ) = - BIG
-      BU( N + M ) =   BIG
-      X( N + M ) = ZERO
+      BU( N + M ) = BIG
+      X( N + M ) = zero
       IOBJ        = 0
       IF ( NNOBJ .LT. N ) IOBJ = M
 C
@@ -472,7 +443,7 @@ C  Ensure there is sufficient room in CWK.
 C
          IF ( LCWK .LT. N ) THEN
 C    It used to be M + N - LCWK instead of N - LCWK.
-            IF ( IOUT .GT. 0 ) WRITE( IOUT, 2000 )
+            IF ( out .GT. 0 ) WRITE( out, 2000 )
      *           'CWK   ','LCWK  ', N - LCWK
             STOP
          END IF
@@ -481,15 +452,15 @@ C
 C  Ensure NEMAX is big enough to store the Jacobian.
 C
          IF ( NEMAX .LT. NE ) THEN
-            IF ( IOUT .GT. 0 ) WRITE( IOUT, 2000 )
+            IF ( out .GT. 0 ) WRITE( out, 2000 )
      *           'AA    ','NEMAX ', NE - NEMAX
             STOP
          END IF
 C
 C  Use CGR to find entries in dense Jacobian.
 C
-         CALL CUTEST_cgr( status, N , M , X       , .FALSE. , M , V , 
-     *              CWK   , .FALSE. , M  , N  , AA )
+         CALL CUTEST_cgr( status, N, M, X, .FALSE., M, V, 
+     *              CWK, .FALSE., M, N, AA )
 C
 C  Set KA( J ) and HA( J ).
 C
@@ -514,7 +485,7 @@ C  Jacobian is to be stored in sparse format.
 C  Ensure there is sufficient room in CWK.
 C
          IF ( LCWK .LT. NEMAX ) THEN
-            IF ( IOUT .GT. 0 ) WRITE( IOUT, 2000 )
+            IF ( out .GT. 0 ) WRITE( out, 2000 )
      *           'CWK   ','LCWK  ', NEMAX - LCWK
             STOP
          END IF
@@ -528,7 +499,7 @@ C
 C  Ensure there is sufficient room in ICWK.
 C
          IF ( LICWK .LT. INDF + NEMAX ) THEN
-            IF ( IOUT .GT. 0 ) WRITE( IOUT, 2000 )
+            IF ( out .GT. 0 ) WRITE( out, 2000 )
      *         'ICWK  ','LICWK', INDF + NEMAX - LICWK
             STOP
          END IF
@@ -537,8 +508,8 @@ C  Use CSGR to find entries in sparse Jacobian.
 C  Since CSGR and MINOS use different sparse formats,
 C  store Jacobian temporarily in CWK.
 C
-         CALL CUTEST_csgr( status, N   , M      , .FALSE. , M , V , X , NE , NEMAX ,
-     *              CWK , ICWK( INDV + 1 ) , ICWK( INDF + 1 ) )
+         CALL CUTEST_csgr( status, N, M, .FALSE., M, V, X, NE, NEMAX,
+     *              CWK, ICWK( INDV + 1 ), ICWK( INDF + 1 ) )
          K = NE
 C
 C  Initialize KA
@@ -627,7 +598,7 @@ C
          ICWK( JSTRT + 1 ) = 1
          NE = KA ( N + 1 ) - 1
       END IF
-      OBJADD = ZERO
+      OBJADD = zero
       DO 400 IG = 1, NG 
          I = IWK( KNDOFC + IG )
 C
@@ -639,7 +610,7 @@ C
          IF ( I .GT. 0 ) THEN
             JSLACK = N + I
             IF ( I .GT. NNCON ) THEN
-               IF ( WK( B + IG ) .NE. ZERO ) THEN
+               IF ( WK( B + IG ) .NE. zero ) THEN
                   BU( JSLACK ) = BU( JSLACK ) - WK( B + IG ) 
      *                           * WK( GSCALE + IG )
                   BL( JSLACK ) = BL( JSLACK ) - WK( B + IG )
@@ -649,7 +620,7 @@ C
 C
 C  If possible, set slack variables to be nonbasic at zero.
 C
-            X ( JSLACK ) = MAX( ZERO       , BL( JSLACK ) )
+            X ( JSLACK ) = MAX( zero, BL( JSLACK ) )
             X ( JSLACK ) = MIN( X( JSLACK ), BU( JSLACK ) )
 C
 C  Incorporate nonzero constants from objective function groups
@@ -683,38 +654,32 @@ C
 C
 C  Non-executable statements.
 C
- 2000 FORMAT( /, ' ** SUBROUTINE MINSSE: array length ', A6, 
+ 2000 FORMAT( /, ' ** SUBROUTINE MINOS_setup: array length ', A6, 
      *        ' too small.', /, ' -- Minimization abandoned.',
      *        /, ' -- Increase the parameter ', A6, ' by at least ', I8,
      *           ' and restart.'  )
-C
-C  End of MINSSE.
-C
+
+C  End of MINOS_setup
+
       END
-C
-C  THIS VERSION: 25/08/1994 AT 12:05:16 PM.
-      SUBROUTINE FUNOBJ( MODE, N, X, F, G, NSTATE, NPROB, Z, NWCORE )
-      INTEGER            MODE, N, NSTATE, NPROB, NWCORE
-CS    REAL               F
-CD    DOUBLE PRECISION   F
-CS    REAL               X( N ), G( N ), Z( NWCORE )
-CD    DOUBLE PRECISION   X( N ), G( N ), Z( NWCORE )
-C
+
+      SUBROUTINE FUNOBJ( MODE, n, X, f, G, nstate, nprob, Z, nwcore )
+      INTEGER ::  mode, n, nstate, nprob, nwcore
+      DOUBLE PRECISION :: f
+      DOUBLE PRECISION :: X( n ), G( n ), Z( nwcore )
+
 C  Local variables
-C
+
       LOGICAL            GRAD
-C
       IF ( MODE .EQ. 0 ) THEN
          GRAD = .FALSE.
       ELSE
          GRAD = .TRUE.
       END IF
       CALL CUTEST_cofg( status, N, X, F, G, GRAD )
-C
       RETURN
       END
-C
-C  THIS VERSION: 25/08/1994 AT 12:05:16 PM.
+
       SUBROUTINE FUNCON( MODE, M, N, NJAC, X, F, G, NSTATE, NPROB,
      *                   Z, NWCORE )
       INTEGER            MODE, M, N, NJAC, NSTATE, NPROB, NWCORE
@@ -723,35 +688,35 @@ CD    DOUBLE PRECISION   X( N ), F( M ), G( NJAC ), Z( NWCORE )
 C
 C MINOS common block
 C
-      INTEGER            NCOM  , NDEN  , NLAG  , NMAJOR, NMINOR
+      INTEGER            NCOM, NDEN, NLAG, NMAJOR, NMINOR
 CS    REAL               PENPAR, ROWTOL
 CD    DOUBLE PRECISION   PENPAR, ROWTOL
-      COMMON    /M8AL1 / PENPAR, ROWTOL, NCOM  , NDEN  , NLAG  ,
+      COMMON    /M8AL1 / PENPAR, ROWTOL, NCOM, NDEN, NLAG,
      *                   NMAJOR, NMINOR
 C
 C  Sparse Jacobian common block 
 C
-      INTEGER            LICWK , LCWK
+      INTEGER            LICWK, LCWK
 C    to accommodate increased MMAX for large installations.
 CBIG  PARAMETER        ( LICWK = 165001 )
-CMED  PARAMETER        ( LICWK =  16501 )
-CTOY  PARAMETER        ( LICWK =   3301 )
-CCUS  PARAMETER        ( LICWK =  165001 )
+CMED  PARAMETER        ( LICWK = 16501 )
+CTOY  PARAMETER        ( LICWK = 3301 )
+CCUS  PARAMETER        ( LICWK = 165001 )
       INTEGER            ICWK( LICWK )
 C    to accommodate increased MMAX for large installations.
-CBIG  PARAMETER        ( LCWK  =  75000 )
-CMED  PARAMETER        ( LCWK  =   7500 )
-CTOY  PARAMETER        ( LCWK  =   1500 )
-CCUS  PARAMETER        ( LCWK  =  75000 )
+CBIG  PARAMETER        ( LCWK  = 75000 )
+CMED  PARAMETER        ( LCWK  = 7500 )
+CTOY  PARAMETER        ( LCWK  = 1500 )
+CCUS  PARAMETER        ( LCWK  = 75000 )
 CS    REAL               CWK ( LCWK )
 CD    DOUBLE PRECISION   CWK ( LCWK )
-      INTEGER            JSTRT , INDV  , INDF 
-      COMMON / SPJAC /   CWK   , ICWK  , JSTRT , INDV  , INDF
+      INTEGER            JSTRT, INDV, INDF 
+      COMMON / SPJAC /   CWK, ICWK, JSTRT, INDV, INDF
       SAVE             / SPJAC /
 C
 C Local variables
 C
-      INTEGER            I , J , K , NNZJ
+      INTEGER            I, J, K, NNZJ
       LOGICAL            GRAD
 C
       IF ( MODE .EQ. 0 ) THEN
@@ -795,30 +760,24 @@ C
 C
       RETURN
       END
-C
-C  THIS VERSION: 25/08/1994 AT 12:05:16 PM.
-      SUBROUTINE MATMOD( NCYCLE, NPROB, FINISH, 
-     *                   M, N, NB, NE, NKA, NS, NSCL,
-     *                   A, HA, KA, BL, BU,
-     *                   ASCALE, HS, ID1, ID2,
+
+      SUBROUTINE MATMOD( NCYCLE, NPROB, FINISH, M, N, NB, NE, NKA, NS, 
+     *                   NSCL, A, HA, KA, BL, BU, ASCALE, HS, ID1, ID2,
      *                   X, PI, Z, NWCORE )
-      INTEGER            NCYCLE, NPROB, M, N, NB, NE, NKA, NS, NSCL,
-     *                   NWCORE
-      INTEGER            HA( NE ), HS( NB )
-      INTEGER            KA( NKA ), ID1( NB ), ID2( NB )
-CS    REAL               
-CD    DOUBLE PRECISION   
-     *                   A( NE ), ASCALE( NSCL ), BL( NB ), BU( NB ),
-     *                   X( NB ), PI( M ), Z( NWCORE )
-      LOGICAL            FINISH
-C
+      INTEGER :: ncycle, nprob, m, n, nb, ne, nka, ns, nscl, nwcore
+      INTEGER ::  HA( ne ), HS( nb )
+      INTEGER ::  KA( nka ), ID1( nb ), ID2( nb )
+      DOUBLE PRECISION :: A( ne ), ASCALE( nscl ), BL( nb ), BU( nb ),
+     *                   X( nb ), PI( m ), Z( nwcore )
+      LOGICAL :: finish
+
 C  MINOS common block
-C
-      INTEGER            IREAD , IPRINT, ISUMM
-      COMMON    /M1FILE/ IREAD , IPRINT, ISUMM
-      IF ( IPRINT .GT. 0 ) WRITE( IPRINT, 2000 )
-      IF ( ISUMM  .GT. 0 ) WRITE( ISUMM , 2000 )
-      FINISH = .TRUE.
+
+      INTEGER :: iread, iprint, isumm
+      COMMON    /M1FILE/ iread, iprint, isumm
+      IF ( iprint .GT. 0 ) WRITE( iprint, 2000 )
+      IF ( isumm .GT. 0 ) WRITE( isumm, 2000 )
+      finish = .TRUE.
       RETURN
 C
 C  Non-executable statements

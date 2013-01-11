@@ -319,7 +319,7 @@ C
 C  Local variable declarations
 C
       INTEGER            I , II, IG, J , JG, K , JSLACK, MEND , NJAC
-      LOGICAL            EFIRST, LFIRST, NVFRST, LTEMP
+      LOGICAL            LTEMP
 CS    REAL               ATEMP , ZERO , BIG
 CD    DOUBLE PRECISION   ATEMP , ZERO , BIG
 CS    PARAMETER        ( ZERO = 0.0E+0, BIG = 1.0E+20 )
@@ -327,12 +327,9 @@ CD    PARAMETER        ( ZERO = 0.0D+0, BIG = 1.0D+20 )
 C
 C  Input problem data using csetup.
 C
-      EFIRST = .FALSE.
-      LFIRST = .FALSE.
-      NVFRST = .TRUE.
       CALL CUTEST_csetup( status, INPUT , IOUT  , N , M , X , BL , BU , NMAX,
      *             EQUATN, LINEAR, V , BL( NMAX + 1 ), BU( NMAX + 1 ),
-     *             MMAX  , EFIRST, LFIRST, NVFRST)
+     *             MMAX  , 0, 0, 1 )
       NNOBJ = NNOV
       NNJAC = NNJV
 C

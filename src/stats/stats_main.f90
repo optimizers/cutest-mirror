@@ -46,7 +46,7 @@ Program STATS_main
   Real ( KIND = wp ), Dimension( 7 ) :: CALLS( 7 )
   DOUBLE PRECISION, PARAMETER :: infty = 9.0D+19
   Character( len = 10 ) :: pname
-  Logical :: efirst, lfirst, nvfrst
+  Integer :: e_order, l_order, v_order
   Logical, Dimension( : ), Allocatable :: equatn, linear
   Logical :: constrained
 
@@ -73,7 +73,7 @@ Program STATS_main
 
 !  Set up parameters
 
-  efirst = .False. ; lfirst = .True. ; nvfrst = .False.
+  e_order = 0 ; l_order = 1 ; v_order = 0
 
 !  Allocate arrays to hold problem data
 
@@ -121,9 +121,9 @@ Program STATS_main
 
 !  If all ok, initialize problem data
 
-     Call CUTEST_csetup( status, input, out, io_buffer, vars%nvar, cons%ncon, &
+     Call CUTEST_csetup( status, input, out, io_buffer, vars%nvar, cons%ncon,  &
                   x, bl, bu, v, cl, cu, equatn, linear,                        &
-                  efirst, lfirst, nvfrst )
+                  e_order, l_order, v_order )
   Else
      Allocate( equatn( 1 ), STAT = alloc_stat )
      If( alloc_stat /= 0 ) Then

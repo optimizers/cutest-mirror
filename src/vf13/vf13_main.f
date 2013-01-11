@@ -15,7 +15,7 @@ C
       CHARACTER ( LEN = 10 ) :: pname
       DOUBLE PRECISION :: f, acc
       DOUBLE PRECISION, PARAMETER :: accreq = 1.0D-7
-      DOUBLE PRECISION dummy, CPU( 2 ), CALLS( 7 )
+      DOUBLE PRECISION :: dummy, CPU( 2 ), CALLS( 7 )
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: IW
       DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: X, BL, BU, G, W
       DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: C, V, CL, CU
@@ -31,7 +31,7 @@ C  open the relevant data input file
 
       OPEN( input, FILE = 'OUTSDIF.d', FORM = 'FORMATTED',
      *      STATUS = 'OLD' )
-      REWIND input
+      REWIND( input )
 
 C  compute problem dimensions
 
@@ -179,7 +179,7 @@ C  Set up the data structures necessary to hold the problem functions.
 
       CALL CUTEST_csetup( status, input, out, io_buffer, n, m, 
      *                    X, BL, BU, V, CL, CU, EQUATN, LINEAR, 
-     *                    .TRUE., .FALSE., .FALSE. )
+     *                    1, 0, 0 )
       IF ( status /= 0 ) GO TO 910
 
 C  Count the number of general equality constraints.
