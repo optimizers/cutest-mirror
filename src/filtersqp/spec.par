@@ -6,3 +6,8 @@
   rho           10.0
   tt            0.125
   ubd           100.0
+  kmax          2000
+  maxf          50    
+  mlp           200    
+  mxws          10000000 
+  mxlws         500000

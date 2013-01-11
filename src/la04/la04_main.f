@@ -87,8 +87,7 @@ C  separable function
       CALL CUTEST_csetup( status, input, out, io_buffer, n, m, 
      *              WS( 1 ), BLOWER( 1 ), BUPPER( 1 ),
      *              WS( n + 1 ), BLOWER( n + 1 ), 
-     *              BUPPER( n + 1 ), EQUATN, LINEAR, 
-     *              .FALSE., .FALSE., .FALSE. )
+     *              BUPPER( n + 1 ), EQUATN, LINEAR, 0, 0, 0 )
       IF ( status /= 0 ) GO TO 910
 
 C  determine the names of the problem, variables and constraints

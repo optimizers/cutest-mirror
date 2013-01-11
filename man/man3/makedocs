@@ -31,7 +31,7 @@
 #               cutest_ureport_threaded cutest_usetup_threaded \
 #               cutest_ush_threaded cutest )
 
-foreach pack ( cutest_cdimen cutest_udimen )
+#foreach pack ( cutest_cdimen cutest_udimen )
 
 #foreach pack ( cutest )
 #foreach pack ( cutest_ccfg )
@@ -99,7 +99,7 @@ foreach pack ( cutest_cdimen cutest_udimen )
 #foreach pack ( cutest_cjprod_threaded )
 #foreach pack ( cutest_cofg_threaded )
 #foreach pack ( cutest_creport_threaded )
-#foreach pack ( cutest_csetup_threaded )
+foreach pack ( cutest_csetup_threaded  cutest_csetup )
 #foreach pack ( cutest_csgr_threaded )
 #foreach pack ( cutest_csgreh_threaded )
 #foreach pack ( cutest_csgrsh_threaded )

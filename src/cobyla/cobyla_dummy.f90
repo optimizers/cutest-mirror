@@ -10,6 +10,12 @@
 
       INTEGER :: n, m, iprint, maxfun
       REAL( KIND = wp ) :: rhobeg, rhoend
-      REAL( KIND = wp ) :: X( * ), W( * ), IW( * )
+      INTEGER :: IW( * )
+      REAL( KIND = wp ) :: X( * ), W( * )
+
+      REAL( KIND = wp ) :: f
+      REAL( KIND = wp ) :: C( m )
+      CALL CALCFC( n, m, X, f, C )
+
       RETURN
       END

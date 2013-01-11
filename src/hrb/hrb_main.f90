@@ -63,7 +63,7 @@
 !  separable function
 
       CALL CUTEST_csetup( status, input, out, io_buffer, N, M, X, BL, BU, Y,   &
-                          CL, CU, EQUATN, LINEAR, .FALSE., .FALSE., .FALSE. ) 
+                          CL, CU, EQUATN, LINEAR, 0, 0, 0 )
       IF ( status /= 0 ) GO TO 910
 
 !  compute the numbers of nonzeros in the problem Jacobian and Hessian

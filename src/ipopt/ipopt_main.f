@@ -1376,7 +1376,7 @@ C
       double precision c(CUTE_MMAX), f, dummy
       logical equatn(CUTE_MMAX), linear(CUTE_MMAX)
       integer cnr_input, iout, i
-      logical efirst, lfirst, nvfrst, ex
+      logical ex
 C
 C*******************************************************************************
 C
@@ -1391,20 +1391,18 @@ C     Call CSETUP to obtain problem size and starting point
 C
       cnr_input = 60
       iout = 6
-      efirst = .false.
-      lfirst = .false.
-      nvfrst = .false.
 
       open(cnr_input,file='OUTSDIF.d',status='old')
 
       call CUTEST_csetup( status,cnr_input, iout, CUTE_N, CUTE_M,
      1     X, bl, bu, CUTE_NMAX, equatn, linear, v, cl, cu,
-     2     CUTE_MMAX, efirst, lfirst, nvfrst)
+     2     CUTE_MMAX, 0, 0, 0 )
       close(cnr_input)
 C
 C     Added this:  Compute C in order to initialize slacks better
 C
-      call CUTEST_ccfg( status,CUTE_N, CUTE_M, X, M, C, .false., 1, 1, dummy, .false.)
+      call CUTEST_ccfg( status,CUTE_N, CUTE_M, X, M, C, .false., 1, 1, 
+     1                  dummy, .false.)
 C
       M = CUTE_M
       N = CUTE_N

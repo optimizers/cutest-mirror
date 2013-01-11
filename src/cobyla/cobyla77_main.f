@@ -49,9 +49,8 @@ C  allocate space
 C
 C  Set up the data structures necessary to hold the problem functions.
 C
-      CALL CUTEST_csetup( status, INPUT, IOUT, io_buffer, n, mcon, 
-     *                     X, BL, BU, C, CL, CU, EQUATN, LINEAR,      
-     *                    .TRUE., .FALSE., .FALSE. )
+      CALL CUTEST_csetup( status, INPUT, IOUT, io_buffer, n, mcon, X,
+     *                     BL, BU, C, CL, CU, EQUATN, LINEAR, 1, 0, 0 )
       IF ( status /= 0 ) GO TO 910
       CLOSE ( INPUT )
 C

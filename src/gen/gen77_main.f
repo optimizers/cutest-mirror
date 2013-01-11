@@ -12,7 +12,7 @@ C
       INTEGER :: io_buffer = 11
       INTEGER, PARAMETER :: inspec = 46, input = 47, iout = 6
       INTEGER :: nlin, neq, nbnds, exitcode
-      LOGICAL :: efirst, lfirst, nvfrst, constrained
+      LOGICAL :: constrained
       CHARACTER ( LEN = 10 ) :: PNAME
       DOUBLE PRECISION dummy, CPU( 2 ), CALLS( 7 )
       DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: X, BL, BU
@@ -50,17 +50,11 @@ C
         STOP
       END IF
 C
-C  Set up parameters
-C
-      efirst = .TRUE.
-      lfirst = .FALSE.
-      nvfrst = .FALSE.
-C
 C  Set up SIF data from the problem file
 C
       IF ( constrained ) THEN
         CALL CUTEST_csetup( status, input, iout, io_buffer, n, m, X, BL, 
-     *        BU, V, CL, CU, EQUATN, LINEAR, efirst, lfirst, nvfrst )
+     *        BU, V, CL, CU, EQUATN, LINEAR, 1, 0, 0 )
       ELSE
         CALL CUTEST_usetup( status, input, iout, io_buffer, n, X, BL, 
      *        BU )

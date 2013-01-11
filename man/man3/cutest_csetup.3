@@ -7,7 +7,7 @@ minimization.
 .HP 1i
 CALL CUTEST_csetup( status, input, out, io_buffer, 
 n, m, X, X_l, X_u, Y, C_l, C_u, 
-EQUATN, LINEAR, efirst, lfirst, nvfrst )
+EQUATN, LINEAR, e_order, l_order, v_order )
 .SH DESCRIPTION
 The CUTEST_csetup subroutine sets up the correct data structures for
 subsequent computations on the problem decoded from a SIF file by
@@ -113,27 +113,31 @@ is an equation (i in E) and .FALSE. if the constraint is an inequality
 a logical array whose i-th component is .TRUE. if the i-th constraint
 is linear or affine and .FALSE. otherwise,
 .TP
-.B efirst \fP[in] - logical
- logical variable that should be set .TRUE. if the user wishes the
-general equations to occur before the general inequalities in the list
-of constraints. If the order is unimportant, efirst should be set to .FALSE.,
+.B e_order \fP[in] - integer
+if the user wishes the general equations to occur before the general 
+inequalities in the list of constraints, e_order must be set to 1.
+If the general equations should follow the general inequalities,
+e_order must be set to 2. If the order is unimportant, e_order
+should be set to 0; any value except 1 and 2 will be interpreted as 0,
 .TP
-.B lfirst \fP[in] - logical
-a logical variable that should be set .TRUE. if the user wishes the
-general linear (or affine) constraints to occur before the general
-nonlinear ones in the list of constraints. If the order is
-unimportant, lfirst should be set .FALSE. If both efirst and lfirst
-are set .TRUE., the linear constraints will occur before the nonlinear
-ones. The linear  constraints will be ordered so that the linear
-equations occur before the linear inequalities. Likewise, the
-nonlinear equations will appear before the nonlinear inequalities in
-the list of nonlinear constraints,
+.B l_order \fP[in] - integer
+if the user wishes the general linear (or affine) constraints to occur 
+before the general nonlinear ones
+in the list of constraints, l_order must be set to 1.
+If the general linear constraints should follow the general nonlinear ones,
+l_order must be set to 2. If the order is unimportant, l_order
+should be set to 0; any value except 1 and 2 will be interpreted as 0,
 .TP
-.B nvfrst \fP[in] - logical
-a logical variable that should be set .TRUE. if the user wishes that
-the nonlinear variables come first. Within the nonlinear variables the
+.B v_order \fP[in] - integer
+if the user wishes the nonlinear variables to occur 
+before those that only appear linearly in the problem,
+in the list of variables, v_order must be set to 1;
+within the nonlinear variables the
 smaller set of either the nonlinear objective or nonlinear Jacobian
-variables appears first.
+variables will appear first.
+If the nonlinear variables must follow the linear ones,
+v_order should be set to 2. If the order is unimportant, v_order
+should be set to 0; any value except 1 and 2 will be interpreted as 0.
 .LP
 .SH APPLICATION USAGE
 A call to CUTEST_csetup must precede calls to other evaluation tools,

@@ -149,7 +149,7 @@ void CUTEST_csetup( integer *status, integer *funit, integer *iout,
 	      doublereal *x, doublereal *bl, doublereal *bu, 
               doublereal *v, doublereal *cl, doublereal *cu, 
 	      logical *equatn, logical *linear, 
-              logical *efirst, logical *lfirst, logical *nvfrst );
+              integer *e_order, integer *l_order, integer *v_order );
 
 /* Unconstrained dimensioning and report routines */
 void CUTEST_udimen( integer *status, integer *funit, integer *n );

@@ -32,7 +32,7 @@
       INTEGER :: n, m, H_ne, HE_nel, HE_val_ne, HE_row_ne, J_ne, Ji_ne, status
       INTEGER :: l_h2_1, l_h, lhe_ptr, lhe_val, lhe_row, alloc_stat
       REAL ( KIND = wp ) :: f, ci
-      LOGICAL :: grad, byrows, goth, gotj, efirst, lfirst, nvfrst
+      LOGICAL :: grad, byrows, goth, gotj
       LOGICAL :: grlagf, jtrans
       CHARACTER ( len = 10 ) ::  p_name
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: H_row, H_col, X_type
@@ -75,10 +75,9 @@
 
 !  set up SIF data
 
-      efirst = .TRUE. ; lfirst = .TRUE. ; nvfrst = .TRUE.
       WRITE( out, "( ' CALL CUTEST_csetup ' )" )
       CALL CUTEST_csetup( status, input, out, buffer, n, m, X, X_l, X_u,       &
-                      Y, C_l, C_u, EQUATION, LINEAR, efirst, lfirst, nvfrst )
+                      Y, C_l, C_u, EQUATION, LINEAR, 1, 1, 1 )
       IF ( status /= 0 ) GO to 900
       CALL WRITE_X( out, n, X, X_l, X_u )
       CALL WRITE_Y( out, m, Y, C_l, C_u, EQUATION, LINEAR )

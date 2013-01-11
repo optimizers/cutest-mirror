@@ -1,12 +1,12 @@
-#  Main body of the installation makefile for CUTEst COBYLA interface
+#  Main body of the installation makefile for CUTEst NPSOL interface
 
 #  N. Gould, D. Orban and Ph. L. Toint.
-#  This version: 7 I 2013
+#  This version: 5 I 2013
 
 #  package
 
-PACKAGE = COBYLA
-package = cobyla
+PACKAGE = NPSOL
+package = npsol
 
 SHELL = /bin/$(BINSHELL)
 
@@ -102,28 +102,28 @@ ctools:
 
 #  individual compilations
 
-$(OBJ)/$(package)_dummy.o: ../$(package)/$(package)_dummy.f90
+$(OBJ)/$(package)_dummy.o: ../$(package)/$(package)_dummy.f
 	@printf ' %-9s %-15s\t\t' "Compiling" "$(package)_dummy" 
-	$(SED) -f $(SEDS) ../$(package)/$(package)_dummy.f90 > \
-          $(OBJ)/$(package)_dummy.f90
-	cd $(OBJ); $(FORTRAN) -o $(package)_dummy.o $(FFLAGS) \
-          $(package)_dummy.f90 \
+	$(SED) -f $(SEDS) ../$(package)/$(package)_dummy.f > \
+          $(OBJ)/$(package)_dummy.f
+	cd $(OBJ); $(FORTRAN) -o $(package)_dummy.o $(FFLAGS77) \
+          $(package)_dummy.f \
             || ( printf ' %-26s' "=> Disabling optimization " ; \
-              $(FORTRAN) -o $(package)_dummy.o $(FFLAGSN) $(package)_dummy.f90 )
-	$(RM) $(OBJ)/$(package)_dummy.f90
+              $(FORTRAN) -o $(package)_dummy.o $(FFLAGS77N) $(package)_dummy.f )
+	$(RM) $(OBJ)/$(package)_dummy.f
 	@printf '[ OK ]\n'
 
 #  CUTEst interface main programs
 
-$(OBJ)/$(package)_main.o: ../$(package)/$(package)_main.f90
+$(OBJ)/$(package)_main.o: ../$(package)/$(package)_main.f
 	@printf ' %-9s %-15s\t\t' "Compiling" "$(package)_main" 
-	$(SED) -f $(SEDS) ../$(package)/$(package)_main.f90 > \
-          $(OBJ)/$(package)_main.f90
-	cd $(OBJ); $(FORTRAN) -o $(package)_main.o $(FFLAGS) \
-             $(package)_main.f90 \
+	$(SED) -f $(SEDS) ../$(package)/$(package)_main.f > \
+          $(OBJ)/$(package)_main.f
+	cd $(OBJ); $(FORTRAN) -o $(package)_main.o $(FFLAGS77) \
+             $(package)_main.f \
               || ( printf ' %-26s' "=> Disabling optimization " ; \
-               $(FORTRAN) -o $(package)_main.o $(FFLAGSN) $(package)_main.f90 )
-	$(RM) $(OBJ)/$(package)_main.f90
+               $(FORTRAN) -o $(package)_main.o $(FFLAGS77N) $(package)_main.f )
+	$(RM) $(OBJ)/$(package)_main.f
 	@printf '[ OK ]\n'
 
 #  book keeping

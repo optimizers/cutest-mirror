@@ -39,6 +39,7 @@
         INTEGER :: n = 0          ! Number of variables
         INTEGER :: m = 0          ! Number of general constraints
         CHARACTER ( LEN = 10 ) :: pname    ! Problem name
+        REAL ( KIND = wp ) :: f   ! objective function
         CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : ) :: vnames
         CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : ) :: cnames
 
@@ -87,6 +88,12 @@
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: J_col
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: J_val
       END TYPE CUTEST_problem_type
+
+!--------------------------------
+!  G l o b a l  v a r i a b l e s
+!--------------------------------
+
+      TYPE ( CUTEST_problem_type ), SAVE, PUBLIC :: CUTEST_problem_global
 
 !============================================================================
 
