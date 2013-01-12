@@ -1,12 +1,12 @@
-#  Main body of the installation makefile for CUTEst PDS interface
+#  Main body of the installation makefile for CUTEst TENMIN interface
 
 #  N. Gould, D. Orban and Ph. L. Toint.
 #  This version: 5 I 2013
 
 #  package
 
-PACKAGE = PDS
-package = pds
+PACKAGE = TENMIN
+package = tenmin
 
 SHELL = /bin/$(BINSHELL)
 

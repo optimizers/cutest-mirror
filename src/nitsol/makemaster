@@ -1,12 +1,12 @@
-#  Main body of the installation makefile for CUTEst PDS interface
+#  Main body of the installation makefile for CUTEst NITSOL interface
 
 #  N. Gould, D. Orban and Ph. L. Toint.
-#  This version: 5 I 2013
+#  This version: 7 I 2013
 
 #  package
 
-PACKAGE = PDS
-package = pds
+PACKAGE = NITSOL
+package = nitsol
 
 SHELL = /bin/$(BINSHELL)
 
@@ -61,7 +61,7 @@ LRMARFILE = $(CUTEST)/bin/rmarfile $(AR) $(GREP) $(LLC)
 #  compilation agenda
 
 $(PACKAGE) = $(OBJ)/$(package)_main.o
-U_TEST = u_elfun.o u_group.o u_range.o
+C_TEST = c_elfun.o c_group.o c_range.o
 
 SUCC = precision version) compiled successfully
 
@@ -78,18 +78,18 @@ $(package)_double: $($(PACKAGE))
 
 # run example tests
 
-run_test: tools test_cutest_unconstrained $(package) $(OBJ)/$(package)_test.o
+run_test: tools test_cutest_constrained $(package) $(OBJ)/$(package)_test.o
 	echo " Test of unconstrained $(package)"
 	cd $(OBJ) ; $(FORTRAN) $(RUNFFLAGS) $(SPECIAL) -o run_test \
-            $(package)_main.o $(package)_test.o $(U_TEST) -L$(OBJ) $(LIBS)
-	ln -fs $(CUTEST)/src/test/u_OUTSDIF.d ../$(package)/OUTSDIF.d
-	- $(OBJ)/run_test >& ../$(package)/u_test.output
-	cat ../$(package)/u_test.output
+            $(package)_main.o $(package)_test.o $(C_TEST) -L$(OBJ) $(LIBS)
+	ln -fs $(CUTEST)/src/test/c_OUTSDIF.d ../$(package)/OUTSDIF.d
+	- $(OBJ)/run_test >& ../$(package)/c_test.output
+	cat ../$(package)/c_test.output
 	rm $(OBJ)/run_test ../$(package)/OUTSDIF.d
 
-test_cutest_unconstrained:
+test_cutest_constrained:
 	( cd ../test ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
-            test_cutest_unconstrained PRECIS=$(PRECIS) PWD=$(PWD)/../test )
+            test_cutest_constrained PRECIS=$(PRECIS) PWD=$(PWD)/../test )
 tools: 
 	( cd ../tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      cutest PRECIS=$(PRECIS) PWD=$(PWD)/../tools )
