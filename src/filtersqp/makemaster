@@ -78,10 +78,10 @@ $(package)_double: $($(PACKAGE))
 
 # run example tests
 
-run_test: tools test_cutest_constrained $(package) $(OBJ)/$(package)_dummy.o
+run_test: tools test_cutest_constrained $(package) $(OBJ)/$(package)_test.o
 	echo " Test of unconstrained $(package)"
 	cd $(OBJ) ; $(FORTRAN) $(RUNFFLAGS) $(SPECIAL) -o run_test \
-            $(package)_main.o $(package)_dummy.o $(C_TEST) -L$(OBJ) $(LIBS)
+            $(package)_main.o $(package)_test.o $(C_TEST) -L$(OBJ) $(LIBS)
 	ln -fs $(CUTEST)/src/test/c_OUTSDIF.d ../$(package)/OUTSDIF.d
 	- $(OBJ)/run_test >& ../$(package)/c_test.output
 	cat ../$(package)/c_test.output
@@ -102,15 +102,15 @@ ctools:
 
 #  individual compilations
 
-$(OBJ)/$(package)_dummy.o: ../$(package)/$(package)_dummy.f
-	@printf ' %-9s %-15s\t\t' "Compiling" "$(package)_dummy" 
-	$(SED) -f $(SEDS) ../$(package)/$(package)_dummy.f > \
-          $(OBJ)/$(package)_dummy.f
-	cd $(OBJ); $(FORTRAN) -o $(package)_dummy.o $(FFLAGS77) \
-          $(package)_dummy.f \
+$(OBJ)/$(package)_test.o: ../$(package)/$(package)_test.f
+	@printf ' %-9s %-15s\t\t' "Compiling" "$(package)_test" 
+	$(SED) -f $(SEDS) ../$(package)/$(package)_test.f > \
+          $(OBJ)/$(package)_test.f
+	cd $(OBJ); $(FORTRAN) -o $(package)_test.o $(FFLAGS77) \
+          $(package)_test.f \
             || ( printf ' %-26s' "=> Disabling optimization " ; \
-              $(FORTRAN) -o $(package)_dummy.o $(FFLAGS77N) $(package)_dummy.f )
-	$(RM) $(OBJ)/$(package)_dummy.f
+              $(FORTRAN) -o $(package)_test.o $(FFLAGS77N) $(package)_test.f )
+	$(RM) $(OBJ)/$(package)_test.f
 	@printf '[ OK ]\n'
 
 #  CUTEst interface main programs
