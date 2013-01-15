@@ -193,7 +193,7 @@
 
 !  local variables
 
-      INTEGER :: ialgor, i, ig, j, jg, mend, meq, mlin, mmax
+      INTEGER :: ialgor, i, ig, j, jg, mend, mmax
       INTEGER :: ii, k, iel, jwrk, kndv, nnlin, nend, neltyp, ngrtyp, itemp
       INTEGER :: alloc_status
       LOGICAL :: debug, ltemp
@@ -970,6 +970,9 @@
           data%ICNA( i ) = data%IWORK( jwrk + j )
         END DO
   300   CONTINUE
+      ELSE
+        data%nnov = n
+        data%nnjv = n
       END IF
 
 !  allocate and initialize workspace
@@ -999,21 +1002,20 @@
 
 !  record which group is associated with each constraint
 
-      meq = 0
-      mlin = 0
+      data%meq = 0 ; data%mlin = 0
       DO ig = 1, data%ng
         i = data%KNDOFC( ig )
         IF ( i > 0 ) THEN
           data%IWORK( i ) = ig
-          IF ( EQUATN( i ) ) meq = meq + 1
-          IF ( LINEAR( i ) ) mlin = mlin + 1
+          IF ( EQUATN( i ) ) data%meq = data%meq + 1
+          IF ( LINEAR( i ) ) data%mlin = data%mlin + 1
         END IF
       END DO
 
 !  the constraints are to be reordered to separate linear and nonlinear ones
 
       IF ( l_order == 1 .OR. l_order == 2 ) THEN
-        IF ( mlin == 0 .OR. mlin == m ) GO TO 390
+        IF ( data%mlin == 0 .OR. data%mlin == m ) GO TO 390
 
 !  reorder the constraints so that the linear constraints occur before the
 !  nonlinear ones
@@ -1105,14 +1107,14 @@
 !  furrther reorderings to separate equality and inequality constraints
 
   390   CONTINUE
-        IF ( meq == 0 .OR. meq == m ) GO TO 700
+        IF ( data%meq == 0 .OR. data%meq == m ) GO TO 700
 
 !  reorder the linear constraints so that the equations occur before the 
 !  inequalities
 
         IF ( e_order == 1 ) THEN
-          mend = mlin
-          DO 420 i = 1, mlin
+          mend = data%mlin
+          DO 420 i = 1, data%mlin
             IF ( i > mend ) GO TO 430
             ig = data%IWORK( i )
 
@@ -1152,7 +1154,7 @@
 
   430     CONTINUE
           mend = m
-          DO 450 i = mlin + 1, m
+          DO 450 i = data%mlin + 1, m
             IF ( i > mend ) GO TO 700
             ig = data%IWORK( i )
 
@@ -1191,8 +1193,8 @@
 !  equations
 
         ELSE IF ( e_order == 2 ) THEN
-          mend = mlin
-          DO 520 i = 1, mlin
+          mend = data%mlin
+          DO 520 i = 1, data%mlin
             IF ( i > mend ) GO TO 530
             ig = data%IWORK( i )
 
@@ -1232,7 +1234,7 @@
 
   530     CONTINUE
           mend = m
-          DO 550 i = mlin + 1, m
+          DO 550 i = data%mlin + 1, m
             IF ( i > mend ) GO TO 700
             ig = data%IWORK( i )
 
@@ -1268,7 +1270,7 @@
   550     CONTINUE
         END IF
       ELSE
-        IF ( meq == 0 .OR. meq == m ) GO TO 700
+        IF ( data%meq == 0 .OR. data%meq == m ) GO TO 700
 
 !  reorder the constraints so that the equations occur before the inequalities
 

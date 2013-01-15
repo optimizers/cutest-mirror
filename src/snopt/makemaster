@@ -1,12 +1,12 @@
-#  Main body of the installation makefile for CUTEst MINOS interface
+#  Main body of the installation makefile for CUTEst SNOPT interface
 
 #  N. Gould, D. Orban and Ph. L. Toint.
 #  This version: 14 I 2013
 
 #  package
 
-PACKAGE = MINOS
-package = minos
+PACKAGE = SNOPT
+package = snopt
 
 SHELL = /bin/$(BINSHELL)
 

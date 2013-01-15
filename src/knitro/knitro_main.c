@@ -1,23 +1,24 @@
 
-/* ====================================================
- * CUTEst interface to KNITRO 7           April 14, 2011
+/* ================================================
+ * CUTEst interface to KNITRO 7           
  *
- * D. Orban
+ * D. Orban, April 14, 2011
+ * CUTEst evoluation, Nick Gould, January 15th 2013
  *
- * ====================================================
+ * ================================================
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 
-#define KNITROMA
+#define KNITRO_main
 
 #ifdef __cplusplus
 extern "C" {   /* To prevent C++ compilers from mangling symbols */
 #endif
 
-#include "cuter.h"
+#include "cutest.h"
 #include "knitro.h"
 
   logical somethingTrue = TRUE_;
@@ -29,7 +30,7 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
   integer CUTEst_nnzh;        /* number of nonzeros in upper triangular
                                 part of the Hessian of the Lagrangian */
   integer *jacIndexVars, *jacIndexCons, *hessIndexRows, *hessIndexCols;
-  doublereal *CUTEr_Jac, *CUTEr_Hess, *Hv, f;
+  doublereal *CUTEst_Jac, *CUTEst_Hess, *Hv, f;
 
   /* ======================================================================== */
   /* Callback function to evaluate the objective function and constraints */
@@ -51,6 +52,7 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
                        void   *        userParams) {
 
     int i;
+    integer status;
 
     if (evalRequestCode != KTR_RC_EVALFC) {
       fprintf (stderr, "*** callbackEvalFC incorrectly called with code %d\n",
@@ -58,17 +60,21 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
       return -1;
     }
 
-    if (CUTEr_ncon > 0) {
-      CUTEST_cfn( status,&CUTEr_nvar, &CUTEr_ncon, x, obj, &CUTEr_ncon, c);
-      //for (i = 0; i < CUTEst_nvar; i++)
-      //    printf(" x = %5d  %22.15e\n", i, x[i]);
-      //printf(" f = %22.15e\n", obj[0]);
-      //for (i = 0; i < CUTEst_ncon; i++)
-      //    printf(" c = %5d  %22.15e\n", i, c[i]);
+    if (CUTEst_ncon > 0) {
+      CUTEST_cfn( &status, &CUTEst_nvar, &CUTEst_ncon, x, obj, c);
+      /*for (i = 0; i < CUTEst_nvar; i++) */
+      /*    printf(" x = %5d  %22.15e\n", i, x[i]); */
+      /*printf(" f = %22.15e\n", obj[0]); */
+      /*for (i = 0; i < CUTEst_ncon; i++) */
+      /*    printf(" c = %5d  %22.15e\n", i, c[i]); */
     } else {
-      CUTEST_ufn( status,&CUTEr_nvar, x, obj);
+      CUTEST_ufn( &status, &CUTEst_nvar, x, obj);
     }
 
+    if( status ) {
+       printf("** CUTEst error, status = %d, aborting\n", status);
+       exit(status);
+    }
     return 0;
   }
 
@@ -92,6 +98,7 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
                        void   *        userParams) {
 
     int i;
+    integer status;
 
     if (evalRequestCode != KTR_RC_EVALGA) {
       fprintf (stderr, "*** callbackEvalGA incorrectly called with code %d\n",
@@ -99,25 +106,30 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
       return -1;
     }
 
-    if (CUTEr_ncon > 0) {
+    if (CUTEst_ncon > 0) {
 
-      CUTEST_csgr( status,&CUTEr_nvar, &CUTEr_ncon, &somethingFalse, &CUTEr_ncon, lambda,
-           x, &CUTEr_nnzj, &CUTEr_lcjac, CUTEst_Jac, jacIndexVars, jacIndexCons);
+      CUTEST_csgr( &status,&CUTEst_nvar, &CUTEst_ncon, x, lambda, 
+                   &somethingFalse, &CUTEst_nnzj, &CUTEst_lcjac, 
+                   CUTEst_Jac, jacIndexVars, jacIndexCons);
       for (i = 0; i < CUTEst_nvar; i++) objGrad[i] = 0.0;
       for (i = 0; i < CUTEst_nnzj; i++)
         if (jacIndexCons[i] == 0)
           objGrad[ (int)(jacIndexVars[i])-1] = CUTEst_Jac[i];
         else
           jac[i] = CUTEst_Jac[i];
-      //CCFSG(&CUTEr_nvar, &CUTEr_ncon, x, &CUTEr_ncon, c, &CUTEr_nnzj,
-      //      &CUTEr_lcjac, jac, jacIndexVars, jacIndexCons, &somethingTrue);
-      //COFG(&CUTEr_nvar, x, &f, objGrad, &somethingTrue);
+      /*CCFSG(&CUTEst_nvar, &CUTEst_ncon, x, &CUTEst_ncon, c, &CUTEst_nnzj, */
+      /*      &CUTEst_lcjac, jac, jacIndexVars, jacIndexCons, &somethingTrue); */
+      /*COFG(&CUTEst_nvar, x, &f, objGrad, &somethingTrue); */
 
     } else
-      CUTEST_ugr( status,&CUTEr_nvar, x, objGrad);
+      CUTEST_ugr( &status,&CUTEst_nvar, x, objGrad);
 
-    // for (i = 0; i < CUTEst_nvar; i++)
-    //  printf(" g = %22.15e\n", objGrad[i]);
+    if( status ) {
+       printf("** CUTEst error, status = %d, aborting\n", status);
+       exit(status);
+    }
+    /* for (i = 0; i < CUTEst_nvar; i++) */
+    /*  printf(" g = %22.15e\n", objGrad[i]); */
 
     return 0;
   }
@@ -142,23 +154,29 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
                          void   *        userParams) {
 
     int i;
+    integer status;
 
     if (evalRequestCode == KTR_RC_EVALH) {
 
-      if (CUTEr_ncon > 0) {
-        CUTEST_csh( status,&CUTEr_nvar, &CUTEr_ncon, x, &CUTEr_ncon, lambda, &CUTEr_nnzh,
-             &CUTEr_nnzh, hessian, hessIndexRows, hessIndexCols);
+      if (CUTEst_ncon > 0) {
+        CUTEST_csh( &status,&CUTEst_nvar, &CUTEst_ncon, x, lambda, &CUTEst_nnzh,
+             &CUTEst_nnzh, hessian, hessIndexRows, hessIndexCols);
       } else {
-        CUTEST_ush( status,&CUTEr_nvar, x, &CUTEr_nnzh,
-             &CUTEr_nnzh, hessian, hessIndexRows, hessIndexCols);
+        CUTEST_ush( &status,&CUTEst_nvar, x, &CUTEst_nnzh,
+             &CUTEst_nnzh, hessian, hessIndexRows, hessIndexCols);
+      }
+
+      if( status ) {
+         printf("** CUTEst error, status = %d, aborting\n", status);
+         exit(status);
       }
 
       /* Adjust indices to be zero-based. */
       for (i = 0; i < CUTEst_nnzh; i++) {
           hessIndexRows[i] = (int)(hessIndexRows[i] - 1);
           hessIndexCols[i] = (int)(hessIndexCols[i] - 1);
-          //printf(" H = %5d  %5d  %22.15e\n", hessIndexRows[i],
-          //        hessIndexCols[i], hessian[i]);
+          /*printf(" H = %5d  %5d  %22.15e\n", hessIndexRows[i], */
+          /*        hessIndexCols[i], hessian[i]); */
 
       }
 
@@ -166,11 +184,16 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
 
       if (! Hv) MALLOC(Hv, CUTEst_nvar, doublereal);
 
-      if (CUTEr_ncon > 0)
-        CUTEST_chprod( status,&CUTEr_nvar, &CUTEr_ncon, &somethingTrue, x, &CUTEr_ncon, \
-              lambda, hessVector, Hv);
+      if (CUTEst_ncon > 0)
+        CUTEST_chprod( &status,&CUTEst_nvar, &CUTEst_ncon, &somethingTrue, x, 
+                       lambda, hessVector, Hv);
       else
-        CUTEST_uhprod( status,&CUTEr_nvar, &somethingTrue, x, hessVector, Hv);
+        CUTEST_uhprod( &status,&CUTEst_nvar, &somethingTrue, x, hessVector, Hv);
+
+      if( status ) {
+         printf("** CUTEst error, status = %d, aborting\n", status);
+         exit(status);
+      }
 
       for (i = 0; i < CUTEst_nvar; i++) hessVector[i] = Hv[i];
 
@@ -193,6 +216,8 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
     integer funit = 42;        /* FORTRAN unit number for OUTSDIF.d */
     integer iout = 6;          /* FORTRAN unit number for error output */
     integer ierr;              /* Exit flag from OPEN and CLOSE */
+    integer io_buffer = 11;    /* FORTRAN unit internal input/output */
+    integer status;            /* Exit flag from CUTEst tools */
 
     KTR_context *KnitroData;
     char      szVersion[15 + 1];
@@ -210,7 +235,7 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
 
     doublereal *c, f;
 
-    real calls[7], cpu[2];
+    doublereal calls[7], cpu[2];
     integer nlin = 0, nbnds = 0, neq = 0;
     doublereal dummy;
     integer ExitCode;
@@ -225,10 +250,15 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
     }
 
     /* Determine problem size */
-    CUTEST_cdimen( status,&funit, &CUTEr_nvar, &CUTEr_ncon);
+    CUTEST_cdimen( &status,&funit, &CUTEst_nvar, &CUTEst_ncon);
+
+    if( status ) {
+       printf("** CUTEst error, status = %d, aborting\n", status);
+       exit(status);
+    }
 
     /* Determine whether to call constrained or unconstrained tools */
-    if (CUTEr_ncon) constrained = TRUE_;
+    if (CUTEst_ncon) constrained = TRUE_;
 
     /* Seems to be needed for some Solaris C compilers */
     ncon_dummy = CUTEst_ncon + 1;
@@ -241,19 +271,26 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
     if (constrained) {
       MALLOC(equatn, CUTEst_ncon+1,            logical   );
       MALLOC(linear, CUTEst_ncon+1,            logical   );
-      MALLOC(v,      CUTEst_ncon+CUTEr_nvar+1, doublereal);
+      MALLOC(v,      CUTEst_ncon+CUTEst_nvar+1, doublereal);
       MALLOC(cl,     CUTEst_ncon+1,            doublereal);
       MALLOC(cu,     CUTEst_ncon+1,            doublereal);
-      CUTEST_csetup( status,&funit, &iout, &CUTEr_nvar, &CUTEr_ncon, x, bl, bu,
-              &CUTEr_nvar, equatn, linear, v, cl, cu, &ncon_dummy,
-              &e_order, &l_order, &v_order);
+      CUTEST_csetup( &status, &funit, &iout, &io_buffer, 
+                     &CUTEst_nvar, &CUTEst_ncon, x, bl, bu,
+                     v, cl, cu, equatn, linear,
+                     &e_order, &l_order, &v_order);
     } else {
       MALLOC(equatn, 1,            logical   );
       MALLOC(linear, 1,            logical   );
       MALLOC(cl,     1,            doublereal);
       MALLOC(cu,     1,            doublereal);
       MALLOC(v,      CUTEst_nvar+1, doublereal);
-      CUTEST_usetup( status,&funit, &iout, &CUTEr_nvar, x, bl, bu, &CUTEr_nvar);
+      CUTEST_usetup( &status, &funit, &iout, &io_buffer, 
+                     &CUTEst_nvar, x, bl, bu);
+    }
+
+    if( status ) {
+       printf("** CUTEst error, status = %d, aborting\n", status);
+       exit(status);
     }
 
     /* Get problem name */
@@ -261,10 +298,17 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
     MALLOC(vnames, CUTEst_nvar*FSTRING_LEN, char);
     if (constrained) {
       MALLOC(gnames, CUTEst_ncon*FSTRING_LEN, char);
-      CUTEST_cnames( status,&CUTEr_nvar, &CUTEr_ncon, pname, vnames, gnames);
+      CUTEST_cnames( &status, &CUTEst_nvar, &CUTEst_ncon, 
+                     pname, vnames, gnames);
       FREE(gnames);
     } else
-      CUTEST_unames( status,&CUTEr_nvar, pname, vnames);
+      CUTEST_unames( &status, &CUTEst_nvar, pname, vnames);
+
+    if( status ) {
+       printf("** CUTEst error, status = %d, aborting\n", status);
+       exit(status);
+    }
+
     FREE(vnames);
 
     /* Make sure to null-terminate problem name */
@@ -277,11 +321,11 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
     /* Obtain basic info on problem */
     /*
     if (constrained)
-      GETINFO(CUTEr_nvar, CUTEst_ncon, bl, bu, cl, cu, equatn, linear, &vtypes);
+      GETINFO(CUTEst_nvar, CUTEst_ncon, bl, bu, cl, cu, equatn, linear, &vtypes);
     else {
       equatn[0] = FALSE_;
       linear[0] = FALSE_;
-      GETINFO(CUTEr_nvar, 1, bl, bu, cl, cu, equatn, linear, &vtypes);
+      GETINFO(CUTEst_nvar, 1, bl, bu, cl, cu, equatn, linear, &vtypes);
     }
     */
 
@@ -309,19 +353,34 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
 
     if (constrained) {
 
-      // Constrained problem.
+      /* Constrained problem. */
 
-      CUTEST_cdimsj( status,&CUTEr_lcjac);
+      CUTEST_cdimsj( &status, &CUTEst_lcjac);
 
+      if( status ) {
+         printf("** CUTEst error, status = %d, aborting\n", status);
+         exit(status);
+      }
       MALLOC(jacIndexVars, CUTEst_lcjac + 1, integer   );
       MALLOC(jacIndexCons, CUTEst_lcjac + 1, integer   );
-      MALLOC(CUTEr_Jac,    CUTEst_lcjac + 1, doublereal);
+      MALLOC(CUTEst_Jac,    CUTEst_lcjac + 1, doublereal);
 
       MALLOC(c, CUTEst_ncon, doublereal);
 
-      CUTEST_ccfsg( status,&CUTEr_nvar, &CUTEr_ncon, x, &CUTEr_ncon, c, &CUTEr_nnzj,
-            &CUTEr_lcjac, CUTEst_Jac, jacIndexVars, jacIndexCons, &somethingTrue);
-      CUTEST_cfn( status,&CUTEr_nvar, &CUTEr_ncon, x, &f, &CUTEr_ncon, c);
+      CUTEST_ccfsg( &status,&CUTEst_nvar, &CUTEst_ncon, x, c, &CUTEst_nnzj,
+                    &CUTEst_lcjac, CUTEst_Jac, jacIndexVars, 
+                    jacIndexCons, &somethingTrue);
+      if( status ) {
+         printf("** CUTEst error, status = %d, aborting\n", status);
+         exit(status);
+      }
+
+      CUTEST_cfn( &status,&CUTEst_nvar, &CUTEst_ncon, x, &f, c);
+
+      if( status ) {
+         printf("** CUTEst error, status = %d, aborting\n", status);
+         exit(status);
+      }
 
       FREE(c);
 
@@ -329,39 +388,49 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
       for (i = 0; i < CUTEst_nnzj; i++) {
         jacIndexVars[i] = (int)(jacIndexVars[i] - 1);
         jacIndexCons[i] = (int)(jacIndexCons[i] - 1);
-        //   printf("jacIndexVars[%d]=%d\n", i, jacIndexVars[i]);
-        // printf("jacIndexCons[%d]=%d\n", i, jacIndexCons[i]);
+        /*   printf("jacIndexVars[%d]=%d\n", i, jacIndexVars[i]); */
+        /* printf("jacIndexCons[%d]=%d\n", i, jacIndexCons[i]); */
       }
 
     } else {
 
-      // Unconstrained problem.
+      /* Unconstrained problem. */
 
       jacIndexVars = NULL;
       jacIndexCons = NULL;
       CUTEst_Jac = NULL;
-      CUTEST_ufn( status,&CUTEr_nvar, x, &f);
+      CUTEST_ufn( &status,&CUTEst_nvar, x, &f);
     }
 
     /* Obtain Hessian sparsity pattern */
 #ifdef KNIT_DEBUG
     fprintf(stderr, "Obtaining Hessian sparsity pattern...\n");
 #endif
-    CUTEST_cdimsh( status,&CUTEr_nnzh);
+    CUTEST_cdimsh( &status, &CUTEst_nnzh);
+
+    if( status ) {
+       printf("** CUTEst error, status = %d, aborting\n", status);
+       exit(status);
+    }
 
     MALLOC(hessIndexRows, CUTEst_nnzh, integer   );
     MALLOC(hessIndexCols, CUTEst_nnzh, integer   );
-    MALLOC(CUTEr_Hess,    CUTEst_nnzh, doublereal);
+    MALLOC(CUTEst_Hess,    CUTEst_nnzh, doublereal);
 
-    CUTEST_csh( status,&CUTEr_nvar, &CUTEr_ncon, x, &CUTEr_ncon, v, &CUTEr_nnzh, &CUTEr_nnzh,
-         CUTEst_Hess, hessIndexRows, hessIndexCols);
+    CUTEST_csh( &status, &CUTEst_nvar, &CUTEst_ncon, x, v, &CUTEst_nnzh, 
+                &CUTEst_nnzh, CUTEst_Hess, hessIndexRows, hessIndexCols);
+
+    if( status ) {
+       printf("** CUTEst error, status = %d, aborting\n", status);
+       exit(status);
+    }
 
     /* Convert to 0-based indexing */
     for (i = 0; i < CUTEst_nnzh; i++) {
       hessIndexRows[i] = (int)(hessIndexRows[i] - 1);
       hessIndexCols[i] = (int)(hessIndexCols[i] - 1);
-      // printf("hessIndexRows[%d]=%d\n", i, hessIndexRows[i]);
-      // printf("hessIndexCols[%d]=%d\n", i, hessIndexCols[i]);
+      /* printf("hessIndexRows[%d]=%d\n", i, hessIndexRows[i]); */
+      /* printf("hessIndexCols[%d]=%d\n", i, hessIndexCols[i]); */
     }
 
     /* Register callback functions */
@@ -382,7 +451,7 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
         goto terminate;
       }
 
-    // Convert infinite bounds.
+    /* Convert infinite bounds. */
     for (i = 0; i < CUTEst_nvar; i++) {
         if (bl[i] == -CUTE_INF) bl[i] = -KTR_INFBOUND;
         if (bu[i] ==  CUTE_INF) bu[i] =  KTR_INFBOUND;
@@ -400,13 +469,13 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
                                  KTR_OBJGOAL_MINIMIZE,
                                  KTR_OBJTYPE_GENERAL,
                                  bl, bu,
-                                 (int)CUTEr_ncon,
+                                 (int)CUTEst_ncon,
                                  (int *)linear,
                                  cl, cu,
-                                 (int)CUTEr_nnzj,
+                                 (int)CUTEst_nnzj,
                                  (int *)jacIndexVars,
                                  (int *)jacIndexCons,
-                                 (int)CUTEr_nnzh,
+                                 (int)CUTEst_nnzh,
                                  (int *)hessIndexRows,
                                  (int *)hessIndexCols,
                                  x,
@@ -425,10 +494,15 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
     fprintf(stderr, "Terminating...\n");
 #endif
     if (KTR_free(&KnitroData))
-      fprintf(stderr, "Knitro-CUTEr:: Error freeing Knitro data structure\n");
+      fprintf(stderr, "Knitro-CUTEst:: Error freeing Knitro data structure\n");
 
     /* Get CUTEst statistics */
-    CUTEST_creport( status,calls, cpu);
+    CUTEST_creport( &status, calls, cpu);
+
+    if( status ) {
+       printf("** CUTEst error, status = %d, aborting\n", status);
+       exit(status);
+    }
 
     printf("\n\n ************************ CUTEst statistics ************************\n\n");
     printf(" Code used               : %-15s\n", szVersion);
@@ -471,14 +545,22 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
     FREE(linear);
 
     if (constrained) {
-      FREE(CUTEr_Jac);
+      FREE(CUTEst_Jac);
       FREE(jacIndexVars);
       FREE(jacIndexCons);
     }
     FREE(hessIndexRows);
     FREE(hessIndexCols);
-    FREE(CUTEr_Hess);
+    FREE(CUTEst_Hess);
     if (Hv) FREE(Hv);
+
+    CUTEST_cterminate( &status );
+
+    if( status ) {
+       printf("** CUTEst error, status = %d, aborting\n", status);
+       exit(status);
+    }
+
     return 0;
 
   }

@@ -88,6 +88,7 @@ typedef struct VarTypes {
 #define CUTEST_cdimsj   FUNDERSCORE(cutest_cdimsj)
 #define CUTEST_cdimsh   FUNDERSCORE(cutest_cdimsh)
 #define CUTEST_cdimse   FUNDERSCORE(cutest_cdimse)
+#define CUTEST_cdstats  FUNDERSCORE(cutest_cstats)
 #define CUTEST_cvartype FUNDERSCORE(cutest_cvartype)
 #define CUTEST_cnames   FUNDERSCORE(cutest_cnames)
 #define CUTEST_creport  FUNDERSCORE(cutest_creport)
@@ -166,6 +167,10 @@ void CUTEST_cdimsj( integer *status, integer *nnzj );
 void CUTEST_cdimsh( integer *status, integer *nnzh );
 void CUTEST_cdimse( integer *status, integer *ne, integer *nzh, 
                     integer *nzirnh );
+void CUTEST_cstats( integer *status, integer *nonlinear_variables_objective, 
+                    integer *nonlinear_variables_constraints,
+                    integer *equality_constraints, 
+                    integer *linear_constraints );
 void CUTEST_cvartype( integer *status, integer *n, integer *ivarty );
 void CUTEST_cnames( integer *status, integer *n, integer *m, char *pname, 
                     char *vnames, char *gnames );

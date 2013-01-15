@@ -87,7 +87,7 @@
         INTEGER :: lstadg, lgvals, lgscal, lescal, lvscal, lcalcg            
         INTEGER :: l_link_e_u_v, lfuval, lelvar, maxsel, maxsin
         INTEGER :: lfxi, lgxi, lhxi, lggfx, ldx, lgrjac, lnguvl, lnhuvl
-        INTEGER :: nnov, nnjv, numvar, numcon, threads
+        INTEGER :: meq, mlin, nnov, nnjv, numvar, numcon, threads
         REAL :: sutime, sttime
         LOGICAL :: alllin, altriv
         CHARACTER ( LEN = 10 ) :: pname

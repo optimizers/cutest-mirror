@@ -77,6 +77,11 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
 	/* Determine problem size */
 	CUTEST_cdimen( &status, &funit, &CUTEst_nvar, &CUTEst_ncon );
 
+	if( status ) {
+          printf("** CUTEst error, status = %d, aborting\n", status);
+	    exit(status);
+	}
+
 	/* Determine whether to call constrained or unconstrained tools */
 	if( CUTEst_ncon ) constrained = TRUE_;
 
@@ -107,6 +112,11 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
                            &CUTEst_nvar, x, bl, bu );
 	}
 
+	if( status ) {
+          printf("** CUTEst error, status = %d, aborting\n", status);
+	    exit(status);
+	}
+
 	/* Get problem, variables and constraints names */
 	MALLOC(pname, FSTRING_LEN+1, char);
         MALLOC(vnames, CUTEst_nvar * FSTRING_LEN, char);     /* For Fortran */
@@ -123,6 +133,11 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
                          pname, vnames, gnames );
 	} else {
           CUTEST_unames( &status, &CUTEst_nvar, pname, vnames );
+	}
+
+	if( status ) {
+          printf("** CUTEst error, status = %d, aborting\n", status);
+	    exit(status);
 	}
 
 	/* Make sure to null-terminate problem name */
@@ -184,6 +199,11 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
 
 	/* Get CUTEst statistics */
 	CUTEST_creport( &status, calls, cpu );
+
+	if( status ) {
+          printf("** CUTEst error, status = %d, aborting\n", status);
+	    exit(status);
+	}
 
 	printf("\n\n ************************ CUTEst statistics ************************\n\n");
 	printf(" Code used               : GENC\n");
