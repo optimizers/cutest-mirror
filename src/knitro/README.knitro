@@ -1,13 +1,13 @@
                       ********************************
                       *                              *
-                      * Using KNITRO 4.0 with CUTEr  *
+                      * Using KNITRO 7.0 with CUTEr  *
                       *                              *
                       ********************************
 
-WHAT IS KNITRO 4.0?
+WHAT IS KNITRO 7.0?
 -------------------
 
-KNITRO 2.0 is a code for solving large-scale nonlinear programming
+KNITRO 7.0 is a code for solving large-scale nonlinear programming
 problems of the form
 
   Min         f(x)
@@ -20,16 +20,18 @@ The code implements an interior point algorithm with trust
 region techniques. It uses first and second derivatives of the 
 function and constraints
 
-USING KNITRO 4.0 WITH CUTEr
+USING KNITRO 7.0 WITH CUTEr
 ---------------------------
 
 Create an environment variable KNITRODIR pointing to the directory
-where your KNITRO 4.0 package is stored. You should have the
+where your KNITRO 7.0 package is stored. You should have the
 subdirectories and files
 
     $KNITRODIR/include/knitro.h
     $KNITRODIR/lib/libknitro.a
 
+Copy $KNITRODIR/in+clude/knitro.h to the $CUTEST/include directory;
+the latest version we know about will already be in $CUTEST/include.
 Copy (or link) the library libknitro.a in $MYCUTER/double/lib under
 the name libknitro.a or add the directory $KNITRODIR/lib to your
 LD_LIBRARY_PATH.
@@ -41,13 +43,13 @@ Alternatively, there can be a symbolic link pointing to it.
 
 KNITRO 4.0 is not available in single precision.
 
-USING THE KNITRO 4.0 INTERFACE TOOL
+USING THE KNITRO 7.0 INTERFACE TOOL
 -----------------------------------
 
 Suppose you wish to solve the problem written in SIF format contained
 in the file probname.SIF.
 
-The KNITRO 4.0 interface tools require two input files:
+The KNITRO 7.0 interface tools require two input files:
 
     probname.SIF   specifies the problem in SIF format
     knitro.opt      sets values for Knitro parameters
@@ -56,12 +58,12 @@ The opt file should be present in the current directory, in
 $CUTER/common/src/pkg/knitro or there should be a symbolic link 
 pointing to it. The file is self-documented so the purpose of each parameter 
 should be clear from the file. Please
-refer to the KNITRO 4.0 documentation for more details.
+refer to the KNITRO 7.0 documentation for more details.
 
 The commands to use this package are the two scripts
 sdknit and knit for the C/Fortran 77 interface.
 
-THE KNITRO 4.0 SPECIFICATIONS FILE
+THE KNITRO 7.0 SPECIFICATIONS FILE
 ----------------------------------
 
 The file knitro.opt may be used to set various Knitro parameters.

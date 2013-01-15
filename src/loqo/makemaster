@@ -1,12 +1,12 @@
-#  Main body of the installation makefile for CUTEst MINOS interface
+#  Main body of the installation makefile for CUTEst LOQO interface
 
 #  N. Gould, D. Orban and Ph. L. Toint.
-#  This version: 14 I 2013
+#  This version: 15 I 2013
 
 #  package
 
-PACKAGE = MINOS
-package = minos
+PACKAGE = LOQO
+package = loqo
 
 SHELL = /bin/$(BINSHELL)
 
@@ -19,6 +19,10 @@ FFLAGS77  = $(BASIC) $(OPTIMIZATION) $(DEBUG) $(MODULES) $(F77) $(USUAL)
 FFLAGS77S = $(BASIC) $(OPTIMIZATION) $(DEBUG) $(MODULES) $(F77) $(SPECIAL)
 FFLAGS7N  = $(BASIC) $(NOOPTIMIZATION) $(DEBUG) $(MODULES) $(F77) $(USUAL)
 RUNFFLAGS =          $(OPTIMIZATION) $(DEBUG) $(MODULES)
+
+CFLAGS    = $(CCBASIC) $(OPTIMIZATION) $(CCDEBUG) -I$(CUTEST)/include
+CFLAGSN   = $(CCBASIC) $(NOOPTIMIZATION) $(CCDEBUG) -I$(CUTEST)/include
+CRUNFFLAGS = $(OPTIMIZATION) $(CCDEBUG) -I$(CUTEST)/include $(CCFFLAGS)
 
 #  names of random libraries
 
@@ -78,18 +82,18 @@ $(package)_double: $($(PACKAGE))
 
 # run example tests
 
-run_test: tools test_cutest_constrained $(package) $(OBJ)/$(package)_test.o
-	echo " Test of unconstrained $(package)"
-	cd $(OBJ) ; $(FORTRAN) $(RUNFFLAGS) $(SPECIAL) -o run_test \
-            $(package)_main.o $(package)_test.o $(C_TEST) -L$(OBJ) $(LIBS)
+run_test: tools test_cutest $(OBJ)/$(package)_main.o
+	echo " Test of constrained $(package)"
+	cd $(OBJ) ; $(CC) -o run_test \
+            $(package)_main.o $(C_TEST) -L$(OBJ) $(LIBS)  $(CRUNFFLAGS)
 	ln -fs $(CUTEST)/src/test/c_OUTSDIF.d ../$(package)/OUTSDIF.d
 	- $(OBJ)/run_test >& ../$(package)/c_test.output
 	cat ../$(package)/c_test.output
 	rm $(OBJ)/run_test ../$(package)/OUTSDIF.d
 
-test_cutest_constrained:
+test_cutest:
 	( cd ../test ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
-            test_cutest_constrained PRECIS=$(PRECIS) PWD=$(PWD)/../test )
+            test_cutest PRECIS=$(PRECIS) PWD=$(PWD)/../test )
 tools: 
 	( cd ../tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      cutest PRECIS=$(PRECIS) PWD=$(PWD)/../tools )
@@ -100,30 +104,16 @@ ctools:
 	( cd ../tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      cutest_constrained PRECIS=$(PRECIS) PWD=$(PWD)/../tools )
 
-#  individual compilations
-
-$(OBJ)/$(package)_test.o: ../$(package)/$(package)_test.f
-	@printf ' %-9s %-15s\t\t' "Compiling" "$(package)_test" 
-	$(SED) -f $(SEDS) ../$(package)/$(package)_test.f > \
-          $(OBJ)/$(package)_test.f
-	cd $(OBJ); $(FORTRAN) -o $(package)_test.o $(FFLAGS77) \
-          $(package)_test.f \
-            || ( printf ' %-26s' "=> Disabling optimization " ; \
-              $(FORTRAN) -o $(package)_test.o $(FFLAGS77N) $(package)_test.f )
-	$(RM) $(OBJ)/$(package)_test.f
-	@printf '[ OK ]\n'
-
 #  CUTEst interface main programs
 
-$(OBJ)/$(package)_main.o: ../$(package)/$(package)_main.f
+$(OBJ)/$(package)_main.o: ../$(package)/$(package)_main.c
 	@printf ' %-9s %-15s\t\t' "Compiling" "$(package)_main" 
-	$(SED) -f $(SEDS) ../$(package)/$(package)_main.f > \
-          $(OBJ)/$(package)_main.f
-	cd $(OBJ); $(FORTRAN) -o $(package)_main.o $(FFLAGS77) \
-             $(package)_main.f \
+	$(SED) -f $(SEDS) ../$(package)/$(package)_main.c > \
+          $(OBJ)/$(package)_main.c
+	cd $(OBJ); $(CC) -o $(package)_main.o $(CFLAGS) $(package)_main.c \
               || ( printf ' %-26s' "=> Disabling optimization " ; \
-               $(FORTRAN) -o $(package)_main.o $(FFLAGS77N) $(package)_main.f )
-	$(RM) $(OBJ)/$(package)_main.f
+               $(CC) -o $(package)_main.o $(CFLAGSN) $(package)_main.c )
+	$(RM) $(OBJ)/$(package)_main.c
 	@printf '[ OK ]\n'
 
 #  book keeping

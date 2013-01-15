@@ -1,150 +1,134 @@
-C Copyright (C) 2002, Carnegie Mellon University, Dominique Orban and others.
+C     ( Last modified on 15 Jan 2013 at 14:20:00 )
+
+C Copyright (C) 2002, 2004, 2005 Carnegie Mellon University,
+C                                Dominique Orban and others.
+C
 C All Rights Reserved.
-C This code is published under the Common Public License.
+C This code is published under the Eclipse Public License.
 C*******************************************************************************
-      PROGRAM           IPOPTMA
+      PROGRAM IPOPT_main
 C
 C     IPOPT CUTEst driver.
-C     D. Orban,  adapted from Andreas Wachter's CUTE driver.
-C
+C     D. Orban,  adapted from Andreas Waechter's CUTE driver.
+C     Adapted for C++ version by Andreas Waechter, Oct 2004
+C     CUTEst evolution, Nick Gould, January 2013
+
       IMPLICIT NONE
-      INTEGER IOUT
-      PARAMETER( IOUT = 6 )
-C
-C Copyright (C) 2002, Carnegie Mellon University and others.
-C All Rights Reserved.
-C This code is published under the Common Public License.
-C
-C     PARAMETER definitions and COMMON block for CUTEst interface
-C
+      INTEGER, PARAMETER :: cnr_input = 60, inp_input = 70, out = 6
+      INTEGER, PARAMETER :: io_buffer = 11
+      INTEGER :: n, m, nz, ierr, status
+      INTEGER :: idx_style, nele_jac, nele_hess
+      DOUBLE PRECISION :: f
+      CHARACTER ( LEN = 10 ) :: pname
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: IDAT
+      DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: DAT
+      DOUBLE PRECISION :: CPU( 2 ), CALLS( 7 )
+      DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: X, X_l, X_u
+      DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: Z_l, Z_u, LAM
+      DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: G, G_l, G_u
+      LOGICAL, ALLOCATABLE, DIMENSION( : ) :: EQUATN, LINEAR
+      CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : ) :: VNAMES
+      CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : ) :: GNAMES
+      INTEGER :: IPSOLVE
+      INTEGER :: iproblem, IPCREATE
+C64BIT INTEGER*8 :: iproblem, IPCREATE
+      EXTERNAL :: EV_F, EV_G, EV_GRAD_F, EV_JAC_G, EV_HESS
 
-CB    CUTE_NMAX       maximal number of variables
-CB    CUTE_MMAX       maximal number of constraints
-CB    CUTE_NZMAX      maximal number of nonzero elements
-CB    CUTE_NOLB       constant of CUTEst to indicate -inf as lower bound
-CB    CUTE_NOUB       constant of CUTEst to indicate +inf as upper bound
+C     The following arrays are work space for the evaluation subroutines
 
-      INTEGER CUTE_NMAX, CUTE_MMAX, CUTE_NZMAX
-CTOY  PARAMETER( CUTE_NMAX = 1000,  CUTE_MMAX = 1000  )
-CMED  PARAMETER( CUTE_NMAX = 10000, CUTE_MMAX = 10000 )
-CBIG  PARAMETER( CUTE_NMAX = 50000, CUTE_MMAX = 50000 )
-CCUS  PARAMETER( CUTE_NMAX = 200000, CUTE_MMAX = 200000 )
-CTOY  PARAMETER( CUTE_NZMAX = 100000  )
-CMED  PARAMETER( CUTE_NZMAX = 200000  )
-CBIG  PARAMETER( CUTE_NZMAX = 1000000 )
-CCUS  PARAMETER( CUTE_NZMAX = 10000000 )
-      DOUBLE PRECISION CUTE_NOLB, CUTE_NOUB
-      PARAMETER( CUTE_NOLB = -1.0D+20, CUTE_NOUB =  1.0D+20 )
+      integer :: i
+      logical :: ex
+      double precision :: init_val
 
-CB    CUTE_N          number of variables in CUTEst problem
-CB    CUTE_M          number of constraints in CUTEst problem
-CB    CUTE_NIQ        number of inequality constraints
-CB    CUTE_NEQ        number of equality constraints
-CB    CUTE_IIQ        indices of inequality constraints
-CB                       constraint number CUTE_IIQ(i) is inequality constraint
-CB                       (always ordered increasingly)
-CB    CUTE_CEQ        constants for equality constraints
-CB                       (ordered as constraints without inequalities)
-CB
-CB    Structure of reformulation:
-CB
-CB    X (variables after reformulation) has a first entries all variables
-CB    from original CUTEst problem, followed by the slack variables for the
-CB    inequality constraints.
+C  Open the problem data file.
 
-      integer CUTE_N, CUTE_M, CUTE_NIQ, CUTE_NEQ
-      integer          CUTE_IIQ(CUTE_MMAX)
-      double precision CUTE_CEQ(CUTE_MMAX)
+      OPEN( cnr_input, FILE = 'OUTSDIF.d', FORM = 'FORMATTED',
+     *      STATUS = 'OLD' )
+      REWIND( cnr_input )
 
-      common /cute_stuff/ CUTE_CEQ, CUTE_IIQ, CUTE_N, CUTE_M,
-     1                    CUTE_NIQ, CUTE_NEQ
-      save   /cute_stuff/
+C  compute problem dimensions
 
+      CALL CUTEST_cdimen( status, cnr_input, n, m )
+      IF ( status /= 0 ) GO TO 910
 
+C  allocate space 
 
-      INTEGER LRW, LIW
-      PARAMETER( LRW=0, LIW=0 )
-      INTEGER IW
-      DOUBLE PRECISION RW
+      ALLOCATE( X( n ), X_l( n ), X_u( n ), Z_l( n ), Z_u( n ), 
+     *          G( m ), G_l( m ), G_u( m ), LAM( m ),
+     *          EQUATN( m ), LINEAR( m ), VNAMES( n ), GNAMES( m ),
+     *          STAT = status )
+      IF ( status /= 0 ) GO TO 990
 
+C  set up the data structures necessary to hold the problem functions
 
-      INTEGER N, M, NLB, NUB
-      DOUBLE PRECISION X( CUTE_NMAX )
-      INTEGER ILB( CUTE_NMAX )
-      INTEGER IUB( CUTE_NMAX )
-      DOUBLE PRECISION BNDS_L( CUTE_NMAX )
-      DOUBLE PRECISION BNDS_U( CUTE_NMAX )
-      DOUBLE PRECISION V_L( CUTE_NMAX )
-      DOUBLE PRECISION V_U( CUTE_NMAX )
-      DOUBLE PRECISION LAM( CUTE_MMAX )
-      DOUBLE PRECISION C( CUTE_MMAX )
-      DOUBLE PRECISION IPOPT
-C
-C     Algorithmic Parameters (INITPARAMS)
-C
-      INTEGER NARGS
-      DOUBLE PRECISION ARGS( 50 )
-      CHARACTER*20 CARGS( 50 )
+      CALL CUTEST_csetup( status,cnr_input, out, io_buffer, 
+     1                    n, m, X, X_l, X_u, LAM, G_l, G_u, 
+     2                    equatn, linear, 0, 0, 0 )
+      CLOSE( cnr_input )
 
-      INTEGER ITER
-      INTEGER IERR
+C  see if we want to set a different initial point
 
-      EXTERNAL EVAL_F
-      EXTERNAL EVAL_C
-      EXTERNAL EVAL_G
-      EXTERNAL EVAL_A
-      EXTERNAL EVAL_H
-      EXTERNAL EVAL_HESSLAG_V
-      EXTERNAL EVAL_HESSOBJ_V
-      EXTERNAL EVAL_HESSCON_V
-C
-C     The following arrays could be used instead of common blocks to
-C     communicate between driver routines and evaluation subroutines
-C
-      DOUBLE PRECISION DAT(1)
-      INTEGER IDAT(1)
+      INQUIRE( file = 'INITPOINT.VAL', exist = ex )
+      IF ( ex ) THEN
+         OPEN( inp_input, FILE = 'INITPOINT.VAL', STATUS = 'old' )
+         READ( inp_input, '(D25.16)' ) init_val
+         DO i = 1, n
+           X( i ) = init_val
+         END DO
+         CLOSE( inp_input )
+      endif
 
-      INTEGER fevals, cevals
-      COMMON /EVALS/ fevals, cevals
+C  obtain the number of nonzeros in Jacobian and Hessian
 
-      REAL CALLS( 7 ), CPU( 2 )
-      CHARACTER*10 PNAME
-      CHARACTER*10 VNAMES( CUTE_NMAX ), GNAMES( CUTE_MMAX )
-      DOUBLE PRECISION FinalF, DummyG, cnrm
-      INTEGER IDAMAX
-C
-      fevals = 0
-      cevals = 0
-C
-C     Get problem dimensions and initialize
-C
-      CALL CUTE_INIT(N, M, CUTE_NMAX, X, NLB, ILB, BNDS_L,
-     .     NUB, IUB, BNDS_U)
-C
-C     Get problem name.
-C
-      CALL CUTEST_cnames( status, CUTE_N, CUTE_M, PNAME, VNAMES, GNAMES )
-C
-C     Set algorithmic parameters (None :)
-C
-      NARGS = 0
-C
-C     Call IPOPT
-C
-      FinalF = IPOPT(N, X, M, NLB, ILB, BNDS_L, NUB, IUB, BNDS_U, V_L,
-     1     V_U, LAM, C, LRW, RW, LIW, IW, ITER, IERR, EVAL_F, EVAL_C,
-     2     EVAL_G, EVAL_A, EVAL_H, EVAL_HESSLAG_V, EVAL_HESSOBJ_V,
-     3     EVAL_HESSCON_V, DAT, IDAT, NARGS, ARGS, CARGS)
-C
+      CALL CUTEST_cdimsj( status, nele_jac )
+      nele_jac = nele_jac - n
+      CALL CUTEST_cdimsh( status, nele_hess )
+
+C  allocate furter space 
+
+      nz = MAX( nele_jac, nele_hess, 2 * n )
+      ALLOCATE( DAT( n + nz ), IDAT( 2 * nz ), STAT = status )
+      IF ( status /= 0 ) GO TO 990
+
+C  get problem name
+
+      CALL CUTEST_cnames( status, n, m, pname, VNAMES, GNAMES )
+
+C  call IPOPT
+
+      idx_STYLE = 1
+      iproblem = IPCREATE( n, X_L, X_U, m, G_L, G_U, 
+     *                     nele_jac, nele_hess, idx_style, 
+     *                     EV_F, EV_G, EV_GRAD_F, EV_JAC_G, EV_HESS )
+      IF ( iproblem .EQ. 0 ) THEN
+        write(*,*) 'Error creating Ipopt Problem.'
+        STOP
+      END IF
+      ierr = IPSOLVE( iproblem, X, G, F, LAM, Z_L, Z_U, IDAT, DAT )
+      CALL IPFREE( iproblem )
+
 C     Display CUTEst statistics
-C
+
       CALL CUTEST_creport( status, CALLS, CPU )
-      WRITE ( IOUT, 2000 ) PNAME, CUTE_N, CUTE_M, CALLS(1), CALLS(2),
-     .     CALLS(3), CALLS(4), CALLS(5), CALLS(6), CALLS(7),
-     .     IERR, FinalF, CPU(1), CPU(2)
-c
+      IF ( status /= 0 ) GO TO 910
+      WRITE( out, 2000 ) pname, n, m, CALLS( 1 ), CALLS( 2 ),
+     *     CALLS( 3 ), CALLS( 4 ), CALLS( 5 ), CALLS( 6 ), CALLS( 7 ),
+     *     ierr, f, CPU( 1 ), CPU( 2 )
+
+      CALL CUTEST_cterminate( status )
+      STOP
+
+  910 CONTINUE
+      WRITE( out, "( ' CUTEst error, status = ', i0, ', stopping' )") 
+     *   status
+      STOP
+
+  990 CONTINUE
+      WRITE( out, "( ' Allocation error, status = ', I0 )" ) status
+      STOP
+
  2000 FORMAT( /, 24('*'), ' CUTEst statistics ', 24('*') //
-     *     ,/,' Code used               :  IPOPT',    /
+     *     ,/,' Package used            :  IPOPT',    /
      *     ,' Problem                 :  ', A10,    /
      *     ,' # variables             =      ', I10 /
      *     ,' # constraints           =      ', I10 /
@@ -164,24 +148,22 @@ c
  9999 CONTINUE
       END
 
-
-
 C Copyright (C) 2002, Carnegie Mellon University and others.
 C All Rights Reserved.
-C This code is published under the Common Public License.
+C This code is published under the Eclipse Public License.
 C*******************************************************************************
 C
-      subroutine EVAL_A(TASK, N, X, NZ, A, ACON, AVAR, DAT, IDAT)
+      subroutine EV_F(N, X, NEW_X, F, IDAT, DAT, IERR)
 C
 C*******************************************************************************
 C
-C    $Id: eval_a.F,v 1.2 2004/03/11 01:27:50 andreasw Exp $
+C    $Id: CUTEstInterface.f 1861 2010-12-21 21:34:47Z andreasw $
 C
 C-------------------------------------------------------------------------------
 C                                 Title
 C-------------------------------------------------------------------------------
 C
-CT    Compute Jacobian of constraints to CUTE problem
+CT    Compute objective function value to CUTEst problem
 C
 C-------------------------------------------------------------------------------
 C                          Programm description
@@ -194,12 +176,15 @@ C                             Author, date
 C-------------------------------------------------------------------------------
 C
 CA    Andreas Waechter      02/25/99
+CA    Andreas Waechter      10/29/04 adapted for C++ version
+CA    Nick Gould            15/01/13 adapted for CUTEst
+
 C
 C-------------------------------------------------------------------------------
 C                             Documentation
 C-------------------------------------------------------------------------------
 C
-CCD
+CD
 C
 C-------------------------------------------------------------------------------
 C                             Parameter list
@@ -207,19 +192,13 @@ C-------------------------------------------------------------------------------
 C
 C    Name     I/O   Type   Meaning
 C
-CP   TASK      I    INT     =0: Obtain NZ
-CP                         <>0: Compute Jacobian
 CP   N         I    INT    number of variables in problem statement
-CP                            (including slacks for inequality constraints)
-CP   X         I    DP     point where A is to be evaluated
-CP   NZ       I/O   INT    TASK = 0: O: number of nonzero elements
-CP                         otherwise: number of nonzero elements
-CP                                     (size of A, AVAR, ACON)
-CP   A         O    DP     (only TASK<>0) values in Jacobian
-CP   ACON      O    INT    (only TASK<>0) row indices
-CP   AVAR      O    INT    (only TASK<>0) column indices
-CP   DAT       P    DP     privat DP data for evaluation routines
+CP   X         I    DP     point where F is to be evaluated
+CP   NEW_X     I    INT    if 1, X has not been changed since last call
+CP   F         O    DP     objective function value
 CP   IDAT      P    INT    privat INT data for evaluation routines
+CP   DAT       P    DP     privat DP data for evaluation routines
+CP   IERR      O    INT    set to nonzero value if error occurred
 C
 C-------------------------------------------------------------------------------
 C                             local variables
@@ -231,8 +210,7 @@ C-------------------------------------------------------------------------------
 C                             used subroutines
 C-------------------------------------------------------------------------------
 C
-CCS    CDIMSJ
-CCS    CCFSG
+CS    CUTEST_cofg
 C
 C*******************************************************************************
 C
@@ -242,61 +220,331 @@ C*******************************************************************************
 C
       IMPLICIT NONE
 C
+C-------------------------------------------------------------------------------
+C                             Parameter list
+C-------------------------------------------------------------------------------
+C
+      integer N
+      double precision X(N)
+      integer NEW_X
+      double precision F
+      double precision DAT(*)
+      integer IDAT(*)
+      integer IERR
+C
+C-------------------------------------------------------------------------------
+C                            Local varibales
+C-------------------------------------------------------------------------------
+C
+      double precision dummy
+C
 C*******************************************************************************
 C
-C                              Include files
+C                           Executable Statements
 C
 C*******************************************************************************
 C
+      IERR = 0
+C
+C     Call COFG to obtain value of objective function
+C
+      call CUTEST_cofg( ierr,  N, X, F, DAT, .false.)
+
+ 9999 continue
+      return
+      end
 C Copyright (C) 2002, Carnegie Mellon University and others.
 C All Rights Reserved.
-C This code is published under the Common Public License.
+C This code is published under the Eclipse Public License.
+C*******************************************************************************
 C
-C     PARAMETER definitions and COMMON block for CUTEst interface
+      subroutine EV_GRAD_F(N, X, NEW_X, GRAD, IDAT, DAT, IERR)
 C
-
-CB    CUTE_NMAX       maximal number of variables
-CB    CUTE_MMAX       maximal number of constraints
-CB    CUTE_NZMAX      maximal number of nonzero elements
-CB    CUTE_NOLB       constant of CUTEst to indicate -inf as lower bound
-CB    CUTE_NOUB       constant of CUTEst to indicate +inf as upper bound
-
-      INTEGER CUTE_NMAX, CUTE_MMAX, CUTE_NZMAX
-CTOY  PARAMETER( CUTE_NMAX = 1000,  CUTE_MMAX = 1000  )
-CMED  PARAMETER( CUTE_NMAX = 10000, CUTE_MMAX = 10000 )
-CBIG  PARAMETER( CUTE_NMAX = 50000, CUTE_MMAX = 50000 )
-CCUS  PARAMETER( CUTE_NMAX = 200000, CUTE_MMAX = 200000 )
-CTOY  PARAMETER( CUTE_NZMAX = 100000  )
-CMED  PARAMETER( CUTE_NZMAX = 200000  )
-CBIG  PARAMETER( CUTE_NZMAX = 1000000 )
-CCUS  PARAMETER( CUTE_NZMAX = 10000000 )
-      DOUBLE PRECISION CUTE_NOLB, CUTE_NOUB
-      PARAMETER( CUTE_NOLB = -1.0D+20, CUTE_NOUB =  1.0D+20 )
-
-CB    CUTE_N          number of variables in CUTEst problem
-CB    CUTE_M          number of constraints in CUTEst problem
-CB    CUTE_NIQ        number of inequality constraints
-CB    CUTE_NEQ        number of equality constraints
-CB    CUTE_IIQ        indices of inequality constraints
-CB                       constraint number CUTE_IIQ(i) is inequality constraint
-CB                       (always ordered increasingly)
-CB    CUTE_CEQ        constants for equality constraints
-CB                       (ordered as constraints without inequalities)
+C*******************************************************************************
+C
+C    $Id: CUTEstInterface.f 1861 2010-12-21 21:34:47Z andreasw $
+C
+C-------------------------------------------------------------------------------
+C                                 Title
+C-------------------------------------------------------------------------------
+C
+CT    Compute gradient of objective function to CUTEst problem
+C
+C-------------------------------------------------------------------------------
+C                          Programm description
+C-------------------------------------------------------------------------------
+C
 CB
-CB    Structure of reformulation:
+C
+C-------------------------------------------------------------------------------
+C                             Author, date
+C-------------------------------------------------------------------------------
+C
+CA    Andreas Waechter      02/25/99
+CA    Andreas Waechter      10/29/04 adapted for C++ version
+CA    Nick Gould            15/01/13 adapted for CUTEst
+C
+C-------------------------------------------------------------------------------
+C                             Documentation
+C-------------------------------------------------------------------------------
+C
+CD
+C
+C-------------------------------------------------------------------------------
+C                             Parameter list
+C-------------------------------------------------------------------------------
+C
+C    Name     I/O   Type   Meaning
+C
+CP   N         I    INT    number of variables in problem statement
+CP                            (including slacks for inequality constraints)
+CP   X         I    DP     point where G is to be evaluated
+CP   NEW_X     I    INT    if 1, X has not been changed since last call
+CP   GRAD      O    DP     gradient of objective function
+CP   IDAT      P    INT    privat INT data for evaluation routines
+CP   DAT       P    DP     privat DP data for evaluation routines
+CP   IERR      O    INT    set to nonzero value if error occurred
+C
+C-------------------------------------------------------------------------------
+C                             local variables
+C-------------------------------------------------------------------------------
+C
+CL
+C
+C-------------------------------------------------------------------------------
+C                             used subroutines
+C-------------------------------------------------------------------------------
+C
+CS    CUTEST_cofg
+C
+C*******************************************************************************
+C
+C                              Declarations
+C
+C*******************************************************************************
+C
+      IMPLICIT NONE
+C
+C-------------------------------------------------------------------------------
+C                             Parameter list
+C-------------------------------------------------------------------------------
+C
+      integer N
+      double precision X(N)
+      integer NEW_X
+      double precision GRAD(N)
+      double precision DAT(*)
+      integer IDAT(*)
+      integer IERR
+C
+C-------------------------------------------------------------------------------
+C                            Local varibales
+C-------------------------------------------------------------------------------
+C
+      double precision f
+C
+C*******************************************************************************
+C
+C                           Executable Statements
+C
+C*******************************************************************************
+C
+      IERR = 0
+C
+C     Call COFG to obtain gradient of objective function
+C
+      call CUTEST_cofg( ierr, N, X, f, GRAD, .true.)
+
+ 9999 continue
+      return
+      end
+C Copyright (C) 2002, Carnegie Mellon University and others.
+C All Rights Reserved.
+C This code is published under the Eclipse Public License.
+C*******************************************************************************
+C
+      subroutine EV_G(N, X, NEW_X, M, G, IDAT, DAT, IERR)
+C
+C*******************************************************************************
+C
+C    $Id: CUTEstInterface.f 1861 2010-12-21 21:34:47Z andreasw $
+C
+C-------------------------------------------------------------------------------
+C                                 Title
+C-------------------------------------------------------------------------------
+C
+CT    Compute values of constraints to CUTEst problem
+C
+C-------------------------------------------------------------------------------
+C                          Programm description
+C-------------------------------------------------------------------------------
+C
 CB
-CB    X (variables after reformulation) has a first entries all variables
-CB    from original CUTEst problem, followed by the slack variables for the
-CB    inequality constraints.
+C
+C-------------------------------------------------------------------------------
+C                             Author, date
+C-------------------------------------------------------------------------------
+C
+CA    Andreas Waechter      02/25/99
+CA    Andreas Waechter      07/01/99 BUG: problems if ineq not first
+CA    Andreas Waechter      10/29/04 adapted for C++ version
+CA    Nick Gould            15/01/13 adapted for CUTEst
+C
+C-------------------------------------------------------------------------------
+C                             Documentation
+C-------------------------------------------------------------------------------
+C
+CD
+C
+C-------------------------------------------------------------------------------
+C                             Parameter list
+C-------------------------------------------------------------------------------
+C
+C    Name     I/O   Type   Meaning
+C
+CP   N         I    INT    number of variables in problem statement
+CP                            (including slacks for inequality constraints)
+CP   X         I    DP     point where G is to be evaluated
+CP   NEW_X     I    INT    if 1, X has not been changed since last call
+CP   M         I    INT    number of constraints
+CP   G         O    DP     values of constraints
+CP   IDAT      P    INT    privat INT data for evaluation routines
+CP   DAT       P    DP     privat DP data for evaluation routines
+CP   IERR      O    INT    set to nonzero value if error occurred
+C
+C-------------------------------------------------------------------------------
+C                             local variables
+C-------------------------------------------------------------------------------
+C
+CL
+C
+C-------------------------------------------------------------------------------
+C                             used subroutines
+C-------------------------------------------------------------------------------
+C
+CS    CUTEST_ccfg
+C
+C*******************************************************************************
+C
+C                              Declarations
+C
+C*******************************************************************************
+C
+      IMPLICIT NONE
+C
+C-------------------------------------------------------------------------------
+C                             Parameter list
+C-------------------------------------------------------------------------------
+C
+      integer N
+      double precision X(N)
+      integer NEW_X
+      integer M
+      double precision G(M)
+      double precision DAT(*)
+      integer IDAT(*)
+      integer IERR
+C
+C-------------------------------------------------------------------------------
+C                            Local varibales
+C-------------------------------------------------------------------------------
+C
+      double precision dummy
+C
+C*******************************************************************************
+C
+C                           Executable Statements
+C
+C*******************************************************************************
+C
+      IERR = 0
+C
+C     Call CCFG to obtain constraint values, but without slacks
+C
+      call CUTEST_ccfg( ierr, N, M, X, G, .FALSE., 1, 1, DAT, .FALSE.)
 
-      integer CUTE_N, CUTE_M, CUTE_NIQ, CUTE_NEQ
-      integer          CUTE_IIQ(CUTE_MMAX)
-      double precision CUTE_CEQ(CUTE_MMAX)
-
-      common /cute_stuff/ CUTE_CEQ, CUTE_IIQ, CUTE_N, CUTE_M,
-     1                    CUTE_NIQ, CUTE_NEQ
-      save   /cute_stuff/
-
+ 9999 continue
+      return
+      end
+C Copyright (C) 2002, Carnegie Mellon University and others.
+C All Rights Reserved.
+C This code is published under the Eclipse Public License.
+C*******************************************************************************
+C
+      subroutine EV_JAC_G(TASK, N, X, NEW_X, M, NZ, ACON, AVAR, A,
+     1     IDAT, DAT, IERR)
+C
+C*******************************************************************************
+C
+C    $Id: CUTEstInterface.f 1861 2010-12-21 21:34:47Z andreasw $
+C
+C-------------------------------------------------------------------------------
+C                                 Title
+C-------------------------------------------------------------------------------
+C
+CT    Compute Jacobian of constraints to CUTEst problem
+C
+C-------------------------------------------------------------------------------
+C                          Programm description
+C-------------------------------------------------------------------------------
+C
+CB
+C
+C-------------------------------------------------------------------------------
+C                             Author, date
+C-------------------------------------------------------------------------------
+C
+CA    Andreas Waechter      02/25/99
+CA    Andreas Waechter      10/29/04 adapted for C++ version
+CA    Nick Gould            15/01/13 adapted for CUTEst
+C
+C-------------------------------------------------------------------------------
+C                             Documentation
+C-------------------------------------------------------------------------------
+C
+CD
+C
+C-------------------------------------------------------------------------------
+C                             Parameter list
+C-------------------------------------------------------------------------------
+C
+C    Name     I/O   Type   Meaning
+C
+CP   TASK      I    INT     =0: Fill ACON and AVAR, don't use A
+CP                         <>0: Fill A, don't use ACON, AVAR
+CP   N         I    INT    number of variables in problem statement
+CP   X         I    DP     point where A is to be evaluated
+CP   NEW_X     I    INT    if 1, X has not been changed since last call
+CP   M         I    INT    number of constraints
+CP   NZ        I    INT    number of nonzero elements
+CP                                     (size of A, AVAR, ACON)
+CP   ACON      O    INT    (only TASK=0) row indices
+CP   AVAR      O    INT    (only TASK=0) column indices
+CP   A         O    DP     (only TASK<>0) values in Jacobian
+CP   IDAT      P    INT    privat INT data for evaluation routines
+CP   DAT       P    DP     privat DP data for evaluation routines
+CP   IERR      O    INT    set to nonzero value if error occurred
+C
+C-------------------------------------------------------------------------------
+C                             local variables
+C-------------------------------------------------------------------------------
+C
+CL
+C
+C-------------------------------------------------------------------------------
+C                             used subroutines
+C-------------------------------------------------------------------------------
+C
+CS    CUTEST_cdimsj
+CS    CUTEST_ccfsg
+C
+C*******************************************************************************
+C
+C                              Declarations
+C
+C*******************************************************************************
+C
+      IMPLICIT NONE
 C
 C-------------------------------------------------------------------------------
 C                             Parameter list
@@ -305,21 +553,22 @@ C
       integer TASK
       integer N
       double precision X(N)
+      integer NEW_X
+      integer M
       integer NZ
       double precision A(NZ)
       integer ACON(NZ)
       integer AVAR(NZ)
       double precision DAT(*)
       integer IDAT(*)
+      integer IERR
 C
 C-------------------------------------------------------------------------------
 C                            Local varibales
 C-------------------------------------------------------------------------------
 C
-      double precision c(CUTE_MMAX)
-      double precision cjac(CUTE_NZMAX)
-      integer indvar(CUTE_NZMAX), indfun(CUTE_NZMAX)
-      integer i, nnzj
+      integer i, nele_jac
+      double precision X0(N)
 C
 C*******************************************************************************
 C
@@ -327,31 +576,22 @@ C                           Executable Statements
 C
 C*******************************************************************************
 C
+      IERR = 0
       if( TASK.eq.0 ) then
 C
-C     Call CDIMSJ to obtain number of nonzero elements
+C     Get the nonzero structure
 C
-         CALL CUTEST_cdimsj( status, NZ )
-C
-C     Substract contribution of (dense) objective function gradient
-C
-         NZ = NZ - CUTE_N
-         NZ = NZ + CUTE_NIQ
+         do i = 1, n
+            DAT(i) = 0.d0
+         enddo
+         call CUTEST_ccfsg( ierr, n, m, DAT(1), DAT(N+1), nele_jac,
+     1        nz, DAT(2*n+1), AVAR, ACON, .TRUE.)
       else
 C
-C     Call CCFSG to obtain Jacobian for constraints
+C     Get the values of nonzeros
 C
-         call CUTEST_ccfsg( status,CUTE_N, CUTE_M, X, CUTE_MMAX, c, nnzj,
-     1        NZ, A, AVAR, ACON, .TRUE.)
-C
-C     Augment entries for slacks
-C
-         do i = 1, CUTE_NIQ
-            A   (nnzj+i) = -1.d0
-            AVAR(nnzj+i) = CUTE_N + i
-            ACON(nnzj+i) = CUTE_IIQ(i)
-         enddo
-
+         call CUTEST_ccfsg( ierr, N, M, X, DAT(1), nele_jac,
+     1        NZ, A, IDAT(1), IDAT(1+NZ), .TRUE.)
       endif
 
  9999 continue
@@ -359,518 +599,22 @@ C
       end
 C Copyright (C) 2002, Carnegie Mellon University and others.
 C All Rights Reserved.
-C This code is published under the Common Public License.
+C This code is published under the Eclipse Public License.
 C*******************************************************************************
 C
-      subroutine EVAL_C(N, X, M, C, DAT, IDAT)
+
+      subroutine EV_HESS(TASK, N, X, NEW_X, OBJFACT, M, LAM, NEW_LAM,
+     1     NNZH, IRNH, ICNH, HESS, IDAT, DAT, IERR)
 C
 C*******************************************************************************
 C
-C    $Id: eval_c.F,v 1.2 2004/03/11 01:27:51 andreasw Exp $
+C    $Id: CUTEstInterface.f 1861 2010-12-21 21:34:47Z andreasw $
 C
 C-------------------------------------------------------------------------------
 C                                 Title
 C-------------------------------------------------------------------------------
 C
-CT    Compute values of constraints to CUTE problem
-C
-C-------------------------------------------------------------------------------
-C                          Programm description
-C-------------------------------------------------------------------------------
-C
-CB
-C
-C-------------------------------------------------------------------------------
-C                             Author, date
-C-------------------------------------------------------------------------------
-C
-CA    Andreas Waechter      02/25/99
-CA    Andreas Waechter      07/01/99   BUG: problems if ineq not first
-C
-C-------------------------------------------------------------------------------
-C                             Documentation
-C-------------------------------------------------------------------------------
-C
-CCD
-C
-C-------------------------------------------------------------------------------
-C                             Parameter list
-C-------------------------------------------------------------------------------
-C
-C    Name     I/O   Type   Meaning
-C
-CP   N         I    INT    number of variables in problem statement
-CP                            (including slacks for inequality constraints)
-CP   X         I    DP     point where G is to be evaluated
-CP   M         I    INT    number of constraints
-CP   C         O    DP     values of constraints
-CP   DAT       P    DP     privat DP data for evaluation routines
-CP   IDAT      P    INT    privat INT data for evaluation routines
-C
-C-------------------------------------------------------------------------------
-C                             local variables
-C-------------------------------------------------------------------------------
-C
-CL
-C
-C-------------------------------------------------------------------------------
-C                             used subroutines
-C-------------------------------------------------------------------------------
-C
-CCS    CCFG
-C
-C*******************************************************************************
-C
-C                              Declarations
-C
-C*******************************************************************************
-C
-      IMPLICIT NONE
-C
-C*******************************************************************************
-C
-C                              Include files
-C
-C*******************************************************************************
-C
-C Copyright (C) 2002, Carnegie Mellon University and others.
-C All Rights Reserved.
-C This code is published under the Common Public License.
-C
-C     PARAMETER definitions and COMMON block for CUTEst interface
-C
-
-CB    CUTE_NMAX       maximal number of variables
-CB    CUTE_MMAX       maximal number of constraints
-CB    CUTE_NZMAX      maximal number of nonzero elements
-CB    CUTE_NOLB       constant of CUTEst to indicate -inf as lower bound
-CB    CUTE_NOUB       constant of CUTEst to indicate +inf as upper bound
-
-      INTEGER CUTE_NMAX, CUTE_MMAX, CUTE_NZMAX
-CTOY  PARAMETER( CUTE_NMAX = 1000,  CUTE_MMAX = 1000  )
-CMED  PARAMETER( CUTE_NMAX = 10000, CUTE_MMAX = 10000 )
-CBIG  PARAMETER( CUTE_NMAX = 50000, CUTE_MMAX = 50000 )
-CCUS  PARAMETER( CUTE_NMAX = 200000, CUTE_MMAX = 200000 )
-CTOY  PARAMETER( CUTE_NZMAX = 100000  )
-CMED  PARAMETER( CUTE_NZMAX = 200000  )
-CBIG  PARAMETER( CUTE_NZMAX = 1000000 )
-CCUS  PARAMETER( CUTE_NZMAX = 10000000 )
-      DOUBLE PRECISION CUTE_NOLB, CUTE_NOUB
-      PARAMETER( CUTE_NOLB = -1.0D+20, CUTE_NOUB =  1.0D+20 )
-
-CB    CUTE_N          number of variables in CUTEst problem
-CB    CUTE_M          number of constraints in CUTEst problem
-CB    CUTE_NIQ        number of inequality constraints
-CB    CUTE_NEQ        number of equality constraints
-CB    CUTE_IIQ        indices of inequality constraints
-CB                       constraint number CUTE_IIQ(i) is inequality constraint
-CB                       (always ordered increasingly)
-CB    CUTE_CEQ        constants for equality constraints
-CB                       (ordered as constraints without inequalities)
-CB
-CB    Structure of reformulation:
-CB
-CB    X (variables after reformulation) has a first entries all variables
-CB    from original CUTEst problem, followed by the slack variables for the
-CB    inequality constraints.
-
-      integer CUTE_N, CUTE_M, CUTE_NIQ, CUTE_NEQ
-      integer          CUTE_IIQ(CUTE_MMAX)
-      double precision CUTE_CEQ(CUTE_MMAX)
-
-      common /cute_stuff/ CUTE_CEQ, CUTE_IIQ, CUTE_N, CUTE_M,
-     1                    CUTE_NIQ, CUTE_NEQ
-      save   /cute_stuff/
-
-C
-C-------------------------------------------------------------------------------
-C                             Parameter list
-C-------------------------------------------------------------------------------
-C
-      integer N
-      double precision X(N)
-      integer M
-      double precision C(M)
-      double precision DAT(*)
-      integer IDAT(*)
-C
-C-------------------------------------------------------------------------------
-C                            Local varibales
-C-------------------------------------------------------------------------------
-C
-      double precision f, dummy
-      integer i, liq, leq
-      logical ineq
-C
-C*******************************************************************************
-C
-C                           Executable Statements
-C
-C*******************************************************************************
-C
-
-C
-C     Call CCFG to obtain constraint values, but without slacks
-C
-      call CUTEST_ccfg( status,CUTE_N, CUTE_M, X, M, C, .FALSE., 1, 1, dummy, .FALSE.)
-C
-C     Add entries for slack variables and constant terms
-C
-      liq = 1
-      leq = 1
-      do i = 1, M
-         ineq = .false.
-         if( liq.le.CUTE_NIQ ) then
-            if( CUTE_IIQ(liq).eq.i ) then
-               C(i) = C(i) - X(CUTE_N+liq)
-               liq = liq + 1
-               ineq = .true.
-            endif
-         endif
-         if( .not.ineq ) then
-            C(i) = C(i) - CUTE_CEQ(leq)
-            leq = leq + 1
-         endif
-      enddo
-
- 9999 continue
-      return
-      end
-C Copyright (C) 2002, Carnegie Mellon University and others.
-C All Rights Reserved.
-C This code is published under the Common Public License.
-C*******************************************************************************
-C
-      subroutine EVAL_F(N, X, F, DAT, IDAT)
-C
-C*******************************************************************************
-C
-C    $Id: eval_f.F,v 1.2 2004/03/11 01:27:51 andreasw Exp $
-C
-C-------------------------------------------------------------------------------
-C                                 Title
-C-------------------------------------------------------------------------------
-C
-CT    Compute objective function value to CUTE problem
-C
-C-------------------------------------------------------------------------------
-C                          Programm description
-C-------------------------------------------------------------------------------
-C
-CB
-C
-C-------------------------------------------------------------------------------
-C                             Author, date
-C-------------------------------------------------------------------------------
-C
-CA    Andreas Waechter      02/25/99
-C
-C-------------------------------------------------------------------------------
-C                             Documentation
-C-------------------------------------------------------------------------------
-C
-CCD
-C
-C-------------------------------------------------------------------------------
-C                             Parameter list
-C-------------------------------------------------------------------------------
-C
-C    Name     I/O   Type   Meaning
-C
-CP   N         I    INT    number of variables in problem statement
-CP                            (including slacks for inequality constraints)
-CP   X         I    DP     point where F is to be evaluated
-CP   F         O    DP     objective function value
-CP   DAT       P    DP     privat DP data for evaluation routines
-CP   IDAT      P    INT    privat INT data for evaluation routines
-C
-C-------------------------------------------------------------------------------
-C                             local variables
-C-------------------------------------------------------------------------------
-C
-CL
-C
-C-------------------------------------------------------------------------------
-C                             used subroutines
-C-------------------------------------------------------------------------------
-C
-C     COFG
-C
-C*******************************************************************************
-C
-C                              Declarations
-C
-C*******************************************************************************
-C
-      IMPLICIT NONE
-C
-C*******************************************************************************
-C
-C                              Include files
-C
-C*******************************************************************************
-C
-C Copyright (C) 2002, Carnegie Mellon University and others.
-C All Rights Reserved.
-C This code is published under the Common Public License.
-C
-C     PARAMETER definitions and COMMON block for CUTEst interface
-C
-
-CB    CUTE_NMAX       maximal number of variables
-CB    CUTE_MMAX       maximal number of constraints
-CB    CUTE_NZMAX      maximal number of nonzero elements
-CB    CUTE_NOLB       constant of CUTEst to indicate -inf as lower bound
-CB    CUTE_NOUB       constant of CUTEst to indicate +inf as upper bound
-
-      INTEGER CUTE_NMAX, CUTE_MMAX, CUTE_NZMAX
-CTOY  PARAMETER( CUTE_NMAX = 1000,  CUTE_MMAX = 1000  )
-CMED  PARAMETER( CUTE_NMAX = 10000, CUTE_MMAX = 10000 )
-CBIG  PARAMETER( CUTE_NMAX = 50000, CUTE_MMAX = 50000 )
-CCUS  PARAMETER( CUTE_NMAX = 200000, CUTE_MMAX = 200000 )
-CTOY  PARAMETER( CUTE_NZMAX = 100000  )
-CMED  PARAMETER( CUTE_NZMAX = 200000  )
-CBIG  PARAMETER( CUTE_NZMAX = 1000000 )
-CCUS  PARAMETER( CUTE_NZMAX = 10000000 )
-      DOUBLE PRECISION CUTE_NOLB, CUTE_NOUB
-      PARAMETER( CUTE_NOLB = -1.0D+20, CUTE_NOUB =  1.0D+20 )
-
-CB    CUTE_N          number of variables in CUTEst problem
-CB    CUTE_M          number of constraints in CUTEst problem
-CB    CUTE_NIQ        number of inequality constraints
-CB    CUTE_NEQ        number of equality constraints
-CB    CUTE_IIQ        indices of inequality constraints
-CB                       constraint number CUTE_IIQ(i) is inequality constraint
-CB                       (always ordered increasingly)
-CB    CUTE_CEQ        constants for equality constraints
-CB                       (ordered as constraints without inequalities)
-CB
-CB    Structure of reformulation:
-CB
-CB    X (variables after reformulation) has a first entries all variables
-CB    from original CUTEst problem, followed by the slack variables for the
-CB    inequality constraints.
-
-      integer CUTE_N, CUTE_M, CUTE_NIQ, CUTE_NEQ
-      integer          CUTE_IIQ(CUTE_MMAX)
-      double precision CUTE_CEQ(CUTE_MMAX)
-
-      common /cute_stuff/ CUTE_CEQ, CUTE_IIQ, CUTE_N, CUTE_M,
-     1                    CUTE_NIQ, CUTE_NEQ
-      save   /cute_stuff/
-
-C
-C-------------------------------------------------------------------------------
-C                             Parameter list
-C-------------------------------------------------------------------------------
-C
-      integer N
-      double precision X(N)
-      double precision F
-      double precision DAT(*)
-      integer IDAT(*)
-C
-C-------------------------------------------------------------------------------
-C                            Local varibales
-C-------------------------------------------------------------------------------
-C
-      double precision dummy(1)
-C
-C*******************************************************************************
-C
-C                           Executable Statements
-C
-C*******************************************************************************
-C
-
-C
-C     Call COFG to obtain value of objective function
-C
-      call CUTEST_cofg( status, CUTE_N, X, F, dummy, .false.)
-
- 9999 continue
-      return
-      end
-C Copyright (C) 2002, Carnegie Mellon University and others.
-C All Rights Reserved.
-C This code is published under the Common Public License.
-C*******************************************************************************
-C
-      subroutine EVAL_G(N, X, G, DAT, IDAT)
-C
-C*******************************************************************************
-C
-C    $Id: eval_g.F,v 1.2 2004/03/11 01:27:51 andreasw Exp $
-C
-C-------------------------------------------------------------------------------
-C                                 Title
-C-------------------------------------------------------------------------------
-C
-CT    Compute gradient of objective function to CUTE problem
-C
-C-------------------------------------------------------------------------------
-C                          Programm description
-C-------------------------------------------------------------------------------
-C
-CB
-C
-C-------------------------------------------------------------------------------
-C                             Author, date
-C-------------------------------------------------------------------------------
-C
-CA    Andreas Waechter      02/25/99
-C
-C-------------------------------------------------------------------------------
-C                             Documentation
-C-------------------------------------------------------------------------------
-C
-CCD
-C
-C-------------------------------------------------------------------------------
-C                             Parameter list
-C-------------------------------------------------------------------------------
-C
-C    Name     I/O   Type   Meaning
-C
-CP   N         I    INT    number of variables in problem statement
-CP                            (including slacks for inequality constraints)
-CP   X         I    DP     point where G is to be evaluated
-CP   G         O    DP     gradient of objective function
-CP   DAT       P    DP     privat DP data for evaluation routines
-CP   IDAT      P    INT    privat INT data for evaluation routines
-C
-C-------------------------------------------------------------------------------
-C                             local variables
-C-------------------------------------------------------------------------------
-C
-CL
-C
-C-------------------------------------------------------------------------------
-C                             used subroutines
-C-------------------------------------------------------------------------------
-C
-C     COFG
-C
-C*******************************************************************************
-C
-C                              Declarations
-C
-C*******************************************************************************
-C
-      IMPLICIT NONE
-C
-C*******************************************************************************
-C
-C                              Include files
-C
-C*******************************************************************************
-C
-C Copyright (C) 2002, Carnegie Mellon University and others.
-C All Rights Reserved.
-C This code is published under the Common Public License.
-C
-C     PARAMETER definitions and COMMON block for CUTEst interface
-C
-
-CB    CUTE_NMAX       maximal number of variables
-CB    CUTE_MMAX       maximal number of constraints
-CB    CUTE_NZMAX      maximal number of nonzero elements
-CB    CUTE_NOLB       constant of CUTEst to indicate -inf as lower bound
-CB    CUTE_NOUB       constant of CUTEst to indicate +inf as upper bound
-
-      INTEGER CUTE_NMAX, CUTE_MMAX, CUTE_NZMAX
-CTOY  PARAMETER( CUTE_NMAX = 1000,  CUTE_MMAX = 1000  )
-CMED  PARAMETER( CUTE_NMAX = 10000, CUTE_MMAX = 10000 )
-CBIG  PARAMETER( CUTE_NMAX = 50000, CUTE_MMAX = 50000 )
-CCUS  PARAMETER( CUTE_NMAX = 200000, CUTE_MMAX = 200000 )
-CTOY  PARAMETER( CUTE_NZMAX = 100000  )
-CMED  PARAMETER( CUTE_NZMAX = 200000  )
-CBIG  PARAMETER( CUTE_NZMAX = 1000000 )
-CCUS  PARAMETER( CUTE_NZMAX = 10000000 )
-      DOUBLE PRECISION CUTE_NOLB, CUTE_NOUB
-      PARAMETER( CUTE_NOLB = -1.0D+20, CUTE_NOUB =  1.0D+20 )
-
-CB    CUTE_N          number of variables in CUTEst problem
-CB    CUTE_M          number of constraints in CUTEst problem
-CB    CUTE_NIQ        number of inequality constraints
-CB    CUTE_NEQ        number of equality constraints
-CB    CUTE_IIQ        indices of inequality constraints
-CB                       constraint number CUTE_IIQ(i) is inequality constraint
-CB                       (always ordered increasingly)
-CB    CUTE_CEQ        constants for equality constraints
-CB                       (ordered as constraints without inequalities)
-CB
-CB    Structure of reformulation:
-CB
-CB    X (variables after reformulation) has a first entries all variables
-CB    from original CUTEst problem, followed by the slack variables for the
-CB    inequality constraints.
-
-      integer CUTE_N, CUTE_M, CUTE_NIQ, CUTE_NEQ
-      integer          CUTE_IIQ(CUTE_MMAX)
-      double precision CUTE_CEQ(CUTE_MMAX)
-
-      common /cute_stuff/ CUTE_CEQ, CUTE_IIQ, CUTE_N, CUTE_M,
-     1                    CUTE_NIQ, CUTE_NEQ
-      save   /cute_stuff/
-
-C
-C-------------------------------------------------------------------------------
-C                             Parameter list
-C-------------------------------------------------------------------------------
-C
-      integer N
-      double precision X(N)
-      double precision G(N)
-      double precision DAT(*)
-      integer IDAT(*)
-C
-C-------------------------------------------------------------------------------
-C                            Local varibales
-C-------------------------------------------------------------------------------
-C
-      double precision f
-      integer i
-C
-C*******************************************************************************
-C
-C                           Executable Statements
-C
-C*******************************************************************************
-C
-
-C
-C     Call COFG to obtain gradient of objective function
-C
-      call CUTEST_cofg( status, CUTE_N, X, f, G, .true.)
-C
-C     Add entries for slack variables
-C
-      do i = CUTE_N + 1, N
-         G(i) = 0.d0
-      enddo
-
- 9999 continue
-      return
-      end
-C Copyright (C) 2002, Carnegie Mellon University and others.
-C All Rights Reserved.
-C This code is published under the Common Public License.
-C*******************************************************************************
-C
-
-      subroutine EVAL_H(TASK, N, X, M, LAM, NNZH, HESS, IRNH, ICNH,
-     1     DAT, IDAT)
-C
-C*******************************************************************************
-C
-C    $Id: eval_h.F,v 1.2 2004/03/11 01:27:52 andreasw Exp $
-C
-C-------------------------------------------------------------------------------
-C                                 Title
-C-------------------------------------------------------------------------------
-C
-CT    Compute Jacobian of constraints to CUTE problem
+CT    Compute Hessian of Lagrangian for CUTEst problem
 C
 C-------------------------------------------------------------------------------
 C                          Programm description
@@ -883,12 +627,14 @@ C                             Author, date
 C-------------------------------------------------------------------------------
 C
 CA    Andreas Waechter      03/23/00
+CA    Andreas Waechter      10/29/04 adapted for C++ version
+CA    Nick Gould            15/01/13 adapted for CUTEst
 C
 C-------------------------------------------------------------------------------
 C                             Documentation
 C-------------------------------------------------------------------------------
 C
-CCD
+CD
 C
 C-------------------------------------------------------------------------------
 C                             Parameter list
@@ -896,19 +642,23 @@ C-------------------------------------------------------------------------------
 C
 C    Name     I/O   Type   Meaning
 C
-CP   TASK      I    INT     =0: Obtain NZ
-CP                         <>0: Compute Jacobian
+CP   TASK      I    INT     =0: Fill IRNH and ICNH, don't use HESS
+CP                         <>0: Fill HESS, don't use IRNH, ICNH
 CP   N         I    INT    number of variables in problem statement
-CP                            (including slacks for inequality constraints)
 CP   X         I    DP     point where A is to be evaluated
-CP   NZ       I/O   INT    TASK = 0: O: number of nonzero elements
-CP                         otherwise: number of nonzero elements
-CP                                     (size of A, AVAR, ACON)
-CP   A         O    DP     (only TASK<>0) values in Jacobian
-CP   ACON      O    INT    (only TASK<>0) row indices
-CP   AVAR      O    INT    (only TASK<>0) column indices
-CP   DAT       P    DP     privat DP data for evaluation routines
+CP   NEW_X     I    INT    if 1, X has not been changed since last call
+CP   OBJFACT   I    DP     weighting factor for objective function Hessian
+CP   M         I    INT    number of constriants
+CP   LAM       I    DP     weighting factors for the constraints
+CP   NEW_LAM   I    INT    if 1, LAM has not been changed since last call
+CP   NNZH      I    INT    number of nonzero elements
+CP                                     (size of HESS, IRNH, ICNH)
+CP   IRNH      O    INT    (only TASK=0) row indices
+CP   ICNH      O    INT    (only TASK=0) column indices
+CP   HESS      O    DP     (only TASK<>0) values in Hessian
 CP   IDAT      P    INT    privat INT data for evaluation routines
+CP   DAT       P    DP     privat DP data for evaluation routines
+CP   IERR      O    INT    set to nonzero value if error occurred
 C
 C-------------------------------------------------------------------------------
 C                             local variables
@@ -920,8 +670,8 @@ C-------------------------------------------------------------------------------
 C                             used subroutines
 C-------------------------------------------------------------------------------
 C
-CCS    CDIMSH
-CCS    CSH
+CS    CUTEST_csh
+CS    CUTEST_cshc
 C
 C*******************************************************************************
 C
@@ -931,89 +681,31 @@ C*******************************************************************************
 C
       IMPLICIT NONE
 C
-C*******************************************************************************
-C
-C                              Include files
-C
-C*******************************************************************************
-C
-C Copyright (C) 2002, Carnegie Mellon University and others.
-C All Rights Reserved.
-C This code is published under the Common Public License.
-C
-C     PARAMETER definitions and COMMON block for CUTEst interface
-C
-
-CB    CUTE_NMAX       maximal number of variables
-CB    CUTE_MMAX       maximal number of constraints
-CB    CUTE_NZMAX      maximal number of nonzero elements
-CB    CUTE_NOLB       constant of CUTEst to indicate -inf as lower bound
-CB    CUTE_NOUB       constant of CUTEst to indicate +inf as upper bound
-
-      INTEGER CUTE_NMAX, CUTE_MMAX, CUTE_NZMAX
-CTOY  PARAMETER( CUTE_NMAX = 1000,  CUTE_MMAX = 1000  )
-CMED  PARAMETER( CUTE_NMAX = 10000, CUTE_MMAX = 10000 )
-CBIG  PARAMETER( CUTE_NMAX = 50000, CUTE_MMAX = 50000 )
-CCUS  PARAMETER( CUTE_NMAX = 200000, CUTE_MMAX = 200000 )
-CTOY  PARAMETER( CUTE_NZMAX = 100000  )
-CMED  PARAMETER( CUTE_NZMAX = 200000  )
-CBIG  PARAMETER( CUTE_NZMAX = 1000000 )
-CCUS  PARAMETER( CUTE_NZMAX = 10000000 )
-      DOUBLE PRECISION CUTE_NOLB, CUTE_NOUB
-      PARAMETER( CUTE_NOLB = -1.0D+20, CUTE_NOUB =  1.0D+20 )
-
-CB    CUTE_N          number of variables in CUTEst problem
-CB    CUTE_M          number of constraints in CUTEst problem
-CB    CUTE_NIQ        number of inequality constraints
-CB    CUTE_NEQ        number of equality constraints
-CB    CUTE_IIQ        indices of inequality constraints
-CB                       constraint number CUTE_IIQ(i) is inequality constraint
-CB                       (always ordered increasingly)
-CB    CUTE_CEQ        constants for equality constraints
-CB                       (ordered as constraints without inequalities)
-CB
-CB    Structure of reformulation:
-CB
-CB    X (variables after reformulation) has a first entries all variables
-CB    from original CUTEst problem, followed by the slack variables for the
-CB    inequality constraints.
-
-      integer CUTE_N, CUTE_M, CUTE_NIQ, CUTE_NEQ
-      integer          CUTE_IIQ(CUTE_MMAX)
-      double precision CUTE_CEQ(CUTE_MMAX)
-
-      common /cute_stuff/ CUTE_CEQ, CUTE_IIQ, CUTE_N, CUTE_M,
-     1                    CUTE_NIQ, CUTE_NEQ
-      save   /cute_stuff/
-
-C
 C-------------------------------------------------------------------------------
 C                             Parameter list
 C-------------------------------------------------------------------------------
 C
       integer TASK
       integer N
-      integer M
-      integer NNZH
-      double precision LAM(M)
       double precision X(N)
-      double precision HESS(NNZH)
+      integer NEW_X
+      double precision OBJFACT
+      integer M
+      double precision LAM(M)
+      integer NEW_LAM
+      integer NNZH
       integer IRNH(NNZH)
       integer ICNH(NNZH)
+      double precision HESS(NNZH)
       double precision DAT(*)
       integer IDAT(*)
+      integer IERR
 C
 C-------------------------------------------------------------------------------
 C                            Local varibales
 C-------------------------------------------------------------------------------
 C
-      double precision v(CUTE_MMAX)
-      double precision h(CUTE_NZMAX)
-      integer indirnh(CUTE_NZMAX), indicnh(CUTE_NZMAX)
-      integer nnzh2
-
-      integer NNZH_STORE
-      save    NNZH_STORE
+      integer i, nnzh2
 C
 C*******************************************************************************
 C
@@ -1021,620 +713,53 @@ C                           Executable Statements
 C
 C*******************************************************************************
 C
+      IERR = 0
       if( TASK.eq.0 ) then
 C
-C     Get number of nonzeros in Hessian of the Lagrangian
+C     Get the nonzero structure
 C
-         CALL CUTEST_cdimsh( status, NNZH )
-         if( NNZH.gt.CUTE_NZMAX ) then
-            write(*,*) 'CUTE_NZMAX = ',CUTE_NZMAX,' too small in cute_h'
-            write(*,*) 'Increase to at least ', NNZH
-            stop
-         endif
-         NNZH_STORE = NNZH
-      else
-C
-C     Call CSH to obtain Hessian for constraints
-C
-         call CUTEST_csh( status,CUTE_N, CUTE_M, X, M, LAM, nnzh2, NNZH, HESS,
-     1        IRNH, ICNH)
-      endif
-
- 9999 continue
-      return
-      end
-C Copyright (C) 2002, Carnegie Mellon University and others.
-C All Rights Reserved.
-C This code is published under the Common Public License.
-C*******************************************************************************
-C
-      subroutine EVAL_HESSLAG_V(TASK, N, X, M, LAM, VIN, VOUT,
-     1     DAT, IDAT)
-C
-C*******************************************************************************
-C
-C    $Id: eval_hesslag_v.F,v 1.2 2004/03/11 01:27:52 andreasw Exp $
-C
-C-------------------------------------------------------------------------------
-C                                 Title
-C-------------------------------------------------------------------------------
-C
-CT    Compute product of Hessian of Lagrangian (individual constraints
-CT    weighted by LAM) with vector
-C
-C-------------------------------------------------------------------------------
-C                          Programm description
-C-------------------------------------------------------------------------------
-C
-CB
-C
-C-------------------------------------------------------------------------------
-C                             Author, date
-C-------------------------------------------------------------------------------
-C
-CA    Andreas Waechter      11/05/00
-C
-C-------------------------------------------------------------------------------
-C                             Documentation
-C-------------------------------------------------------------------------------
-C
-CCD
-C
-C-------------------------------------------------------------------------------
-C                             Parameter list
-C-------------------------------------------------------------------------------
-C
-C    Name     I/O   Type   Meaning
-C
-CP   TASK      I    INT     =0: reevaluate Hessian entries (because X or LAM
-CP                              changed
-CP                         <>0: no need to reevaluate
-CP   N         I    INT    number of variables in problem statement
-CP                            (including slacks for inequality constraints)
-CP   X         I    DP     point where Hessians are to be evaluated
-CP   M         I    INT    number of constraints (including slack equations)
-CP   LAM       I    DP     weights for constraints Hessians
-CP   VIN       I    DP     vector to be mutliplied with Hessian
-CP   VOUT      O    DP     resulting product
-CP   DAT       P    DP     privat DP data for evaluation routines
-CP   IDAT      P    INT    privat INT data for evaluation routines
-C
-C-------------------------------------------------------------------------------
-C                             local variables
-C-------------------------------------------------------------------------------
-C
-CL
-C
-C-------------------------------------------------------------------------------
-C                             used subroutines
-C-------------------------------------------------------------------------------
-C
-CCS    CPROD
-CCS    DCOPY
-C
-C*******************************************************************************
-C
-C                              Declarations
-C
-C*******************************************************************************
-C
-      IMPLICIT NONE
-C
-C*******************************************************************************
-C
-C                              Include files
-C
-C*******************************************************************************
-C
-C Copyright (C) 2002, Carnegie Mellon University and others.
-C All Rights Reserved.
-C This code is published under the Common Public License.
-C
-C     PARAMETER definitions and COMMON block for CUTEst interface
-C
-
-CB    CUTE_NMAX       maximal number of variables
-CB    CUTE_MMAX       maximal number of constraints
-CB    CUTE_NZMAX      maximal number of nonzero elements
-CB    CUTE_NOLB       constant of CUTEst to indicate -inf as lower bound
-CB    CUTE_NOUB       constant of CUTEst to indicate +inf as upper bound
-
-      INTEGER CUTE_NMAX, CUTE_MMAX, CUTE_NZMAX
-CTOY  PARAMETER( CUTE_NMAX = 1000,  CUTE_MMAX = 1000  )
-CMED  PARAMETER( CUTE_NMAX = 10000, CUTE_MMAX = 10000 )
-CBIG  PARAMETER( CUTE_NMAX = 50000, CUTE_MMAX = 50000 )
-CCUS  PARAMETER( CUTE_NMAX = 200000, CUTE_MMAX = 200000 )
-CTOY  PARAMETER( CUTE_NZMAX = 100000  )
-CMED  PARAMETER( CUTE_NZMAX = 200000  )
-CBIG  PARAMETER( CUTE_NZMAX = 1000000 )
-CCUS  PARAMETER( CUTE_NZMAX = 10000000 )
-      DOUBLE PRECISION CUTE_NOLB, CUTE_NOUB
-      PARAMETER( CUTE_NOLB = -1.0D+20, CUTE_NOUB =  1.0D+20 )
-
-CB    CUTE_N          number of variables in CUTEst problem
-CB    CUTE_M          number of constraints in CUTEst problem
-CB    CUTE_NIQ        number of inequality constraints
-CB    CUTE_NEQ        number of equality constraints
-CB    CUTE_IIQ        indices of inequality constraints
-CB                       constraint number CUTE_IIQ(i) is inequality constraint
-CB                       (always ordered increasingly)
-CB    CUTE_CEQ        constants for equality constraints
-CB                       (ordered as constraints without inequalities)
-CB
-CB    Structure of reformulation:
-CB
-CB    X (variables after reformulation) has a first entries all variables
-CB    from original CUTEst problem, followed by the slack variables for the
-CB    inequality constraints.
-
-      integer CUTE_N, CUTE_M, CUTE_NIQ, CUTE_NEQ
-      integer          CUTE_IIQ(CUTE_MMAX)
-      double precision CUTE_CEQ(CUTE_MMAX)
-
-      common /cute_stuff/ CUTE_CEQ, CUTE_IIQ, CUTE_N, CUTE_M,
-     1                    CUTE_NIQ, CUTE_NEQ
-      save   /cute_stuff/
-
-C
-C-------------------------------------------------------------------------------
-C                             Parameter list
-C-------------------------------------------------------------------------------
-C
-      integer TASK
-      integer N
-      integer M
-      double precision LAM(M)
-      double precision X(N)
-      double precision VIN(N)
-      double precision VOUT(N)
-      double precision DAT(*)
-      integer IDAT(*)
-C
-C-------------------------------------------------------------------------------
-C                            Local varibales
-C-------------------------------------------------------------------------------
-C
-      logical goth
-C
-C*******************************************************************************
-C
-C                           Executable Statements
-C
-C*******************************************************************************
-C
-      if( TASK.eq.0 ) then
-         goth = .false.
-      else
-         goth = .true.
-      endif
-
-      call CUTEST_chprod( status,CUTE_N, CUTE_M, goth, X, M, LAM, VIN, VOUT)
-C
-C     slacks only appear linear
-C
-      if( N.gt.CUTE_N ) then
-         call DCOPY(N-CUTE_N, 0d0, 0, VOUT(CUTE_N+1), 1)
-      endif
-
- 9999 continue
-      return
-      end
-C Copyright (C) 2002, Carnegie Mellon University and others.
-C All Rights Reserved.
-C This code is published under the Common Public License.
-C*******************************************************************************
-C
-      subroutine CUTE_INIT(N, M, LX, X, NLB, ILB, BNDS_L,
-     1                     NUB, IUB, BNDS_U)
-C
-C*******************************************************************************
-C
-C    $Id: cute_init.F,v 1.2 2004/03/11 01:27:50 andreasw Exp $
-C
-C-------------------------------------------------------------------------------
-C                                 Title
-C-------------------------------------------------------------------------------
-C
-CT    Initialize interface to CUTE problem
-C
-C-------------------------------------------------------------------------------
-C                          Programm description
-C-------------------------------------------------------------------------------
-C
-CB
-C
-C-------------------------------------------------------------------------------
-C                             Author, date
-C-------------------------------------------------------------------------------
-C
-CA    Andreas Waechter      02/25/99
-CA    Andreas Waechter      07/19/99  initialize slacks based on C
-C
-C-------------------------------------------------------------------------------
-C                             Documentation
-C-------------------------------------------------------------------------------
-C
-CCD
-C
-C-------------------------------------------------------------------------------
-C                             Parameter list
-C-------------------------------------------------------------------------------
-C
-C    Name     I/O   Type   Meaning
-C
-CP   N         O    INT    number of variables in problem statement
-CP                            (including slacks for inequality constraints)
-CP   M         O    INT    number of equality constraints
-CP   LX        I    INT    actual declared length of X, LIB, BNDS_L, IUB, BNDS_U
-CP   X         O    DP     starting point
-CP   NLB       O    INT    number of lower bounds
-CP   ILB       O    INT    indices for lower bounds
-CP                            ( BNDS_L(i) is lower bound for X(ILB(i)) )
-CP   BNDS_L    O    INT    values of lower bounds
-CP   NUB       O    INT    number of upper bounds
-CP   IUB       O    INT    indices for upper bounds
-CP                            ( BNDS_U(i) is lower bound for X(IUB(i)) )
-CP   BNDS_U    O    INT    values of upper bounds
-C
-C-------------------------------------------------------------------------------
-C                             local variables
-C-------------------------------------------------------------------------------
-C
-CL
-C
-C-------------------------------------------------------------------------------
-C                             used subroutines
-C-------------------------------------------------------------------------------
-C
-CCS    CSETUP
-C
-C*******************************************************************************
-C
-C                              Declarations
-C
-C*******************************************************************************
-C
-      IMPLICIT NONE
-C
-C*******************************************************************************
-C
-C                              Include files
-C
-C*******************************************************************************
-C
-C Copyright (C) 2002, Carnegie Mellon University and others.
-C All Rights Reserved.
-C This code is published under the Common Public License.
-C
-C     PARAMETER definitions and COMMON block for CUTEst interface
-C
-
-CB    CUTE_NMAX       maximal number of variables
-CB    CUTE_MMAX       maximal number of constraints
-CB    CUTE_NZMAX      maximal number of nonzero elements
-CB    CUTE_NOLB       constant of CUTEst to indicate -inf as lower bound
-CB    CUTE_NOUB       constant of CUTEst to indicate +inf as upper bound
-
-      INTEGER CUTE_NMAX, CUTE_MMAX, CUTE_NZMAX
-CTOY  PARAMETER( CUTE_NMAX = 1000,  CUTE_MMAX = 1000  )
-CMED  PARAMETER( CUTE_NMAX = 10000, CUTE_MMAX = 10000 )
-CBIG  PARAMETER( CUTE_NMAX = 50000, CUTE_MMAX = 50000 )
-CCUS  PARAMETER( CUTE_NMAX = 200000, CUTE_MMAX = 200000 )
-CTOY  PARAMETER( CUTE_NZMAX = 100000  )
-CMED  PARAMETER( CUTE_NZMAX = 200000  )
-CBIG  PARAMETER( CUTE_NZMAX = 1000000 )
-CCUS  PARAMETER( CUTE_NZMAX = 10000000 )
-      DOUBLE PRECISION CUTE_NOLB, CUTE_NOUB
-      PARAMETER( CUTE_NOLB = -1.0D+20, CUTE_NOUB =  1.0D+20 )
-
-CB    CUTE_N          number of variables in CUTEst problem
-CB    CUTE_M          number of constraints in CUTEst problem
-CB    CUTE_NIQ        number of inequality constraints
-CB    CUTE_NEQ        number of equality constraints
-CB    CUTE_IIQ        indices of inequality constraints
-CB                       constraint number CUTE_IIQ(i) is inequality constraint
-CB                       (always ordered increasingly)
-CB    CUTE_CEQ        constants for equality constraints
-CB                       (ordered as constraints without inequalities)
-CB
-CB    Structure of reformulation:
-CB
-CB    X (variables after reformulation) has a first entries all variables
-CB    from original CUTEst problem, followed by the slack variables for the
-CB    inequality constraints.
-
-      integer CUTE_N, CUTE_M, CUTE_NIQ, CUTE_NEQ
-      integer          CUTE_IIQ(CUTE_MMAX)
-      double precision CUTE_CEQ(CUTE_MMAX)
-
-      common /cute_stuff/ CUTE_CEQ, CUTE_IIQ, CUTE_N, CUTE_M,
-     1                    CUTE_NIQ, CUTE_NEQ
-      save   /cute_stuff/
-
-C
-C-------------------------------------------------------------------------------
-C                             Parameter list
-C-------------------------------------------------------------------------------
-C
-      integer N
-      integer M
-      integer LX
-      double precision X(LX)
-      integer NLB
-      integer ILB(LX)
-      double precision BNDS_L(LX)
-      integer NUB
-      integer IUB(LX)
-      double precision BNDS_U(LX)
-C
-C-------------------------------------------------------------------------------
-C                            Local varibales
-C-------------------------------------------------------------------------------
-C
-      double precision bl(CUTE_NMAX), bu(CUTE_NMAX)
-      double precision v(CUTE_MMAX), cl(CUTE_MMAX), cu(CUTE_MMAX)
-      double precision c(CUTE_MMAX), f, dummy
-      logical equatn(CUTE_MMAX), linear(CUTE_MMAX)
-      integer cnr_input, iout, i
-      logical ex
-C
-C*******************************************************************************
-C
-C                           Executable Statements
-C
-C*******************************************************************************
-C
-C-------------------------------------------------------------------------------
-
-C
-C     Call CSETUP to obtain problem size and starting point
-C
-      cnr_input = 60
-      iout = 6
-
-      open(cnr_input,file='OUTSDIF.d',status='old')
-
-      call CUTEST_csetup( status,cnr_input, iout, CUTE_N, CUTE_M,
-     1     X, bl, bu, CUTE_NMAX, equatn, linear, v, cl, cu,
-     2     CUTE_MMAX, 0, 0, 0 )
-      close(cnr_input)
-C
-C     Added this:  Compute C in order to initialize slacks better
-C
-      call CUTEST_ccfg( status,CUTE_N, CUTE_M, X, M, C, .false., 1, 1, 
-     1                  dummy, .false.)
-C
-      M = CUTE_M
-      N = CUTE_N
-C
-C     Obtain bounds on variables
-C
-      NLB = 0
-      do i = 1, CUTE_N
-         if( bl(i).gt.CUTE_NOLB ) then
-            NLB = NLB + 1
-            ILB(NLB) = i
-            BNDS_L(NLB) = bl(i)
-         endif
-      enddo
-
-      NUB = 0
-      do i = 1, CUTE_N
-         if( bu(i).lt.CUTE_NOUB ) then
-            NUB = NUB + 1
-            IUB(NUB) = i
-            BNDS_U(NUB) = bu(i)
-         endif
-      enddo
-C
-C     Find inequalities and augment X
-C
-      CUTE_NIQ = 0
-      CUTE_NEQ = 0
-      do i = 1, CUTE_M
-         if( .not.equatn(i) ) then
-            CUTE_NIQ = CUTE_NIQ + 1
-            CUTE_IIQ(CUTE_NIQ) = i
-            N = N + 1
-            if( N.gt.LX ) then
-               write(6,*) 'Error in cute_init: LX = ',
-     1                    LX,' is too small. Abort.'
-               stop
-            endif
-C
-C           This is kind of arbitrary: initialize slack to zero...
-C
-C            X(N) = 0.d0
-            X(N) = C(i)
-            if( cl(i).gt.CUTE_NOLB ) then
-               NLB = NLB + 1
-               ILB(NLB) = N
-               BNDS_L(NLB) = cl(i)
-            endif
-            if( cu(i).lt.CUTE_NOUB ) then
-               NUB = NUB + 1
-               IUB(NUB) = N
-               BNDS_U(NUB) = cu(i)
-            endif
-         else
-            CUTE_NEQ = CUTE_NEQ + 1
-            CUTE_CEQ(CUTE_NEQ) = cl(i)
-         endif
-      enddo
-C
-C     For basis selection, write indices of slack variables into file
-C     SLACKS.DAT, or delete this file, if no slack variables
-C
-      if( CUTE_NIQ.gt.0 ) then
-         open(10,file='SLACKS.DAT',status='unknown')
-         do i = CUTE_N+1, CUTE_N+CUTE_NIQ
-            write(10,1000) i
- 1000       format(i10)
+         do i = 1, N
+            DAT(i) = 0.d0
          enddo
-         close(10)
+         call CUTEST_csh( ierr, N, M, DAT(1), DAT(1), 
+     1                    nnzh2, NNZH, DAT(N+1), IRNH, ICNH)
       else
-         inquire(file='SLACKS.DAT',exist=ex)
-         if( ex ) then
-            open(10,file='SLACKS.DAT',status='old')
-            close(10,status='delete')
+C
+C     Call CSH to get the values
+C
+         if( OBJFACT.ne.0.d0 ) then
+
+            if( OBJFACT.ne.1.d0 ) then
+               do i = 1, M
+                  DAT(i) = LAM(i)/OBJFACT
+               enddo
+               call CUTEST_csh( ierr, N, M, X, DAT(1), 
+     1                       nnzh2, NNZH, HESS, IDAT(1), IDAT(1+NNZH))
+               do i = 1, NNZH
+                  HESS(i) = HESS(i)*OBJFACT
+               enddo
+            else
+               call CUTEST_csh( ierr, N, M, X, LAM, nnzh2, NNZH, HESS,
+     1              IDAT(1), IDAT(1+NNZH))
+            endif
+
+         else
+C     now we have to call CSH twice, since we can't otherwise get rid of
+C     the objective function entries
+            do i = 1, M
+               DAT(i) = 0.d0
+            enddo
+C           call CUTEST_csh( ierr, N, M, X, DAT(1), nnzh2, 
+C    1           NNZH, DAT(1+M), IDAT(1), IDAT(1+NNZH))
+C           IF ( ierr /= 0 ) RETURN
+            call CUTEST_cshc( ierr, N, M, X, LAM, nnzh2, NNZH, HESS,
+     1           IDAT(1), IDAT(1+NNZH))
+C           do i = 1, NNZH
+C              HESS(i) = HESS(i) - DAT(M+i)
+C           enddo
          endif
       endif
 
  9999 continue
-      return
-      end
-C Copyright (C) 2002, Carnegie Mellon University and others.
-C All Rights Reserved.
-C This code is published under the Common Public License.
-      subroutine EVAL_HESSCON_V(TASK, N, X, M, LAM, VIN, VOUT,
-     1     DAT, IDAT)
-C
-C    $Id: eval_hesscon_v.F,v 1.2 2004/03/11 01:27:52 andreasw Exp $
-C
-C     TASK = 0: reevaluate Hessian (because X or LAM changed)
-C            1: do not need to reevaluate - but X and LAM are still
-C               set to the correct values
-      implicit none
-      integer TASK, N, M
-      double precision LAM(M), VIN(N), X(N), VOUT(N)
-      double precision DAT(*)
-      integer IDAT(*)
-
-C Copyright (C) 2002, Carnegie Mellon University and others.
-C All Rights Reserved.
-C This code is published under the Common Public License.
-C
-C     PARAMETER definitions and COMMON block for CUTEst interface
-C
-
-CB    CUTE_NMAX       maximal number of variables
-CB    CUTE_MMAX       maximal number of constraints
-CB    CUTE_NZMAX      maximal number of nonzero elements
-CB    CUTE_NOLB       constant of CUTEst to indicate -inf as lower bound
-CB    CUTE_NOUB       constant of CUTEst to indicate +inf as upper bound
-
-      INTEGER CUTE_NMAX, CUTE_MMAX, CUTE_NZMAX
-CTOY  PARAMETER( CUTE_NMAX = 1000,  CUTE_MMAX = 1000  )
-CMED  PARAMETER( CUTE_NMAX = 10000, CUTE_MMAX = 10000 )
-CBIG  PARAMETER( CUTE_NMAX = 50000, CUTE_MMAX = 50000 )
-CCUS  PARAMETER( CUTE_NMAX = 200000, CUTE_MMAX = 200000 )
-CTOY  PARAMETER( CUTE_NZMAX = 100000  )
-CMED  PARAMETER( CUTE_NZMAX = 200000  )
-CBIG  PARAMETER( CUTE_NZMAX = 1000000 )
-CCUS  PARAMETER( CUTE_NZMAX = 10000000 )
-      DOUBLE PRECISION CUTE_NOLB, CUTE_NOUB
-      PARAMETER( CUTE_NOLB = -1.0D+20, CUTE_NOUB =  1.0D+20 )
-
-CB    CUTE_N          number of variables in CUTEst problem
-CB    CUTE_M          number of constraints in CUTEst problem
-CB    CUTE_NIQ        number of inequality constraints
-CB    CUTE_NEQ        number of equality constraints
-CB    CUTE_IIQ        indices of inequality constraints
-CB                       constraint number CUTE_IIQ(i) is inequality constraint
-CB                       (always ordered increasingly)
-CB    CUTE_CEQ        constants for equality constraints
-CB                       (ordered as constraints without inequalities)
-CB
-CB    Structure of reformulation:
-CB
-CB    X (variables after reformulation) has a first entries all variables
-CB    from original CUTEst problem, followed by the slack variables for the
-CB    inequality constraints.
-
-      integer CUTE_N, CUTE_M, CUTE_NIQ, CUTE_NEQ
-      integer          CUTE_IIQ(CUTE_MMAX)
-      double precision CUTE_CEQ(CUTE_MMAX)
-
-      common /cute_stuff/ CUTE_CEQ, CUTE_IIQ, CUTE_N, CUTE_M,
-     1                    CUTE_NIQ, CUTE_NEQ
-      save   /cute_stuff/
-
-      double precision lam2(CUTE_MMAX)
-      double precision tmp(CUTE_NMAX)
-
-      if( M.gt.CUTE_MMAX .or. N.gt.CUTE_NMAX) then
-         write(*,*) 'N or M too large in eval_hesscon_v.'
-         stop
-      endif
-
-      call EVAL_HESSLAG_V(0, N, X, M, LAM, VIN, VOUT, DAT, IDAT)
-
-      call DCOPY(CUTE_M, 0d0, 0, lam2, 1)
-      call EVAL_HESSLAG_V(0, N, X, M, lam2, VIN, tmp, DAT, IDAT)
-      call DAXPY(CUTE_N, -1d0, tmp, 1, VOUT, 1)
-
-      return
-      end
-C Copyright (C) 2002, Carnegie Mellon University and others.
-C All Rights Reserved.
-C This code is published under the Common Public License.
-      subroutine EVAL_HESSOBJ_V(TASK, N, X, M, VIN, VOUT, DAT, IDAT)
-C
-C    $Id: eval_hessobj_v.F,v 1.2 2004/03/11 01:27:52 andreasw Exp $
-C
-C     TASK = 0: reevaluate Hessian (because X or LAM changed)
-C            1: do not need to reevaluate - but X and LAM are still
-C               set to the correct values
-      implicit none
-      integer TASK, N, M
-      double precision  VIN(N), X(N), VOUT(N)
-      double precision DAT(*)
-      integer IDAT(*)
-
-C Copyright (C) 2002, Carnegie Mellon University and others.
-C All Rights Reserved.
-C This code is published under the Common Public License.
-C
-C     PARAMETER definitions and COMMON block for CUTEst interface
-C
-
-CB    CUTE_NMAX       maximal number of variables
-CB    CUTE_MMAX       maximal number of constraints
-CB    CUTE_NZMAX      maximal number of nonzero elements
-CB    CUTE_NOLB       constant of CUTEst to indicate -inf as lower bound
-CB    CUTE_NOUB       constant of CUTEst to indicate +inf as upper bound
-
-      INTEGER CUTE_NMAX, CUTE_MMAX, CUTE_NZMAX
-CTOY  PARAMETER( CUTE_NMAX = 1000,  CUTE_MMAX = 1000  )
-CMED  PARAMETER( CUTE_NMAX = 10000, CUTE_MMAX = 10000 )
-CBIG  PARAMETER( CUTE_NMAX = 50000, CUTE_MMAX = 50000 )
-CCUS  PARAMETER( CUTE_NMAX = 200000, CUTE_MMAX = 200000 )
-CTOY  PARAMETER( CUTE_NZMAX = 100000  )
-CMED  PARAMETER( CUTE_NZMAX = 200000  )
-CBIG  PARAMETER( CUTE_NZMAX = 1000000 )
-CCUS  PARAMETER( CUTE_NZMAX = 10000000 )
-      DOUBLE PRECISION CUTE_NOLB, CUTE_NOUB
-      PARAMETER( CUTE_NOLB = -1.0D+20, CUTE_NOUB =  1.0D+20 )
-
-CB    CUTE_N          number of variables in CUTEst problem
-CB    CUTE_M          number of constraints in CUTEst problem
-CB    CUTE_NIQ        number of inequality constraints
-CB    CUTE_NEQ        number of equality constraints
-CB    CUTE_IIQ        indices of inequality constraints
-CB                       constraint number CUTE_IIQ(i) is inequality constraint
-CB                       (always ordered increasingly)
-CB    CUTE_CEQ        constants for equality constraints
-CB                       (ordered as constraints without inequalities)
-CB
-CB    Structure of reformulation:
-CB
-CB    X (variables after reformulation) has a first entries all variables
-CB    from original CUTEst problem, followed by the slack variables for the
-CB    inequality constraints.
-
-      integer CUTE_N, CUTE_M, CUTE_NIQ, CUTE_NEQ
-      integer          CUTE_IIQ(CUTE_MMAX)
-      double precision CUTE_CEQ(CUTE_MMAX)
-
-      common /cute_stuff/ CUTE_CEQ, CUTE_IIQ, CUTE_N, CUTE_M,
-     1                    CUTE_NIQ, CUTE_NEQ
-      save   /cute_stuff/
-
-      double precision lam(CUTE_MMAX)
-
-      call DCOPY(CUTE_M, 0d0, 0, lam, 1)
-
-      call EVAL_HESSLAG_V(0, N, X, M, lam, VIN, VOUT, DAT, IDAT)
-
       return
       end

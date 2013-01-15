@@ -18,6 +18,9 @@ and is therefore not intended for large sparse problems.
 SNOPT has been written by Gill, Murray, Saunders and Wright, and is available
 from the Office of Technology Licensing at Stanford University.
 
+** N.B. Up until SNOPT 5.3, the SNOPTB interface was simply known as SNOPT.
+   If you have a 5.3 or earlier version, simply change the name SNOPTB -> SNOPT
+   in snopt_main.f **
 
 CREATING THE OBJECT MODULE FOR SNOPT6.1
 ---------------------------------------

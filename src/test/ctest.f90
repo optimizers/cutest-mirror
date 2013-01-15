@@ -31,6 +31,8 @@
 
       INTEGER :: n, m, H_ne, HE_nel, HE_val_ne, HE_row_ne, J_ne, Ji_ne, status
       INTEGER :: l_h2_1, l_h, lhe_ptr, lhe_val, lhe_row, alloc_stat
+      INTEGER :: nonlinear_variables_objective, nonlinear_variables_constraints
+      INTEGER :: equality_constraints, linear_constraints
       REAL ( KIND = wp ) :: f, ci
       LOGICAL :: grad, byrows, goth, gotj
       LOGICAL :: grlagf, jtrans
@@ -83,6 +85,20 @@
       CALL WRITE_Y( out, m, Y, C_l, C_u, EQUATION, LINEAR )
 
 X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
+
+!  obtain numbers of nonlinear variables, and equality and linear constraints
+
+      WRITE( out, "( ' CALL CUTEST_cstats' )" )
+      CALL CUTEST_cstats( status, nonlinear_variables_objective,               &
+                          nonlinear_variables_constraints,                     &
+                          equality_constraints, linear_constraints )
+      IF ( status /= 0 ) GO to 900
+      WRITE( out, "( ' * nonlinear_variables_objective = ', I0, /,             &
+     &               ' * nonlinear_variables_constraints = ', I0, /,           &
+     &               ' * equality_constraints = ', I0, /,                      &
+     &               ' * linear_constraints = ', I0 )" )                       &
+       nonlinear_variables_objective, nonlinear_variables_constraints,         &
+       equality_constraints, linear_constraints
 
 !  obtain variable and problem names
 

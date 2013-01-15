@@ -74,7 +74,7 @@ CCUTESTS = $(LCS)(csetup.o) $(LCS)(cdimen.o) $(LCS)(cdimse.o) $(LCS)(cdimsh.o) \
            $(LCS)(cgr.o) $(LCS)(cofg.o) $(LCS)(ccfg.o) $(LCS)(ccfsg.o) \
            $(LCS)(ccifg.o) $(LCS)(ccifsg.o) $(LCS)(cdh.o) $(LCS)(ceh.o) \
            $(LCS)(cgrdh.o) $(LCS)(cidh.o) $(LCS)(csh.o) $(LCS)(cshc.o) \
-           $(LCS)(cish.o) $(LCS)(cjprod.o) \
+           $(LCS)(cish.o) $(LCS)(cjprod.o) $(LCS)(cstats.o) \
            $(LCS)(csgr.o) $(LCS)(csgreh.o) $(LCS)(csgrsh.o) $(LCS)(chprod.o) \
            $(LCS)(chcprod.o) $(LCS)(creport.o) $(LCS)(connames.o) \
            $(LCS)(cterminate.o) 
@@ -94,7 +94,7 @@ CCUTESTD = $(LCD)(csetup.o) $(LCD)(cdimen.o) $(LCD)(cdimse.o) $(LCD)(cdimsh.o) \
            $(LCD)(cgr.o) $(LCD)(cofg.o) $(LCD)(ccfg.o) $(LCD)(ccfsg.o) \
            $(LCD)(ccifg.o) $(LCD)(ccifsg.o) $(LCD)(cdh.o) $(LCD)(ceh.o) \
            $(LCD)(cgrdh.o) $(LCD)(cidh.o) $(LCD)(csh.o) $(LCD)(cshc.o) \
-           $(LCD)(cish.o) $(LCD)(cjprod.o) \
+           $(LCD)(cish.o) $(LCD)(cjprod.o) $(LCD)(cstats.o) \
            $(LCD)(csgr.o) $(LCD)(csgreh.o) $(LCD)(csgrsh.o) $(LCD)(chprod.o) \
            $(LCD)(chcprod.o) $(LCD)(creport.o) $(LCD)(connames.o) \
            $(LCD)(cterminate.o) 
@@ -182,6 +182,7 @@ $(LC)(cutest.o): ../tools/cutest.f90
 	cd $(OBJ); $(ARR) cutest.o; $(RM) cutest.f90 cutest.o
 	$(RMARFILE) csetup.o
 	$(RMARFILE) cdimen.o
+	$(RMARFILE) cstats.o
 	$(RMARFILE) cdimse.o
 	$(RMARFILE) cdimsh.o
 	$(RMARFILE) cdimsj.o
@@ -256,6 +257,18 @@ $(LC)(cdimen.o): ../tools/cdimen.f90
                 || ( printf ' %-26s' "=> Disabling optimization " ; \
                    $(FORTRAN) -o cdimen.o $(FFLAGSN) cdimen.f90 )
 	cd $(OBJ); $(ARR) cdimen.o; $(RM) cdimen.f90 cdimen.o
+#	$(MVMODS)
+	@printf '[ OK ]\n'
+
+cstats.o: $(LC)(cstats.o)
+
+$(LC)(cstats.o): ../tools/cstats.f90
+	@printf ' %-9s %-15s\t\t' "Compiling" "cstats" 
+	$(SED) -f $(SEDS) ../tools/cstats.f90 > $(OBJ)/cstats.f90
+	cd $(OBJ); $(FORTRAN) -o cstats.o $(FFLAGS) cstats.f90 \
+                || ( printf ' %-26s' "=> Disabling optimization " ; \
+                   $(FORTRAN) -o cstats.o $(FFLAGSN) cstats.f90 )
+	cd $(OBJ); $(ARR) cstats.o; $(RM) cstats.f90 cstats.o
 #	$(MVMODS)
 	@printf '[ OK ]\n'
 

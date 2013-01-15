@@ -1,8 +1,8 @@
-                      *************************
-                      *                       *
-                      * Using LOQO with CUTEr *
-                      *                       *
-                      *************************
+                      **************************
+                      *                        *
+                      * Using LOQO with CUTEst *
+                      *                        *
+                      **************************
 
 WHAT IS LOQO?
 ------------------
@@ -22,7 +22,7 @@ nonlinear and nonconvex. LOQO was originally designed for linear
 and quadratic programming and subsequently generalized to problems of
 the form (1)--(3).
 
-USING LOQO WITH CUTEr
+USING LOQO WITH CUTEst
 ---------------------
 
 Either by acquiring the official LOQO distribution or retrieving a
@@ -32,13 +32,11 @@ have received (among others) the header files
 
      loqo.h and myalloc.h
 
-Make sure these files reside in the directory $LOQODIR or in any
-directory searched by the C compiler for #includes. If they may be
-found under $LOQODIR, CUTEr will be taking care of the inclusion
-without any further intervention from the user being required.
+Copy these to the $CUTEST/include directory as loqo.h and loqo_alloc.h;
+the latest versions we know about will already be in $CUTEST/include.
 
 After installation and/or download, place the library libloqo.a in the
-directory $MYCUTER/double/lib, or alternatively, create a symbolic
+directory $MYCUTEst/double/lib, or alternatively, create a symbolic
 link at that location pointing to the library.
 
 LOQO is only available in double precision.

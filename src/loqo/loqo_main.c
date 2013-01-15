@@ -5,6 +5,7 @@
  * Originally written by Andreas Wachter, IBM TJ Watson
  * Cosmetically rearranged by   D. Orban,  Northwestern
  * Specs reading part by   Hande Benson, Drexel College
+ * CUTEst evoluation, Nick Gould, January 2013
  * ====================================================
  */
 
@@ -13,15 +14,15 @@
 #include <ctype.h>
 #include <math.h>
 
-#define LOQOMA
+#define LOQO_main
 
 #ifdef __cplusplus
 extern "C" {   /* To prevent C++ compilers from mangling symbols */
 #endif
 
-#include "myalloc.h"
+#include "loqo_alloc.h"
 #include "loqo.h"
-#include "cuter.h"
+#include "cutest.h"
 
 typedef struct keyword keyword;
 struct keyword {
@@ -89,7 +90,7 @@ static int spec = 0;
 	void set_opns(LOQO *lp);
 
 /*
- * Global variables used by auxilliary library functions in ccuter.c
+ * Global variables used by auxilliary library functions in ccutest.c
  */
 
     typedef struct {
@@ -111,7 +112,7 @@ static int spec = 0;
 
 /* Variables used in LOQO main driver */
 
-    int *Acuter2loqo, *Atcuter2loqo, qnz, *Qcuter2loqo;
+    int *Acutest2loqo, *Atcutest2loqo, qnz, *Qcutest2loqo;
     double *cscale;      /* some of the constraints must be scaled by minus one, */
     /* if they are inequalities with infinite lower bound.  */
 
@@ -124,7 +125,9 @@ static int spec = 0;
 	char *fname = "OUTSDIF.d"; /* CUTEst data file */
 	integer funit = 42;        /* FORTRAN unit number for OUTSDIF.d */
 	integer iout = 6;          /* FORTRAN unit number for error output */
+	integer io_buffer = 11;    /* FORTRAN unit internal input/output */
 	integer ierr;              /* Exit flag from OPEN and CLOSE */
+	integer status;            /* Exit flag from CUTEst tools */
 
 	integer nconp1;
 
@@ -132,14 +135,16 @@ static int spec = 0;
 	doublereal *x, *bl, *bu, *c, *J, *H;
 	doublereal *v = NULL, *cl = NULL, *cu = NULL;
 	logical *equatn = NULL, *linear = NULL;
-	logical efirst = FALSE_, lfirst = FALSE_, nvfrst = FALSE_, grad;
+	integer e_order = 0, l_order = 0, v_order = 0;
+        logical grad;
 	char *pname, *vnames, *gnames;
 	doublereal f, cmax;
-	real calls[7], cpu[2];
+	doublereal calls[7], cpu[2];
 
 	int *iA=NULL, *kA=NULL, *iQ=NULL, *kQ=NULL, *iAt=NULL, *kAt=NULL;
 
-	int i, status;
+        /*	int i, status; */
+	int i;
 
 	/* Open problem description file OUTSDIF.d */
 	FORTRAN_OPEN( &funit, fname, &ierr );
@@ -149,7 +154,12 @@ static int spec = 0;
 	}
 
 	/* Determine problem size */
-	CDIMEN( &funit, &CUTEr_nvar, &CUTEr_ncon );
+	CUTEST_cdimen( &status, &funit, &CUTEst_nvar, &CUTEst_ncon );
+
+	if( status ) {
+          printf("** CUTEst error, status = %d, aborting\n", status);
+	    exit(status);
+	}
 
 	/* Reserve memory for variables, bounds, and multipliers */
 	MALLOC( x,      CUTEst_nvar, doublereal );
@@ -165,9 +175,14 @@ static int spec = 0;
 	nconp1 = CUTEst_ncon + 1;
 
 	/* Call initialization routine for CUTEst */
-	CSETUP( &funit, &iout, &CUTEr_nvar, &CUTEr_ncon, x, bl, bu,
-		&CUTEr_nvar, equatn, linear, v, cl, cu, &nconp1,
-		&efirst, &lfirst, &nvfrst );
+	CUTEST_csetup( &status, &funit, &iout, &io_buffer, 
+                &CUTEst_nvar, &CUTEst_ncon, x, bl, bu,
+		v, cl, cu, equatn, linear, &e_order, &l_order, &v_order );
+
+	if( status ) {
+          printf("** CUTEst error, status = %d, aborting\n", status);
+	    exit(status);
+	}
 
 	/* Free unneeded arrays */
 	FREE( equatn );
@@ -176,7 +191,13 @@ static int spec = 0;
 	if( CUTEst_ncon > 0 )
 	{
 	    /* Determine number of nonzeros in Jacobian */
-	    CUTEST_cdimsj( status, &CUTEr_nnzj );
+	    CUTEST_cdimsj( &status, &CUTEst_nnzj );
+
+  	    if( status ) {
+               printf("** CUTEst error, status = %d, aborting\n", status);
+ 	       exit(status);
+    	    }
+
 	    /* CUTEst_nnzj -= CUTEst_nvar; */   /* substract dense gradient of objective function */
 
 	    /* Get Jacobian at starting point */
@@ -186,13 +207,19 @@ static int spec = 0;
 	    MALLOC( indfun, CUTEst_nnzj, integer );
 	    grad = TRUE_;
 	    /* Here, idummy will be set to nnzj again */
-	    CUTEST_ccfsg( status, &CUTEr_nvar, &CUTEr_ncon, x, &CUTEr_ncon, c, &idummy,
-		   &CUTEr_nnzj, J, indvar, indfun, &grad );
+	    CUTEST_ccfsg( &status, &CUTEst_nvar, &CUTEst_ncon, x, c, &idummy,
+		   &CUTEst_nnzj, J, indvar, indfun, &grad );
+
+  	    if( status ) {
+               printf("** CUTEst error, status = %d, aborting\n", status);
+ 	       exit(status);
+    	    }
+
 	    FREE( c );
 	    FREE( J );
 
 #ifdef DEBUG
-	    for( i=0; i<CUTEr_nnzj; i++){
+	    for( i=0; i<CUTEst_nnzj; i++){
 		printf("i = %d var = %d fun = %d\n",i,indvar[i],indfun[i]);
 	    }
 #endif
@@ -203,24 +230,24 @@ static int spec = 0;
 	    /* Convert Jacobian sparsity structure */
 	    convert_sparse_format( 0, CUTEst_ncon, CUTEst_nvar, CUTEst_nnzj,
 				   indfun, indvar, &i, &iA,
-				   &kA, &Acuter2loqo );
+				   &kA, &Acutest2loqo );
 #ifdef DEBUG
-	    for( i=0; i<=CUTEr_nvar; i++ )
+	    for( i=0; i<=CUTEst_nvar; i++ )
 		printf("i = %d kA = %d\n",i,kA[i]);
-	    for( i=0; i<CUTEr_nnzj; i++ )
-		printf("i=%d iA=%d map=%d\n",i,iA[i],Acuter2loqo[i]);
+	    for( i=0; i<CUTEst_nnzj; i++ )
+		printf("i=%d iA=%d map=%d\n",i,iA[i],Acutest2loqo[i]);
 #endif
 
 	    /* LOQO's congrad function also requires the mapping for the 
 	       transpose of the Jacobian */
 	    convert_sparse_format( 0, CUTEst_nvar, CUTEst_ncon, CUTEst_nnzj,
 				   indvar, indfun, &i, &iAt,
-				   &kAt, &Atcuter2loqo );
+				   &kAt, &Atcutest2loqo );
 #ifdef DEBUG
-	    for( i=0; i<=CUTEr_ncon; i++ )
+	    for( i=0; i<=CUTEst_ncon; i++ )
 		printf("i = %d kAt = %d\n",i,kAt[i]);
-	    for( i=0; i<CUTEr_nnzj; i++ )
-		printf("i=%d iAt=%d map=%d\n",i,iAt[i],Atcuter2loqo[i]);
+	    for( i=0; i<CUTEst_nnzj; i++ )
+		printf("i=%d iAt=%d map=%d\n",i,iAt[i],Atcutest2loqo[i]);
 #endif
 
 	    FREE( iAt );
@@ -235,7 +262,7 @@ static int spec = 0;
 	}
 
 	/* Determine number of nonzeros in Hessian of Lagrangian */
-	CDIMSH( &CUTEr_nnzh );
+	CDIMSH( &CUTEst_nnzh );
 
 	if( CUTEst_nnzh > 0 )
 	{
@@ -245,12 +272,18 @@ static int spec = 0;
 	    MALLOC( icnh, CUTEst_nnzh, integer );
 	    if( CUTEst_ncon == 0 ) idummy = CUTEst_nnzh; /* for unconstrained problems */
 	    /* idummy will be set to nnzh again */
-	    CUTEST_csh( status, &CUTEr_nvar, &CUTEr_ncon, x, &CUTEr_ncon,
-		 v, &idummy, &CUTEr_nnzh, H, irnh, icnh );
+	    CUTEST_csh( &status, &CUTEst_nvar, &CUTEst_ncon, x, v,
+		 &idummy, &CUTEst_nnzh, H, irnh, icnh );
+
+  	    if( status ) {
+               printf("** CUTEst error, status = %d, aborting\n", status);
+ 	       exit(status);
+    	    }
+
 	    FREE( H );
 
 #ifdef DEBUG
-	    for( i=0; i<CUTEr_nnzh; i++){
+	    for( i=0; i<CUTEst_nnzh; i++){
 		printf("i = %d irnh = %d icnh = %d\n",i,irnh[i],icnh[i]);
 	    }
 #endif
@@ -258,12 +291,12 @@ static int spec = 0;
 	    /* Convert Hessian sparsity structure */
 	    convert_sparse_format( 1, CUTEst_nvar, CUTEst_nvar, CUTEst_nnzh,
 				   irnh, icnh, &qnz, &iQ,
-				   &kQ, &Qcuter2loqo );
+				   &kQ, &Qcutest2loqo );
 #ifdef DEBUG
-	    for( i=0; i<=CUTEr_nvar; i++ )
+	    for( i=0; i<=CUTEst_nvar; i++ )
 		printf("i = %d kQ = %d\n",i,kQ[i]);
 	    for( i=0; i<qnz; i++ )
-		printf("i=%d iQ=%d map=%d\n",i,iQ[i],Qcuter2loqo[i]);
+		printf("i=%d iQ=%d map=%d\n",i,iQ[i],Qcutest2loqo[i]);
 #endif
 
 	    FREE( irnh );
@@ -298,7 +331,7 @@ static int spec = 0;
 	/* Bounds on variables */
 	MALLOC( lp->l, CUTEst_nvar, double );
 	MALLOC( lp->u, CUTEst_nvar, double );
-	for(i=0;i<CUTEr_nvar;i++)
+	for(i=0;i<CUTEst_nvar;i++)
 	{
 	    if( bl[i] <= -CUTE_INF )
 		lp->l[i] = -HUGE_VAL;
@@ -315,7 +348,7 @@ static int spec = 0;
 	MALLOC( lp->b,  CUTEst_ncon, double );
 	MALLOC( lp->r,  CUTEst_ncon, double );
 	MALLOC( cscale, CUTEst_ncon, double );
-	for( i=0; i<CUTEr_ncon; i++)
+	for( i=0; i<CUTEst_ncon; i++)
 	{
 	    if( cl[i] <= -CUTE_INF ) /* Scale the constraint by -1 */
 	    {
@@ -335,7 +368,7 @@ static int spec = 0;
 	}
 
 #ifdef DEBUG
-	for(i=0; i<CUTEr_ncon; i++) 
+	for(i=0; i<CUTEst_ncon; i++) 
 	    printf("cscale[%d] = %f r[%d] = %e b[%d] = %e\n", i, 
 		   cscale[i], i, lp->r[i], i, lp->b[i]);
 #endif
@@ -359,10 +392,10 @@ static int spec = 0;
 	status = solvelp( lp );
 
 	/* Free memory */
-	FREE( Qcuter2loqo );
+	FREE( Qcutest2loqo );
 	FREE( cscale );
-	FREE( Atcuter2loqo );
-	FREE( Acuter2loqo );
+	FREE( Atcutest2loqo );
+	FREE( Acutest2loqo );
 
 	printf("LOQO status: %d\n",status);
 
@@ -370,7 +403,13 @@ static int spec = 0;
 	MALLOC( pname, FSTRING_LEN+1, char );
 	MALLOC( vnames, CUTEst_nvar*FSTRING_LEN, char );
 	MALLOC( gnames, CUTEst_ncon*FSTRING_LEN, char );
-	CNAMES( &CUTEr_nvar, &CUTEr_ncon, pname, vnames, gnames );
+	CUTEST_cnames( &status, &CUTEst_nvar, &CUTEst_ncon, 
+                       pname, vnames, gnames );
+
+  	if( status ) {
+           printf("** CUTEst error, status = %d, aborting\n", status);
+ 	   exit(status);
+    	}
 
 	FREE( vnames );
 	FREE( gnames );
@@ -382,9 +421,15 @@ static int spec = 0;
 
 	/* Compute final value of objective function and constraint violation */
 	MALLOC( c, CUTEst_ncon, doublereal );
-	CFN( &CUTEr_nvar, &CUTEr_ncon, lp->x, &f, &CUTEr_ncon, c );
+	CUTEST_cfn( &status, &CUTEst_nvar, &CUTEst_ncon, lp->x, &f, c );
+
+  	if( status ) {
+           printf("** CUTEst error, status = %d, aborting\n", status);
+ 	   exit(status);
+    	}
+
 	cmax = 0.;
-	for( i=0; i<CUTEr_ncon; i++)
+	for( i=0; i<CUTEst_ncon; i++)
 	{
 	    if( cl[i] > -CUTE_INF )
 		cmax = max(cmax, cl[i] - c[i]);
@@ -392,7 +437,7 @@ static int spec = 0;
 		cmax = max(cmax, c[i] - cu[i]);
 	}
 	FREE( c );
-	for( i=0; i<CUTEr_nvar; i++)
+	for( i=0; i<CUTEst_nvar; i++)
 	{
 	    if( bl[i] > -CUTE_INF )
 		cmax = max(cmax, bl[i] - lp->x[i]);
@@ -412,7 +457,12 @@ static int spec = 0;
 	printf( "# Eval H(x) \t%-6d\n", count_h );
 										
 	/* Get CUTEst statistics */
-	CREPRT( calls, cpu );
+	CUTEST_creprt( &status, calls, cpu );
+
+  	if( status ) {
+           printf("** CUTEst error, status = %d, aborting\n", status);
+ 	   exit(status);
+    	}
 
 	printf("\n\n ************************ CUTEst statistics ************************\n\n");
 	printf(" Code used               : LOQO\n");
@@ -443,6 +493,7 @@ static int spec = 0;
 	    printf( "Error closing file %s", fname );
 	    return 1;
 	}
+	CUTEST_cterminate( &status );
 	return 0;
     }
 
@@ -457,10 +508,17 @@ static int spec = 0;
     double objval( double *x ) {
 	logical grad = FALSE_;
 	doublereal *dummy, f;
+	integer status; 
 
 	count_f++;
 
-	COFG( &CUTEr_nvar, x, &f, dummy, &grad );
+	CUTEST_cofg( &status, &CUTEst_nvar, x, &f, dummy, &grad );
+
+  	if( status ) {
+           printf("** CUTEst error, status = %d, aborting\n", status);
+ 	   exit(status);
+    	}
+
 	return f;
     }
 
@@ -473,10 +531,17 @@ static int spec = 0;
     void objgrad( double *c, double *x ) {
 	logical grad = TRUE_;
 	doublereal fdummy;
+	integer status; 
 
 	count_g++;
 
-	COFG( &CUTEr_nvar, x, &fdummy, c, &grad );
+	CUTEST_cofg( &status, &CUTEst_nvar, x, &fdummy, c, &grad );
+
+  	if( status ) {
+           printf("** CUTEst error, status = %d, aborting\n", status);
+ 	   exit(status);
+    	}
+
 	return;
     }
 
@@ -491,6 +556,7 @@ static int spec = 0;
 	doublereal *v;
 	integer idummy, *irnh, *icnh;
 	int i;
+	integer status; 
 
 	count_h++;
 
@@ -501,15 +567,20 @@ static int spec = 0;
 
 	/* Rescale the multipliers according to cscale - also, note that LOQO
 	   uses '-' in the definition of the Lagrangian while CUTEst uses '+' */
-	for( i=0; i<CUTEr_ncon; i++ )
+	for( i=0; i<CUTEst_ncon; i++ )
 	    v[i] = -1.*cscale[i]*y[i];
 
-	CSH( &CUTEr_nvar, &CUTEr_ncon, x, &CUTEr_ncon,
-	     v, &idummy, &CUTEr_nnzh, h, irnh, icnh );
+	CUTEST_csh( &status, &CUTEst_nvar, &CUTEst_ncon, x, v,
+	     &idummy, &CUTEst_nnzh, h, irnh, icnh );
+
+  	if( status ) {
+           printf("** CUTEst error, status = %d, aborting\n", status);
+ 	   exit(status);
+    	}
 
 	/* Now copy values into correct places in Q */
 	for( i=0; i<qnz; i++ )
-	    Q[i] = h[Qcuter2loqo[i]];
+	    Q[i] = h[Qcutest2loqo[i]];
 
 	FREE( icnh );
 	FREE( irnh );
@@ -527,16 +598,22 @@ static int spec = 0;
 	int i;
 	logical jtrans = FALSE_;
 	logical grad = FALSE_;
+	integer status; 
 	integer izero=0;
 	doublereal *cjac;
 
 	count_c++;
 
-	CCFG( &CUTEr_nvar, &CUTEr_ncon, x, &CUTEr_ncon,
-	      h, &jtrans, &izero, &izero, cjac, &grad );
+	CUTEST_ccfg( &status, &CUTEst_nvar, &CUTEst_ncon, x, h,
+	      &jtrans, &izero, &izero, cjac, &grad );
+
+  	if( status ) {
+           printf("** CUTEst error, status = %d, aborting\n", status);
+ 	   exit(status);
+    	}
 
 	/* Scale according to cscale */
-	for( i=0; i<CUTEr_ncon; i++ )
+	for( i=0; i<CUTEst_ncon; i++ )
 	    h[i] = cscale[i]*h[i];
     }
 
@@ -550,7 +627,7 @@ static int spec = 0;
 	doublereal *c, *cjac;
 	integer idummy, *indvar, *indfun;
 	logical grad=TRUE_;
-
+	integer status; 
 	int i;
 
 	count_a++;
@@ -560,27 +637,32 @@ static int spec = 0;
 	MALLOC( indvar, CUTEst_nnzj, integer );
 	MALLOC( indfun, CUTEst_nnzj, integer );
 
-	CCFSG( &CUTEr_nvar, &CUTEr_ncon, x, &CUTEr_ncon,
-	       c, &idummy, &CUTEr_nnzj, cjac, indvar, indfun, &grad );
+	CUTEST_ccfsg( &status, &CUTEst_nvar, &CUTEst_ncon, x, c,
+	       &idummy, &CUTEst_nnzj, cjac, indvar, indfun, &grad );
+
+  	if( status ) {
+           printf("** CUTEst error, status = %d, aborting\n", status);
+ 	   exit(status);
+    	}
 
 	/* Scale entries according to cscale */
-	for( i=0; i<CUTEr_nnzj; i++)
+	for( i=0; i<CUTEst_nnzj; i++)
 	    cjac[i] = cscale[indfun[i]-1]*cjac[i];
 
 #ifdef DEBUG
-	for(i=0;i<CUTEr_nnzj;i++)
+	for(i=0;i<CUTEst_nnzj;i++)
 	    printf("indfun[%d]= %d  cjac[%d] = %e\n",i,indfun[i],i,cjac[i]);
 #endif
 
 	/* Copy entries into LOQO's format */
-	for( i=0; i<CUTEr_nnzj; i++) {
-	    A[i]  = cjac[Acuter2loqo[i]];
-	    At[i] = cjac[Atcuter2loqo[i]];
+	for( i=0; i<CUTEst_nnzj; i++) {
+	    A[i]  = cjac[Acutest2loqo[i]];
+	    At[i] = cjac[Atcutest2loqo[i]];
 	}
 
 #ifdef DEBUG
 	printf("\nJacobian:\n");
-	for(i=0;i<CUTEr_nnzj;i++)
+	for(i=0;i<CUTEst_nnzj;i++)
 	    printf("%d A = %f  At = %f\n",i,A[i],At[i]);
 #endif
 
@@ -597,9 +679,9 @@ static int spec = 0;
 #endif
 #define __FUNCT__ "compare"
     int compare(const void *A, const void *B) {
-	CUTErentry *a, *b;
-	a = (CUTErentry *) A;
-	b = (CUTErentry *) B;
+	CUTEstentry *a, *b;
+	a = (CUTEstentry *) A;
+	b = (CUTEstentry *) B;
 	if (a->j < b->j) return(-1);
 	if (a->j > b->j) return(1);
 	if (a->i < b->i) return(-1);
@@ -625,8 +707,8 @@ static int spec = 0;
 			       int **k_out,     /* sparse format - columns */
 			       int **cute2loqo  /* mapping for values */
 	) {
-	int i, j, icuter;
-	CUTErentry *A;
+	int i, j, icutest;
+	CUTEstentry *A;
 
 	MALLOC(A, 2*nnz_in, CUTEstentry);   /* we are generous... */
 
@@ -663,7 +745,7 @@ static int spec = 0;
 #endif
 
 	/* sort the entries */
-	qsort(A, *nnz_out, sizeof(CUTErentry), compare);
+	qsort(A, *nnz_out, sizeof(CUTEstentry), compare);
 
 #ifdef DEBUG
 	printf("After qsort:\n\n");
@@ -678,16 +760,16 @@ static int spec = 0;
 	MALLOC(*k_out, m+1, int);
 	MALLOC(*cute2loqo, *nnz_out, int);
 
-	icuter = 0;
+	icutest = 0;
 	for( j=0; j<m; j++ ) {
-	    (*k_out)[j] = icuter;
-	    while( icuter < *nnz_out && A[icuter].j == j ) {
-		(*i_out)[icuter] = A[icuter].i;
-		(*cute2loqo)[icuter] = A[icuter].pos;
-		icuter++;
+	    (*k_out)[j] = icutest;
+	    while( icutest < *nnz_out && A[icutest].j == j ) {
+		(*i_out)[icutest] = A[icutest].i;
+		(*cute2loqo)[icutest] = A[icutest].pos;
+		icutest++;
 	    }
 	}
-	(*k_out)[m] = icuter;
+	(*k_out)[m] = icutest;
 
 	/* That should be it */
 	FREE( A );
@@ -858,7 +940,7 @@ void set_opns(LOQO *lp) {
 int rd_specs(char *Spec_name) {
 	char *s1;
 	keyword *kw;
-	char	*CUTEr_loc;
+	char	*CUTEst_loc;
 	char	*Spec_loc;
 	char	specline[80];
 	char	option[15], val[15], comment[50];

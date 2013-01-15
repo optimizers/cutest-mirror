@@ -15,9 +15,11 @@ C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 C  Set up parameters, variables and arrays required by constrained tools
 
       INTEGER, PARAMETER :: input = 55, out = 6
-      INTEGER :: n, m, ldcj, ldr, liwork, lwork, npm
+      INTEGER, PARAMETER :: io_buffer = 11
+      INTEGER :: n, m, ldcj, ldr, liwork, lwork, npm, i, ib, ic, j
       INTEGER :: ioptns, iprint, ncnln, inform, iter, status
       DOUBLE PRECISION :: f
+      DOUBLE PRECISION, PARAMETER :: zero = 0.0D+0
       DOUBLE PRECISION :: CPU( 2 ), CALLS( 7 )
       LOGICAL :: debug
       CHARACTER ( LEN= 10 ) :: cbgbnd
@@ -30,8 +32,6 @@ C  Set up parameters, variables and arrays required by constrained tools
       DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : , : ) :: A, R, CJAC
       LOGICAL, ALLOCATABLE, DIMENSION( : ) :: EQUATN, LINEAR
       external :: NPSOL_evalfg, NPSOL_evalcj
-
-C  finite-difference gradients allowed
       LOGICAL :: fdgrad
       COMMON / FDG   / fdgrad
 
@@ -97,11 +97,87 @@ C  allocate space
      *          CLAMBDA( npm ), STAT = status )
       IF ( status /= 0 ) GO TO 990
 
-C  Set up the data structures necessary to hold the problem functions.
+C  input problem data using CSETUP - reorder the constraints so that the 
+C  nonlinear constraints occur before the linear ones.  The constraints 
+C  are ordered in this way so that CCFG need evaluate the Jacobian for 
+C  only the first NCNLN constraints
 
-      CALL NPSOL_setup( input, out, n, m, nclin, ncnln, X, BL, BU,
-     *             EQUATN, LINEAR, Y, C, CL, CU, BLOWER, BUPPER, 
-     *             CLAMBDA, lda, A, ldcj, CJAC )
+      CALL CUTEST_csetup( status, input, out, io_buffer, n, m, X, BL, 
+     *                    BU, Y, CL, CU,EQUATN, LINEAR, 0, 2, 0 )
+      CLOSE( input )
+      IF ( status /= 0 ) GO TO 910
+
+C  determine the number of linear and nonlinear constraints
+
+      nclin = COUNT( LINEAR( 1 : m ) )
+      ncnln = m - nclin
+
+C  set up the lower bound vector BLOWER and upper bound vector BUPPER
+C  in the order required by NPSOL. For i=1 to n, set BLOWER (BUPPER) 
+C  to the lower (upper) bound on the variables.  (CSETUP put these bounds 
+C  in BL and BU.). For i=n+1 to n+nclin, set BLOWER (BUPPER) to the lower 
+C  (upper) bounds on the linear constraints. For i=n+nclin+1 to n+nclin+
+C   ncnln, set BLOWER (BUPPER) to the lower (upper) bounds on the nonlinear 
+C  constraints. At the same time, copy the multiplier estimates from Y to 
+C  CLAMBDA. CLAMBDA has the same ordering as BLOWER and BUPPER.
+
+      DO 150 i = 1, n
+        BLOWER( i ) = BL( i )
+        BUPPER( i ) = BU( i )
+        CLAMBDA( i ) = zero
+        G( i ) = zero
+  150 CONTINUE
+      DO 160 i = 1, nclin
+        ib = n + i
+        ic = ncnln + i
+        BLOWER( ib ) = CL( ic )
+        BUPPER( ib ) = CU( ic )
+        CLAMBDA( ib ) = Y( ic )
+  160 CONTINUE
+      DO 170 i = 1, ncnln
+        ib = n + nclin + i
+        BLOWER( ib ) = CL( i )
+        BUPPER( ib ) = CU( i )
+        CLAMBDA( ib ) = Y( i )
+  170 CONTINUE
+
+C  compute the constraint values and Jacobian at X = G = 0
+      
+      CALL CUTEST_ccfg( status, n, m, G, C, .FALSE., 
+     *                  ldcj, n, CJAC, .TRUE. )
+      IF ( status .NE. 0 ) THEN
+        WRITE( 6, "( ' CUTEst error, status = ', i0, ', stopping' )") 
+     *   status
+        STOP
+      END IF
+
+C  set A, the coefficients of the linear constraints
+
+      DO 230 J = 1, n
+        DO 210 i = 1, nclin
+          ic = ncnln + i
+          A( i, j ) = CJAC( ic, j )
+  210   CONTINUE
+  230 CONTINUE
+
+C  Incorporate nonzero RHS constants of linear constraints into the 
+C  lower and upper bounds
+
+      DO 250 i = 1, nclin
+        ic = ncnln + i
+        ib = n + i
+        BLOWER( ib ) = BLOWER( ib ) + C( ic )
+        BUPPER( ib ) = BUPPER( ib ) + C( ic )
+  250 CONTINUE
+
+C  Incorporate nonzero RHS constants of nonlinear constraints into
+C  the lower and upper bounds.
+
+      DO 260 i = 1, ncnln
+        ib = n + nclin + i
+        BLOWER( ib ) = BLOWER( ib ) + C( i )
+        BUPPER( ib ) = BUPPER( ib ) + C( i )
+  260 CONTINUE
 
 C  Get the problem name and write some debug messages.
 
@@ -187,6 +263,11 @@ C  Output final objective function value and timing information
       IF ( out .GT. 0 )
      *  WRITE ( out, 2000 ) pname, n, m, CALLS( 1 ), CALLS( 2 ), 
      *   CALLS( 5 ), CALLS( 6 ), inform, f, CPU( 1 ), CPU( 2 )
+
+      DEALLOCATE( X, BL, BU, Y, CL, CU, G, C, EQUATN, LINEAR, WORK,
+     *            IWORK, ISTATE, CJAC, A, R, BLOWER, BUPPER, CLAMBDA, 
+     *            STAT = status )
+      CALL CUTEST_cterminate( status )
       STOP
 
   910 CONTINUE
@@ -249,105 +330,6 @@ C  Non-executable statements
  4007 FORMAT(    ' The provided derivatives of the objective function',
      *        /, ' or nonlinear constraints appear to be incorrect.' )
  4009 FORMAT(    ' An input parameter is invalid.' )
-      END
-
-      SUBROUTINE NPSOL_setup( input, out, n, m, nclin, ncnln, X, BL, BU,
-     *                   EQUATN, LINEAR, Y, C, CL, CU, BLOWER, BUPPER, 
-     *                   CLAMBDA, LDA, A, LDCJ, CJAC )
-      INTEGER :: input, out, n, m, nclin, ncnln, lda, ldcj
-      DOUBLE PRECISION :: X( n ), BL( n ), BU( n )
-      DOUBLE PRECISION :: C( m ), Y( m ), CL( m ), CU( m )
-      DOUBLE PRECISION :: BLOWER( n + m ), BUPPER( n + m )
-      DOUBLE PRECISION :: CLAMBDA( n + m )
-      DOUBLE PRECISION :: A( lda, n ), CJAC( ldcj, n )
-      LOGICAL :: EQUATN( m ), LINEAR( m )
-
-C  set up initial data for NPSOL
-
-      INTEGER :: i, ib, ic, j, status
-      INTEGER, PARAMETER :: io_buffer = 11
-      DOUBLE PRECISION, PARAMETER :: zero = 0.0D+0
-
-C  input problem data using CSETUP -Reorder the constraints so that the 
-C  nonlinear constraints occur before the linear ones.  The constraints 
-C  are ordered in this way so that CCFG need evaluate the Jacobian for 
-C  only the first NCNLN constraints
-
-      CALL CUTEST_csetup( status, input, out, io_buffer, n, m, X, BL, 
-     *                    BU, Y, CL, CU,EQUATN, LINEAR, 0, 2, 0 )
-      CLOSE( input )
-
-C  determine the number of linear and nonlinear constraints
-
-      nclin = COUNT( LINEAR( 1 : m ) )
-      ncnln = m - nclin
-
-C  set up the lower bound vector BLOWER and upper bound vector BUPPER
-C  in the order required by NPSOL. For i=1 to n, set BLOWER (BUPPER) 
-C  to the lower (upper) bound on the variables.  (CSETUP put these bounds 
-C  in BL and BU.). For i=n+1 to n+nclin, set BLOWER (BUPPER) to the lower 
-C  (upper) bounds on the linear constraints. For i=n+nclin+1 to n+nclin+
-C   ncnln, set BLOWER (BUPPER) to the lower (upper) bounds on the nonlinear 
-C  constraints. At the same time, copy the multiplier estimates from Y to 
-C  CLAMBDA. CLAMBDA has the same ordering as BLOWER and BUPPER.
-
-      DO 150 i = 1, n
-        BLOWER( i ) = BL( i )
-        BUPPER( i ) = BU( i )
-        CLAMBDA( i ) = zero
-  150 CONTINUE
-      DO 160 i = 1, nclin
-        ib = n + i
-        ic = ncnln + i
-        BLOWER( ib ) = CL( ic )
-        BUPPER( ib ) = CU( ic )
-        CLAMBDA( ib ) = Y( ic )
-  160 CONTINUE
-      DO 170 i = 1, ncnln
-        ib = n + nclin + i
-        BLOWER( ib ) = CL( i )
-        BUPPER( ib ) = CU( i )
-        CLAMBDA( ib ) = Y( i )
-  170 CONTINUE
-
-C  compute the constraint values and Jacobian at X
-
-      CALL CUTEST_ccfg( status, n, m, X, C, .FALSE., 
-     *                  ldcj, n, CJAC, .TRUE. )
-      IF ( status .NE. 0 ) THEN
-        WRITE( 6, "( ' CUTEst error, status = ', i0, ', stopping' )") 
-     *   status
-        STOP
-      END IF
-
-C  set A, the coefficients of the linear constraints
-
-      DO 230 J = 1, n
-        DO 210 i = 1, nclin
-          ic = ncnln + i
-          A( i, j ) = CJAC( ic, j )
-  210   CONTINUE
-  230 CONTINUE
-
-C  Incorporate nonzero RHS constants of linear constraints into the 
-C  lower and upper bounds
-
-      DO 250 i = 1, nclin
-        ic = ncnln + i
-        ib = n + i
-        BLOWER( ib ) = BLOWER( ib ) + C( ic )
-        BUPPER( ib ) = BUPPER( ib ) + C( ic )
-  250 CONTINUE
-
-C  Incorporate nonzero RHS constants of nonlinear constraints into
-C  the lower and upper bounds.
-
-      DO 260 i = 1, ncnln
-        ib = n + nclin + i
-        BLOWER( ib ) = BLOWER( ib ) + C( i )
-        BUPPER( ib ) = BUPPER( ib ) + C( i )
-  260 CONTINUE
-      RETURN
       END
 
       SUBROUTINE NPSOL_evalfg( mode, n, X, f, G, nstate )

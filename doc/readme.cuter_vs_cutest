@@ -163,7 +163,7 @@ new tool:
                 EQUATION, LINEAR, Y, C_l, C_u, m, efirst, lfirst, nvfrst )
 -->
  CUTEST_csetup( status, input, out, io_buffer, n, m, X, X_l, X_u,          &
-                Y, C_l, C_u, EQUATION, LINEAR,    efirst, lfirst, nvfrst )
+                Y, C_l, C_u, EQUATION, LINEAR,    e_order, l_order, v_order )
 .............................................................................
 
 .............................................................................
@@ -342,9 +342,13 @@ or equivalently
  CUTEST_creport( status, CALLS, CPU )
 .............................................................................
 
-new tool:
+new tools:
 
  CUTEST_cterminate( status )
+
+ CUTEST_cstats( status, nonlinear_variables_objective,              &
+                nonlinear_variables_constraints,                    &   
+                equality_constraints, linear_constraints )
 
 Package support removed
 -----------------------
