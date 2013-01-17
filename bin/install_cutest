@@ -456,6 +456,7 @@ fi
 
 OBJDIR=$CUTEST/objects/$VERSION
 MODDIR=$CUTEST/modules/$VERSION
+PKGDIR=$CUTEST/packages/$VERSION
 
 echo "$MACHINE ($OPSYS) $COMPUSED" > $CUTEST/versions/$VERSION
 
@@ -483,6 +484,16 @@ else
     fi
 fi
 
+if [[ ! -e $PKGDIR/double ]]; then
+$MKDIR $PKGDIR/double
+fi
+if [[ ! -e $PKGDIR/single ]]; then
+$MKDIR $PKGDIR/single
+fi
+
+#$CP $CUTEST/packages/master/* $PKGDIR/double/
+#$CP $CUTEST/packages/master/* $PKGDIR/single/
+
 #  write out the cutest/bin/sys file for this architecture
 
 SYSFILE=$CUTEST/bin/sys/$VERSION
@@ -492,7 +503,9 @@ echo 'MAKE="'$MAKE'"'                                              >> $SYSFILE
 echo 'CAT="'$CAT'"'                                                >> $SYSFILE
 echo 'SED="'$SED'"'                                                >> $SYSFILE
 echo 'MV="'$MV'"'                                                  >> $SYSFILE
+echo 'CP="'$CP'"'                                                  >> $SYSFILE
 echo 'LS="'$LS'"'                                                  >> $SYSFILE
+echo 'LN="'$LN'"'                                                  >> $SYSFILE
 echo 'FORTRAN="'$FORTRAN'"'                                        >> $SYSFILE
 MOD='$CUTEST/modules/'$VERSION'/$PRECIS'
 FFLAGS="$LIBCMD"' '`eval echo $MODCMD`' '"$F90"

@@ -47,7 +47,7 @@
  * ihess      udh / cidh                  Evaluate the Hessian matrix of the
  *                                         i-th problem function (i=0 is the
  *                                         objective function), or of the
- *                                         objective if problem is             *                                         unconstrained
+ *                                         objective if problem is unconstrained
  *
  * hprod      uprod / cprod               Evaluate the matrix-vector product
  *                                         between the Hessian of the
@@ -72,7 +72,10 @@
  *                                         objective if problem is
  *                                         unconstrained, in sparse format
  *
+ *                                          CUTEr version:
  *                                           D. Orban, Montreal, January 2007
+ *                                          CUTEst version additions:
+ *                                           Nick Gould, January 2013
  */
 
 /* -------------------------------------------------------------------------- */
@@ -171,6 +174,8 @@ extern "C" {
     integer  funit = 42;          /* FORTRAN unit number for OUTSDIF.d */
     integer  iout = 6;         /* FORTRAN unit number for error output */
     integer  ioErr;                   /* Exit flag from OPEN and CLOSE */
+    integer io_buffer = 11;    /* FORTRAN unit internal input/output */
+    integer status;            /* Exit flag from CUTEst tools */
 
     char msgBuf[256];
 
@@ -183,7 +188,8 @@ extern "C" {
     doublereal *p, *r;
 
     logical *equatn = NULL, *linear = NULL;
-    logical  efirst = TRUE_, lfirst = TRUE_, nvfrst = FALSE_;
+    /* logical  efirst = TRUE_, lfirst = TRUE_, nvfrst = FALSE_; */
+    integer e_order = 1, l_order = 1, v_order = 0;
     logical  somethingFalse = FALSE_, somethingTrue = TRUE_;
     logical  individual;
 
@@ -246,7 +252,12 @@ extern "C" {
 #ifdef MXDEBUG
       mexPrintf("Calling CDIMEN\n");
 #endif
-      CDIMEN(&funit, &CUTEst_nvar, &CUTEst_ncon);
+      CUTEST_cdimen( &status, &funit, &CUTEst_nvar, &CUTEst_ncon);
+      if (status != 0) {
+          sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
+          mexErrMsgTxt(msgBuf);
+        }
+
 #ifdef MXDEBUG
       mexPrintf("  n = %-d, m = %-d\n", CUTEst_nvar, CUTEst_ncon);
 #endif
@@ -282,9 +293,9 @@ extern "C" {
           lFirst  = mxGetLogicals(prhs[2]);
           nvFirst = mxGetLogicals(prhs[3]);
 
-          efirst = *eFirst  ? TRUE_ : FALSE_;
+          /*          efirst = *eFirst  ? TRUE_ : FALSE_;
           lfirst = *lFirst  ? TRUE_ : FALSE_;
-          nvfrst = *nvFirst ? TRUE_ : FALSE_;
+          nvfrst = *nvFirst ? TRUE_ : FALSE_; */
         }
 
 #ifdef MXDEBUG
@@ -297,7 +308,11 @@ extern "C" {
 #ifdef MXDEBUG
       mexPrintf("Calling CDIMEN\n");
 #endif
-      CDIMEN(&funit, &CUTEst_nvar, &CUTEst_ncon);
+      CUTEST_cdimen( &status, &funit, &CUTEst_nvar, &CUTEst_ncon);
+      if (status != 0) {
+          sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
+          mexErrMsgTxt(msgBuf);
+        }
 #ifdef MXDEBUG
       mexPrintf("  n = %-d, m = %-d\n", CUTEst_nvar, CUTEst_ncon);
 
@@ -326,11 +341,17 @@ extern "C" {
       mexPrintf("Calling [UC]SETUP\n");
 #endif
       if (CUTEst_ncon > 0)
-        CSETUP(&funit, &iout, &CUTEst_nvar, &CUTEst_ncon, x, bl, bu,
-                &CUTEst_nvar, equatn, linear, v, cl, cu, &CUTEst_ncon,
-                &efirst, &lfirst, &nvfrst);
+        CUTEST_csetup( &status, &funit, &iout, &io_buffer, 
+                       &CUTEst_nvar, &CUTEst_ncon, x, bl, bu,
+                       v, cl, cu, equatn, linear, 
+                       &e_order, &l_order, &v_order );
       else
-        USETUP(&funit, &iout, &CUTEst_nvar, x, bl, bu, &CUTEst_nvar);
+        CUTEST_usetup( &status, &funit, &iout, &io_buffer, 
+                       &CUTEst_nvar, x, bl, bu );
+      if (status != 0) {
+          sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
+          mexErrMsgTxt(msgBuf);
+        }
 #ifdef MXDEBUG
       mexPrintf("  n = %-d, m = %-d\n", CUTEst_nvar, CUTEst_ncon);
 #endif
@@ -353,16 +374,20 @@ extern "C" {
 #ifdef MXDEBUG
       mexPrintf("Calling CDIMSH/CDIMSJ\n");
 #endif
-      CDIMSH(&CUTEst_nnzh);
+      CUTEST_cdimsh( &status, &CUTEst_nnzh);
+      if (status != 0) {
+          sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
+          mexErrMsgTxt(msgBuf);
+        }
       if (CUTEst_ncon > 0) {
-        CDIMSJ(&CUTEst_nnzj);
+        CUTEST_cdimsj( &status, &CUTEst_nnzj);
         CUTEst_nnzj -= CUTEst_nvar;
       }
 #ifdef MXDEBUG
       mexPrintf("  nnzh = %-d, nnzj = %-d\n", CUTEst_nnzh, CUTEst_nnzj);
       mexPrintf("Finding out problem name\n");
 #endif
-      PBNAME(&CUTEst_nvar, probName);
+      CUTEST_probname( &status, probName );
       probName[STR_LEN] = '\0';
       MprobName = mxCreateString(probName);
 
@@ -421,7 +446,7 @@ extern "C" {
     if (! setupCalled) mexErrMsgTxt("setup() must be called first\n");
 
     /* Obtain variable names
-     * Usage: vnames = varnames()
+     * Usage: vnames = CUTEST_varnames( &status, )
      */
     if (strcmp(toolName, "varnames") == 0) {
 
@@ -433,7 +458,7 @@ extern "C" {
       if (!Fvnames)
         mexErrMsgTxt("varnames: Error allocating room for variable names\n");
 
-      VARNAMES(&CUTEst_nvar, Fvnames);
+      CUTEST_varnames( &status, &CUTEst_nvar, Fvnames);
 
       /* Transfer to a C array of strings.
        * If you know of a cleaner and portable way to do this, please
@@ -463,7 +488,7 @@ extern "C" {
     /* ------------------------------------------------------------------ */
 
     /* Obtain constraint names
-     * Usage: cnames = connames()
+     * Usage: cnames = CUTEST_connames( &status, )
      */
     if (strcmp(toolName, "connames") == 0) {
 
@@ -480,7 +505,11 @@ extern "C" {
       if (!Fcnames)
         mexErrMsgTxt("connames: Error allocating room for constraint names\n");
 
-      CONNAMES(&CUTEst_ncon, Fcnames);
+      CUTEST_connames( &status, &CUTEst_ncon, Fcnames);
+      if (status != 0) {
+          sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
+          mexErrMsgTxt(msgBuf);
+        }
 
       /* Transfer to a C array of strings.
        * If you know of a cleaner and portable way to do this, please
@@ -533,7 +562,11 @@ extern "C" {
       plhs[1] = mxCreateDoubleMatrix(CUTEst_ncon, 1, mxREAL);
       c = (doublereal *)mxGetData(plhs[1]);
 
-      CFN(&CUTEst_nvar, &CUTEst_ncon, x, f, &CUTEst_ncon, c);
+      CUTEST_cfn( &status, &CUTEst_nvar, &CUTEst_ncon, x, f, c);
+      if (status != 0) {
+          sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
+          mexErrMsgTxt(msgBuf);
+        }
 
       mxFree((void *)toolName);
       return;
@@ -566,14 +599,19 @@ extern "C" {
 
       if (CUTEst_ncon == 0)
         if (nlhs == 1)
-          UOFG(&CUTEst_nvar, x, f, NULL, &somethingFalse);
+          CUTEST_uofg( &status, &CUTEst_nvar, x, f, NULL, &somethingFalse);
         else
-          UOFG(&CUTEst_nvar, x, f, g, &somethingTrue);
+          CUTEST_uofg( &status, &CUTEst_nvar, x, f, g, &somethingTrue);
       else
         if (nlhs == 1)
-          COFG(&CUTEst_nvar, x, f, NULL, &somethingFalse);
+          CUTEST_cofg( &status, &CUTEst_nvar, x, f, NULL, &somethingFalse);
         else
-          COFG(&CUTEst_nvar, x, f, g, &somethingTrue);
+          CUTEST_cofg( &status, &CUTEst_nvar, x, f, g, &somethingTrue);
+
+      if (status != 0) {
+          sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
+          mexErrMsgTxt(msgBuf);
+        }
 
       mxFree((void *)toolName);
       return;
@@ -600,7 +638,11 @@ extern "C" {
       plhs[0] = mxCreateDoubleMatrix(CUTEst_nvar, 1, mxREAL);
       g  = (doublereal *)mxGetData(plhs[0]);
 
-      UGR(&CUTEst_nvar, x, g);
+      CUTEST_ugr( &status, &CUTEst_nvar, x, g);
+      if (status != 0) {
+          sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
+          mexErrMsgTxt(msgBuf);
+        }
 
       mxFree((void *)toolName);
       return;
@@ -658,10 +700,10 @@ extern "C" {
         }
 
         if (nlhs == 1)
-          CCFG(&CUTEst_nvar, &CUTEst_ncon, x, &CUTEst_ncon, c,
+          CUTEST_ccfg( &status, &CUTEst_nvar, &CUTEst_ncon, x, c,
                 &somethingFalse, &zero, &zero, NULL, &somethingFalse);
         else
-          CCFG(&CUTEst_nvar, &CUTEst_ncon, x, &CUTEst_ncon, c,
+          CUTEST_ccfg( &status, &CUTEst_nvar, &CUTEst_ncon, x, c,
                 &somethingFalse, &CUTEst_ncon, &CUTEst_nvar, J,
                 &somethingTrue);
       } else {
@@ -674,10 +716,16 @@ extern "C" {
         }
 
         if (nlhs == 1)         /* Only constraint value is requested */
-          CCIFG(&CUTEst_nvar, &icon, x, c, NULL, &somethingFalse);
+          CUTEST_ccifg( &status, &CUTEst_nvar, &icon, x, c, 
+                        NULL, &somethingFalse);
         else           /* Constraint value and gradient are requested */
-          CCIFG(&CUTEst_nvar, &icon, x, c, g, &somethingTrue);
+          CUTEST_ccifg( &status, &CUTEst_nvar, &icon, x, c, 
+                        g, &somethingTrue);
       }
+      if (status != 0) {
+          sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
+          mexErrMsgTxt(msgBuf);
+        }
 
       mxFree((void *)toolName);
       return;
@@ -714,11 +762,15 @@ extern "C" {
       J  = (doublereal *)mxGetData(plhs[1]);
 
       if (nrhs == 2)             /* g = gradient of objective function */
-        CGR(&CUTEst_nvar, &CUTEst_ncon, x, &somethingFalse, &CUTEst_ncon,
-             NULL, g, &somethingFalse, &CUTEst_ncon, &CUTEst_nvar, J);
+        CUTEST_cgr( &status, &CUTEst_nvar, &CUTEst_ncon, x, NULL, 
+            &somethingFalse, g, &somethingFalse, &CUTEst_ncon, &CUTEst_nvar, J);
       else                                /* g = gradient of Lagrangian */
-        CGR(&CUTEst_nvar, &CUTEst_ncon, x, &somethingTrue, &CUTEst_ncon,
-             v, g, &somethingFalse, &CUTEst_ncon, &CUTEst_nvar, J);
+        CUTEST_cgr( &status, &CUTEst_nvar, &CUTEst_ncon, x, v, 
+            &somethingTrue, g, &somethingFalse, &CUTEst_ncon, &CUTEst_nvar, J);
+      if (status != 0) {
+          sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
+          mexErrMsgTxt(msgBuf);
+        }
 
       mxFree((void *)toolName);
       return;
@@ -775,8 +827,12 @@ extern "C" {
         irow = (integer *)mxCalloc(CUTEst_nnzj, sizeof(integer));
         jcol = (integer *)mxCalloc(CUTEst_nnzj, sizeof(integer));
 
-        CCFSG(&CUTEst_nvar, &CUTEst_ncon, x, &CUTEst_ncon, c, &CUTEst_nnzj,
+        CUTEST_ccfsg( &status, &CUTEst_nvar, &CUTEst_ncon, x, c, &CUTEst_nnzj,
               &CUTEst_nnzj, J, jcol, irow, &somethingTrue);
+        if (status != 0) {
+            sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
+            mexErrMsgTxt(msgBuf);
+          }
 
         /* Convert sparse matrix to Matlab format */
         plhs[1] = coordToMatlabSparse(CUTEst_ncon, CUTEst_nvar,
@@ -803,8 +859,12 @@ extern "C" {
         mexPrintf("iscons:: Before: nnzgci = %-d\n", nnzgci);
 #endif
 
-        CCIFSG(&CUTEst_nvar, &icon, x, c, &nnzgci, &nnzgci, g,
+        CUTEST_ccifsg( &status, &CUTEst_nvar, &icon, x, c, &nnzgci, &nnzgci, g,
                (integer *)ir, &somethingTrue);
+        if (status != 0) {
+            sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
+            mexErrMsgTxt(msgBuf);
+          }
 
 #ifdef MXDEBUG
         mexPrintf("iscons:: After: nnzgci = %-d\n", nnzgci);
@@ -858,11 +918,15 @@ extern "C" {
       jcol = (integer *)mxCalloc(nnzjplusn, sizeof(integer));
 
       if (nrhs == 2)
-        CSGR(&CUTEst_nvar, &CUTEst_ncon, &somethingFalse, &CUTEst_ncon,
-              NULL, x, &nnzjplusn, &nnzjplusn, J, jcol, irow);
+        CUTEST_csgr( &status, &CUTEst_nvar, &CUTEst_ncon, x, NULL, 
+          &somethingFalse, &nnzjplusn, &nnzjplusn, J, jcol, irow);
       else
-        CSGR(&CUTEst_nvar, &CUTEst_ncon, &somethingTrue, &CUTEst_ncon,
-              v, x, &nnzjplusn, &nnzjplusn, J, jcol, irow);
+        CUTEST_csgr( &status, &CUTEst_nvar, &CUTEst_ncon, x, v, 
+          &somethingTrue, &nnzjplusn, &nnzjplusn, J, jcol, irow);
+      if (status != 0) {
+          sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
+          mexErrMsgTxt(msgBuf);
+        }
 
       /* Extract the gradient from J. Its components have irow[i]=0 */
       plhs[0] = extractSparseVector(CUTEst_ncon, CUTEst_nvar,
@@ -929,11 +993,15 @@ extern "C" {
       r = (doublereal *)mxGetData(plhs[0]);
 
       if (nrhs == 2)    /* Assume J(x) has been computed previously */
-        CJPROD(&CUTEst_nvar, &CUTEst_ncon, &somethingTrue,
+        CUTEST_cjprod( &status, &CUTEst_nvar, &CUTEst_ncon, &somethingTrue,
                 &somethingFalse, NULL, p, &CUTEst_nvar, r, &CUTEst_ncon);
       else               /* Recompute J(x) */
-        CJPROD(&CUTEst_nvar, &CUTEst_ncon, &somethingFalse,
+        CUTEST_cjprod( &status, &CUTEst_nvar, &CUTEst_ncon, &somethingFalse,
                 &somethingFalse, x, p, &CUTEst_nvar, r, &CUTEst_ncon);
+      if (status != 0) {
+          sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
+          mexErrMsgTxt(msgBuf);
+        }
 
       mxFree((void *)toolName);
       return;
@@ -987,11 +1055,15 @@ extern "C" {
       r = (doublereal *)mxGetData(plhs[0]);
 
       if (nrhs == 2)    /* Assume J(x) has been computed previously */
-        CJPROD(&CUTEst_nvar, &CUTEst_ncon, &somethingTrue,
+        CUTEST_cjprod( &status, &CUTEst_nvar, &CUTEst_ncon, &somethingTrue,
                 &somethingTrue, NULL, p, &CUTEst_ncon, r, &CUTEst_nvar);
       else               /* Recompute J(x) */
-        CJPROD(&CUTEst_nvar, &CUTEst_ncon, &somethingFalse,
+        CUTEST_cjprod( &status, &CUTEst_nvar, &CUTEst_ncon, &somethingFalse,
                 &somethingTrue, x, p, &CUTEst_ncon, r, &CUTEst_nvar);
+      if (status != 0) {
+          sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
+          mexErrMsgTxt(msgBuf);
+        }
 
       mxFree((void *)toolName);
       return;
@@ -1036,10 +1108,15 @@ extern "C" {
       H = (doublereal *)mxGetData(plhs[0]);
 
       if (CUTEst_ncon > 0)
-        CDH(&CUTEst_nvar, &CUTEst_ncon, x, &CUTEst_ncon, v,
+        CUTEST_cdh( &status, &CUTEst_nvar, &CUTEst_ncon, x, v,
              &CUTEst_nvar, H);
       else
-        UDH(&CUTEst_nvar, x, &CUTEst_nvar, H);
+        CUTEST_udh( &status, &CUTEst_nvar, x, &CUTEst_nvar, H);
+
+      if (status != 0) {
+          sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
+          mexErrMsgTxt(msgBuf);
+        }
 
       mxFree((void *)toolName);
       return;
@@ -1077,9 +1154,14 @@ extern "C" {
       H = (doublereal *)mxGetData(plhs[0]);
 
       if (CUTEst_ncon > 0)
-        CIDH(&CUTEst_nvar, x, &icon, &CUTEst_nvar, H);
+        CUTEST_cidh( &status, &CUTEst_nvar, x, &icon, &CUTEst_nvar, H);
       else
-        UDH(&CUTEst_nvar, x, &CUTEst_nvar, H);
+        CUTEST_udh( &status, &CUTEst_nvar, x, &CUTEst_nvar, H);
+
+      if (status != 0) {
+          sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
+          mexErrMsgTxt(msgBuf);
+        }
 
       mxFree((void *)toolName);
       return;
@@ -1123,15 +1205,20 @@ extern "C" {
       /* Call the appropriate matrix-vector product subroutine */
       if (nrhs == 2) {
         if (CUTEst_ncon > 0)
-          CPROD(&CUTEst_nvar, &CUTEst_ncon, &somethingTrue, NULL,
-                 &CUTEst_ncon, NULL, p, r);
+          CUTEST_chprod( &status, &CUTEst_nvar, &CUTEst_ncon, &somethingTrue, NULL,
+                 NULL, p, r);
         else
-          UPROD(&CUTEst_nvar, &somethingTrue, NULL, p, r);
+          CUTEST_uhprod( &status, &CUTEst_nvar, &somethingTrue, NULL, p, r);
       } else if (nrhs == 3)
-        UPROD(&CUTEst_nvar, &somethingFalse, x, p, r);
+        CUTEST_uhprod( &status, &CUTEst_nvar, &somethingFalse, x, p, r);
       else
-        CPROD(&CUTEst_nvar, &CUTEst_ncon, &somethingFalse, x,
-               &CUTEst_ncon, v, p, r);
+        CUTEST_chprod( &status, &CUTEst_nvar, &CUTEst_ncon, &somethingFalse, x,
+               v, p, r);
+
+      if (status != 0) {
+          sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
+          mexErrMsgTxt(msgBuf);
+        }
 
       mxFree((void *)toolName);
       return;
@@ -1192,17 +1279,27 @@ extern "C" {
                    gradf, jtrans);
 #endif
 
-        CGRDH(&CUTEst_nvar, &CUTEst_ncon, x, &gradf, &CUTEst_ncon, v,
-               g, &jtrans, jtrans ? &CUTEst_nvar : &CUTEst_ncon,
-               jtrans ? &CUTEst_ncon : &CUTEst_nvar, J, &CUTEst_nvar, H);
+        if (jtrans)
+          CUTEST_cgrdh( &status, &CUTEst_nvar, &CUTEst_ncon, x, v, 
+                        &gradf, g, &jtrans, &CUTEst_ncon, &CUTEst_nvar, J, 
+                        &CUTEst_nvar, H);
+        else
+          CUTEST_cgrdh( &status, &CUTEst_nvar, &CUTEst_ncon, x, v, 
+                        &gradf, g, &jtrans, &CUTEst_nvar, &CUTEst_ncon, J, 
+                        &CUTEst_nvar, H);
       } else {
         plhs[0] = mxCreateDoubleMatrix(CUTEst_nvar, 1, mxREAL);
         g = (doublereal *)mxGetData(plhs[0]);
         plhs[1] = mxCreateDoubleMatrix(CUTEst_nvar, CUTEst_nvar, mxREAL);
         H = (doublereal *)mxGetData(plhs[1]);
 
-        UGRDH(&CUTEst_nvar, x, g, &CUTEst_nvar, H);
+        CUTEST_ugrdh( &status, &CUTEst_nvar, x, g, &CUTEst_nvar, H);
       }
+
+      if (status != 0) {
+          sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
+          mexErrMsgTxt(msgBuf);
+        }
 
       mxFree((void *)toolName);
       return;
@@ -1241,10 +1338,15 @@ extern "C" {
 
       /* Pretend only one triangle was allocated */
       if (CUTEst_ncon > 0)
-        CSH(&CUTEst_nvar, &CUTEst_ncon, x, &CUTEst_ncon, v, &CUTEst_nnzh,
+        CUTEST_csh( &status, &CUTEst_nvar, &CUTEst_ncon, x, v, &CUTEst_nnzh,
              &CUTEst_nnzh, H, irow, jcol);
       else
-        USH(&CUTEst_nvar, x, &CUTEst_nnzh, &CUTEst_nnzh, H, irow, jcol);
+        CUTEST_ush( &status, &CUTEst_nvar, x, &CUTEst_nnzh, &CUTEst_nnzh, H, irow, jcol);
+
+      if (status != 0) {
+          sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
+          mexErrMsgTxt(msgBuf);
+        }
 
       /* Expand missing triangle ; do not duplicate diagonal */
       offdiag_nnzh = 0;
@@ -1307,9 +1409,16 @@ extern "C" {
       jcol = (integer *)mxCalloc(nnzh2, sizeof(integer));
 
       if (CUTEst_ncon > 0)
-        CISH(&CUTEst_nvar, x, &icon, &nnzhi, &CUTEst_nnzh, H, irow, jcol);
+        CUTEST_cish( &status, &CUTEst_nvar, x, &icon, 
+                     &nnzhi, &CUTEst_nnzh, H, irow, jcol);
       else
-        USH(&CUTEst_nvar, x, &nnzhi, &CUTEst_nnzh, H, irow, jcol);
+        CUTEST_ush( &status, &CUTEst_nvar, x, 
+                    &nnzhi, &CUTEst_nnzh, H, irow, jcol);
+
+      if (status != 0) {
+          sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
+          mexErrMsgTxt(msgBuf);
+        }
 
       /* Expand missing triangle ; do not duplicate diagonal */
       offdiag_nnzh = 0;
@@ -1388,9 +1497,13 @@ extern "C" {
         J = (doublereal *)mxCalloc(nnzjplusn, sizeof(doublereal));
 
         /* Pretend only one triangle of H was allocated */
-        CSGRSH(&CUTEst_nvar, &CUTEst_ncon, x, &gradf, &CUTEst_ncon, v,
+        CUTEST_csgrsh( &status, &CUTEst_nvar, &CUTEst_ncon, x, v, &gradf, 
                 &nnzjplusn, &nnzjplusn, J, jcol2, irow2, &CUTEst_nnzh,
                 &CUTEst_nnzh, H, irow, jcol);
+        if (status != 0) {
+            sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
+            mexErrMsgTxt(msgBuf);
+          }
 
         /* nnzjplusn was overwritten with the actual number of nonzeros
          * in the "augmented" matrix [J' g].
@@ -1422,8 +1535,12 @@ extern "C" {
         H = (doublereal *)mxCalloc(2*CUTEst_nnzh, sizeof(doublereal));
 
         /* Pretend only one triangle was allocated */
-        UGRSH(&CUTEst_nvar, x, g, &CUTEst_nnzh, &CUTEst_nnzh,
+        CUTEST_ugrsh( &status, &CUTEst_nvar, x, g, &CUTEst_nnzh, &CUTEst_nnzh,
                H, irow, jcol);
+        if (status != 0) {
+            sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
+            mexErrMsgTxt(msgBuf);
+          }
       }
 
       /* Expand missing triangle of H ; do not duplicate diagonal */

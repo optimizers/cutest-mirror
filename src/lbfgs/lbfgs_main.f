@@ -13,8 +13,6 @@ C
       DOUBLE PRECISION F, EPS, XTOL, GTOL  , GNORM , BIGINF, DMACHR,
      *                 ZERO  , STPMIN, STPMAX
       LOGICAL          DIAGCO, BOUNDS
-      PARAMETER      ( out  = 6 )
-      PARAMETER      ( INPUT = 55, INSPEC = 56 )
       PARAMETER      ( BIGINF = 9.0D+19, ZERO = 0.0D0 )
       CHARACTER ( LEN = 10 ) :: PNAME, SPCDAT
       DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: X, G, DIAG, W

@@ -442,8 +442,7 @@ for i  in  $NSUB; do
     if [[ $? != 0 ]]; then
       exit 1
     fi
-    $RM ${j}.f90
-  fi
+    $RM ${j}.f90  fi
 done
 
 # link all the tools files together.
