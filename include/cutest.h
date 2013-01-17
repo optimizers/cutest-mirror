@@ -233,8 +233,7 @@ void CUTEST_ccifsg( integer *status, integer *n, integer *i, doublereal *x,
               doublereal *ci, integer *nnzsgc, integer *lsgci, 
               doublereal *sgci, integer *ivsgci, logical *grad );
 void CUTEST_cgrdh( integer *status, integer *n, integer *m, doublereal *x, 
-             logical *grlagf,
-	     integer *lv, doublereal *v, doublereal *g, logical *jtrans,
+             doublereal *v, logical *grlagf, doublereal *g, logical *jtrans,
 	     integer *lcjac1, integer *lcjac2, doublereal *cjac,
 	     integer *lh1, doublereal *h );
 void CUTEST_cdh( integer *status, integer *n, integer *m, doublereal *x, 
