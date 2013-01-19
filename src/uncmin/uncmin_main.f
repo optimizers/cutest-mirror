@@ -1,6 +1,6 @@
 C     ( Last modified on 5 Jan 2013 at 12:40:00 )
 
-      PROGRAM          UNCMA
+      PROGRAM          UNCMIN_main
 
 C  UNCMIN test driver for problems derived from SIF files.
 

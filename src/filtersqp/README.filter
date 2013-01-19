@@ -1,10 +1,10 @@
-                      ******************************
-		      *                            *
-                      * Using FilterSQP with CUTEr *
-		      *                            *
-                      ******************************
+                      *******************************
+		      *                             *
+                      * Using FilterSQP with CUTEst *
+		      *                             *
+                      *******************************
 
-             ( Last modified on 5 Dec 2002 at 08:50 )
+              ( Last modified on 19 Jan 2013 at 17:50:00 )
 
 WHAT IS FilterSQP?
 ------------------
@@ -24,8 +24,8 @@ The code was written by Roger Fletcher <fletcher@maths.dundee.ac.uk> and
 Sven Leyffer  <leyffer@mcs.anl.gov> of the University of Dundee, to whom 
 all technical questions should be addressed.
 
-USING FilterSQP WITH CUTEr
---------------------------
+USING FilterSQP WITH CUTEst
+---------------------------
 
 Change directory in to the appropriate './fil/single' or './fil/double' 
 subdirectory of the untarred filterSQP distribution, depending on
@@ -44,20 +44,17 @@ the version you require.
 Using the makefile make_NLP found in the directory, issue the command 
 
   gmake -f make_NLP filter.o filteraux.o QPsolves.o bqpd.o auxil.o sparseL.o \
-    sparseA.o util.o scaling.o CUTEuser.o FORTRAN='f77'  COPTIONS='-O -c'
+    sparseA.o util.o scaling.o FORTRAN='f77'  COPTIONS='-O -c'
   
 to create the FilterSQP installation procedure creates object files;
 the arguments FORTRAN='f77' and COPTIONS='-O -c' should be adapted to
-your local fortran compiler and its compilation flags. Having 
-created the object files, now create the random library "libfilter.a" 
-by issuing the command 
+your local fortran compiler and its compilation flags. 
+
+[[old - ignore! Having created the object files, now create the random 
+library "libfilter.a" by issuing the command 
 
   ar rsu libfilter.a filteraux.o QPsolves.o bqpd.o auxil.o \
-    sparseL.o sparseA.o util.o scaling.o CUTEuser.o
-
-Copy (or link) the library libfilter.a to $MYCUTER/single/lib or
-$MYCUTER/double/lib (as appropriate for the precision you have compiled)
-with the name libfilter.a
+    sparseL.o sparseA.o util.o scaling.o CUTEuser.o ]]
 
 USING THE FilterSQP INTERFACE TOOL
 ----------------------------------
@@ -115,4 +112,4 @@ stackmax        n/a            stacksize for MINLP
 tt              1.25           violation will be bounded by tt*initial violation
 ubd             100.0          violation will be bounded by ubd
 
-A default file is given in the file spec.par in $CUTER/common/src/pkg/filter
+A default file is given in the file spec.par in $CUTEST/src/filtersqp

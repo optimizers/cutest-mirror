@@ -1,10 +1,10 @@
                       ******************************
 		      *                            *
-                      *  Using PRAXIS with CUTEr   *
+                      *  Using PRAXIS with CUTEst  *
 		      *                            *
                       ******************************
 
-               ( Last modified on 15 Sep 1996 at 16:51:55 )
+              ( Last modified on 19 Jan 2013 at 17:40:00 )
 
 WHAT is PRAXIS?
 ---------------
@@ -189,7 +189,7 @@ distributed by J. Chandler, its initiator.  Here is is.
      jpc@a.cs.okstate.edu
 
 Of course, the paragraph on test problems no longer applies when PRAXIS is
-used in conjunction with CUTEr, but amny more problems may then be tested!
+used in conjunction with CUTEst, but many more problems may then be tested!
 
 
 CREATING THE OBJECT MODULE FOR PRAXIS
@@ -202,9 +202,9 @@ following steps.
    first routine is then PRAXIS(F) itself.
 
 2) Change the name of the subroutine RANDOM to PRXRDM, say, everywhere in the
-   code. This is necessary because CUTEr also uses a function called RANDOM (in
-   the others.f file.  To avoid multiply defined entries when PRAXIS is linked
-   with the CUTEr tools, the duplicate names  must thus be removed.
+   code. This is necessary because modern fortran has an intrinsic function 
+   called RANDOM.  To avoid multiply defined entries when PRAXIS is linked
+   with the CUTEst tools, the duplicate names  must thus be removed.
 
 3) At the beginning of the code, replace the section
 
@@ -235,11 +235,12 @@ following steps.
            XM2    = ZSQRT( EPSMCH )
            XM4    = ZSQRT( XM2)
 
-4) Save the resulting Fortran code in a file named praxisd.f.
+4) Save the resulting Fortran code as praxis.f.
 
-5) Compile (but do not link) praxisd.f. The resulting object file praxisd.o 
-   should be placed in your directory $CUTER/common/src/pkg/praxis or
-   $MYCUTER/double/bin under the name praxis.o.
+5) Compile (but do not link) praxis.f. The resulting object file praxis.o 
+   should be placed in either the user-defined directory $PRAXIS or in 
+   $CUTEST/objects/(architecture)/(precision)/ for the architecture and 
+   precsion you intend to use.
 
 
 USING THE PRAXIS INTERFACE TOOL
@@ -254,7 +255,7 @@ The PRAXIS interface tools require two input files:
    PRAXIS.SPC     sets values for PRAXIS run-time parameters
 
 If no PRAXIS.SPC file is present in the current directory, the default
-version is copied from the $CUTER/common/src/pkg/praxis directory. 
+version is copied from the $CUTEST/src/praxis directory. 
 This default file is as follows:
 
     100000   NFMAX,  the maximum number of function calls

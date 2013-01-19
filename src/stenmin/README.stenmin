@@ -1,10 +1,10 @@
                       *******************************
 		      *                             *
-                      *  Using STENMIN with CUTEr   *
+                      *  Using STENMIN with CUTEst  *
 		      *                             *
                       *******************************
 
-                 ( Last modified on 15 Sep 1996 at 16:51:55 )
+              ( Last modified on 19 Jan 2013 at 14:50:00 )
 
 WHAT is STENMIN?
 ----------------
@@ -43,19 +43,15 @@ following steps on a UNIX system (or equivalent actions on other systems).
 
        cat colmord.f >> stenmind.f
 
-3) In the resulting stenmind.f, remove the BLAS functions DCOPY, DNRM2, 
-   DDOT and DSCAL. (CUTEr also uses these BLAS subroutines.  They are
-   contained in the CUTEr Fortran file named linpac.f. To avoid multiply
-   defined subroutines when STENMIN is linked with the CUTEr tools, the
-   duplicate BLAS subroutines must be removed from STENMIN.)
+3) Compile (but do not link) stenmind.f. The resulting object file stenmind.o 
+   should then be placed in either the user-defined directory $STENMIN or in 
+   $CUTEST/objects/(architecture)/double/ for the architecture and 
+   precsion you intend to use.
 
-4) Compile (but do not link) stenmind.f. The resulting object file stenmind.o 
-   should be placed in your directory $CUTER/common/src/pkg/stenmin or in
-   $MYCUTER/double/bin under the name stenmin.o.
-
-5) You should also have a compiled double precision version of the Harwell 
-   Subroutine MA27 named ma27d.o in your directory
-   $CUTER/common/src/pkg/stenmin. This subroutine is requested by STENMIN.
+4) You should also have a compiled double precision version of the Harwell 
+   Subroutine MA27 named ma27d.o in either the user-defined directory $STENMIN 
+   or in $CUTEST/objects/(architecture)/double/ for the architecture and 
+   precsion you intend to use. This subroutine is required by STENMIN.
 
 The steps for obtaining the single precision version of STENMIN are identical,
 except that the following substitutions should be made:
@@ -69,10 +65,10 @@ except that the following substitutions should be made:
         DSCAL       -->  SSCAL
         stenmind.o  -->  stenmins.o
         ma27d.o     -->  ma27s.o
+        double      -->  single
 
 Note: If you have the Harwell Subroutine Library already available on your
-system, an additional copy of MA27 is unnecessary.  You should edit the file
-$MYCUTER/bin/stn to set the BLAS variable adequately.
+system, an additional copy of MA27 is unnecessary.  
 
 USING THE STENMIN INTERFACE TOOL
 --------------------------------
@@ -86,7 +82,7 @@ The STENMIN interface tools require two input files:
    STNMIN.SPC     sets values for STNMIN run-time parameters
 
 If no STNMIN.SPC file is present in the current directory, the default
-version is copied from the $CUTER/common/src/pkg/stenmin directory. 
+version is copied from the $CUTEST/src/stenmin directory. 
 This default file is as follows:
 
       1000    ILIM,    the maximum number of iterations

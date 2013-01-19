@@ -1,8 +1,8 @@
-                      ******************************
-		      *                            *
-                      * Using IPOPT 2.0 with CUTEr *
-		      *                            *
-                      ******************************
+                      *******************************
+		      *                             *
+                      * Using IPOPT 2.0 with CUTEst *
+		      *                             *
+                      *******************************
 
 WHAT IS IPOPT 2.0?
 ------------------
@@ -19,7 +19,7 @@ c: R^n ---> R^m (m <=n) are assumed to be twice continuously
 differentiable and can be nonlinear and nonconvex.  In (3), not all
 variables need to have lower and upper bounds.
 
-USING IPOPT 2.0 WITH CUTEr
+USING IPOPT 2.0 WITH CUTEst
 --------------------------
 
 Using the makefile found in the 'CUTE_interface' subdirectory, the IPOPT
@@ -28,7 +28,7 @@ installation procedure creates the files
         $IPOPT/OBJECTS/IPOPT/CUTEr_interface/libipoptcuter.a, and
 	$MYCUTER/double/lib/ipopt.liblist
 
-The first contains relevant gateways between CUTEr and IPOPT while the
+The first contains relevant gateways between CUTEst and IPOPT while the
 second contains all library information corresponding to user settings
 within IPOPT, assuming you installed IPOPT 2.0 in the directory $IPOPT.
 
@@ -49,17 +49,6 @@ Please refer to the IPOPT 2.0 documentation for more details.
 
 The commands to use this package are the two scripts
 sdipopt and ipopt.
-
-THE IPOPT 2.0 SPECIFICATIONS FILES
-----------------------------------
-
-Also relevant to the IPOPT 2.0 interface are the two sizing files
-
-         $MYCUTER/double/config/ipoptma.inc, and
-         $MYCUTER/double/config/ipoptma.wrk
-
-the first of which contains problem-specific sizing information while the
-second specifies workspace allocation.
 
 REFERENCES
 ----------

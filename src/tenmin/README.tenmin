@@ -1,11 +1,11 @@
 
-                      *****************************
-		      *                           *
-                      *  USING TENMIN WITH CUTEr  *
-		      *                           *
-                      *****************************
+                      ******************************
+		      *                            *
+                      *  USING TENMIN WITH CUTEst  *
+		      *                            *
+                      ******************************
 
-              ( Last modified on 15 Sep 1996 at 16:51:55 )
+              ( Last modified on 19 Jan 2013 at 11:50:00 )
 
 WHAT IS TENMIN?
 ---------------
@@ -19,25 +19,15 @@ specially constructed fourth-order model of the objective function that is not
 significantly more expensive to form, store, or solve than the standard
 quadratic model.  
 
-TENMIN is available via anonymous ftp from ftp.cs.colorado.edu, in the
-directory pub/cs/distribs/tensor.  Any questions about this software should be
-addressed to eskow@cs.colorado.edu
+TENMIN is available from http://www.netlib.org/toms/739 .
 
 CREATING THE OBJECT MODULE FOR TENMIN
 -------------------------------------
 
-Copy the TENMIN source code, distributed in the file tensrd.f, into a 
-new file named tenmind.f.  In tenmind.f, remove or comment out the BLAS
-subroutines DCOPY, DDOT, and DSCAL.  In our version of the TENMIN source,
-this corresponds to deleting or commenting out lines 2675 to 2814 at
-the end of the file.  (CUTEr also uses the BLAS subroutines DCOPY, DDOT,
-and DSCAL. They are contained in the CUTEr Fortran file named linpac.f
-To avoid multiply defined subroutines when TENMIN is linked with the CUTEr
-tools, the duplicate BLAS subroutines must be removed from TENMIN.)
-
-Compile (but do not link) tenmind.f. The resulting object file tenmind.o
-should be called tenmin.o and placed in the directory
-$CUTER/common/src/pkg/tenmin or $MYCUTER/[single|double]/bin.
+Compile (but do not link) tenmsrd.f. The resulting object file tensrd.o
+should be placed in either the user-defined directory $TENMIN or in 
+$CUTEST/objects/(architecture)/(precision)/ for the architecture and 
+precsion you intend to use.
 
 USING THE TENMIN INTERFACE TOOL
 --------------------------------
@@ -51,7 +41,7 @@ The TENMIN interface tools require two input files:
    TENMIN.SPC     sets values for TENMIN run-time parameters
 
 If no TENMIN.SPC file is present in the current directory, the default
-version is copied from the $CUTER/common/src/pkg/tenmin directory. 
+version is copied from the $CUTEST/src/tenmin directory. 
 This default file is as follows:
 
       1000    ILIM,    the maximum number of iterations

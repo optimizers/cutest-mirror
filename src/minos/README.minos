@@ -1,10 +1,10 @@
                       ****************************
 		      *                          *
-                      *  Using MINOS with CUTEr  *
+                      *  Using MINOS with CUTEst *
 		      *                          *
                       ****************************
 
-              ( Last modified on 15 Sep 1996 at 16:51:55 )
+              ( Last modified on 19 Jan 2013 at 15:55:00 )
 
 
 WHAT IS MINOS?
@@ -28,10 +28,10 @@ CREATING THE OBJECT MODULE FOR MINOS 5.4 AND MINOS 5.5
 ------------------------------------------------------
 
 Copy mi15blas.f into subsblas.f (or another name of your choice).
-Remove the subroutines daxpy, dcopy, ddot, dnrm2 and dscal from subsblas.f
+(Old: Remove the subroutines daxpy, dcopy, ddot, dnrm2 and dscal from subsblas.f
 to create a new file with a subset of the MINOS BLAS subroutines.  In our
 versions of MINOS 5.4 and MINOS 5.5, this corresponds to deleting lines
-70 to 391 in subsblas.f  (CUTEr also uses the BLAS subroutines daxpy, dcopy,
+70 to 391 in subsblas.f  CUTEr also used the BLAS subroutines daxpy, dcopy,
 ddot, dnrm2 and dscal.  They are contained in the CUTEr Fortran file named
 linpac.f.  To avoid multiply defined subroutines when MINOS is linked with
 the CUTEr tools, the duplicate BLAS subroutines must be removed from MINOS.)
@@ -50,64 +50,10 @@ you may also concatenate the single precision equivalents of the twelve
 subroutines listed above into a single file named minoss.f
 
 Compile (but do not link) minosd.f (minoss.f).
-The resulting object file minosd.o (minoss.o) should be placed in your
-directory $CUTER/common/src/pkg/minos or $MYCUTER/[single|double]/bin under
-the name minos.o.
-
-The commands to use this package are the two scripts
-sdmns and mns.
-
-
-CREATING THE OBJECT MODULE FOR MINOS 5.3
-----------------------------------------
-
-Copy MI00MAIN.f into MI00MAIN_f (or another name of your choice, assuming you
-want to keep the original Fortran source file).  Remove the subroutines FUNOBJ,
-FUNCON and MATMOD from MI00MAIN.f.  In our version of MINOS 5.3, this
-corresponds to deleting lines 62 to 238 in MI00MAIN.f.
-
-Copy MI15BLAS.f into SUBSBLAS.f.  Remove the subroutines DAXPY, DCOPY,
-DDOT, DNRM2 and DSCAL from SUBSBLAS.f to create a new file with a subset
-of the MINOS BLAS subroutines.  In our version of MINOS 5.3, this
-corresponds to deleting lines 34 to 184 in SUBSBLAS.f
-(CUTEr also uses the BLAS subroutines DAXPY, DCOPY, DDOT, DNRM2 and DSCAL,
-but it requires the general versions of these subroutines, rather than
-the specialized versions contained in MI15BLAS.f  The general versions
-are contained in the CUTEr Fortran file named linpac.f
-To avoid multiply defined subroutines when MINOS is linked with the CUTEr
-tools, the specialized versions must be removed from MINOS.)
-
-Copy MI10MACH.f into MI10MACH_f (or another name of your choice).
-Find the following three lines in MI10MACH.f:
-
-      LINCON = NNCON .EQ. 0
-      NLNCON = NNCON .GT. 0
-      NLNOBJ = NNOBJ .GT. 0
-
-(They appear in lines 517 to 519 in our version of MINOS 5.3.)
-Move these three lines so they appear immediately after the call to
-M3INPT (which appears on line 536 in our version).
-This change is necessary because we calculate the values of NNCON and
-NNOBJ for you rather than insisting that you provide the exact values
-in MINOS.SPC
-
-You should also edit MI10MACH.f so that it compiles and runs properly
-on your machine.  See the MINOS User's Guide for details.
-
-Now you must concatenate the following .f files into a single file named
-mi53d.f:
-
-   MI00MAIN.f   MI20AMAT.f   MI30SPEC.f   MI50LP.f     MI65RMOD.f   MI80NCON.f
-   MI10MACH.f   MI25BFAC.f   MI40BFIL.f   MI60SRCH.f   MI70NOBJ.f   SUBSBLAS.f
-
-If you have created single precision versions of the MINOS subroutines,
-you may also concatenate the single precision equivalents of the twelve
-subroutines listed above into a single file named mi53s.f
-
-Compile (but do not link) mi53d.f (mi53s.f).
-The resulting object file mi53d.o (mi53s.o) should be placed in your
-directory $CUTER/common/src/pkg/minos or $MYCUTER/[single|double]/bin.
-
+The resulting object file minosd.o (minoss.o) 
+should then be placed in either the user-defined directory 
+$MINOS or in $CUTEST/objects/(architecture)/(precision)/ for the 
+architecture and precsion you intend to use.
 
 USING THE MINOS INTERFACE TOOL
 ------------------------------
@@ -121,7 +67,7 @@ The MINOS interface tools require two input files:
    MINOS.SPC      sets values for MINOS run-time parameters
 
 If no MINOS.SPC file is present in the current directory, the default
-version is copied from the $CUTER/common/src/pkg/minos directory.
+version is copied from the $CUTEST/src/minos directory.
 
 MINOS.SPC is linked to fort.4.  This link is established because
 MINOS reads the SPECS file from unit 4 (by default).  If this unit
@@ -153,7 +99,7 @@ THE MINOS SPECIFICATIONS FILE
 The file MINOS.SPC constitutes the MINOS SPECS file, which sets various
 MINOS run-time parameters.  This SPECS file is used exactly as described
 in the MINOS User's Guide, with the following exception:  MINOS (when
-used by itself, not with CUTEr) requires that the user specify exact numbers
+used by itself, not with CUTEst) requires that the user specify exact numbers
 for the following keywords:
 
    NONLINEAR CONSTRAINTS
@@ -164,7 +110,7 @@ and optionally also for the following keywords:
    NONLINEAR OBJECTIVE VARIABLES
    NONLINEAR JACOBIAN VARIABLES
 
-Because the CUTEr tools determine the values of these quantities, the
+Because the CUTEst tools determine the values of these quantities, the
 values given in MINOS.SPC need not be exact.  Instead, the values given
 in MINOS.SPC should be at least as large as the true values, in order
 to guarantee that sufficient space is allotted to various arrays, but
@@ -185,16 +131,6 @@ The default version of MINOS.SPC sets only a few of the run-time
 parameters.  Many more parameters are available.  A full description
 of the available parameters is given in the SPECS file chapter in
 the MINOS User's Guide.
-
-***NOTE***
-
-There is a different default MINOS specifications for each size of CUTEr
-installation (small, medium, and large).  In the CUTEr distribution, these
-different specifications files are named MINOS.sml, MINOS.med, and MINOS.lrg.
-The unfolding procedure copies all three of these files to the 
-$CUTER/common/src/pkg/minos directory.  The install procedure then copies 
-the specifications file of the appropriate size to MINOS.SPC.
-
 
 REFERENCES
 ----------

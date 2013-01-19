@@ -1,11 +1,11 @@
 
                       *****************************
 		      *                           *
-                      *   USING LA04 WITH CUTEr   *
+                      *   USING LA04 WITH CUTEst  *
 		      *                           *
                       *****************************
 
-               ( Last modified on 15 Sep 1996 at 16:51:55 )
+              ( Last modified on 19 Jan 2013 at 15:40:00 )
 
 WHAT IS  LA04?
 --------------
@@ -27,13 +27,13 @@ CREATING THE OBJECT MODULE FOR LA04
 For building the double precision version, the LA04 double precision
 subroutine and dependencies should be concatenated in a new file called
 la04d.f. This file should then be compiled (but not linked) and the resulting
-object file la04d.o placed (or linked to from a file) in the directory
-$CUTER/common/src/pkg/la04 or $MYCUTER/double/bin, under the name la04.o.
+object file la04d.o should then be placed in either the user-defined directory 
+$LA04 or in $CUTEST/objects/(architecture)/double/ for the architecture 
+you intend to use.
 
 The procedure is identical for the single precision, except that the names
-la04d.f and la04d.o are replaced by la04s.f and la04s.o, respectively, and the
-file la04.o should be found under $MYCUTER/single/bin.
-
+la04d.f, la04d.o and double are replaced by la04s.f and la04s.o and single, 
+respectively.
 
 USING THE LA04 INTERFACE TOOL
 -----------------------------
@@ -47,7 +47,7 @@ The LA04 interface tools require two input files:
    LA04.SPC       sets values for LA04 run-time parameters
 
 If no LA04.SPC file is present in the current directory, the default
-version is copied from the $CUTER/common/src/pkg/la04 directory. This default
+version is copied from the $CUTEST/src/la04 directory. This default
 file is as follows:
 
       1000    MAXIT,   the maximum number of iterations.

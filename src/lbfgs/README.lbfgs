@@ -1,11 +1,10 @@
                       *****************************
                       *                           *
-                      *  USING L-BFGS WITH CUTEr  *
+                      *  USING L-BFGS WITH CUTEst *
                       *                           *
                       *****************************
 
-               ( Last modified on 4 Sep 2004 at 08:30:35 )
-
+              ( Last modified on 19 Jan 2013 at 15:00:00 )
 
 WHAT IS L-BFGS?
 ---------------
@@ -23,10 +22,9 @@ See
 COMPILING THE OBJECT MODULE FOR L-BFGS
 --------------------------------------
 
-The L-BFGS file lbfgs.f should be edited to remove the
-subroutines DAXPY and DDOT. It should then be
-compiled, and the resulting file lbfgs.o placed in
-(or symbolically linked to) the directory $MYCUTER/double/bin.
+The file lbfgs.f compiled, and the resulting file lbfgs.o 
+should then be placed in either the user-defined directory $LBFGS or in 
+$CUTEST/objects/(architecture)/double/ for the architecture you intend to use.
 
 There is no single-precision version.
 
@@ -42,7 +40,7 @@ The L-BFGS interface tools require two input files:
    LBFGS.SPC      sets values for L-BFGS run-time parameters
 
 If no LBFGS.SPC file is present in the current directory, the default
-version is copied from the $CUTER/common/src/pkg/lbfgs directory. 
+version is copied from the $CUTEST/src/lbfgs directory. 
 This default file is as follows:
 
          5    M         specifies the number of iterations in the memory

@@ -183,7 +183,7 @@ Program DFO_main
 
 !  Write select statistics to file
 
-  Open(REPRTOUT, FILE = 'cuter.log', FORM = 'FORMATTED')
+  Open(REPRTOUT, FILE = 'cutest.log', FORM = 'FORMATTED')
   Write(REPRTOUT, 2002) PNAME, N, M, IT, Int(CALLS(1)), Int(CALLS(5)), &
        INFO, FX(1), F0, CPU(1), CPU(2)
   Close(REPRTOUT)

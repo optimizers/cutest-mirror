@@ -1,10 +1,10 @@
                       ****************************
 		      *                          *
-                      *  Using NPSOL with CUTEr  *
+                      *  Using NPSOL with CUTEst *
 		      *                          *
                       ****************************
 
-             ( Last modified on 15 Sep 1996 at 16:51:55 )
+              ( Last modified on 19 Jan 2013 at 14:55:00 )
 
 
 WHAT IS NPSOL?
@@ -24,16 +24,17 @@ from the Office of Technology Licensing at Stanford University.
 CREATING THE OBJECT MODULE FOR NPSOL
 ------------------------------------
 
-Concatenate the following .f files into a single file named npsold.f:
+Concatenate the following .f files into a single file named npsol.f:
 
    chsubs.f   f06subs.f     mcsubs.f      opsubs.f   srsubs.f
    cmsubs.f   lssolsubs.f   npsolsubs.f   qrsubs.f
 
-Compile (but do not link) npsold.f.
-The resulting object file npsold.o should be placed in your directory
-$CUTER/common/src/pkg/npsol or $MYCUTER/[single|double]/bin under the
-name npsol.o.
-
+Compile (but do not link) npsol.f; the makefile provided with NPSOL will
+do this, but please check that the FORTRAN and FFLAGS variables are correctly
+set for your compiler. The resulting object file npsol.o 
+should then be placed in either the user-defined directory $NPSOL or in 
+$CUTEST/objects/(architecture)/(precision)/ for the architecture and 
+precsion you intend to use.
 
 USING THE NPSOL INTERFACE TOOL
 ------------------------------
@@ -47,7 +48,7 @@ The NPSOL interface tools require two input files:
    NPSOL.SPC      sets values for NPSOL parameters
 
 If no NPSOL.SPC file is present in the current directory, the default
-version is copied from the $CUTER/common/src/pkg/npsol directory.
+version is copied from the $CUTEST/src/npsol directory.
 
 The commands to use this package are the two scripts
 sdnps and nps.
@@ -66,7 +67,7 @@ NPSOL.LIS by nps, the unit number must also be changed in nps.
 
 In addition, NPSOL can create a summary of the problem output.
 By the source code default, this summary is sent to unit 0, and thus
-does not appear anywhere.  The CUTEr default version of NPSOL.SPC
+does not appear anywhere.  The CUTEst default version of NPSOL.SPC
 includes the line
 
    Summary  6 
@@ -83,7 +84,7 @@ The file NPSOL.SPC may be used to set various NPSOL parameters.
 These parameters are described in the chapter 'Optional Input
 Parameters' in the User's Guide for NPSOL.
 
-The CUTEr default version of NPSOL.SPC includes only one line, to direct
+The CUTEst default version of NPSOL.SPC includes only one line, to direct
 the summary output to unit 6 (standard output).  All other parameters
 therefore assume their default values.
 

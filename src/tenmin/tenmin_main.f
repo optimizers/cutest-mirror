@@ -1,6 +1,6 @@
 C     ( Last modified on 5 Jan 2013 at 14:40:00 )
 
-      PROGRAM          TENMA
+      PROGRAM          TENMIN_main
 
 C  TENSOR test driver for problems derived from SIF files.
 
@@ -130,8 +130,8 @@ C  output solution
 C  Non-executable statements
 
  1000 FORMAT( I10, /, D10.3, 2(/,I10), 2(/,D10.3), 2(/,I10) )
- 2000 FORMAT( /, 24('*'), ' CUTEr statistics ', 24('*') //
-     *    ,' Code used               :  TENMIN',   /
+ 2000 FORMAT( /, 24('*'), ' CUTEst statistics ', 24('*') //
+     *    ,' Package used            :  TENMIN',   /
      *    ,' Problem                 :  ', A10,    /
      *    ,' # variables             =      ', I10 /
      *    ,' # objective functions   =        ', F8.2 /

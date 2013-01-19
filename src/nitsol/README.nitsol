@@ -2,11 +2,12 @@ Package available from
 
     ftp://ephraim.wpi.edu/pub/nitsol/nitsol.tar.gz
 
-   ==============================
-   To make NITSOL work with CUTEr
-   ==============================
+   ===============================
+   To make NITSOL work with CUTEst
+   ===============================
 
-1. Dowload and unpack nitsol into any suitable directory
+1. Dowload and unpack nitsol into any suitable directory, and
+   set an environment varaible NITSOL to point at the directory
 
 2. Build the appropriate NITSOL, LAPACK and BLAS libraries:
 
@@ -15,20 +16,6 @@ Package available from
    make blas_lib
 
    with appropriate fortran compiler and flags
-
-3. move the libraries
-
-   Nitsol/libnitsol.a
-
-   to your $MYCUTER/(precision)/lib directory. 
-
-4. If you DO NOT have machine-tuned blas &/or LAPACK
-   libraries on your LIBPATH, also move
-
-   Lapack/liblapack.a
-   Blas/libblas.a
-
-   to your $MYCUTER/(precision)/lib directory. 
 
 That's it!
 

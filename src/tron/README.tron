@@ -1,10 +1,10 @@
                       ***************************
                       *                         *
-                      *  USING TRON WITH CUTEr  *
+                      *  USING TRON WITH CUTEst *
                       *                         *
                       ***************************
 
-               ( Last modified on 4 Sep 2004 at 08:30:35 )
+              ( Last modified on 19 Jan 2013 at 15:55:00 )
 
 
 WHAT IS TRON?
@@ -26,16 +26,16 @@ COMPILING THE OBJECT MODULE FOR TRON
 
 All of the TRON .f files contained in src/tron, src/coloring and src/icf
 should be compiled and the resulting files inserted into a random library 
-libtron_cuter.a. For example, with appropriate fortran 77 compiler $F77 
+libtron.a. For example, with appropriate fortran 77 compiler $F77 
 and compiler flags $FFLAGS, move into the directory in which you have 
 unpacked the TRON codes and issue the commands
 
-  ( cd src/tron; make FC=$F77 FFLAGS=$FFLAGS LIB_NAME=../../libtron_cuter.a )
-  ( cd src/coloring; make FC=$F77 FFLAGS=$FFLAGS LIB_NAME=../../libtron_cuter.a )
-  ( cd src/icf; make FC=$F77 FFLAGS=$FFLAGS LIB_NAME=../../libtron_cuter.a )
+  ( cd src/tron; make FC=$F77 FFLAGS=$FFLAGS LIB_NAME=../../libtron.a )
+  ( cd src/coloring; make FC=$F77 FFLAGS=$FFLAGS LIB_NAME=../../libtron.a )
+  ( cd src/icf; make FC=$F77 FFLAGS=$FFLAGS LIB_NAME=../../libtron.a )
 
-The resulting double precision library libtron_cuter.a should be placed in
-(or symbolically linked to) the directory $MYCUTER/double/lib.
+The environment variable TRON should then be set to point to the 
+full path of the directory containing the resulting library libtron.a .
 
 There is no single-precision version.
 
@@ -51,7 +51,7 @@ The TRON interface tools require two input files:
    TRON.SPC     sets values for TRON run-time parameters
 
 If no TRON.SPC file is present in the current directory, the default
-version is copied from the $CUTER/common/src/pkg/tron directory. 
+version is copied from the $CUTEST/src/tron directory. 
 This default file is as follows:
 
          5     P        the number of vectors to hold factorization fill-in

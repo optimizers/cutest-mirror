@@ -205,8 +205,8 @@ C
 C  Non-executable statements.
 C
  1000 FORMAT( 2( I10, / ), 4( D10.3, / ), D10.3 )
- 2000 FORMAT( /, 24('*'), ' CUTEr statistics ', 24('*') //
-     *    ,' Code used               :  TRON',     /
+ 2000 FORMAT( /, 24('*'), ' CUTEst statistics ', 24('*') //
+     *    ,' Package used            :  TRON',     /
      *    ,' Problem                 :  ', A10,    /
      *    ,' # variables             =      ', I10 /
      *    ,' # objective functions   =      ', I10 /

@@ -1,21 +1,23 @@
-CUTEst README file.				          January 2013
+CUTEst packages/defaults README file.			    January 2013
 
-======================================================================
+========================================================================
 
   Please read this file prior to any modification in this directory.
 
-======================================================================
+========================================================================
 
-This   directory   contains  the   various   interfaces  to   existing
-optimization packages, such as MINOS,  Snopt, Knitro, etc. The name of
-the interfaces  matches the patters  pak and sdpak. For  instance, you
-will find cob and sdcob, knit  and sdknit and so forth. The pak script
-assumes  the problem  of interest  has already  been decoded  into the
-appropriate fortran subroutines and data files. The sdpak script first
-calls  the SIF  decoder on  the  specified problem  before spawning  a
-process running the corresponding optimization package.
+This directory contains a file  for each supported external package that
+provides  values   for  the  environment   variables  PACKAGE,  PACKDIR,
+PACK_PRECISION, PACKOBJS,  PACKLIBS and SPECS  that are required  by the
+CUTEst  script runcutest.  Precise  definitions of  these variables  are
+given in  the file ./example. If  a user wishes to  override the default
+value for  a particular  package, she should  copy the  relevant package
+file  into  the  directory  ../(architecture/(precision)/ and  edit  the
+required entries  in the newly-created file. The  runcutest package will
+check   $CUTEST/packages/(architecture/(precision)/  in   precedence  to
+$CUTEST/packages/defaults/ when assigning environment variables.
 
-======================================================================
+========================================================================
 
 			      Good luck!
 
@@ -23,5 +25,5 @@ Nicholas I.M. Gould,	  		        nick.gould@stfc.ac.uk,
 Dominique Orban,				     orban@cerfacs.fr,
 Philippe L. Toint.			    philippe.toint@fundp.ac.be
 
-======================================================================
+========================================================================
 
