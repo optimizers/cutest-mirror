@@ -1,10 +1,10 @@
                       *****************************
 		      *                           *
-                      *  USING UNCMIN WITH CUTEr  *
+                      *  USING UNCMIN WITH CUTEst *
 		      *                           *
                       *****************************
 
-               ( Last modified on 15 Sep 1996 at 16:51:55 )
+              ( Last modified on 19 Jan 2013 at 15:05:00 )
 
 
 WHAT IS UNCMIN?
@@ -25,16 +25,17 @@ wherever appropriate.  (Otherwise, the machine precision EPSM may not
 be calculated correctly by UNCMIN.)  On an RS/6000, for example, the
 UNCMIN source should be compiled with at least the following flags:
 
-xlf -qrndsngl -c uncmins.f
+xlf -qrndsngl -c uncmind.f
 
-where uncmins.f is the file containing the single precision UNCMIN source.
+where uncmind.f is the file containing the double precision UNCMIN source.
 Of course, you may wish to use additional flags for optimization, debugging,
 etc.
 
-The resulting single precision object file uncmins.o should be placed in
-the directory $CUTER/common/src/pkg/uncmin or $MYCUTER/single/bin under the
-name uncmin.o. The same applies when working in double precision, where
-uncmin.o should be found under $MYCUTER/double/bin.
+The resulting double precision object file uncmind.o 
+should then be placed in either the user-defined directory $UNCMIN or in 
+$CUTEST/objects/(architecture)/double/ for the architecture you intend to use.
+The same applies when working in single precision, where uncmins.o should be 
+found under in $UNCMIN or in $CUTEST/objects/(architecture)/single/.
 
 
 USING THE UNCMIN INTERFACE TOOL
@@ -49,7 +50,7 @@ The UNCMIN interface tools require two input files:
    UNCMIN.SPC     sets values for UNCMIN run-time parameters
 
 If no UNCMIN.SPC file is present in the current directory, the default
-version is copied from the $CUTER/common/src/pkg/uncmin directory. 
+version is copied from the $CUTEST/src/uncmin directory. 
 This default file is as follows:
 
        1.0   TYPX    typical size for each component of X

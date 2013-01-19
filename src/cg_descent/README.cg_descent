@@ -1,10 +1,10 @@
                    *********************************
                    *                               *
-                   *  USING CG_DESCENT WITH CUTEr  *
+                   *  USING CG_DESCENT WITH CUTEst *
                    *                               *
                    *********************************
 
-               ( Last modified on 10 Sep 2004 at 17:25:15 )
+              ( Last modified on 19 Jan 2013 at 17:30:00 )
 
 
 WHAT IS CG_DESCENT?
@@ -25,9 +25,10 @@ See
 COMPILING THE OBJECT MODULE FOR CG_DESCENT
 ------------------------------------------
 
-The CG_DESCENT file cg_desecent.f should be compiled, and the resulting 
-file cg_descent.o placed in (or symbolically linked to) the directory 
-$MYCUTER/double/bin.
+The CG_DESCENT file cg_descent.f should be compiled, and the resulting 
+file cg_descent.o should be placed in either the user-defined directory 
+$CG_DESCENT or in $CUTEST/objects/(architecture)/double/ for the architecture
+you intend to use.
 
 There is no single-precision version.
 
@@ -43,7 +44,7 @@ The CG_DESCENT interface tools require two input files:
    CG_DESCENT.SPC  sets values for CG_DESCENT run-time parameters
 
 If no CG_DESCENT.SPC file is present in the current directory, the default
-version is copied from the $CUTER/common/src/pkg/cg_descent directory. 
+version is copied from the $CUTER/src/cg_descent directory. 
 This default file is as follows:
 
 .1d0      delta        (Wolfe line search parameter)

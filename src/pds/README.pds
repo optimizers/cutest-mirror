@@ -1,11 +1,11 @@
 
                       ****************************
 		      *                          *
-                      *   USING PDS WITH CUTEr   *
+                      *   USING PDS WITH CUTEst  *
 		      *                          *
                       ****************************
 
-                 ( Last modified on 15 Sep 1996 at 16:51:55 )
+              ( Last modified on 19 Jan 2013 at 11:50:00 )
 
 WHAT IS PDS?
 ------------
@@ -90,9 +90,10 @@ Concatenate the files
    right.f   scaled.f  search.f  shrink.f  sort.f   writes.f
  
 from the PDS distribution in a single new file named pdsd.f.  Compile
-(but do not link) pdsd.f. The resulting object file pdsd.o should then
-be placed in the directory $CUTER/common/src/pkg/pds or $MYCUTER/double/bin
-under the name pds.o.
+(but do not link) pdsd.f. The resulting object file pdsd.o 
+should then be placed in either the user-defined directory $PDS or in 
+$CUTEST/objects/(architecture)/(precision)/ for the architecture and 
+precsion you intend to use.
 
 PDS is not available in single precision.
 
@@ -108,7 +109,7 @@ The PDS interface tools require two input files:
    PDS.SPC        sets values for PDS run-time parameters
 
 If no PDS.SPC file is present in the current directory, the default
-version is copied from the $CUTER/common/src/pkg/pds directory. 
+version is copied from the $CUTEST/src/pds directory. 
 This default file is as follows:
 
    0.00001   TOL     the stopping tolerance for the step size 

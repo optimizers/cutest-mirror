@@ -7,10 +7,12 @@ Quick instructions
    It is very important to note that DFO requires the pre-3 FORTRAN version
    of IPOPT and will not work with the newer flavor of Ipopt 3.x.
 
-   Follow the instructions to build the IPOPT libraries for CUTEr. This should
-   create a file named ipopt.liblist in $MYCUTER/double/lib. Note that the
-   newer Ipopt 3.x creates a file names ipo.liblist in $MYCUTER/double/lib
-   which cannot be used in place of ipopt.liblist.
+   Follow the instructions to build the IPOPT libraries for CUTEst. This should
+   create a file named ipopt.liblist in 
+   $CUTEST/objects/(architecture)/(precision)/. Note that the
+   newer Ipopt 3.x creates a file names ipo.liblist in 
+   $CUTEST/objects/(architecture)/(precision)/
+   that cannot be used in place of ipopt.liblist.
 
 2. Download the DFO source code:
    svn co https://projects.coin-or.org/svn/Dfo/trunk dfo
@@ -19,6 +21,8 @@ Quick instructions
    libdfo_ipopt.a and ranlux.o.
 
    Place libdfo_ipopt.a in a place where the linker can find it
-   (e.g., in your $LD_LIBRARY_PATH, $LIBPATH or in $MYCUTER/double/lib).
+   (e.g., in your $LD_LIBRARY_PATH, $LIBPATH or in 
+   $CUTEST/objects/(architecture)/(precision) .
 
-   Similarly, place ranlux.o in $MYCUTER/double/bin.
+   Similarly, place ranlux.o in user-defined directory $DFO or in
+   $CUTEST/objects/(architecture)/(precision) .

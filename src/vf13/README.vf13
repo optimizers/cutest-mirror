@@ -1,11 +1,11 @@
 
                       *****************************
 		      *                           *
-                      *   USING VF13 WITH CUTEr   *
+                      *   USING VF13 WITH CUTEst  *
 		      *                           *
                       *****************************
 
-               ( Last modified on 15 Sep 1996 at 16:51:55 )
+              ( Last modified on 19 Jan 2013 at 14:40:00 )
 
 WHAT IS  VF13?
 --------------
@@ -28,12 +28,13 @@ CREATING THE OBJECT MODULE FOR VF13
 For building the double precision version, the VF13 double precision
 subroutine and dependencies should be concatenated in a new file called
 vf13d.f. This file should then be compiled (but not linked) and the resulting
-object file vf13d.o should be placed (or linked to from a file) in the directory
-$CUTER/common/src/pkg/vf13 or $MYCUTER/double/bin, under the name vf13.o.
+object file vf13d.o should then be placed in either the user-defined directory 
+$VF13 or in $CUTEST/objects/(architecture)/double/ for the architecture 
+you intend to use.
 
 The procedure is identical for the single precision, except that the names
-vf13d.f and vf13d.o are replaced by vf13s.f and vf13s.o, respectively, and the
-file vf13.o should be found under $MYCUTER/single/bin.
+vf13d.f, vf13d.o and double are replaced by vf13s.f and vf13s.o and single, 
+respectively.
 
 
 USING THE VF13 INTERFACE TOOL
@@ -48,7 +49,7 @@ The VF13 interface tools require two input files:
    VF13.SPC       sets values for VF13 run-time parameters
 
 If no VF13.SPC file is present in the current directory, the default
-version is copied from the $CUTER/common/src/pkg/vf13 directory. 
+version is copied from the $CUTEST/src/vf13 directory. 
 This default file is as follows:
 
       1000    MAXFUN, the maximum number of function calls,

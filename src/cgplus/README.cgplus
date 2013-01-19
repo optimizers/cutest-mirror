@@ -1,10 +1,10 @@
                       **************************
                       *                        *
-                      *  USING CG+ WITH CUTEr  *
+                      *  USING CG+ WITH CUTEst *
                       *                        *
                       **************************
 
-               ( Last modified on 3 Sep 2004 at 04:51:55 )
+              ( Last modified on 19 Jan 2013 at 15:50:00 )
 
 
 WHAT IS CG+?
@@ -26,17 +26,11 @@ See
 COMPILING THE OBJECT MODULE FOR CG+
 -----------------------------------
 
-The CG+ files cgfam.f cgsearch.f timer.f fcn.f should
-be compiled and placed together into a random library libcgplus.a.
-For example, with appropriate fortran 77 compiler $F77 and 
-compiler flags $FFLAGS, move into the directory in which you have 
-unpacked the CG+ codes and issue the commands
-
-  $F77 $FFLAGS cgfam.f cgsearch.f timer.f fcn.f
-  ar ru libcgplus.a cgfam.o cgsearch.o timer.o fcn.o
-
-The resulting double precision object file libcgplus.a should be placed in
-(or symbolically linked to) the directory $MYCUTER/double/lib.
+The CG+ files cgfam.f cgsearch.f timer.f and blas.f should be compiled 
+(but not linked) and the resulting object files cgfam.o cgsearch.o timer.o 
+and blas.o should then be placed in either the user-defined directory 
+$CGPLUS or in $CUTEST/objects/(architecture)/double/ for the architecture 
+you intend to use.
 
 There is no single-precision version.
 
@@ -52,7 +46,7 @@ The CG+ interface tools require two input files:
    CGPLUS.SPC     sets values for CG+ run-time parameters
 
 If no CGPLUS.SPC file is present in the current directory, the default
-version is copied from the $CUTER/common/src/pkg/cgplus directory. 
+version is copied from the $CUTEST/src/cgplus directory. 
 This default file is as follows:
 
         -1    IPRINT(1) specifies the frequency of output (<0: no output)

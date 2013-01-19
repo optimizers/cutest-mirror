@@ -6,7 +6,7 @@
  * CUTEst evolution, Nick Gould Jan 4 2013
  *
  * Take a look at $CUTEST/include/cutest.h and
- * $CUTER/src/loqo/loqoma.c for more examples
+ * $CUTEST/src/loqo/loqoma.c for more examples
  * ===========================================
  */
 

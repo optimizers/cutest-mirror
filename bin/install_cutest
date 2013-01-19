@@ -552,7 +552,7 @@ MOD='$CUTEST/modules/'$VERSION'/$PRECIS'
 FFLAGS="$LIBCMD"' '`eval echo $MODCMD`' '"$F90"
 echo 'FFLAGS="'$FFLAGS' '$OPENMP'"'                                >> $SYSFILE
 echo 'PROBFLAGS="'$FFLAGS' '$BASIC' '$OPTIMIZATION' '$F77' "'      >> $SYSFILE
-#echo 'CUTERUSED="'$CUTERUSED'"'                                    >> $SYSFILE
+#echo 'CUTESTUSED="'$CUTESTUSED'"'                                 >> $SYSFILE
 echo 'BLAS="'$BLAS'"'                                              >> $SYSFILE
 echo 'LAPACK="'$LAPACK'"'                                          >> $SYSFILE
 #echo 'HSL="'$HSL'"'                                                >> $SYSFILE
@@ -633,8 +633,8 @@ echo 'LAPACK = '$LAPACK                                            >> $MAKEFILE
 #echo 'PARDISO = '$PARDISO                                         >> $MAKEFILE
 #echo 'WSMP = '$WSMP                                               >> $MAKEFILE
 #echo 'PLPLOT = '$PLPLOT                                           >> $MAKEFILE
-#echo 'CUTERUSED = '$CUTERUSED                                     >> $MAKEFILE
-echo 'CUTERUSED = '                                                >> $MAKEFILE
+#echo 'CUTESTUSED = '$CUTESTUSED                                   >> $MAKEFILE
+echo 'CUTESTUSED = '                                               >> $MAKEFILE
 echo ' '                                                           >> $MAKEFILE
 echo '#  Shell used'                                               >> $MAKEFILE
 echo ' '                                                           >> $MAKEFILE

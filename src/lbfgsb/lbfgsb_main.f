@@ -170,8 +170,8 @@ C
 C  Non-executable statements.
 C
  1000 FORMAT( 3( I10, / ), ( D10.3, / ), D10.3 )
- 2000 FORMAT( /, 24('*'), ' CUTEr statistics ', 24('*') //
-     *    ,' Code used               :  L-BFGS-B',     /
+ 2000 FORMAT( /, 24('*'), ' CUTEst statistics ', 24('*') //
+     *    ,' Package used            :  L-BFGS-B',     /
      *    ,' Problem                 :  ', A10,    /
      *    ,' # variables             =      ', I10 /
      *    ,' # objective functions   =      ', I10 /

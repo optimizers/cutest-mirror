@@ -1,9 +1,10 @@
                       *******************************
 		      *                             *
-                      *  Using SNOPT6.1 with CUTEr  *
+                      *  Using SNOPT6.1 with CUTEst *
 		      *                             *
                       *******************************
 
+              ( Last modified on 19 Jan 2013 at 16:15:00 )
 
 WHAT IS SNOPT?
 --------------
@@ -28,16 +29,9 @@ CREATING THE OBJECT MODULE FOR SNOPT6.1
 Assuming Snopt6.1 was installed under the directory $SNOPT6.1 on your system,
 you should have the following library file
 
-	$SNOPT6.1/lib/libcutesnopt.a
+	$SNOPT6.1/lib/libsnopt.a
 
 Note that SNOPT is only available in double precision.
-
-Either copy the above file in
-
-	$MYCUTER/double/lib
-
-or create a symbolic link pointing to it.
-
 
 USING THE SNOPT INTERFACE TOOL
 ------------------------------
@@ -51,7 +45,7 @@ The SNOPT interface tools require two input files:
 	SNOPT.SPC      sets values for SNOPT parameters
 
 If no SNOPT.SPC file is present in the current directory, the default
-version is copied from the $CUTER/common/src/pkg/snopt directory.
+version is copied from the $CUTEST/src/snopt directory.
 
 The main output from SNOPT is written (by default) in a file named fort.9.
 This file is subsequently renamed to probname.snp by sdsnp. If this unit
@@ -67,7 +61,7 @@ output_id every k-th minor iteration. This requires
 
 	Minor print level
 
-to be positive. It is *not* the case in the default CUTEr spec file.
+to be positive. It is *not* the case in the default CUTEst spec file.
 
 In addition, SNOPT can create a summary of the problem output.
 By the source code default, this summary is sent to unit 6 (stdout).
@@ -82,7 +76,7 @@ output_id every k-th minor iteration. This requires
 
 	Minor print level
 
-to be positive. It is *not* the case in the default CUTEr spec file.
+to be positive. It is *not* the case in the default CUTEst spec file.
 
 The commands to use this package are the two scripts
 sdsnp and snp.
@@ -95,7 +89,7 @@ The file SNOPT.SPC may be used to set various SNOPT parameters.
 These parameters are described in the section 'Description of the optional
 parameters' in the User's Guide for SNOPT.
 
-The CUTEr default version of SNOPT.SPC is as follows
+The CUTEst default version of SNOPT.SPC is as follows
 
  BEGIN SNOPT Problem
     Jacobian                   SPARSE  * Needed by the CUTE interface

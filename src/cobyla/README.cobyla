@@ -1,11 +1,11 @@
 
                       *******************************
 		      *                             *
-                      *   USING COBYLA WITH CUTEr   *
+                      *   USING COBYLA WITH CUTEst  *
 		      *                             *
                       *******************************
 
-                 ( Last modified on 15 Sep 1996 at 16:51:55 )
+              ( Last modified on 19 Jan 2013 at 14:10:00 )
 
 WHAT IS COBYLA?
 ---------------
@@ -23,8 +23,9 @@ CREATING THE OBJECT MODULE FOR COBYLA
 
 Create a file named cobyla.f containing the source code of the package.
 Compile (but do not link) this file.  The resulting object file cobyla.o
-should be placed in the directory $CUTER/common/src/pkg/cobyla or
-$MYCUTER/double/bin under the name cobyla.o.
+should then be placed in either the user-defined directory $COBYLA or in 
+$CUTEST/objects/(architecture)/(precision)/ for the architecture and 
+precsion you intend to use.
 
 COBYLA is only available in double precision.
 
@@ -40,7 +41,7 @@ The COBYLA interface tools require two input files:
    COBYLA.SPC     sets values for COBYLA run-time parameters
 
 If no COBYLA.SPC file is present in the current directory, the default
-version is copied from the $CUTER/common/src/pkg/cobyla directory.
+version is copied from the $CUTEST/src/cobyla directory.
 This default file is as follows:
 
   0.5       RHOBEG   the size of the simplex initially
