@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 ###############################################################################
 #
 # runcutest: the new and improved runpackage
@@ -93,7 +93,7 @@ Display_Usage() {
     printf "Syntax: ${thisprog} -a architecture -p pkg [options...]\n"
     printf 'Here is a summary of the available options.\n'
     printf 'See the man page for further details.\n\n'
-    printf '  -a  or --architecture \tspecify architecture to use\n'
+    printf '  -A  or --architecture \tspecify architecture to use\n'
     printf '  -p  or --package \tspecify package name\n'
     printf '  -s  or --single  \trun single precision version of package\n'
     printf '  -h  or --help    \tdisplay this help message\n'
@@ -123,7 +123,7 @@ Parse_Arguments() {
 
     while [[ $# > 0 ]]; do
         case "$1" in
-            -a|--architecture)  ARCH="$2"
+            -A|--architecture)  ARCH="$2"
                            let architecture_set=1
                            shift
                            ;;
@@ -313,12 +313,12 @@ fi
 
 if [[ -x ${CUTEST}/packages/${ARCH}/${PRECISION}/${PKG} ]]; then
    . ${CUTEST}/packages/${ARCH}/${PRECISION}/${PKG}
-elif [[ -x ${CUTEST}/packages/master/${PKG} ]]; then
-   . ${CUTEST}/packages/master/${PKG}
+elif [[ -x ${CUTEST}/packages/defaults/${PKG} ]]; then
+   . ${CUTEST}/packages/defaults/${PKG}
 else
    echo "Cannot find a ${PKG} definitions file in "
    echo "${CUTEST}/packages/${ARCH}/${PRECISION} or"
-   echo "${CUTEST}/packages/master"
+   echo "${CUTEST}/packages/defaults"
    exit 9
 fi
 [[ $? != 0 ]] && exit $?
@@ -353,7 +353,8 @@ fi
 
 # Make sure package is up to date
 cd ${CUTEST}/src/${PKG}
-[[ ${PKG} != "matlab" ]] && ${MAKE} -s -f ${CUTEST}/makefiles/${ARCH} tools ${PKG}
+${MAKE} -s -f ${CUTEST}/makefiles/${ARCH} tools ${PKG}
+#[[ ${PKG} != "matlab" ]] && ${MAKE} -s -f ${CUTEST}/makefiles/${ARCH} tools ${PKG}
 
 #cd ${CUTEST}/${PRECISION}/bin
 #[[ ${PKG} != "matlab" ]] && ${MAKE} -s ${DRIVER}
@@ -364,8 +365,8 @@ cd ${WorkingDir}
 BLAS=-lblas
 if [[ ${SPECS} != "" ]]; then
   if [[ ! -e ${SPECS} ]]; then
-     if [[ -e ${CUTEST}/src/${PACKAGE}/${SPECS} ]]; then
-       ${LN} -fs ${CUTEST}/src/${PACKAGE}/${SPECS} ${SPECS}
+     if [[ -e ${CUTEST}/src/${PACKDIR}/${SPECS} ]]; then
+       ${LN} -fs ${CUTEST}/src/${PACKDIR}/${SPECS} ${SPECS}
      else
         printf "\nCannot find spec file ${SPECS}---skipping\n"
      fi
@@ -399,14 +400,20 @@ if [[ -e EXTER.f ]]; then
     [[ -e EXTER.o && -z EXTER.o ]] && ${RM} EXTER.o || EXTER="EXTER.o"
 fi
 
-# The package-dependent object files are in ${CUTEST}/${PRECISION}/bin
+# The package-dependent object files are either fully in full-specified 
+# indididual directories or in ${CUTEST}/${PRECISION}/bin
 PACKOBJS=( ${PACKOBJS} )
+echo $PACKOBJS
 nobjs=${#PACKOBJS[@]}
 #cd ${CUTEST}/${PRECISION}/bin
 for (( i = 0; i < nobjs ; i++ ))
 do
 #   ${MAKE} -s ${PACKOBJS[$i]}
-    PACKOBJS[$i]=${CUTEST}/objects/${ARCH}/${PRECISION}/${PACKOBJS[$i]}
+    if [[ -e ${PACKOBJS[$i]} ]] ; then
+      PACKOBJS[$i]=${PACKOBJS[$i]}
+    else
+      PACKOBJS[$i]=${CUTEST}/objects/${ARCH}/${PRECISION}/${PACKOBJS[$i]}
+    fi
 done
 cd ${WorkingDir}
 
@@ -417,14 +424,14 @@ if [[ ${PKG} == "matlab" ]]; then
         echo "Either Matlab is not installed or MATLAB is incorrectly set"
         exit 10
     fi
-    MEXFORTRAN=$(MATLAB)/bin/mex
+    MEXFORTRAN=${MATLAB}/bin/mex
     if [[ ! -x ${MEXFORTRAN} ]]; then
         echo "Mex command ${MEXFORTRAN} does not exist or is not executable"
         exit 11
     fi
     (( OUTPUT )) && printf '\nBuilding MEX file ...\n'
     outputName=mcutest
-    command="${MEXFORTRAN} -I${CUTEST}/include -output ${outputName} ${CUTEST}/src/matlab/mcutest.c ELFUN.o GROUP.o RANGE.o ${EXTER} -L${LIBDIR} -lcutest ${BLAS} ${LAPACK} ${PACKLIBS}"
+    command="${MEXFORTRAN} -I${CUTEST}/include -output ${outputName} ${CUTEST}/objects/${ARCH}/${PRECISION}/mcutest.o ELFUN.o GROUP.o RANGE.o ${EXTER} -L${LIBDIR} -lcutest ${BLAS} ${LAPACK} ${PACKLIBS}"
     (( show_commands )) && echo "$command"
     $command
     Run_Post
