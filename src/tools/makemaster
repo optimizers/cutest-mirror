@@ -106,7 +106,7 @@ SUCC = precision version) compiled successfully
 
 #  main compilations and runs
 
-all: basics
+all: cutest
 
 #  basic packages
 

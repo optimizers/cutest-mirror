@@ -445,7 +445,48 @@ while [ $CORRECT_SUBSET == "false" ]; do
    esac
 done
 
-CCOMPILER=ccompiler.all.all.gcc
+#CCOMPILER=ccompiler.all.all.gcc
+#CCOMP=( `$LS $ARCH/ccompiler.${MCH}.${OS}.*`)
+CCOMP=( `$LS $ARCH/ccompiler.${MCH}.${OS}.* $ARCH/ccompiler.all.all.*`)
+NUMBER=${#CCOMP[@]}
+LIST=( ${CCOMP[@]} )
+let count=-1
+for i  in  ${CCOMP[@]}; do
+  (( count++ ))
+  CCOMP[$count]="`$SED q $i | $SED 's/^[# ]*//'`"
+done
+
+CORRECT_CCOMPILER="false"
+while [[ $CORRECT_CCOMPILER == "false" ]]; do 
+
+    let count=-1
+    for i  in  ${LIST[@]}; do
+      (( count++ ))
+      let counter=count+1
+      echo "        ($counter) ${CCOMP[$count]}"
+    done
+
+    read CHOICE
+   	(( CHOICE-- ))
+
+    i=0
+    while [[ $i -lt $NUMBER &&  $CORRECT_CCOMPILER == "false" ]]; do
+       if [[ $CHOICE == $i ]]; then
+         CORRECT_CCOMPILER="true"
+         CHOICE=$i
+       fi
+       (( i++ ))
+    done
+    if [[ $CORRECT_CCOMPILER == "true" ]]; then
+      CCOMPILER=${LIST[$CHOICE]##*/}
+      CMP=${CCOMPILER##*\.} #${LIST[$CHOICE]%*\.}
+      #CCOMPILER=$LIST[$CHOICE]:t
+      #CMP=$LIST[$CHOICE]:e
+      CCOMPUSED="${CCOMP[$CHOICE]}"
+    else
+      echo " Please give an integer between 1 and $NUMBER"
+    fi
+done
 
 source $ARCH/$CCOMPILER
 if [[ $NEWCC == "true" ]]; then
@@ -491,8 +532,8 @@ if [[ ! -e $PKGDIR/single ]]; then
 $MKDIR $PKGDIR/single
 fi
 
-#$CP $CUTEST/packages/master/* $PKGDIR/double/
-#$CP $CUTEST/packages/master/* $PKGDIR/single/
+#$CP $CUTEST/packages/defaults/* $PKGDIR/double/
+#$CP $CUTEST/packages/defaults/* $PKGDIR/single/
 
 #  write out the cutest/bin/sys file for this architecture
 
