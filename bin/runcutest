@@ -3,7 +3,7 @@
 #
 # runcutest: the new and improved runpackage
 #
-# N. Gould, D. Orban & Ph. Toint for GOT Productions, 2006,2013
+# N. Gould, D. Orban & Ph. Toint for GOT Productions, 2006, 2013
 #
 ###############################################################################
 
@@ -199,7 +199,7 @@ Decode_Problem() {
     ${RM} ELFUN.o GROUP.o RANGE.o EXTER.o
     if [[ ${SIFDECODE+set} == 'set' ]]; then
         echo "sifdecode ${sd_opts[@]} $1"
-        ${SIFDECODE}/bin/sifdecoder ${ARCH} ${sd_opts[@]} $1
+        ${SIFDECODE}/bin/sifdecoder -A ${ARCH} ${sd_opts[@]} $1
         [[ $? != 0 ]] && exit $?
     else
         echo "${thisprog}: environment variable SIFDECODE not set"
