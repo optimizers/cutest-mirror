@@ -519,7 +519,7 @@ done
 
 source $ARCH/$CCOMPILER
 if [[ $NEWCC == "true" ]]; then
-  CC="gcc-4.3"
+  CC=$MATLABGCC
 fi
 
 #  create architecture-dependent object and module directories
