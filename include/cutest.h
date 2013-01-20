@@ -133,8 +133,8 @@ typedef struct VarTypes {
 #define CUTEST_uterminate FUNDERSCORE(cutest_uterminate)
 #define CUTEST_cterminate FUNDERSCORE(cutest_cterminate)
 
-#define FORTRAN_OPEN  FUNDERSCORE(fortran_open)
-#define FORTRAN_CLOSE FUNDERSCORE(fortran_close)
+#define FORTRAN_open  FUNDERSCORE(fortran_open)
+#define FORTRAN_close FUNDERSCORE(fortran_close)
 
 /*
  * Prototypes for CUTEst FORTRAN routines found in libcutest.a
@@ -277,8 +277,8 @@ void CUTEST_uterminate( integer *status );
 void CUTEST_cterminate( integer *status );
 
 /* FORTRAN auxiliary subroutines to retrieve stream unit numbers */
-void FORTRAN_OPEN(  integer *funit, char *fname, integer *ierr );
-void FORTRAN_CLOSE( integer *funit, integer *ierr );
+void FORTRAN_open(  integer *funit, char *fname, integer *ierr );
+void FORTRAN_close( integer *funit, integer *ierr );
 
 /*
  * Memory allocation shortcuts

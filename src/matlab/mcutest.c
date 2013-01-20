@@ -245,7 +245,7 @@ extern "C" {
       mexPrintf("Opening data file\n");
 #endif
       ioErr = 0;
-      if (! dataFileOpen) FORTRAN_OPEN(&funit, fName, &ioErr);
+      if (! dataFileOpen) FORTRAN_open(&funit, fName, &ioErr);
       if (ioErr) mexErrMsgTxt("Error opening file OUTSDIF.d\n");
       dataFileOpen = 1;
 
@@ -302,7 +302,7 @@ extern "C" {
       mexPrintf("Opening data file\n");
 #endif
       ioErr = 0;
-      if (! dataFileOpen) FORTRAN_OPEN(&funit, fName, &ioErr);
+      if (! dataFileOpen) FORTRAN_open(&funit, fName, &ioErr);
       if (ioErr) mexErrMsgTxt("Error opening file OUTSDIF.d\n");
 
 #ifdef MXDEBUG
@@ -395,7 +395,7 @@ extern "C" {
       mexPrintf("  %-s\n", probName);
       mexPrintf("Closing data file\n");
 #endif
-      FORTRAN_CLOSE(&funit, &ioErr);
+      FORTRAN_close(&funit, &ioErr);
       if (ioErr) mexWarnMsgTxt("Error closing file OUTSDIF.d\n");
       dataFileOpen = 0;
 
