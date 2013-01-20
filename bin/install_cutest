@@ -389,6 +389,9 @@ if [[ -e $CUTEST/versions/$VERSION ]]; then
     fi    
 fi
 
+MATLABGCC="gcc-4.4"
+MATLABGFORTRAN="gfortran-4.4"
+
 #echo $CMP
 
 while [ $CORRECT_SUBSET == "false" ]; do 
@@ -396,52 +399,78 @@ while [ $CORRECT_SUBSET == "false" ]; do
    echo ' (the chosen subset will optionally be installed below)'
    echo
    echo '     (1) Everything'
-   echo '     (2) Unconstrained tools'
-   echo '     (3) Constrained tools'
+   echo '     (2) Everything except Matlab support'
+   echo '     (3) Unconstrained tools without Matlab support'
+   echo '     (4) Constrained tools without Matlab support'
    if [[ $CMP="g95" || $CMP="gfortran" ]]; then
-     echo '     (4) Everything for Matlab'
+     echo '     (5) Everything for Matlab'
    fi
 
   read CHOICE
    
    case  $CHOICE  in
        "1")
-            CORRECT_SUBSET="true"
-            SUBSET="all"
+            if [[ $CMP="g95" || $CMP="gfortran" ]]; then
+              CORRECT_SUBSET="true"
+              SUBSET="all"
+              if [[ $CMP="gfortran" ]]; then
+                type -P $MATLABGFORTRAN &>/dev/null || \
+              { echo " Warning: you need to install $MATLABGFORTRAN/$MATLABGCC" \
+                echo ' to allow Matlab and CUTEST interaction. Aborting ' \
+                 >&2; exit 3; }
+                type -P $MATLABGCC &>/dev/null || \
+              { echo ' Warning: you need to install $MATLABGCC' \
+                echo ' to allow Matlab and CUTEST interaction. Aborting ' \
+                 >&2; exit 3; }
+                FORTRAN="$MATLABGFORTRAN"
+                CC="$MATLABGCC"
+                NEWCC="true"
+                echo " Warning: $MATLABGCC and $MATLABGFORTRAN override more modern"
+                echo ' GNU compilers to allow Matlab-CUTEST interaction'
+              fi
+            else
+              echo ' Matlab only supports gfortran/gcc '
+              echo ' Please give an integer between 2 and 4!'
+            fi
 ;;
        "2")
             CORRECT_SUBSET="true"
-            SUBSET="all_unconstrained"
+            SUBSET="all_except_matlab"
 ;;
        "3")
             CORRECT_SUBSET="true"
-            SUBSET="all_constrained"
+            SUBSET="all_unconstrained"
 ;;
        "4")
+            CORRECT_SUBSET="true"
+            SUBSET="all_constrained"
+;;
+       "5")
             if [[ $CMP="g95" || $CMP="gfortran" ]]; then
               CORRECT_SUBSET="true"
               SUBSET="all_matlab"
               if [[ $CMP="gfortran" ]]; then
-                type -P gfortran-4.3 &>/dev/null || \
-              { echo ' Warning: you need to install gfortran-4.3/gcc-4.3' \
+                type -P $MATLABGFORTRAN &>/dev/null || \
+              { echo " Warning: you need to install $MATLABGFORTRAN/$MATLABGCC" \
                 echo ' to allow Matlab and CUTEST interaction. Aborting ' \
                  >&2; exit 3; }
-                type -P gcc-4.3 &>/dev/null || \
-              { echo ' Warning: you need to install gcc-4.3' \
+                type -P $MATLABGCC &>/dev/null || \
+              { echo ' Warning: you need to install $MATLABGCC' \
                 echo ' to allow Matlab and CUTEST interaction. Aborting ' \
                  >&2; exit 3; }
-                FORTRAN="gfortran-4.3"
-                CC="gcc-4.3"
+                FORTRAN="$MATLABGFORTRAN"
+                CC="$MATLABGCC"
                 NEWCC="true"
-                echo ' Warning: gcc-4.3 and gfortran-4.3 override more modern'
+                echo " Warning: $MATLABGCC and $MATLABGFORTRAN override more modern"
                 echo ' GNU compilers to allow Matlab-CUTEST interaction'
               fi
             else
-              echo ' Please give an integer between 1 and 3!'
+              echo ' Matlab only supports gfortran/gcc '
+              echo ' Please give an integer between 2 and 4!'
             fi
 ;;
        *)
-         echo ' Please give an integer between 1 and 4'
+         echo ' Please give an integer between 1 and 5'
    esac
 done
 
@@ -523,6 +552,10 @@ else
     if [[ ! -e $MODDIR/single ]]; then
     $MKDIR $MODDIR/single
     fi
+fi
+
+if [[ ! -e $PKGDIR ]]; then
+$MKDIR $PKGDIR
 fi
 
 if [[ ! -e $PKGDIR/double ]]; then
@@ -692,6 +725,10 @@ if [[ $YESNO == 'Y' ]]; then
             $MAKE $OPTIONS all $MACROS
             [[ $? != 0 ]] && exit 2
 ;;
+        "all_except_matlab")
+            $MAKE $OPTIONS all $MACROS
+            [[ $? != 0 ]] && exit 2
+;;
         "all_unconstrained")
             $MAKE $OPTIONS all_unconstrained $MACROS
             [[ $? != 0 ]] && exit 2
@@ -733,6 +770,10 @@ if [[ $YESNO == 'Y' ]]; then
         MACROS="PRECIS=$PREC PWD=$CUTEST/src CUTEST=$CUTEST"
         case  $SUBSET  in
         "all")
+            $MAKE $OPTIONS all_cuter $MACROS
+            [[ $? != 0 ]] && exit 2
+;;
+        "all_except_matlab")
             $MAKE $OPTIONS all_cuter $MACROS
             [[ $? != 0 ]] && exit 2
 ;;
