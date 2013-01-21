@@ -1,7 +1,7 @@
 c Driver program for solving a .SIF example problem with TAO 
 c (after sifdecode has been used on the .SIF file)
 
-      program cutedriver
+      program tao_main
       implicit none
 
 #include "finclude/petscsys.h"
