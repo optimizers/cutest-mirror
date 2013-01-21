@@ -3,12 +3,16 @@
 #  N. Gould, D. Orban and Ph. L. Toint.
 #  This version: 16 I 2013
 
+#  package
+
+PACKAGE = MATLAB
+package = matlab
+
 SHELL = /bin/$(BINSHELL)
 
 #  Mex compiler
 
 MEX = $(MATLAB)/bin/mex
-
 
 #  compiler flags
 
@@ -86,12 +90,18 @@ C_TEST = c_elfun.o c_group.o c_range.o
 
 SUCC = precision version) compiled successfully
 
-#  everything for distribution
+#  main compilations and runs
 
-all: all_$(PRECIS)
+all: $(package)
 
-all_single: $(OBJS)/utools.o $(OBJS)/ctools.o $(OBJS)/mcutest.o
-all_double: $(OBJD)/utools.o $(OBJD)/ctools.o $(OBJD)/mcutest.o
+#  basic packages
+
+$(package): $(package)_$(PRECIS)
+	@printf ' %-21s\n' "CUTEst: $(package) ($(PRECIS) $(SUCC)" 
+$(package)_single: $(OBJS)/utools.o $(OBJS)/ctools.o $(OBJS)/mcutest.o
+$(package)_double: $(OBJD)/utools.o $(OBJD)/ctools.o $(OBJD)/mcutest.o
+
+#  dependent packages
 
 tools: 
 	( cd ../tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \

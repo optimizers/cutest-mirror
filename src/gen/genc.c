@@ -28,7 +28,7 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
 	   Possibly, this routine contains precision-dependent directives */
 
 	/* Open relevant file */
-	FORTRAN_OPEN( &funit, fname, &ierr );
+	FORTRAN_open( &funit, fname, &ierr );
 	if( ierr ) {
 	    printf( "Error opening spec file %s.\nAborting.\n", fname );
 	    exit(1);
@@ -36,7 +36,7 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
 
 	/* ... Do something ... */
 
-	FORTRAN_CLOSE( &funit, &ierr );
+	FORTRAN_close( &funit, &ierr );
 	return;
 
     }

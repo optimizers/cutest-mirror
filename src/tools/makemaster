@@ -126,8 +126,7 @@ cutest_unconstrained_silent_single: $(BASICS) $(UCUTESTS)
 cutest_unconstrained_silent_double: $(BASICD) $(UCUTESTD)
 
 cutest_unconstrained: cutest_unconstrained_$(PRECIS)
-	@printf ' %-21s\n' "CUTEST: unconstrained tools \
-          ($(PRECIS) $(SUCC)" 
+	@printf ' %-21s\n' "CUTEST: unconstrained tools ($(PRECIS) $(SUCC)" 
 cutest_unconstrained_single: $(BASICS) $(UCUTESTS)
 	$(RANLIB) $(LCS)
 cutest_unconstrained_double: $(BASICD) $(UCUTESTD)
@@ -138,8 +137,7 @@ cutest_constrained_silent_single: $(BASICS) $(CCUTESTS)
 cutest_constrained_silent_double: $(BASICD) $(CCUTESTD)
 
 cutest_constrained: cutest_constrained_$(PRECIS)
-	@printf ' %-21s\n' "CUTEST: constrained tools \
-          ($(PRECIS) $(SUCC)" 
+	@printf ' %-21s\n' "CUTEST: constrained tools ($(PRECIS) $(SUCC)" 
 cutest_constrained_single: $(BASICS) $(CCUTESTS)
 	$(RANLIB) $(LCS)
 cutest_constrained_double: $(BASICD) $(CCUTESTD)
