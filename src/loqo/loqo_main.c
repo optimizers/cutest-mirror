@@ -147,7 +147,7 @@ static int spec = 0;
 	int i;
 
 	/* Open problem description file OUTSDIF.d */
-	FORTRAN_OPEN( &funit, fname, &ierr );
+	FORTRAN_open( &funit, fname, &ierr );
 	if( ierr ) {
 	    printf("Error opening file OUTSDIF.d.\nAborting.\n");
 	    exit(1);
@@ -488,7 +488,7 @@ static int spec = 0;
 	printf(" count_h (LOQO)          = %-8d\n", count_h);
 	printf(" ******************************************************************\n\n");
 
-	FORTRAN_CLOSE( &funit, &ierr );
+	FORTRAN_close( &funit, &ierr );
 	if( ierr ) {
 	    printf( "Error closing file %s", fname );
 	    return 1;
