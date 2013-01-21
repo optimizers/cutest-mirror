@@ -7,47 +7,279 @@ SHELL = /bin/$(BINSHELL)
 
 #  main compilations and runs
 
-all: all_$(PRECIS)
+#  all tools and interfaces
 
-all_single: 
+all: all_$(PRECIS)
+all_single: tools_single
+	( cd cg_descent  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   cg_descent  PRECIS=single PWD=$(PWD)/cg_descent )
+	( cd cgplus  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   cgplus  PRECIS=single PWD=$(PWD)/cgplus )
+	( cd cobyla  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   cobyla  PRECIS=single PWD=$(PWD)/cobyla )
+	( cd derchk  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   derchk  PRECIS=single PWD=$(PWD)/derchk )
+	( cd dfo  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   dfo  PRECIS=single PWD=$(PWD)/dfo )
+	( cd filtersqp  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   filtersqp  PRECIS=single PWD=$(PWD)/filtersqp )
+	( cd gen  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   gen  PRECIS=single PWD=$(PWD)/gen )
+	( cd hrb  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   hrb  PRECIS=single PWD=$(PWD)/hrb )
+	( cd ipopt  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   ipopt  PRECIS=single PWD=$(PWD)/ipopt )
+	( cd knitro  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   knitro  PRECIS=single PWD=$(PWD)/knitro )
+	( cd la04  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   la04  PRECIS=single PWD=$(PWD)/la04 )
+	( cd lbfgs  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   lbfgs  PRECIS=single PWD=$(PWD)/lbfgs )
+	( cd lbfgsb  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   lbfgsb  PRECIS=single PWD=$(PWD)/lbfgsb )
+	( cd loqo  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   loqo  PRECIS=single PWD=$(PWD)/loqo )
+	( cd minos  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   minos  PRECIS=single PWD=$(PWD)/minos )
+	( cd nitsol  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   nitsol  PRECIS=single PWD=$(PWD)/nitsol )
+	( cd npsol  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   npsol  PRECIS=single PWD=$(PWD)/npsol )
+	( cd pds  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   pds  PRECIS=single PWD=$(PWD)/pds )
+	( cd praxis  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   praxis  PRECIS=single PWD=$(PWD)/praxis )
+	( cd snopt  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   snopt  PRECIS=single PWD=$(PWD)/snopt )
+	( cd stats  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   stats  PRECIS=single PWD=$(PWD)/stats )
+	( cd stenmin  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   stenmin  PRECIS=single PWD=$(PWD)/stenmin )
+	( cd tenmin  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   tenmin  PRECIS=single PWD=$(PWD)/tenmin )
+	( cd tron  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   tron  PRECIS=single PWD=$(PWD)/tron )
+	( cd uncmin  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   uncmin  PRECIS=single PWD=$(PWD)/uncmin )
+	( cd vf13  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   vf13  PRECIS=single PWD=$(PWD)/vf13 )
+all_double: tools_double
+	( cd cg_descent  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   cg_descent  PRECIS=double PWD=$(PWD)/cg_descent )
+	( cd cgplus  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   cgplus  PRECIS=double PWD=$(PWD)/cgplus )
+	( cd cobyla  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   cobyla  PRECIS=double PWD=$(PWD)/cobyla )
+	( cd derchk  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   derchk  PRECIS=double PWD=$(PWD)/derchk )
+	( cd dfo  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   dfo  PRECIS=double PWD=$(PWD)/dfo )
+	( cd filtersqp  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   filtersqp  PRECIS=double PWD=$(PWD)/filtersqp )
+	( cd gen  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   gen  PRECIS=double PWD=$(PWD)/gen )
+	( cd hrb  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   hrb  PRECIS=double PWD=$(PWD)/hrb )
+	( cd ipopt  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   ipopt  PRECIS=double PWD=$(PWD)/ipopt )
+	( cd knitro  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   knitro  PRECIS=double PWD=$(PWD)/knitro )
+	( cd la04  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   la04  PRECIS=double PWD=$(PWD)/la04 )
+	( cd lbfgs  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   lbfgs  PRECIS=double PWD=$(PWD)/lbfgs )
+	( cd lbfgsb  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   lbfgsb  PRECIS=double PWD=$(PWD)/lbfgsb )
+	( cd loqo  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   loqo  PRECIS=double PWD=$(PWD)/loqo )
+	( cd minos  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   minos  PRECIS=double PWD=$(PWD)/minos )
+	( cd nitsol  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   nitsol  PRECIS=double PWD=$(PWD)/nitsol )
+	( cd npsol  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   npsol  PRECIS=double PWD=$(PWD)/npsol )
+	( cd pds  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   pds  PRECIS=double PWD=$(PWD)/pds )
+	( cd praxis  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   praxis  PRECIS=double PWD=$(PWD)/praxis )
+	( cd snopt  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   snopt  PRECIS=double PWD=$(PWD)/snopt )
+	( cd stats  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   stats  PRECIS=double PWD=$(PWD)/stats )
+	( cd stenmin  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   stenmin  PRECIS=double PWD=$(PWD)/stenmin )
+	( cd tenmin  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   tenmin  PRECIS=double PWD=$(PWD)/tenmin )
+	( cd tron  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   tron  PRECIS=double PWD=$(PWD)/tron )
+	( cd uncmin  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   uncmin  PRECIS=double PWD=$(PWD)/uncmin )
+	( cd vf13  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   vf13  PRECIS=double PWD=$(PWD)/vf13 )
+
+#  all tools (including tao) and interfaces
+
+all_with_tao: all_with_tao_$(PRECIS)
+all_with_tao_single: all_single
+	( cd tao  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   tao  PRECIS=single PWD=$(PWD)/tao )
+all_with_tao_double: all_double
+	( cd tao  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   tao  PRECIS=double PWD=$(PWD)/tao )
+
+# all tools
+
+tools: tools_$(PRECIS)
+tools_single: 
 	( cd tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      cutest PRECIS=single PWD=$(PWD)/tools )
-	( cd test  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
-                     test_cutest PRECIS=single PWD=$(PWD)/test )
-
-all_double: 
+tools_double: 
 	( cd tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      cutest PRECIS=double PWD=$(PWD)/tools )
+
+# all interface tests
+
+test: test_$(PRECIS)
+test_single: 
+	( cd test  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                     test_cutest PRECIS=single PWD=$(PWD)/test )
+test_double: 
 	( cd test  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      test_cutest PRECIS=double PWD=$(PWD)/test )
 
-all_unconstrained: all_unconstrained_$(PRECIS)
+# all unconstrained tools and interface tests
 
+all_unconstrained: all_unconstrained_$(PRECIS)
 all_unconstrained_single: 
 	( cd tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      cutest_unconstrained PRECIS=single PWD=$(PWD)/tools )
 	( cd test  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      test_cutest_unconstrained PRECIS=single PWD=$(PWD)/test )
-
 all_unconstrained_double: 
 	( cd tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      cutest_unconstrained PRECIS=double PWD=$(PWD)/tools )
 	( cd test  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      test_cutest_unconstrained PRECIS=double PWD=$(PWD)/test )
 
-all_constrained: all_constrained_$(PRECIS)
+# all constrained tools and interface tests
 
+all_constrained: all_constrained_$(PRECIS)
 all_constrained_single: 
 	( cd tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      cutest_constrained PRECIS=single PWD=$(PWD)/tools )
 	( cd test  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      test_cutest_constrained PRECIS=single PWD=$(PWD)/test )
-
 all_constrained_double: 
 	( cd tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      cutest_constrained PRECIS=double PWD=$(PWD)/tools )
 	( cd test  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      test_cutest_constrained PRECIS=double PWD=$(PWD)/test )
+
+# all tests
+
+run_test: run_test_$(PRECIS)
+run_test_single: tools_single test_single
+	( cd cg_descent  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=single PWD=$(PWD)/cg_descent )
+	( cd cgplus  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=single PWD=$(PWD)/cgplus )
+	( cd cobyla  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=single PWD=$(PWD)/cobyla )
+	( cd derchk  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=single PWD=$(PWD)/derchk )
+	( cd dfo  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=single PWD=$(PWD)/dfo )
+	( cd filtersqp  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=single PWD=$(PWD)/filtersqp )
+	( cd gen  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=single PWD=$(PWD)/gen )
+	( cd hrb  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=single PWD=$(PWD)/hrb )
+	( cd ipopt  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=single PWD=$(PWD)/ipopt )
+	( cd knitro  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=single PWD=$(PWD)/knitro )
+	( cd la04  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=single PWD=$(PWD)/la04 )
+	( cd lbfgs  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=single PWD=$(PWD)/lbfgs )
+	( cd lbfgsb  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=single PWD=$(PWD)/lbfgsb )
+	( cd minos  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=single PWD=$(PWD)/minos )
+	( cd nitsol  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=single PWD=$(PWD)/nitsol )
+	( cd npsol  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=single PWD=$(PWD)/npsol )
+	( cd pds  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=single PWD=$(PWD)/pds )
+	( cd praxis  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=single PWD=$(PWD)/praxis )
+	( cd snopt  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=single PWD=$(PWD)/snopt )
+	( cd stats  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=single PWD=$(PWD)/stats )
+	( cd stenmin  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=single PWD=$(PWD)/stenmin )
+	( cd tenmin  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=single PWD=$(PWD)/tenmin )
+	( cd tron  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=single PWD=$(PWD)/tron )
+	( cd uncmin  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=single PWD=$(PWD)/uncmin )
+	( cd vf13  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=single PWD=$(PWD)/vf13 )
+run_test_double: tools_double test_double
+	( cd cg_descent  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=double PWD=$(PWD)/cg_descent )
+	( cd cgplus  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=double PWD=$(PWD)/cgplus )
+	( cd cobyla  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=double PWD=$(PWD)/cobyla )
+	( cd derchk  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=double PWD=$(PWD)/derchk )
+	( cd dfo  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=double PWD=$(PWD)/dfo )
+	( cd filtersqp  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=double PWD=$(PWD)/filtersqp )
+	( cd gen  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=double PWD=$(PWD)/gen )
+	( cd hrb  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=double PWD=$(PWD)/hrb )
+	( cd ipopt  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=double PWD=$(PWD)/ipopt )
+	( cd knitro  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=double PWD=$(PWD)/knitro )
+	( cd la04  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=double PWD=$(PWD)/la04 )
+	( cd lbfgs  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=double PWD=$(PWD)/lbfgs )
+	( cd lbfgsb  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=double PWD=$(PWD)/lbfgsb )
+	( cd minos  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=double PWD=$(PWD)/minos )
+	( cd nitsol  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=double PWD=$(PWD)/nitsol )
+	( cd npsol  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=double PWD=$(PWD)/npsol )
+	( cd pds  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=double PWD=$(PWD)/pds )
+	( cd praxis  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=double PWD=$(PWD)/praxis )
+	( cd snopt  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=double PWD=$(PWD)/snopt )
+	( cd stats  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=double PWD=$(PWD)/stats )
+	( cd stenmin  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=double PWD=$(PWD)/stenmin )
+	( cd tenmin  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=double PWD=$(PWD)/tenmin )
+	( cd tron  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=double PWD=$(PWD)/tron )
+	( cd uncmin  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=double PWD=$(PWD)/uncmin )
+	( cd vf13  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=double PWD=$(PWD)/vf13 )
 
 #  book keeping
 

@@ -82,7 +82,10 @@ $(package)_double: $($(PACKAGE))
 
 # run example tests
 
-run_test: tools test_cutest $(OBJ)/$(package)_main.o
+run_test: 
+	echo " No $(PACKAGE) test program at the moment"
+
+run_test_todo: tools test_cutest $(OBJ)/$(package)_main.o
 	echo " Test of constrained $(package)"
 	cd $(OBJ) ; $(CC) -o run_test \
             $(package)_main.o $(C_TEST) -L$(OBJ) $(LIBS)  $(CRUNFFLAGS)
