@@ -416,17 +416,17 @@ while [ $CORRECT_SUBSET == "false" ]; do
               if [[ $CMP="gfortran" ]]; then
                 type -P $MATLABGFORTRAN &>/dev/null || \
               { echo " Warning: you need to install $MATLABGFORTRAN/$MATLABGCC" \
-                echo ' to allow Matlab and CUTEST interaction. Aborting ' \
+                echo ' to allow for Matlab and CUTEst interaction. Aborting ' \
                  >&2; exit 3; }
                 type -P $MATLABGCC &>/dev/null || \
               { echo ' Warning: you need to install $MATLABGCC' \
-                echo ' to allow Matlab and CUTEST interaction. Aborting ' \
+                echo ' to allow for Matlab and CUTEst interaction. Aborting ' \
                  >&2; exit 3; }
                 FORTRAN="$MATLABGFORTRAN"
                 CC="$MATLABGCC"
                 NEWCC="true"
                 echo " Warning: $MATLABGCC and $MATLABGFORTRAN override more modern"
-                echo ' GNU compilers to allow Matlab-CUTEST interaction'
+                echo ' GNU compilers to allow for Matlab and CUTEst interaction'
               fi
             else
               echo ' Matlab only supports gfortran/gcc '
@@ -452,17 +452,17 @@ while [ $CORRECT_SUBSET == "false" ]; do
               if [[ $CMP="gfortran" ]]; then
                 type -P $MATLABGFORTRAN &>/dev/null || \
               { echo " Warning: you need to install $MATLABGFORTRAN/$MATLABGCC" \
-                echo ' to allow Matlab and CUTEST interaction. Aborting ' \
+                echo ' to allow for Matlab and CUTEst interaction. Aborting ' \
                  >&2; exit 3; }
                 type -P $MATLABGCC &>/dev/null || \
               { echo ' Warning: you need to install $MATLABGCC' \
-                echo ' to allow Matlab and CUTEST interaction. Aborting ' \
+                echo ' to allow for Matlab and CUTEst interaction. Aborting ' \
                  >&2; exit 3; }
                 FORTRAN="$MATLABGFORTRAN"
                 CC="$MATLABGCC"
                 NEWCC="true"
                 echo " Warning: $MATLABGCC and $MATLABGFORTRAN override more modern"
-                echo ' GNU compilers to allow Matlab-CUTEST interaction'
+                echo ' GNU compilers to allow for Matlab and CUTEst interaction'
               fi
             else
               echo ' Matlab only supports gfortran/gcc '

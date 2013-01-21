@@ -67,6 +67,7 @@ SUCC = precision version) compiled successfully
 
 #  main compilations and runs
 
+#all: hrb
 all: $(package)
 
 #  basic packages
@@ -109,7 +110,7 @@ $(OBJ)/$(package)_main.o: ../$(package)/$(package)_main.f90
 	$(SED) -f $(SEDS) ../$(package)/$(package)_main.f90 > \
           $(OBJ)/$(package)_main.f90
 	cd $(OBJ); $(FORTRAN) -o $(package)_main.o $(FFLAGS) \
-             $(package)_main.f \
+             $(package)_main.f90 \
               || ( printf ' %-26s' "=> Disabling optimization " ; \
                $(FORTRAN) -o $(package)_main.o $(FFLAGSN) $(package)_main.f90 )
 	$(RM) $(OBJ)/$(package)_main.f90

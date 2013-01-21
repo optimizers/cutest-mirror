@@ -3,6 +3,11 @@
 #  N. Gould, D. Orban and Ph. L. Toint.
 #  This version: 3 I 2013
 
+#  package
+
+PACKAGE = GEN
+package = gen
+
 SHELL = /bin/$(BINSHELL)
 
 #  compiler flags
@@ -59,6 +64,8 @@ LRMARFILE = $(CUTEST)/bin/rmarfile $(AR) $(GREP) $(LLC)
 
 #  compilation agenda
 
+$(PACKAGE) = $(OBJ)/gen77.o $(OBJ)/gen90.o $(OBJ)/genc.o
+
 GEN77 =  $(OBJ)/gen77.o  $(OBJ)/gen77_main.o
 GEN90 =  $(OBJ)/gen90.o  $(OBJ)/gen90_main.o
 GENC = $(OBJ)/genc.o $(OBJ)/genc_main.o
@@ -70,7 +77,14 @@ SUCC = precision version) compiled successfully
 
 #  main compilations and runs
 
-all: run_test_cutest
+all: $(package)
+
+#  basic packages
+
+$(package): $(package)_$(PRECIS)
+	@printf ' %-21s\n' "CUTEst: $(package) ($(PRECIS) $(SUCC)" 
+$(package)_single: $($(PACKAGE))
+$(package)_double: $($(PACKAGE))
 
 #  basic packages
 
