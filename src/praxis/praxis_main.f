@@ -1,9 +1,9 @@
 C     ( Last modified on 6 Jan 2013 at 12:00:00 )
 
-      PROGRAM          PRXMA
-C
+      PROGRAM PRAXIS_main
+
 C  PRAXIS test driver for problems derived from SIF files.
-C
+
 C  Ph. Toint, for CGT Productions.
 C  January 1996.
 C  Revised for CUTEst, Nick Gould, January 2013
@@ -22,6 +22,7 @@ C Nick - stupid use of common does not allow allocatable arrays
       DOUBLE PRECISION, DIMENSION( nmax ) :: X, D, Q0, Q1
       DOUBLE PRECISION, DIMENSION( nmax, nmax ) :: V
       CHARACTER ( LEN = 10 ), DIMENSION( nmax )  :: XNAMES
+      DOUBLE PRECISION :: PRAXIS_evalf
       EXTERNAL :: PRAXIS_evalf
       COMMON / CPRAX / V, X, D, Q0, Q1, dmin, epsmch, fx, h, qd0, qd1,
      *                 qf1, small, t, xldt, xm2, xm4, dseed, scbd, n,         

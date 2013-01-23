@@ -83,7 +83,8 @@ C  Check to see if there is sufficient room
 
 C  Set up SIF data.
 
-      CALL CUTEST_usetup( status, input, out, n, X, XTEMP, GTEMP )
+      CALL CUTEST_usetup( status, input, out, io_buffer, n, X, 
+     *                    XTEMP, GTEMP )
       IF ( status /= 0 ) GO TO 910
 
 C  Obtain variable names.
