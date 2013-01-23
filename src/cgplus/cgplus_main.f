@@ -1,5 +1,5 @@
 C     ( Last modified on 2 Jan 2013 at 15:10:00 )
-      PROGRAM          CGPMA
+      PROGRAM          CGPLUS_main
 C
 C  CG+ test driver for problems derived from SIF files.
 C
@@ -116,24 +116,23 @@ C
            FINISH = .TRUE.
            GO TO 30
         ENDIF
-
    50 CONTINUE
 C
 C  Terminal exit.
 C
       CALL CUTEST_ureport( status, CALLS, CPU )
       IF ( status /= 0 ) GO TO 910
-      GNORM    = ZERO
-      DO 110 I  = 1, N
-         GNORM = MAX( GNORM, ABS( G( I ) ) )
+      gnorm = zero
+      DO 110 i = 1, n
+         gnorm = MAX( gnorm, ABS( G( i ) ) )
   110 CONTINUE
-      WRITE ( out, 2010 ) F, GNORM
+      WRITE ( out, 2010 ) f, gnorm
 C      DO 120 I = 1, N
 C         WRITE( out, 2020 ) XNAMES( I ), X( I ), G( I )
 C  120 CONTINUE
-      WRITE ( out, 2000 ) PNAME, N, INT( CALLS(1) ), INT( CALLS(2) ),
-     *                     IFLAG, F, CPU(1), CPU(2) 
-      CLOSE( INPUT  )
+      WRITE ( out, 2000 ) pname, n, INT( CALLS(1) ), INT( CALLS(2) ),
+     *                    iflag, F, CPU(1), CPU(2) 
+      CLOSE( input  )
       CALL CUTEST_uterminate( status )
       STOP
 

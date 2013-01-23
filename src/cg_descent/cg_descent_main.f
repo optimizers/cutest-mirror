@@ -1,141 +1,136 @@
 C     ( Last modified on 2 Jan 2013 at 15:10:00 )
-      PROGRAM          CGDMA
-C
+
+      PROGRAM CG_DESCENT_main
+
 C  CG_DESCENT test driver for problems derived from SIF files.
-C
+
 C  Nick Gould, for CGT Productions.
 C  July 2004
 C  Revised for CUTEst, January 2013
-C
+
 C  A number of updates to the structure of the SPEC file
 C  to accomodate version 1.4 of CG_DESCENT.
 C  Dominique Orban, July 2007
-C
+
       IMPLICIT NONE
-      INTEGER          out  , N , M , INPUT , MSAVE, outcp, status
-      INTEGER          LP    , MP, I , METHOD, ITER  , NF, NG
-      INTEGER          STAT  , ICALL , INSPEC, IPRINT( 2 )
+      INTEGER :: lp, mp, i, method, iter, nf, ng, nxpand, nsecnt
+      INTEGER :: n, m, msave, status, stat, icall, IPRINT( 2 )
       INTEGER :: io_buffer = 11
-      DOUBLE PRECISION F, TOL, GNORM , BIGINF, ZERO,
-     *                 STPMIN, STPMAX, TLEV
-      LOGICAL          BOUNDS
-      DOUBLE PRECISION DELTA, SIGMA, EPSILON, THETA, GAMMA,STOPFA,
-     *                 RHO, ETA, PSI0, PSI1, PSI2, QUADCU, RSTRTF, 
-     *                 MAXITF, FEPS, AWLFFCT, QDECAY
-      INTEGER          NXPAND, NSECNT
-      LOGICAL          QUADST, PRNTLV, PRNTFI, STRULE, ERULE, AWOLFE, 
-     *                 STEP, PRTRUL, DEBUG
-      PARAMETER      ( out  = 6 )
-      PARAMETER      ( INPUT = 55, INSPEC = 56, outcp = 57 )
-      PARAMETER      ( BIGINF = 9.0D+19, ZERO = 0.0D0 )
- 
+      INTEGER, PARAMETER :: out  = 6
+      INTEGER, PARAMETER :: input = 55, inspec = 56, outcp = 57
+      DOUBLE PRECISION :: f, tol, gnorm, stpmin, stpmax, tlev
+      LOGICAL :: bounds
+      DOUBLE PRECISION :: delta, sigma, epsilon, theta, gamma,stopfa
+      DOUBLE PRECISION :: rho, eta, psi0, psi1, psi2, quadcu, rstrtf
+      DOUBLE PRECISION :: maxitf, feps, awlffct, qdecay
+      LOGICAL :: quadst, prntlv, prntfi, strule, erule, awolfe
+      LOGICAL :: step, prtrul, debug
+      DOUBLE PRECISION, PARAMETER :: biginf = 9.0D+19, zero = 0.0D0
       DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: X, G, D
       DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: XTEMP, GTEMP
-      CHARACTER ( LEN = 10 ) :: PNAME
+      CHARACTER ( LEN = 10 ) :: pname
       CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : )  :: XNAMES
+      CHARACTER ( LEN = 17 ), PARAMETER :: cgparm = 'cg_descent_f.parm'
+      CHARACTER ( LEN = 15 ) :: spcdat
+      CHARACTER ( LEN = 80 ) :: rest
+      DOUBLE PRECISION :: CPU( 2 ), CALLS( 4 )
+      EXTERNAL :: CG_DESCENT_EVALF, CG_DESCENT_EVALG
 
- 
-      CHARACTER * 17   CGPARM
-      PARAMETER      ( CGPARM = 'cg_descent_f.parm' )
-      CHARACTER * 15   SPCDAT
-      DOUBLE PRECISION CPU( 2 ), CALLS( 4 )
-      EXTERNAL         EVALF, EVALG
-C     
 C  Open the Spec file for the method.
-C
+
       SPCDAT = 'CG_DESCENT.SPC'
-      OPEN ( INSPEC, FILE = SPCDAT, FORM = 'FORMATTED',
+      OPEN ( inspec, FILE = SPCDAT, FORM = 'FORMATTED',
      *      STATUS = 'OLD' )
-      REWIND INSPEC
-C
+      REWIND( inspec )
+
 C  Read input Spec data.
-C
-      READ ( INSPEC, 1000 ) TOL, GNORM, DELTA, SIGMA, EPSILON, GAMMA,
-     *                      RHO, ETA,
-     *                      PSI0, PSI1, PSI2, QUADCU, STOPFA, AWLFFCT,
-     *                      RSTRTF, MAXITF, FEPS, QDECAY, NXPAND,
-     *                      NSECNT, PRTRUL, QUADST, PRNTLV, PRNTFI,
-     *                      STRULE, AWOLFE, STEP, DEBUG
-C
+
+      READ( inspec, 1000 ) tol, gnorm, delta, sigma, epsilon, gamma,
+     *                     rho, eta, psi0, psi1, psi2, quadcu, stopfa, 
+     *                     awlffct, rstrtf, maxitf, feps, qdecay, 
+     *                     nxpand, nsecnt, prtrul, quadst, prntlv, 
+     *                     prntfi, strule, awolfe, step, debug
+
 C  Close input file.
-C
-      CLOSE ( INSPEC )
-C
+
+      CLOSE ( inspec )
+
 C  Create the required data input file
-C
-      OPEN ( outcp, FILE = CGPARM, FORM = 'FORMATTED',
+
+      OPEN( outcp, FILE = CGPARM, FORM = 'FORMATTED',
      *       STATUS = 'UNKNOWN' )
-      REWIND outcp
-      WRITE( outcp, 1001 ) DELTA, SIGMA, EPSILON, GAMMA, RHO, ETA,
-     *                      PSI0, PSI1, PSI2, QUADCU, STOPFA, AWLFFCT,
-     *                      RSTRTF, MAXITF, FEPS, QDECAY, NXPAND,
-     *                      NSECNT, PRTRUL, QUADST, PRNTLV, PRNTFI,
-     *                      STRULE, AWOLFE, STEP, DEBUG
-      CLOSE ( outcp )
-C
+      REWIND( outcp )
+      WRITE( outcp, 1001 ) delta, sigma, epsilon, gamma, rho, eta,
+     *                     psi0, psi1, psi2, quadcu, stopfa, awlffct,
+     *                     rstrtf, maxitf, feps, qdecay, nxpand,
+     *                     nsecnt, prtrul, quadst, prntlv, prntfi,
+     *                     strule, awolfe, step, debug
+      CLOSE( outcp )
+
 C  Open the relevant file.
-C
+
       OPEN ( INPUT, FILE = 'OUTSDIF.d', FORM = 'FORMATTED',
      *       STATUS = 'OLD' )
-C
+
 C  Check to see if there is sufficient room
-C
-      CALL CUTEST_udimen( status, INPUT, N )
+
+      CALL CUTEST_udimen( status, input, n )
       IF ( status /= 0 ) GO TO 910
 
       ALLOCATE( X( n ), G( n ), D( n ), XTEMP( n ), GTEMP( n ), 
      *          XNAMES( n ), STAT = status )
       IF ( status /= 0 ) GO TO 990
-C
+
 C  Set up SIF data.
-C
-      CALL CUTEST_usetup( status, INPUT, out, N, X, XTEMP, GTEMP )
+
+      CALL CUTEST_usetup( status, input, out, n, X, XTEMP, GTEMP )
       IF ( status /= 0 ) GO TO 910
-C
+
 C  Obtain variable names.
-C
+
       CALL CUTEST_unames( status, N, PNAME, XNAMES )
       IF ( status /= 0 ) GO TO 910
-C
+
 C  Set up algorithmic input data.
-C
-      BOUNDS  = .FALSE.
-      DO 10 I = 1, N
-         IF ( XTEMP( I ) .GT. - BIGINF .OR. GTEMP( I ) .LT. BIGINF )
-     *      BOUNDS = .TRUE.
+
+      bounds = .FALSE.
+      DO 10 i = 1, n
+        IF ( XTEMP( i ) .GT. - biginf .OR. GTEMP( i ) .LT. biginf )
+     *    bounds = .TRUE.
    10 CONTINUE
-      IF ( BOUNDS ) WRITE( out, 2030 )
-      LP     = out
-      MP     = out
-C
+      IF ( bounds ) WRITE( out, 2030 )
+      lp = out
+      mp = out
+
 C  Set up initial step length if requested
-C
-      IF( STEP ) THEN
-         IF( GNORM .LE. 0.0D+0 ) THEN
-             CALL CUTEST_ugr( status, N, X, G )
-             IF ( status /= 0 ) GO TO 910
-             GNORM = 0.0D+0
-             DO 11 I = 1, N
-                GNORM = MAX( GNORM, DABS(G(I)) )
-   11        CONTINUE
-         ENDIF
+
+      IF ( step ) THEN
+        IF ( gnorm .LE. 0.0D+0 ) THEN
+          CALL CUTEST_ugr( status, N, X, G )
+          IF ( status /= 0 ) GO TO 910
+          gnorm = 0.0D+0
+          DO 11 i = 1, n
+            gnorm = MAX( gnorm, DABS( G( i ) ) )
+   11     CONTINUE
+        ENDIF
       ENDIF
-C
+
 C  Call the optimizer.
-C
-      CALL CG_DESCENT( TOL, X, N, EVALF, EVALG, STAT, GNORM, F,
-     &                 ITER, NF, NG, D, G, XTEMP, GTEMP )
-C
+
+      CALL CG_DESCENT( tol, X, n, CG_DESCENT_evalf, CG_DESCENT_evalg, 
+     &                 stat, gnorm, f, iter, nf, ng, D, G, 
+     &                 XTEMP, GTEMP )
+
 C  Terminal exit.
-C
+
       CALL CUTEST_ureport( status, CALLS, CPU )
       IF ( status /= 0 ) GO TO 910
-      WRITE ( out, 2010 ) F, GNORM
-C      DO 120 I = 1, N
-C         WRITE( out, 2020 ) XNAMES( I ), X( I ), G( I )
+      WRITE ( out, 2010 ) f, gnorm
+C      DO 120 i = 1, n
+C         WRITE( out, 2020 ) XNAMES( i ), X( i ), G( i )
 C  120 CONTINUE
-      WRITE ( out, 2000 ) PNAME, N, INT( CALLS(1) ), INT( CALLS(2) ),
-     *                     STAT, F, CPU(1), CPU(2) 
+      WRITE ( out, 2000 ) pname, n, INT( CALLS(1) ), INT( CALLS(2) ),
+     *                    stat, f, CPU(1), CPU(2) 
       CLOSE( INPUT  )
       CALL CUTEST_uterminate( status )
       STOP
@@ -148,9 +143,9 @@ C  120 CONTINUE
   990 CONTINUE
       WRITE( out, "( ' Allocation error, status = ', I0 )" ) status
       STOP
-C
+
 C  Non-executable statements.
-C
+
  1000 FORMAT( 18( D10.3, / ), 2( I10, / ), 7( L10, / ), L10 )
  1001 FORMAT( 16( D10.3, / ), 2( I10, / ), 7( L10, / ), L10 )
  2000 FORMAT( /, 24('*'), ' CUTEr statistics ', 24('*') //
@@ -221,34 +216,30 @@ C     * 'Step         F (no initial line search guess) T (guess in ',
 C     * 'gnorm')
       END
 
-      SUBROUTINE EVALF( F, X, N )
+      SUBROUTINE CG_DESCENT_evalf( f, X, n )
 
 C  Evaluate the objective function
 
-      INTEGER N
-CS    REAL             F
-CD    DOUBLE PRECISION F
-CS    REAL             X( N )
-CD    DOUBLE PRECISION X( N )
+      INTEGER :: n
+      DOUBLE PRECISION :: f
+      DOUBLE PRECISION :: X( n )
       EXTERNAL CUTEST_ufn
 
       INTEGER :: status
 
-      CALL CUTEST_ufn( status, N, X, F )
+      CALL CUTEST_ufn( status, n, X, f )
       IF ( status /= 0 ) STOP
 
       RETURN
       END
       
-      SUBROUTINE EVALG( G, X, N )
+      SUBROUTINE CG_DESCENT_evalg( G, X, n )
 
 C  Evaluate the gradiuent of the objective function
 
-      INTEGER N
-CS    REAL             X( N ), G( N )
-CD    DOUBLE PRECISION X( N ), G( N )
+      INTEGER :: n
+      DOUBLE PRECISION :: X( n ), G( n )
       EXTERNAL CUTEST_ugr
-
       INTEGER :: status
 
       CALL CUTEST_ugr( status, N, X, G )
