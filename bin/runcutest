@@ -90,12 +90,12 @@ Initialize_Settings() {
 
 Display_Usage() {
 
-    printf "Syntax: ${thisprog} -a architecture -p pkg [options...]\n"
+    printf "Syntax: ${thisprog} -A architecture -p pkg [options...]\n"
     printf 'Here is a summary of the available options.\n'
     printf 'See the man page for further details.\n\n'
     printf '  -A  or --architecture \tspecify architecture to use\n'
     printf '  -p  or --package \tspecify package name\n'
-    printf '  -s  or --single  \trun single precision version of package\n'
+    printf '  -sp or --single  \trun single precision version of package\n'
     printf '  -h  or --help    \tdisplay this help message\n'
     printf '  -k  or --keep    \tkeep executable after run is over\n'
     printf '  -r  or --rebuild \tforce recompilation of problem subroutines\n'
@@ -131,7 +131,7 @@ Parse_Arguments() {
                            let package_set=1
                            shift
                            ;;
-            -s|--single)   PRECISION="single"
+            -sp|--single)  PRECISION="single"
                            ;;
             -h|--help)     Display_Usage
                            exit 0
@@ -272,6 +272,18 @@ Parse_Arguments "$@"
 ${CUTEST}/bin/envcheck
 [[ $? != 0 ]] && exit $?
 
+if [[ -z "$ARCH" ]]; then
+  if [[ -z "$MYARCH" ]]; then
+    echo ' no architecture specified and environment variable MYARCH is unset.'
+    echo ' Either specificy architecture with -A option or set variable MYARCH.'
+    echo ' and re-run.'
+    echo ''
+    exit 2
+  else
+    ARCH=${MYARCH}
+  fi
+fi
+
 # Initialize architecture-dependent parts
 . ${CUTEST}/bin/sys/${ARCH}
 
@@ -288,15 +300,6 @@ if (( show_config )); then
 #    printf "  Mex compile:   ${MEXCOMPILE}\n"
     printf '========================\n'
     printf '\n'
-fi
-
-# Ensure that the architecture was specified
-if (( architecture_set == 0 )); then
-    echo "Please specify the architecture to use using -a"
-    echo "available architecturess are -"
-    ${LS} -1 ${CUTEST}/versions/
-    echo "Try $0 --help for more information"
-    exit 1
 fi
 
 # Ensure that a package was specified
@@ -363,10 +366,13 @@ cd ${WorkingDir}
 # If needed, find the correct BLAS and package spec file
 (( $blas_set == 0 )) && BLAS=${CUTEST}/${PRECISION}/bin/linpac.o
 BLAS=-lblas
+echo ${SPECS}
 if [[ ${SPECS} != "" ]]; then
   if [[ ! -e ${SPECS} ]]; then
      if [[ -e ${CUTEST}/src/${PACKDIR}/${SPECS} ]]; then
        ${LN} -fs ${CUTEST}/src/${PACKDIR}/${SPECS} ${SPECS}
+echo ${SPECS}
+cat ${SPECS}
      else
         printf "\nCannot find spec file ${SPECS}---skipping\n"
      fi
@@ -403,7 +409,6 @@ fi
 # The package-dependent object files are either fully in full-specified 
 # indididual directories or in ${CUTEST}/${PRECISION}/bin
 PACKOBJS=( ${PACKOBJS} )
-echo $PACKOBJS
 nobjs=${#PACKOBJS[@]}
 #cd ${CUTEST}/${PRECISION}/bin
 for (( i = 0; i < nobjs ; i++ ))

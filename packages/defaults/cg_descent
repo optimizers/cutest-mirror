@@ -14,7 +14,7 @@ export PACK_PRECISION="double"
 
 # Define the names of the object files for the package which must lie in
 # a full path must occur in ${CUTEST}/objects/(architecture)/(precision)/
-export PACKOBJS="cg_descent.o"
+export PACKOBJS="${CG_DESCENT}/cg_descent.o"
 
 # Define package and system libraries using -llibrary to include library.a
 # or library.so together with any nonstandard library paths using -L(path)
