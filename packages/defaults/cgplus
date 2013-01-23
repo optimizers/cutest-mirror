@@ -3,7 +3,7 @@
 # N. Gould, D. Orban & Ph. Toint, January 19th, 2013, September 4th, 2004
 
 # The name of the package
-export PACKAGE=cgp
+export PACKAGE=cgplus
 
 # Subdirectory of ${CUTEST}/src where the package lives
 export PACKDIR=cgplus

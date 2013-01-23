@@ -1281,11 +1281,11 @@ extern "C" {
 
         if (jtrans)
           CUTEST_cgrdh( &status, &CUTEst_nvar, &CUTEst_ncon, x, v, 
-                        &gradf, g, &jtrans, &CUTEst_ncon, &CUTEst_nvar, J, 
+                        &gradf, g, &jtrans, &CUTEst_nvar, &CUTEst_ncon, J, 
                         &CUTEst_nvar, H);
         else
           CUTEST_cgrdh( &status, &CUTEst_nvar, &CUTEst_ncon, x, v, 
-                        &gradf, g, &jtrans, &CUTEst_nvar, &CUTEst_ncon, J, 
+                        &gradf, g, &jtrans, &CUTEst_ncon, &CUTEst_nvar, J, 
                         &CUTEst_nvar, H);
       } else {
         plhs[0] = mxCreateDoubleMatrix(CUTEst_nvar, 1, mxREAL);

@@ -24,7 +24,7 @@
       IMPLICIT NONE
       INTEGER :: funit, status
       CHARACTER ( LEN = 64 ) fname
-
+      
       OPEN( funit, FILE = fname, STATUS = 'UNKNOWN', ERR = 900 )
       status = 0
       RETURN
