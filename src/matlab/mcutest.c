@@ -1338,10 +1338,11 @@ extern "C" {
 
       /* Pretend only one triangle was allocated */
       if (CUTEst_ncon > 0)
-        CUTEST_csh( &status, &CUTEst_nvar, &CUTEst_ncon, x, v, &CUTEst_nnzh,
-             &CUTEst_nnzh, H, irow, jcol);
+        CUTEST_csh( &status, &CUTEst_nvar, &CUTEst_ncon, x, v, 
+             &CUTEst_nnzh, &CUTEst_nnzh, H, irow, jcol);
       else
-        CUTEST_ush( &status, &CUTEst_nvar, x, &CUTEst_nnzh, &CUTEst_nnzh, H, irow, jcol);
+        CUTEST_ush( &status, &CUTEst_nvar, x, 
+             &CUTEst_nnzh, &CUTEst_nnzh, H, irow, jcol);
 
       if (status != 0) {
           sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
@@ -1358,7 +1359,17 @@ extern "C" {
           offdiag_nnzh++;
         }
 
+      i =  CUTEst_nnzh + offdiag_nnzh ;
+      /*sprintf(msgBuf,"** nnzh = %d", CUTEst_nnzh + offdiag_nnzh);*/
+
+      mexPrintf(" nnzh total %-d allocated %-d\n", i, 2*CUTEst_nnzh);
+for (i = 0; i < CUTEst_nnzh +  offdiag_nnzh ; i++)
+  mexPrintf("row,col %-d %-d %f \n ", irow[i],jcol[i],H[i]);
+
+      /*                sprintf(msgBuf,"** nnzh = %d, nvar = %d", i, CUTEst_nvar);
+                        mexErrMsgTxt(msgBuf); */
       /* Convert to Matlab Sparse format */
+      offdiag_nnzh = offdiag_nnzh + CUTEst_nnzh ;
       plhs[0] = coordToMatlabSparse(CUTEst_nvar, CUTEst_nvar,
                                     CUTEst_nnzh + offdiag_nnzh,
                                     irow, jcol,
@@ -1635,6 +1646,8 @@ extern "C" {
 
     double zero = (double)0.0;
     int i, j, k, elem;
+
+        mexPrintf("in %-d\n", nnz);
 
     if (nnz < 0) return NULL;
 
