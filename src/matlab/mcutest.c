@@ -212,6 +212,9 @@ extern "C" {
     mwIndex *ir, *jptr;
     int  i, j;
 
+    mxArray *matrix;    /* Output Matlab sparse matrix */
+
+
     /* ------------------------------------------------------------------ */
 
     if (nrhs == 0) mexErrMsgTxt("At least one argument must be given\n");
@@ -1362,19 +1365,23 @@ extern "C" {
       i =  CUTEst_nnzh + offdiag_nnzh ;
       /*sprintf(msgBuf,"** nnzh = %d", CUTEst_nnzh + offdiag_nnzh);*/
 
-      mexPrintf(" nnzh total %-d allocated %-d\n", i, 2*CUTEst_nnzh);
+mexPrintf(" nnzh total %-d allocated %-d\n", i, 2*CUTEst_nnzh);
 for (i = 0; i < CUTEst_nnzh +  offdiag_nnzh ; i++)
-  mexPrintf("row,col %-d %-d %f \n ", irow[i],jcol[i],H[i]);
+  mexPrintf("%-2d row,col,val %-d %-d %f \n ", i+1,irow[i],jcol[i],H[i]);
 
-      /*                sprintf(msgBuf,"** nnzh = %d, nvar = %d", i, CUTEst_nvar);
-                        mexErrMsgTxt(msgBuf); */
-      /* Convert to Matlab Sparse format */
-      offdiag_nnzh = offdiag_nnzh + CUTEst_nnzh ;
+/*  this fails if 13 is changed to 14 ... or CUTEst_nnzh + offdiag_nnzh = 16 */
+/*      plhs[0] = coordToMatlabSparse(CUTEst_nvar, CUTEst_nvar, */
+      matrix = coordToMatlabSparse(CUTEst_nvar, CUTEst_nvar,
+                                    14,
+                                    irow, jcol,
+                                    (double *)H);
+mexErrMsgTxt("stop\n");
+      /*
+
       plhs[0] = coordToMatlabSparse(CUTEst_nvar, CUTEst_nvar,
                                     CUTEst_nnzh + offdiag_nnzh,
                                     irow, jcol,
-                                    (double *)H);
-
+                                    (double *)H); */
       mxFree(jcol);
       mxFree(irow);
       mxFree(H);
@@ -1647,7 +1654,7 @@ for (i = 0; i < CUTEst_nnzh +  offdiag_nnzh ; i++)
     double zero = (double)0.0;
     int i, j, k, elem;
 
-        mexPrintf("in %-d\n", nnz);
+    /*        mexPrintf("in %-d\n", nnz); */
 
     if (nnz < 0) return NULL;
 

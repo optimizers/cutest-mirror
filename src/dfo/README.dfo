@@ -26,3 +26,16 @@ Quick instructions
 
    Similarly, place ranlux.o in user-defined directory $DFO or in
    $CUTEST/objects/(architecture)/(precision) .
+
+References:
+----------
+
+A. R. Conn, K. Scheinberg and Ph.L. Toint, 
+On the convergence of derivative-free methods for unconstrained optimization. 
+Approximation Theory and Optimization: Tributes to M. J. D. Powell , 
+Eds. A. Iserles and M. Buhmann, (1997), pp. 83-108, Cambridge University Press. 
+
+A. R. Conn, K. Scheinberg and Ph.L. Toint, 
+A derivative free optimization algorithm in practice,
+in Proceedings of 7th AIAA/USAF/NASA/ISSMO Symposium on Multidisciplinary 
+Analysis and Optimization, St. Louis, MO, 1998. 

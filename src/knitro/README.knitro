@@ -32,7 +32,7 @@ subdirectories and files
     $KNITRODIR/include/knitro.h
     $KNITRODIR/lib/libknitro700.a
 
-Copy $KNITRODIR/in+clude/knitro.h to the $CUTEST/include directory;
+Copy $KNITRODIR/include/knitro.h to the $CUTEST/include directory;
 the latest version we know about will already be in $CUTEST/include.
 
 The file knitro.opt should be present in the directory from which you 

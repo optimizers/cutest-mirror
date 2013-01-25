@@ -83,7 +83,6 @@ REFERENCE
 ---------
 
  W. W. Hager and H. Zhang, 
- "CG_DESCENT, A conjugate gradient method with guaranteed descent",
- Department of Mathematics, University of Florida, Gainesville, FL 32611,
- January, 2004.
+ "Algorithm 851: CG_DESCENT, A conjugate gradient method with guaranteed 
+ descent", ACM Transactions on Mathematical Software, 32 (2006), 113-137. 
 
