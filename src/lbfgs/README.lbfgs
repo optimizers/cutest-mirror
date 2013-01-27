@@ -17,7 +17,7 @@ HOW DO I GET L-BFGS?
 
 See
 
-  http://www.ece.northwestern.edu/~nocedal/lbfgs.html
+  http://users.eecs.northwestern.edu/~nocedal/lbfgs.html
 
 COMPILING THE OBJECT MODULE FOR L-BFGS
 --------------------------------------
@@ -49,14 +49,19 @@ This default file is as follows:
      10000    MAXIT     specifies the maximum number of iterations
    0.00001    EPS       specifies the required gradient accuracy
 
-The commands to use this package are the two scripts sdlbs and lbs.
-
 The reader is referred to the paper quoted below and the code itself if he or 
 she wishes to modify these parameters.
 
-REFERENCE
----------
+To run with CUTEst, use the runcutest command with the -p lbfgs option.
+See the man page for runcutest for more details of other options.
+
+REFERENCES
+----------
 
 J. Nocedal,
  "Updating quasi-Newton matrices with limited storage",
   Mathematics of Computation, Vol 35, (1980) 773--782.
+
+D.C. Liu and J. Nocedal,
+ "On the Limited Memory Method for Large Scale Optimization",
+  Mathematical Programming B, 45, 3, (1989) pp. 503-528.

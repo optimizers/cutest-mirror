@@ -119,13 +119,17 @@ There are currently interfaces to the following packages:
 .B \fIcg_descent\fP
 See W. W. Hager and H. Zhang, 
 \fIAlgorithm 851: CG_DESCENT, A conjugate gradient method with guaranteed 
-descent\fP, ACM Transactions on Mathematical Software, 32 (2006), 113-137. 
+descent\fP, ACM Transactions on Mathematical Software, 32, 113-137 (2006).
+
+http://www.math.ufl.edu/~hager/papers/CG/
 
 .TP
 .B \fIcgplus\fP
 The CG+ package is a nonlinear conjugate-gradient algorithm
 designed for unconstrained minimization by G. Liu, Jorge 
 Nocedal and Richard Waltz (Northwestern U.).
+
+http://users.eecs.northwestern.edu/~nocedal/CG+.html
 
 .TP
 .B \fIcobyla\fP
@@ -136,19 +140,23 @@ constraint functions by linear interpolation\fP,
 In Advances in optimization and numerical analysis, Proceedings
 of the Sixth workshop on Optimization and Numerical Analysis, Oaxaca,
 Mexico, volume 275 of Mathematics and its Applications, pp 51--67.
-Kluwer Academic Publishers, 1994.
-
+Kluwer Academic Publishers (1994).
 
 .TP
 .B \fIderchk\fP
+This package checks the dervatives supplied in the problem SIF file, and
+is due to Dominique Orban from Ecole Polytechnique de Montreal.
 
 .TP
 .B \fIdfo\fP
+.br
 See A. R. Conn, K. Scheinberg and Ph.L. Toint, 
 \fIOn the convergence of derivative-free methods for unconstrained 
 optimization\fP,
 Approximation Theory and Optimization: Tributes to M. J. D. Powell , 
-Eds. A. Iserles and M. Buhmann, (1997), pp. 83-108, Cambridge University Press. 
+Eds. A. Iserles and M. Buhmann, 83-108, Cambridge University Press (1997).
+
+https://projects.coin-or.org/Dfo
 
 .TP
 .B \fIfiltersqp\fP
@@ -156,94 +164,196 @@ FilterSQP is a filter-based SQP method for large-scale nonlinear programming
 by Roger Fletcher and Sven Leyffer from the University of Dundee.
 
 .TP
-.B \fIgen\fP
+.B \fIgen77\fP, \fIgen90\fP, \fIgenc\fP
+.br
+These package simply illustrates how CUTEst tools may be called in fortran 77,
+fortran 90 and C; the result is of no consequence.
 
 .TP
 .B \fIhrb\fP
+.br
+This package writes the matrix data for the given problem in Harwell or 
+Rutherford-Boeing sparse matrix forrmat, and was provded by Nick Gould 
+from the Rutherford Appleton Laboratory.
 
 .TP
 .B \fIipopt\fP
+See A. Wächter and L. T. Biegler, 
+\fIOn the Implementation of an Interior-Point Filter Line-Search Algorithm 
+for Large-Scale Nonlinear Programming\fP,
+Mathematical Programming 106(1) 25-57 (2006).
+
+https://projects.coin-or.org/Ipopt
 
 .TP
 .B \fIknitro\fP
+See R. H. Byrd, J. Nocedal, and R. A. Waltz, 
+\fIKNITRO: An Integrated Package for Nonlinear Optimization\fP in 
+Large-Scale Nonlinear Optimization, G. di Pillo and M. Roma, eds, 
+pp. 35-59 (2006), Springer-Verlag.
+
+http://www.ziena.com/knitro.htm
 
 .TP
 .B \fIla04\fP
+.br    
+LA04 is a steepest-edge simplex method for linear programming by John Reid
+frm the Rutherford Appleton Laboratory.
+
+http://www.hsl.rl.ac.uk/catalogue/la04.xml
 
 .TP
 .B \fIlbfgs\fP
+See D.C. Liu and J. Nocedal,
+\fIOn the Limited Memory Method for Large Scale Optimization\fP 
+Mathematical Programming B, 45(3) 503-528 (1989).
+
+http://users.eecs.northwestern.edu/~nocedal/lbfgs.html
 
 .TP
 .B \fIlbfgsb\fP
+See C. Zhu, R. H. Byrd and J. Nocedal. 
+\fIL-BFGS-B: Algorithm 778: L-BFGS-B, FORTRAN routines for large scale bound 
+constrained optimization\fP 
+ACM Transactions on Mathematical Software, 23(4) 550-560 (1997).
+
+http://users.eecs.northwestern.edu/~nocedal/lbfgsb.html
 
 .TP
 .B \fIloqo\fP
+.br
+See R. J. Vanderbei and D. F. Shanno 
+\fIAn Interior-Point Algorithm for Nonconvex Nonlinear Programming\fP,
+13 (1-3) pp 231-252 (1999).
+
+http://www.princeton.edu/~rvdb/loqo/LOQO.html
 
 .TP
 .B \fImatlab\fP
+Creates a Matlab binary to allow CUTEst calls from Matlab. 
+See $CUTEST/src/matlab/README.matlab to see how to use the binary with Matlab.
 
 .TP
 .B \fIminos\fP
+See
+B. A. Murtagh and M. A. Saunders.
+\fIA projected Lagrangian algorithm and its implementation for sparse 
+nonlinear constraints\fP,
+Mathematical Programming Study 16, 84-117 (1982). 
+
+http://www.sbsi-sol-optimize.com/asp/sol_product_minos.htm
 
 .TP
 .B \fInitsol\fP
+See M. Pernice and H. F. Walker,
+\fINITSOL: a Newton iterative solver for nonlinear systems\fP,
+Special Issue on Iterative Methods, SIAM J. Sci. Comput., 19, 302-318 (1998).
+
+http://users.wpi.edu/~walker/NITSOL/
 
 .TP
 .B \fInpsol\fP
+A linesearch SQP method for constrained optimization by Philip Gill, 
+Walter Murray, Michael Saunders and Margaret Wright from Stanford University.
+
+http://www.sbsi-sol-optimize.com/asp/sol_product_npsol.htm
 
 .TP
 .B \fIpds\fP
+.br    
+Direct search methods for unconstrained optimization on either sequential or 
+parallel machines by Virginia Torczon from The College of William and Mary.
 
 .TP
 .B \fIpraxis\fP
+Brent's multi-dimensional direct search unconstrained minimization algorithm,
+as implemented by John Chandler, Sue Pinsk and Rosalee Taylor from
+Oklahoma State University.
+
+http://people.sc.fsu.edu/~jburkardt/f_src/praxis/praxis.html
 
 .TP
 .B \fIsnopt\fP
+See P. E. Gill, W. Murray and M. A. Saunders.
+\fISNOPT: An SQP algorithm for large-scale constrained optimization\fP,
+SIAM Review 47(1) 99-131 (2005). 
 
+http://www.sbsi-sol-optimize.com/asp/sol_product_snopt.htm
 .TP
 .B \fIstats\fP
+The package collects statistics about the types of variables and constraints
+involved in a given problem, and was written by Dominique Orban from
+Ecole Polytechnique de Montreal.
 
 .TP
 .B \fIstenmin\fP
+See A. Bouaricha, 
+\fIAlgorithm 765: STENMIN — a software package for large, sparse unconstrained 
+optimization using tensor methods\fP,
+ACM Transactions on Mathematical Software, 23(1) 81-90 (1997).
+
+http://www.netlib.org/toms/765
 
 .TP
 .B \fItao\fP
+TAO is an object-oriented package for large-scale optimization written by
+Todd Munson, Jason Sarich, Stefan Wild, Steven Benson and Lois Curfman McInnes,
+
+http://www.mcs.anl.gov/research/projects/tao/
 
 .TP
 .B \fItenmin\fP
+See R.B. Schnabel and T.-T. Chow,
+R. B. Schnabel and T.-T. Chow,
+\fIAlgorithm 739: A software package for unconstrained optimization using 
+tensor methods\fP,
+ACM Transactions on Mathematical Software, 20(4) 518-530 (1994).
+
+http://www.netlib.org/toms/739
 
 .TP
 .B \fItron\fP
+See C. Lin and J. J. More',
+\fINewton's method for large bound-constrained optimization problems\fP,
+SIAM J. Optimization 9(4) 1100-1127 (1999).
+
+  http://www.mcs.anl.gov/~more/tron/
 
 .TP
 .B \fIuncmin\fP
+See J. E. Koontz, R.B. Schnabel, and B.E. Weiss,
+\fIA modular system of algorithms for unconstrained minimization\fP,
+ACM Transactions on Mathematical Software, 11(4) 419-440 (1985).
 
 .TP
 .B \fIvf13\fP
+.br    
+VF13 is a line-search SQP method for constrained optimization by Mike Powell
+from the University of Cambridge. 
+
+http://www.hsl.rl.ac.uk/archive/index.html
 
 .LP 
-
-
 Interfaces to the obsolete packages 
 \fIhsl_ve12\fP, \fIosl\fP, \fIva15\fP, \fIve09\fP and \fIve14\fP 
-supported by CUTEr have been withdrawn.
+previously supported in CUTEr have been withdrawn.
 
 The packages 
-\fIderchk\fP,  \fIgen\fP, \fIhrb\fP and \fIstats\fP are supplied
+\fIderchk\fP,  \fIgen77/90/c\fP, \fIhrb\fP and \fIstats\fP are supplied
 as part of the CUTEst distribution and should work "as is". 
 Anyone wishing to use one of remaining packages will need to download 
 and install it first. See the
 README in the relevant subdirectory of $CUTEST/src for further
 instructions. 
 
-A file with each of the supported packages' names may be found
+A file with each of supported package's name may be found
 in the directory $CUTEST/packages/ and indicates default 
 locations for the package's binary and options files.
 These files may be edited if necessary, or copied into 
 $CUTEST/packages/(arrchitecture)/(precision)/
 to allow for architecture or precision
-specfic versions; \fBruncutest\fP will check the architecture/precision
-specfic directory before using the default version.
+specfic settings; \fBruncutest\fP will use the architecture/precision
+specfic directory version, if any, in preference to the default version.
 .SH ENVIRONMENT 
 .TP
 .SB CUTEST
@@ -273,9 +383,4 @@ Environment, revisited\fP,
    I. Bongartz, A.R. Conn, N.I.M. Gould and Ph.L. Toint, 
    TOMS, \fB21\fP:1, pp.123-160, 1995.
 
-sifdecoder(1), 
-cob(1), fil(1), gen(1), hrb(1), knit(1), lmb(1), mns(1), nps(1),
-prx(1), sdcob(1), sdfil(1), sdgen(1), sdhrb(1), sdknit(1),
-sdlmb(1), sdmns(1), sdnps(1), sdprx(1), sdsnp(1), sdten(1),
-sdunc(1), sdvf13(1),
-snp(1), ten(1), unc(1), vf13(1).
+sifdecoder(1).

@@ -17,8 +17,15 @@ algorithm, where bounds, linear constraints and nonlinear constraints are
 treated separately.  NPSOL stores all matrices in dense format,
 and is therefore not intended for large sparse problems.  
 
+HOW DO I GET NPSOL?
+-------------------
+
 NPSOL has been written by Gill, Murray, Suanders and Wright, and is available
 from the Office of Technology Licensing at Stanford University.
+
+See 
+
+  http://www.sbsi-sol-optimize.com/asp/sol_product_npsol.htm
 
 
 CREATING THE OBJECT MODULE FOR NPSOL
@@ -50,20 +57,20 @@ The NPSOL interface tools require two input files:
 If no NPSOL.SPC file is present in the current directory, the default
 version is copied from the $CUTEST/src/npsol directory.
 
-The commands to use this package are the two scripts
-sdnps and nps.
+To run with CUTEst, use the runcutest command with the -p npsol option.
+See the man page for runcutest for more details of other options.
 
 The main output from NPSOL is written (by default) in a file named fort.9, and
-then renamed to NPSOL.LIS by nps.  (This file is subsequently renamed to
-probname.nps by sdnps.)  If this unit number has been changed in the NPSOL
-source code, then it must also be changed in the shell script nps.
+then renamed to NPSOL.LIS by runcutest.  (This file is subsequently renamed to
+probname.nps by runcutest.)  If this unit number has been changed in the NPSOL
+source code, then it must also be changed in the shell script runcutest.
 The unit number may also be changed in the NPSOL.SPC file, by adding the
 following line:
 
    Print File  n
 
 where n is the new unit number.  Again, if fort.n is to be renamed to
-NPSOL.LIS by nps, the unit number must also be changed in nps. 
+NPSOL.LIS by runcutest, the unit number must also be changed in runcutest. 
 
 In addition, NPSOL can create a summary of the problem output.
 By the source code default, this summary is sent to unit 0, and thus

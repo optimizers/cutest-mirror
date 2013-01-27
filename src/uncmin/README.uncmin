@@ -16,6 +16,16 @@ The provided options include analytic gradients or difference
 approximations with analytic Hessians or finite difference Hessians
 (from analytic or finite difference gradients) or secant methods (BFGS).
 
+HOW DO I GET UNCMIN?
+--------------------
+
+See
+
+  http://people.sc.fsu.edu/~jburkardt/f77_src/uncmin/uncmin.html
+
+or
+
+  http://orion.math.iastate.edu/docs/cmlib/uncmin.html
 
 COMPILING THE OBJECT MODULE FOR UNCMIN
 --------------------------------------
@@ -66,17 +76,19 @@ This default file is as follows:
    0.00001   GRADTL  gradient tolerance for convergence
    0.00001   STEPL   minimum steplength
 
-The commands to use this package are the two scripts
-sdunc and unc.
-
 The reader is referred to the paper quoted below and the code itself if he or 
 she wishes to modify these parameters.
 
+To run with CUTEst, use the runcutest command with the -p uncmin option.
+See the man page for runcutest for more details of other options.
 
-REFERENCE
----------
+REFERENCES
+----------
 
-J.E. Koontz, R.B. Schnabel, and B.E. Weiss,
+J. E. Koontz, R.B. Schnabel, and B.E. Weiss,
 "A modular system of algorithms for unconstrained minimization",
-ACM Transactions on Mathematical Software, vol. 11, pp. 419-440, 1985.
+ACM Transactions on Mathematical Software, 11(4), pp. 419-440, 1985.
 
+J. E. Dennis and R. B. Schnabel,
+Numerical Methods for Unconstrained Optimization and Nonlinear Equations,
+SIAM, 1996.

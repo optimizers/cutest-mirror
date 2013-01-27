@@ -44,6 +44,10 @@ distributed by J. Chandler, its initiator.  Here is is.
         get praxis.f
         quit
      
+     See more recently
+
+       http://people.sc.fsu.edu/~jburkardt/f_src/praxis/praxis.html
+
       
      Brent's method and its performance
      
@@ -265,11 +269,11 @@ This default file is as follows:
          1   KTM,    the maximum number of iterations without improvement
          0   JPRINT, the printing specifier
 
-The commands to use this package are the two scripts
-sdprx and prx.
-
 The reader is referred to the paper quoted below and the code itself if he or 
 she wishes to modify these parameters.
+
+To run with CUTEst, use the runcutest command with the -p praxis option.
+See the man page for runcutest for more details of other options.
 
 REFERENCES
 ----------

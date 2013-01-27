@@ -26,6 +26,13 @@ STENMIN has been written and is distributed by
        E-MAIL:  ali@silvaco.com
 
 
+HOW DO I GET STENMIN?
+---------------------
+
+See
+
+  http://www.netlib.org/toms/765
+
 CREATING THE OBJECT MODULE FOR STENMIN
 --------------------------------------
 
@@ -95,22 +102,17 @@ This default file is as follows:
         15    NDIGIT,  the number of accurate digits in function values
          1    MSG,     the output specifier
 
-The commands to use this package are the two scripts
-sdstn and stn.
-
 The reader is referred to the paper quoted below and the code itself if he or 
 she wishes to modify these parameters.
 
-REFERENCES
+To run with CUTEst, use the runcutest command with the -p stenmin option.
+See the man page for runcutest for more details of other options.
+
+REFERENCE:
 ----------
 
 A. Bouaricha, 
-"STENMIN: A software package for large, sparse unconstrained 
-optimization using tensor methods", 
-Preprint MCS-P451-0794, Argonne National Laboratory, Argonne, Illinois, 1994.
-
-A. Bouaricha,
-"Tensor methods for large, sparse unconstrainted optimization 
-using tensor methods", 
-Preprint MCS-P452-0794, Argonne National Laboratory, Argonne, Illinois, 1994.
+"Algorithm 765: STENMIN — a software package for large, sparse unconstrained 
+optimization using tensor methods"
+ACM Transactions on Mathematical Software, 23(1) 1997, pp. 81-90.
 

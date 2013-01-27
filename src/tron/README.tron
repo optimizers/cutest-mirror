@@ -19,7 +19,7 @@ HOW DO I GET TRON?
 
 See
 
-  http://www-unix.mcs.anl.gov/~more/tron/
+  http://www.mcs.anl.gov/~more/tron/
 
 COMPILING THE OBJECT MODULE FOR TRON
 ------------------------------------
@@ -62,11 +62,11 @@ This default file is as follows:
     1.0D-1     CGTOL    the relative CG decrease required per iteration
     1.0D-5     GTOL     the required norm of the projected gradient
 
-The commands to use this package are the two scripts sdtrn and trn.
-
 The reader is referred to the paper quoted below and the code itself if he or 
 she wishes to modify these parameters.
 
+To run with CUTEst, use the runcutest command with the -p tron option.
+See the man page for runcutest for more details of other options.
 
 REFERENCE
 ---------

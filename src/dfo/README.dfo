@@ -27,6 +27,9 @@ Quick instructions
    Similarly, place ranlux.o in user-defined directory $DFO or in
    $CUTEST/objects/(architecture)/(precision) .
 
+To run with CUTEst, use the runcutest command with the -p dfo option.
+See the man page for runcutest for more details of other options.
+
 References:
 ----------
 
@@ -39,3 +42,5 @@ A. R. Conn, K. Scheinberg and Ph.L. Toint,
 A derivative free optimization algorithm in practice,
 in Proceedings of 7th AIAA/USAF/NASA/ISSMO Symposium on Multidisciplinary 
 Analysis and Optimization, St. Louis, MO, 1998. 
+
+https://projects.coin-or.org/Dfo

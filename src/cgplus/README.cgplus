@@ -21,7 +21,7 @@ HOW DO I GET CG+?
 
 See
 
-  http://www.ece.northwestern.edu/~nocedal/software.html#cg
+  http://users.eecs.northwestern.edu/~nocedal/CG+.html
 
 COMPILING THE OBJECT MODULE FOR CG+
 -----------------------------------
@@ -56,10 +56,11 @@ This default file is as follows:
      10000    MAXIT     specifies the maximum number of iterations
    0.00001    EPS       specifies the required gradient accuracy
 
-The commands to use this package are the two scripts sdcgp and cgp.
-
 The reader is referred to the paper quoted below and the code itself if he or 
 she wishes to modify these parameters.
+
+To run with CUTEst, use the runcutest command with the -p cgplus option.
+See the man page for runcutest for more details of other options.
 
 REFERENCE
 ---------

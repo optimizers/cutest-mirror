@@ -19,6 +19,13 @@ c: R^n ---> R^m (m <=n) are assumed to be twice continuously
 differentiable and can be nonlinear and nonconvex.  In (3), not all
 variables need to have lower and upper bounds.
 
+HOW DO I GET IPOPT?
+-------------------
+
+See 
+
+  https://projects.coin-or.org/Ipopt
+
 USING IPOPT 2.0 WITH CUTEst
 --------------------------
 
@@ -47,8 +54,8 @@ The IPOPT 2.0 interface tools require two input files:
 
 Please refer to the IPOPT 2.0 documentation for more details.
 
-The commands to use this package are the two scripts
-sdipopt and ipopt.
+To run with CUTEst, use the runcutest command with the -p ipopt option.
+See the man page for runcutest for more details of other options.
 
 REFERENCES
 ----------
@@ -58,7 +65,10 @@ REFERENCES
     A. Wachter. PhD Dissertation, Carnegie Mellon University, Pittsburgh,
     PA, 2002.
 
-
+[2]  A. Wächter and L. T. Biegler, 
+     On the Implementation of an Interior-Point Filter Line-Search Algorithm 
+     for Large-Scale Nonlinear Programming, 
+     Mathematical Programming 106(1), pp. 25-57, 2006 
 
 
 
