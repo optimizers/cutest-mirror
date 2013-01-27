@@ -17,9 +17,16 @@ which the variables are partitioned into free and fixed variables, the
 latter being fixed at one of their bounds. The status of each variable
 is revised after every iteration.
 
+HOW DO I GET LA04?
+------------------
+
 LA04 is part of HSL (formerly the Harwell Subroutine Library), and was written 
 by John Reid. It is available from Hyprotech UK Ltd, subject to certain 
 license agreements. It is copywritten jointly by CCLRC and Hyprotech UK.
+
+See 
+
+  http://www.hsl.rl.ac.uk/catalogue/la04.xml
 
 CREATING THE OBJECT MODULE FOR LA04
 -----------------------------------
@@ -60,6 +67,8 @@ The reader is referred to the paper quoted below, the documentation of the
 routine in HSL or the code itself if he or she wishes to modify these 
 parameters.
 
+To run with CUTEst, use the runcutest command with the -p la04 option.
+See the man page for runcutest for more details of other options.
 
 REFERENCES
 ----------

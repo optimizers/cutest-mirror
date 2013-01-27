@@ -22,6 +22,14 @@ The code implements an interior point algorithm with trust
 region techniques. It uses first and second derivatives of the 
 function and constraints
 
+HOW DO I GET KNITRO?
+--------------------
+
+See 
+
+  http://www.ziena.com/knitro.htm
+
+
 USING KNITRO 7.0 WITH CUTEst
 ----------------------------
 
@@ -56,6 +64,9 @@ $CUTEST/src/knitro or there should be a symbolic link pointing to it.
 The file is self-documented so the purpose of each parameter should be clear 
 from the file. Please refer to the KNITRO 7.0 documentation for more details.
 
+To run with CUTEst, use the runcutest command with the -p knitro option.
+See the man page for runcutest for more details of other options.
+
 THE KNITRO 7.0 SPECIFICATIONS FILE
 ----------------------------------
 
@@ -66,20 +77,25 @@ parameters.
 REFERENCES
 ----------
 
-  [1] R.H. Byrd, J.C. Gilbert, and J. Nocedal, "A trust region
+  [1] R. H. Byrd, J. Nocedal, and R. A. Waltz, 
+  "KNITRO: An Integrated Package for Nonlinear Optimization" in 
+  Large-Scale Nonlinear Optimization, G. di Pillo and M. Roma, eds, 
+  pp. 35-59 (2006), Springer-Verlag.
+
+  [2] R.H. Byrd, J.C. Gilbert, and J. Nocedal, "A trust region
   method based on interior point techniques for nonlinear 
   programming", Technical Report OTC 96/02, Optimization
   Technology Center, Northwestern University (1996).
     Note: this paper provides a global convergence analysis
 
-  [2] R.H. Byrd, M.E. Hribar, and J. Nocedal, "An interior point 
+  [3] R.H. Byrd, M.E. Hribar, and J. Nocedal, "An interior point 
   algorithm for large scale nonlinear programming", SIAM Journal 
   on Optimization, 9,4, (1999) pp.877-900
     Note: this paper gives a description of the algorithm
           implemented in KNITRO 2.0. Some changes have occurred since
           then; see ref [4].
 
-  [3] R. H. Byrd, G. Liu, and J. Nocedal, "On the local behavior 
+  [4] R. H. Byrd, G. Liu, and J. Nocedal, "On the local behavior 
   of an interior point method nonlinear programming", Numerical
   analysis, D. F. Griffiths, D. J. Higham and G. A. Watson eds.,
   Longman, 1997.
@@ -87,7 +103,7 @@ REFERENCES
           rate of convergence. These strategies have not yet been
           implemented in the current version of KNITRO 2.0.
 
-  [4] G. Liu, "Design Issues in Algorithms for Large Scale 
+  [5] G. Liu, "Design Issues in Algorithms for Large Scale 
   Nonlinear Programming", PhD thesis, Department of Industrial 
   Engineering and Management Science, Northwestern University, 
   Evanston, Illinois, USA, 1999
@@ -95,7 +111,7 @@ REFERENCES
           are implemented in the current version of the code 
 
 
-DESCRIPTION OF THE VARIABLES IN KNITRO 2.0
+DESCRIPTION OF THE VARIABLES IN KNITRO 7.0
 ------------------------------------------
 
 
@@ -234,3 +250,4 @@ DESCRIPTION OF THE VARIABLES IN KNITRO 2.0
      --------------------------------------------------------------
            END OF THE DESCRIPTION OF THE VARIABLES IN KNITRO
      --------------------------------------------------------------
+

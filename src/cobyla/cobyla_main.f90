@@ -162,7 +162,7 @@
 !  Non-executable statements
 
 2000 FORMAT( /, 24('*'), ' CUTEst statistics ', 24('*') //,                    &
-          ' Code used               :  COBYLA ',  /,                           &
+          ' Package used            :  COBYLA ',  /,                           &
           ' Problem                 :  ', A10,    /,                           &
           ' # variables             =      ', I10 /,                           &
           ' # constraints           =      ', I10 /,                           &

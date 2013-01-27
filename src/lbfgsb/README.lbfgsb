@@ -20,7 +20,7 @@ HOW DO I GET L-BFGS-B?
 
 See
 
-  http://www.ece.northwestern.edu/~nocedal/lbfgsb.html
+  http://users.eecs.northwestern.edu/~nocedal/lbfgsb.html
 
 COMPILING THE OBJECT MODULE FOR L-BFGS-B
 ----------------------------------------
@@ -61,11 +61,11 @@ where epsmch is the machine precision, which is automatically generated
 by the code. Typical values for factr: 1.D+12 for low accuracy; 1.D+7 
 for moderate accuracy; 1.D+1 for extremely high accuracy.
 
-The commands to use this package are the two scripts sdlbb and lbb.
-
 The reader is referred to the paper quoted below and the code itself if he or 
 she wishes to modify these parameters.
 
+To run with CUTEst, use the runcutest command with the -p lbfgsb option.
+See the man page for runcutest for more details of other options.
 
 REFERENCES
 ----------

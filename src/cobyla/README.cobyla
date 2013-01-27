@@ -13,9 +13,12 @@ WHAT IS COBYLA?
 COBYLA is a nonlinear programming code for unconstrained and constrained
 problems, which only uses function values (no derivatives needed).  
 
+HOW DO I GET COBYLA?
+--------------------
+
 COBYLA was written by M.J.D. Powell, DAMTP, Cambridge University, Silver
 Street, Cambridge (GB) (email: mjdp@damtp.cambridge.ac.uk). It is available
-from the author.
+from the author on request.
 
 
 CREATING THE OBJECT MODULE FOR COBYLA
@@ -49,12 +52,11 @@ This default file is as follows:
   8000      MAXFUN   the maximum number of function calls allowed 
   0         IPRINT   controls the amount of printing --- set to 0, 1, 2 or 3
 
-The commands to use this package are the two scripts
-sdcob and cob.
-
 The reader is referred to the paper quoted below and the code itself if he or 
 she wishes to modify these parameters.
 
+To run with CUTEst, use the runcutest command with the -p cobyla option.
+See the man page for runcutest for more details of other options.
 
 REFERENCE
 ---------

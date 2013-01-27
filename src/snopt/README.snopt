@@ -16,8 +16,15 @@ algorithm, where bounds, linear constraints and nonlinear constraints are
 treated separately.  SNOPT stores all matrices in dense format,
 and is therefore not intended for large sparse problems.  
 
+HOW DO I GET SNOPT?
+-------------------
+
 SNOPT has been written by Gill, Murray, Saunders and Wright, and is available
 from the Office of Technology Licensing at Stanford University.
+
+See 
+
+  http://www.sbsi-sol-optimize.com/asp/sol_product_snopt.htm
 
 ** N.B. Up until SNOPT 5.3, the SNOPTB interface was simply known as SNOPT.
    If you have a 5.3 or earlier version, simply change the name SNOPTB -> SNOPT
@@ -78,9 +85,8 @@ output_id every k-th minor iteration. This requires
 
 to be positive. It is *not* the case in the default CUTEst spec file.
 
-The commands to use this package are the two scripts
-sdsnp and snp.
-
+To run with CUTEst, use the runcutest command with the -p snopt option.
+See the man page for runcutest for more details of other options.
 
 THE SNOPT SPECIFICATIONS FILE
 -----------------------------
@@ -110,6 +116,10 @@ The CUTEst default version of SNOPT.SPC is as follows
 
 REFERENCES
 ----------
+
+P. E. Gill, W. Murray and M. A. Saunders.
+SNOPT: An SQP algorithm for large-scale constrained optimization,
+SIAM Review 47(1), 99-131 (2005). 
 
 P.E. Gill, W. Murray, and M.A. Saunders, User's Guide for
 SNOPT (Version 5.3):  A Fortran Package for Large-Scale Nonlinear Programming,

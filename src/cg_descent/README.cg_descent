@@ -19,8 +19,7 @@ HOW DO I GET CG_DESCENT?
 
 See
 
-  http://www.math.ufl.edu/~hager/papers/CG/cg.html
-
+  http://www.math.ufl.edu/~hager/papers/CG/
 
 COMPILING THE OBJECT MODULE FOR CG_DESCENT
 ------------------------------------------
@@ -74,10 +73,11 @@ This default file is as follows:
 .false.   Step         F (no initial line search guess) T (guess in gnorm)
 .false.   debug        F (no debugging) T (check for no increase in f)
 
-The commands to use this package are the two scripts sdcgd and cgd.
-
 The reader is referred to the paper quoted below and the code itself if he or 
 she wishes to modify these parameters.
+
+To run with CUTEst, use the runcutest command with the -p cg_descent option.
+See the man page for runcutest for more details of other options.
 
 REFERENCE
 ---------

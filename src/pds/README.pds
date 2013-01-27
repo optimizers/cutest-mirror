@@ -119,13 +119,22 @@ This default file is as follows:
          4   DEBUG   flag 0 (none) 1 2 3 and 4 give progressively more info.
        256   SSS     number of points used in the search strategy.
 
-The commands to use this package are the two scripts
-sdpds and pds.
-
 The reader is referred to the paper quoted below and the code itself if he or 
 she wishes to modify these parameters.
 
+To run with CUTEst, use the runcutest command with the -p pds option.
+See the man page for runcutest for more details of other options.
 
-REFERENCE
----------
+REFERENCES
+----------
+
+V. Torczon 
+PDS: Direct search methods for unconstrained optimization on either 
+sequential or parallel machines, 
+Rice University (1992)
+
+V. Torczon
+On the Convergence of the Multidirectional Search Algorithm
+SIAM J. Optimization, 1(1), 123–145 (1990).
+
 

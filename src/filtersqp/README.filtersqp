@@ -20,6 +20,9 @@ The code is based on a trust-region SQP approach, and is globalized
 using a filter mechanism. It uses first and second derivatives of the 
 problem functions. 
 
+HOW DO I GET FilterSQP?
+-----------------------
+
 The code was written by Roger Fletcher <fletcher@maths.dundee.ac.uk> and 
 Sven Leyffer  <leyffer@mcs.anl.gov> of the University of Dundee, to whom 
 all technical questions should be addressed.
@@ -69,14 +72,8 @@ The FilterSQP interface tools require two input files:
 
 The spec.par file should be present in the current directory.
 
-The commands to use this package are the two scripts sdfil and fil.
-To decode probname.SIF and run filterSQP on the output, use
-
-   sdfil probname
-
-To rerun a previously decoded problem, use
-
-   fil
+To run with CUTEst, use the runcutest command with the -p filtersqp option.
+See the man page for runcutest for more details of other options.
 
 THE spec.par FILE
 -----------------
@@ -113,3 +110,10 @@ tt              1.25           violation will be bounded by tt*initial violation
 ubd             100.0          violation will be bounded by ubd
 
 A default file is given in the file spec.par in $CUTEST/src/filtersqp
+
+REFERENCE
+---------
+
+R. Fletcher and S. Leyffer. 
+Nonlinear programming without a penalty function. 
+Mathematical Programming, 91:239–270, 2002. 

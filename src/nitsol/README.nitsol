@@ -2,6 +2,10 @@ Package available from
 
     ftp://ephraim.wpi.edu/pub/nitsol/nitsol.tar.gz
 
+See
+
+    http://users.wpi.edu/~walker/NITSOL/
+
    ===============================
    To make NITSOL work with CUTEst
    ===============================
@@ -16,6 +20,9 @@ Package available from
    make blas_lib
 
    with appropriate fortran compiler and flags
+
+3. To run with CUTEst, use the runcutest command with the -p nitsol option.
+   See the man page for runcutest for more details of other options.
 
 That's it!
 
@@ -61,3 +68,11 @@ Worcester Polytechnic Institute                   Fax       508-831-5824
 Worcester, MA 01609-2280, USA                     
 
 =========================================================================
+
+REFERENCE:
+----------
+
+M. Pernice and H. F. Walker,
+NITSOL: a Newton iterative solver for nonlinear systems,
+Special Issue on Iterative Methods, SIAM J. Sci. Comput., 19 (1998), 302-318.
+
