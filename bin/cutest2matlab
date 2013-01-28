@@ -1,0 +1,26 @@
+#!/bin/bash
+###############################################################################
+#
+# cutest2matlab: build the bridge between CUTEst and Matlab
+#
+# Nick Gould for GALAHAD Productions, January 2013
+#
+###############################################################################
+
+if [[ -z "$MYCUTESTARCH" ]]; then
+  if [[ -z "$MYARCH" ]]; then
+    echo ' no architecture specified and environment variable MYARCH is unset.'
+    echo ' Either specificy architecture with -A option or set variable MYARCH.'
+    echo ' and re-run.'
+    echo ''
+    exit 2
+  else
+    ARCH=${MYARCH}
+  fi
+else
+  ARCH=${MYCUTESTARCH}
+fi
+
+${CUTEST}/bin/runcutest -A $ARCH -p matlab -D $1
+
+exit 0
