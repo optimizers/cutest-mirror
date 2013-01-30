@@ -103,7 +103,7 @@ c     ... initialization
       call initialize_NLP(n,m,nout,blo,bup,x,lam,equatn,
      .                    linear,cstype,xnames,gnames)
       
-c  compute the numbers of nonzeros in the constrraint Jacobian and Hessian
+c  compute the numbers of nonzeros in the constraint Jacobian and Hessian
 
       call CUTEST_cdimsj( status, nnzj )
       IF ( status /= 0 ) GO TO 910

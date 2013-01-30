@@ -391,6 +391,7 @@ fi
 
 MATLABGCC="gcc-4.4"
 MATLABGFORTRAN="gfortran-4.4"
+matlab=""
 
 #echo $CMP
 
@@ -402,7 +403,7 @@ while [ $CORRECT_SUBSET == "false" ]; do
    echo '     (2) Everything except Matlab support'
    echo '     (3) Unconstrained tools without Matlab support'
    echo '     (4) Constrained tools without Matlab support'
-   if [[ $CMP="g95" || $CMP="gfortran" ]]; then
+   if [[ $CMP="gfortran" ]]; then
      echo '     (5) Everything for Matlab'
    fi
 
@@ -410,9 +411,10 @@ while [ $CORRECT_SUBSET == "false" ]; do
    
    case  $CHOICE  in
        "1")
-            if [[ $CMP="g95" || $CMP="gfortran" ]]; then
+            if [[ $CMP="gfortran" ]]; then
               CORRECT_SUBSET="true"
               SUBSET="all"
+              matlab="true"
               if [[ $CMP="gfortran" ]]; then
                 type -P $MATLABGFORTRAN &>/dev/null || \
               { echo " Warning: you need to install $MATLABGFORTRAN/$MATLABGCC" \
@@ -446,9 +448,10 @@ while [ $CORRECT_SUBSET == "false" ]; do
             SUBSET="all_constrained"
 ;;
        "5")
-            if [[ $CMP="g95" || $CMP="gfortran" ]]; then
+            if [[ $CMP="gfortran" ]]; then
               CORRECT_SUBSET="true"
               SUBSET="all_matlab"
+              matlab="true"
               if [[ $CMP="gfortran" ]]; then
                 type -P $MATLABGFORTRAN &>/dev/null || \
               { echo " Warning: you need to install $MATLABGFORTRAN/$MATLABGCC" \
@@ -801,6 +804,17 @@ echo " (see $CUTEST/doc/README.cshrc"
 echo "  and $CUTEST/doc/README.bashrc"
 echo "  for examples on how to do this)"
 echo ''
+echo " If you wish the version you have just installed to become your"
+if [[ $matlab == "true" ]]; then
+  echo " default CUTEst version, additionally set the environment variables"
+  echo "  MYARCH to $VERSION"
+  echo " and"
+  echo "  MYMATLABARCH to $VERSION"
+else
+  echo " default CUTEst version, additionally set the environment variable"
+  echo "  MYARCH to $VERSION"
+fi
+
 
 exit 0
 

@@ -11,7 +11,7 @@ C  Revised for CUTEst, Nick Gould, January 2013
       INTEGER :: n, nl, nf, lp, jprint, illcin, ktm, i
       INTEGER :: nfmax, jranch, nmx, status
 C Nick - stupid use of common does not allow allocatable arrays
-      INTEGER, PARAMETER :: nmax = 1000
+      INTEGER, PARAMETER :: nmax = 20
       INTEGER, PARAMETER :: input = 55, out = 6, inspec = 46
       INTEGER, PARAMETER :: io_buffer = 11
       DOUBLE PRECISION :: dmin, epsmch, fx, h, qd0, qd1, qf1
@@ -71,6 +71,7 @@ C     KTM   :  the maximum number of iterations without improvement
 C     JPRINT: the printing specifier
 C
       READ ( inspec, 1000 ) NFMAX, T, SCBD, ILLCIN, KTM, JPRINT
+      WRITE( 6, 1000 ) NFMAX, T, SCBD, ILLCIN, KTM, JPRINT
 
 C  close input file
 

@@ -366,12 +366,10 @@ cd ${WorkingDir}
 # If needed, find the correct BLAS and package spec file
 (( $blas_set == 0 )) && BLAS=${CUTEST}/${PRECISION}/bin/linpac.o
 BLAS=-lblas
-echo ${SPECS}
 if [[ ${SPECS} != "" ]]; then
   if [[ ! -e ${SPECS} ]]; then
      if [[ -e ${CUTEST}/src/${PACKDIR}/${SPECS} ]]; then
        ${LN} -fs ${CUTEST}/src/${PACKDIR}/${SPECS} ${SPECS}
-echo ${SPECS}
 cat ${SPECS}
      else
         printf "\nCannot find spec file ${SPECS}---skipping\n"

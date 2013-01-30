@@ -1,12 +1,12 @@
-#  Main body of the installation makefile for CUTEst IPOPT interface
+#  Main body of the installation makefile for CUTEst NEWUOA interface
 
 #  N. Gould, D. Orban and Ph. L. Toint.
-#  This version: 14 I 2013
+#  This version: 27 I 2013
 
 #  package
 
-PACKAGE = IPOPT
-package = ipopt
+PACKAGE = NEWUOA
+package = newuoa
 
 SHELL = /bin/$(BINSHELL)
 
@@ -61,7 +61,7 @@ LRMARFILE = $(CUTEST)/bin/rmarfile $(AR) $(GREP) $(LLC)
 #  compilation agenda
 
 $(PACKAGE) = $(OBJ)/$(package)_main.o
-C_TEST = c_elfun.o c_group.o c_range.o
+U_TEST = u_elfun.o u_group.o u_range.o
 
 SUCC = precision version) compiled successfully
 
@@ -79,12 +79,12 @@ $(package)_double: $($(PACKAGE))
 # run example tests
 
 run_test: tools test_cutest_constrained $(package) $(OBJ)/$(package)_test.o
-	echo " Test of constrained $(package)"
+	echo " Test of unconstrained $(package)"
 	cd $(OBJ) ; $(FORTRAN) $(RUNFFLAGS) $(SPECIAL) -o run_test \
-            $(package)_main.o $(package)_test.o $(C_TEST) -L$(OBJ) $(LIBS)
-	ln -fs $(CUTEST)/src/test/c_OUTSDIF.d ../$(package)/OUTSDIF.d
-	- $(OBJ)/run_test >& ../$(package)/c_test.output
-	cat ../$(package)/c_test.output
+            $(package)_main.o $(package)_test.o $(U_TEST) -L$(OBJ) $(LIBS)
+	ln -fs $(CUTEST)/src/test/u_OUTSDIF.d ../$(package)/OUTSDIF.d
+	- $(OBJ)/run_test >& ../$(package)/u_test.output
+	cat ../$(package)/u_test.output
 	rm $(OBJ)/run_test ../$(package)/OUTSDIF.d
 
 test_cutest_constrained:
@@ -102,28 +102,28 @@ ctools:
 
 #  individual compilations
 
-$(OBJ)/$(package)_test.o: ../$(package)/$(package)_test.f
+$(OBJ)/$(package)_test.o: ../$(package)/$(package)_test.f90
 	@printf ' %-9s %-15s\t\t' "Compiling" "$(package)_test" 
-	$(SED) -f $(SEDS) ../$(package)/$(package)_test.f > \
-          $(OBJ)/$(package)_test.f
-	cd $(OBJ); $(FORTRAN) -o $(package)_test.o $(FFLAGS77) \
-          $(package)_test.f \
+	$(SED) -f $(SEDS) ../$(package)/$(package)_test.f90 > \
+          $(OBJ)/$(package)_test.f90
+	cd $(OBJ); $(FORTRAN) -o $(package)_test.o $(FFLAGS) \
+          $(package)_test.f90 \
             || ( printf ' %-26s' "=> Disabling optimization " ; \
-              $(FORTRAN) -o $(package)_test.o $(FFLAGS77N) $(package)_test.f )
-	$(RM) $(OBJ)/$(package)_test.f
+              $(FORTRAN) -o $(package)_test.o $(FFLAGSN) $(package)_test.f90 )
+	$(RM) $(OBJ)/$(package)_test.f90
 	@printf '[ OK ]\n'
 
 #  CUTEst interface main programs
 
-$(OBJ)/$(package)_main.o: ../$(package)/$(package)_main.f
+$(OBJ)/$(package)_main.o: ../$(package)/$(package)_main.f90
 	@printf ' %-9s %-15s\t\t' "Compiling" "$(package)_main" 
-	$(SED) -f $(SEDS) ../$(package)/$(package)_main.f > \
-          $(OBJ)/$(package)_main.f
-	cd $(OBJ); $(FORTRAN) -o $(package)_main.o $(FFLAGS77) \
-             $(package)_main.f \
+	$(SED) -f $(SEDS) ../$(package)/$(package)_main.f90 > \
+          $(OBJ)/$(package)_main.f90
+	cd $(OBJ); $(FORTRAN) -o $(package)_main.o $(FFLAGS) \
+             $(package)_main.f90 \
               || ( printf ' %-26s' "=> Disabling optimization " ; \
-               $(FORTRAN) -o $(package)_main.o $(FFLAGS77N) $(package)_main.f )
-	$(RM) $(OBJ)/$(package)_main.f
+               $(FORTRAN) -o $(package)_main.o $(FFLAGSN) $(package)_main.f90 )
+	$(RM) $(OBJ)/$(package)_main.f90
 	@printf '[ OK ]\n'
 
 #  book keeping

@@ -47,7 +47,6 @@ distributed by J. Chandler, its initiator.  Here is is.
      See more recently
 
        http://people.sc.fsu.edu/~jburkardt/f_src/praxis/praxis.html
-
       
      Brent's method and its performance
      
@@ -195,6 +194,12 @@ distributed by J. Chandler, its initiator.  Here is is.
 Of course, the paragraph on test problems no longer applies when PRAXIS is
 used in conjunction with CUTEst, but many more problems may then be tested!
 
+*************************************************************************** 
+
+   A VERY BIG WARNING .... since the maximum dimension 20 is hardwired
+   into the code, don't expect to solve bigger problems!
+
+*************************************************************************** 
 
 CREATING THE OBJECT MODULE FOR PRAXIS
 -------------------------------------

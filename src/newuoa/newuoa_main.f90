@@ -1,8 +1,8 @@
 !   ( Last modified on 27 Jan 2013 at 17:20:00 )
 
-      PROGRAM BOBYQA_main
+      PROGRAM NEWUOA_main
 
-!  BOBYQA test driver for problems derived from SIF files
+!  NEWUOA test driver for problems derived from SIF files
 
 !  Nick Gould, January 2013
 
@@ -47,7 +47,7 @@
 
 !  open the Spec file for the method
 
-      OPEN( indr, FILE = 'BOBYQA.SPC', FORM = 'FORMATTED', STATUS = 'OLD')
+      OPEN( indr, FILE = 'NEWUOA.SPC', FORM = 'FORMATTED', STATUS = 'OLD')
       REWIND( indr )
 
 !  read input Spec data
@@ -70,17 +70,16 @@
         ( CUTEST_problem_global%n + 1 ) * ( CUTEST_problem_global%n + 2 ) / 2 )
 
 !  allocate the temporary work array W of length at least
-!  ( npt + 5 ) * ( npt + n ) + 3 * n * ( n + 5 ) / 2 ... so use double this
+!  ( npt + 5 ) * ( npt + n ) + 3 * n * ( n + 3 ) / 2 ... so use double this
 
-      lw = 2 * ( npt + 5 ) * ( npt + CUTEST_problem_global%n )                 &
-             + 3 * CUTEST_problem_global%n * ( CUTEST_problem_global%n + 5 )
+      lw = 2 * ( npt + 13 ) * ( npt + CUTEST_problem_global%n )                &
+             + 3 * CUTEST_problem_global%n * ( CUTEST_problem_global%n + 3 )
       ALLOCATE( W( lw ), STAT = status )
       IF ( status /= 0 ) GO TO 990
 
 !  perform the minimization
 
-      CALL BOBYQA( CUTEST_problem_global%n, npt, CUTEST_problem_global%X,      &
-                   CUTEST_problem_global%X_l, CUTEST_problem_global%X_u,       &
+      CALL NEWUOA( CUTEST_problem_global%n, npt, CUTEST_problem_global%X,      &
                    rhobeg, rhoend, iprint, maxfun, W )
 
 !  output report
@@ -118,7 +117,7 @@
 !  Non-executable statements
 
 2000 FORMAT( /, 24('*'), ' CUTEst statistics ', 24('*') //,                    &
-          ' Package used            :  BOBYQA ',  /,                           &
+          ' Package used            :  NEWUOA ',  /,                           &
           ' Problem                 :  ', A10,    /,                           &
           ' # variables             =      ', I10 /,                           &
           ' # objective functions   =        ', F8.2 /,                        &
@@ -135,13 +134,13 @@
           /,'  -- Increase the parameter ', A6, ' by at least ', I0,           &
             ' and restart.'  )
 
-!  End of BOBYQA_main
+!  End of NEWUOA_main
 
-      END PROGRAM BOBYQA_main
+      END PROGRAM NEWUOA_main
 
       SUBROUTINE CALFUN( n, X, f )
 
-!  evaluates the objective function value in a format compatible with BOBYQA,
+!  evaluates the objective function value in a format compatible with NEWUOA,
 !  but using the CUTEst tools.
 
       USE CUTEst_problem
@@ -150,7 +149,6 @@
       INTEGER, INTENT( IN ) :: n
       REAL( KIND = wp ), INTENT( OUT ) :: f
       REAL( KIND = wp ), INTENT( IN ) :: X( n )
-      REAL( KIND = wp ), PARAMETER :: biginf = 9.0D+19
 
       INTEGER ::  status
 
