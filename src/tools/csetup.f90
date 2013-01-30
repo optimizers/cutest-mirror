@@ -656,9 +656,9 @@
         END IF
       END DO
       IF ( m == 0 .AND. out > 0 ) WRITE( out,                                  &
-        "( /, ' ** SUBROUTINE CSETUP: ** Warning. The problem has',            &
+        "( /, ' ** SUBROUTINE CSETUP: Warning. The problem has',            &
        &      ' no general constraints. ', /,                                  &
-       &      ' Other tools may be preferable' )" )
+       &      ' ** Other tools may be preferable ** ' )" )
       IF ( SIZE( Y ) < m ) THEN
         CLOSE( input )
         IF ( out > 0 ) WRITE( out, 2000 ) 'Y', m

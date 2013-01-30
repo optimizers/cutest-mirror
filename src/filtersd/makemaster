@@ -1,12 +1,12 @@
-#  Main body of the installation makefile for CUTEst IPOPT interface
+#  Main body of the installation makefile for CUTEst filterSD interface
 
 #  N. Gould, D. Orban and Ph. L. Toint.
-#  This version: 14 I 2013
+#  This version: 30 I 2013
 
 #  package
 
-PACKAGE = IPOPT
-package = ipopt
+PACKAGE = FILTERSD
+package = filtersd
 
 SHELL = /bin/$(BINSHELL)
 

@@ -282,7 +282,7 @@ C  Output final objective function value and timing information
 C  Non-executable statements
 
  2000 FORMAT( /, 24('*'), ' CUTEst statistics ', 24('*') //
-     *    ,' Code used               :  NPSOL',    /
+     *    ,' Package used            :  NPSOL',    /
      *    ,' Problem                 :  ', A10,    /
      *    ,' # variables             =      ', I10 /
      *    ,' # constraints           =      ', I10 /

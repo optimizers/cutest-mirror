@@ -1,6 +1,6 @@
 #!/bin/bash
 # Definitions for the NEWUOA package
-# N. Gould, D. Orban & Ph. Toint, January 27th, 2013
+# N. Gould, D. Orban & Ph. Toint, January 29th, 2013
 
 # The name of the package
 export PACKAGE=newuoa
@@ -14,7 +14,7 @@ export PACK_PRECISION="single double"
 
 # Define the name of any package object files used; any object file without
 # a full path must occur in ${CUTEST}/objects/(architecture)/(precision)/
-export PACKOBJS="${NEWUOA}/newuoa.o"
+export PACKOBJS="${NEWUOA}/newuoa.o ${NEWUOA}/newuob.o ${NEWUOA}/trsapp.o ${NEWUOA}/update.o ${NEWUOA}/bigden.o ${NEWUOA}/biglag.o"
 
 # Define package and system libraries using -llibrary to include library.a
 # or library.so together with any nonstandard library paths using -L(path)

@@ -74,8 +74,9 @@ isphess      ush / cish                  Evaluate the Hessian matrix of the
 --------------------------------------------------------------------------
 
 * To create the Matlab/CUTEst interface, use the runcutest command with the 
-  -p tron option. This will create a binary file mcutest.mexglx (32bit) 
-  or mcutest.mexa64 (64bit). 
+  -p tron option. This will create a binary file mcutest.mexglx (32bit Linux), 
+  mcutest.mexa64 (64bit Linux) mcutest.mexmaci (32bit OSX) or 
+  mcutest.mexmaci64 (64bit OSX).
 
 * Both this binary and the Matlab .m files in $CUTEST/src/matlab must be 
   placed on the Matlab search path. 

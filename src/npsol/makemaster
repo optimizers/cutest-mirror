@@ -79,7 +79,7 @@ $(package)_double: $($(PACKAGE))
 # run example tests
 
 run_test: tools test_cutest_constrained $(package) $(OBJ)/$(package)_test.o
-	echo " Test of unconstrained $(package)"
+	echo " Test of constrained $(package)"
 	cd $(OBJ) ; $(FORTRAN) $(RUNFFLAGS) $(SPECIAL) -o run_test \
             $(package)_main.o $(package)_test.o $(C_TEST) -L$(OBJ) $(LIBS)
 	ln -fs $(CUTEST)/src/test/c_OUTSDIF.d ../$(package)/OUTSDIF.d
