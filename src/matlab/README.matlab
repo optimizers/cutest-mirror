@@ -73,8 +73,9 @@ isphess      ush / cish                  Evaluate the Hessian matrix of the
                                           unconstrained, in sparse format
 --------------------------------------------------------------------------
 
-* To create the Matlab/CUTEst interface, use the runcutest command with the 
-  -p tron option. This will create a binary file mcutest.mexglx (32bit Linux), 
+* To create the Matlab/CUTEst interface, use the cutest2matlab command or,
+  for more control, the runcutest command with the  -p matlab option. 
+  This will create a binary file mcutest.mexglx (32bit Linux), 
   mcutest.mexa64 (64bit Linux) mcutest.mexmaci (32bit OSX) or 
   mcutest.mexmaci64 (64bit OSX).
 

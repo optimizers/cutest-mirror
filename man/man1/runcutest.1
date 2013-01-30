@@ -11,10 +11,8 @@ predecessor CUTEr's combination of \fBrunpackage\fP, \fIpkg\fP and
 Any option that is not directly recognized is passed unchanged to the 
 SIF decoder, sifdecoder(1).
 
-There are still \fIpkg\fP scripts for each solver but they are reduced 
-to a minimum, setting a few environment variables.
-
-\fBruncutest\fP reads these environment variables and then compiles and
+\fBruncutest\fP reads suitable architecture-dependent environment variables 
+and then compiles and
 links all the relevant source files and libraries to form an executable
 of the package \fIpackage\fP running on problem \fIproblem\fP.
 
@@ -251,6 +249,8 @@ http://www.princeton.edu/~rvdb/loqo/LOQO.html
 .B \fImatlab\fP
 Creates a Matlab binary to allow CUTEst calls from Matlab. 
 See $CUTEST/src/matlab/README.matlab to see how to use the binary with Matlab.
+Note that there is a simplified interface \fBcutest2matlab\fP that may be
+used in preference.
 
 .TP
 .B \fIminos\fP
@@ -411,4 +411,4 @@ Environment, revisited\fP,
    I. Bongartz, A.R. Conn, N.I.M. Gould and Ph.L. Toint, 
    TOMS, \fB21\fP:1, pp.123-160, 1995.
 
-sifdecoder(1).
+sifdecoder(1), cutest2matlab(1).
