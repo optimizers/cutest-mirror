@@ -98,8 +98,10 @@ all: $(package)
 
 $(package): $(package)_$(PRECIS)
 	@printf ' %-21s\n' "CUTEst: $(package) ($(PRECIS) $(SUCC)" 
-$(package)_single: $(OBJS)/utools.o $(OBJS)/ctools.o $(OBJS)/mcutest.o
-$(package)_double: $(OBJD)/utools.o $(OBJD)/ctools.o $(OBJD)/mcutest.o
+#$(package)_single: $(OBJS)/utools.o $(OBJS)/ctools.o $(OBJS)/mcutest.o
+#$(package)_double: $(OBJD)/utools.o $(OBJD)/ctools.o $(OBJD)/mcutest.o
+$(package)_single: $(OBJS)/mcutest.o
+$(package)_double: $(OBJD)/mcutest.o
 
 #  dependent packages
 
