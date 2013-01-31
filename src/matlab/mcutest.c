@@ -129,6 +129,10 @@ extern "C" {
 
   void quicksortFollow(mwIndex x[], double follower[],
                        mwIndex first, mwIndex last);
+
+  void quicksort_cutest(mwIndex numbers[], double values[], 
+                        mwIndex left, mwIndex right);
+
   int partition(mwIndex y[], double follower[], mwIndex f, mwIndex l);
   void swap(mwIndex y[], double follower[], mwIndex el1, mwIndex el2);
 
@@ -1337,7 +1341,10 @@ extern "C" {
       /* Make enough room for the full Hessian (both triangles) */
       H = (doublereal *)mxCalloc(2*CUTEst_nnzh, sizeof(doublereal));
       irow = (integer *)mxCalloc(2*CUTEst_nnzh, sizeof(integer));
-      jcol = (integer *)mxCalloc(2*CUTEst_nnzh, sizeof(integer));
+      jcol = (integer *)mxCalloc(2*CUTEst_nnzh, sizeof(integer)); 
+      /*      H = (doublereal *)mxCalloc(16, sizeof(doublereal));
+      irow = (integer *)mxCalloc(16, sizeof(integer));
+      jcol = (integer *)mxCalloc(16, sizeof(integer)); */
 
       /* Pretend only one triangle was allocated */
       if (CUTEst_ncon > 0)
@@ -1362,26 +1369,26 @@ extern "C" {
           offdiag_nnzh++;
         }
 
-      i =  CUTEst_nnzh + offdiag_nnzh ;
-      /*sprintf(msgBuf,"** nnzh = %d", CUTEst_nnzh + offdiag_nnzh);*/
+      /* i =  CUTEst_nnzh + offdiag_nnzh ; */
+      /* sprintf(msgBuf,"** nnzh = %d", CUTEst_nnzh + offdiag_nnzh);*/
 
-mexPrintf(" nnzh total %-d allocated %-d\n", i, 2*CUTEst_nnzh);
+      /* mexPrintf(" nnzh total %-d allocated %-d\n", i, 2*CUTEst_nnzh);
 for (i = 0; i < CUTEst_nnzh +  offdiag_nnzh ; i++)
-  mexPrintf("%-2d row,col,val %-d %-d %f \n ", i+1,irow[i],jcol[i],H[i]);
+mexPrintf("%-2d row,col,val %-d %-d %f \n ", i+1,irow[i],jcol[i],H[i]); */
 
 /*  this fails if 13 is changed to 14 ... or CUTEst_nnzh + offdiag_nnzh = 16 */
 /*      plhs[0] = coordToMatlabSparse(CUTEst_nvar, CUTEst_nvar, */
-      matrix = coordToMatlabSparse(CUTEst_nvar, CUTEst_nvar,
-                                    14,
+/*      matrix = coordToMatlabSparse(CUTEst_nvar, CUTEst_nvar,
+                                    16,
                                     irow, jcol,
                                     (double *)H);
 mexErrMsgTxt("stop\n");
-      /*
+*/
 
       plhs[0] = coordToMatlabSparse(CUTEst_nvar, CUTEst_nvar,
                                     CUTEst_nnzh + offdiag_nnzh,
                                     irow, jcol,
-                                    (double *)H); */
+                                    (double *)H); 
       mxFree(jcol);
       mxFree(irow);
       mxFree(H);
@@ -1696,7 +1703,9 @@ mexErrMsgTxt("stop\n");
      * Keep each segment of pr synchronized. Not sorting row indices
      * causes bugs and eventually deadly crashes in Matlab. */
     for (j = 0; j < ncol; j++)
-      quicksortFollow(ir, (double*)pr, jptr[j], jptr[j+1]-1);
+/*    quicksortFollow(ir, (double*)pr, jptr[j], jptr[j+1]-1); */
+      quicksort_cutest(ir, (double*)pr, jptr[j], jptr[j+1]-1);
+    /*   mexPrintf("out %-d\n", nnz); */
 
     return matrix;
   }
@@ -1740,6 +1749,45 @@ mexErrMsgTxt("stop\n");
     follower[el2] = dtmp;
     return;
   }
+
+  void quicksort_cutest(mwIndex numbers[], double values[], 
+                        mwIndex low, mwIndex up) {
+    int current, low_current, up_current;
+    double dcurrent;
+
+    low_current = low;
+    up_current = up;
+    current = numbers[low];
+    dcurrent = values[low];
+    while (low < up)
+    {
+      while ((numbers[up] >= current) && (low < up))
+        up--;
+      if (low != up)
+      {
+        numbers[low] = numbers[up];
+        values[low] = values[up];
+        low++;
+      }
+      while ((numbers[low] <= current) && (low < up))
+        low++;
+      if (low != up)
+      {
+        numbers[up] = numbers[low];
+        values[up] = values[low];
+        up--;
+      }
+    }
+    numbers[low] = current;
+    values[low] = dcurrent;
+    current = low;
+    low = low_current;
+    up = up_current;
+    if (low < current)
+      quicksort_cutest(numbers, values, low, current-1);
+    if (up > current)
+      quicksort_cutest(numbers, values, current+1, up);
+  }  
 
 #ifdef __cplusplus
 }
