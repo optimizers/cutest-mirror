@@ -39,6 +39,10 @@ if [[ ${ARCH##*.} != 'gfo' ]] ; then
     exit 3
 fi
 
-${CUTEST}/bin/runcutest -A $ARCH -p matlab -D $1
+if [[ $# > 0 ]] ; then
+  ${CUTEST}/bin/runcutest -A $ARCH -p matlab -D $1
+else
+  ${CUTEST}/bin/runcutest -A $ARCH -p matlab
+fi
 
 exit 0

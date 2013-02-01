@@ -537,6 +537,19 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
       CALL CUTEST_cterminate( status )
       IF ( status /= 0 ) GO to 900
 
+!  one more setup ...
+
+      WRITE( out, "( ' CALL CUTEST_csetup ' )" )
+      CALL CUTEST_csetup( status, input, out, buffer, n, m, X, X_l, X_u,       &
+                      Y, C_l, C_u, EQUATION, LINEAR, 1, 1, 1 )
+      IF ( status /= 0 ) GO to 900
+
+!  ... and terminal exit
+
+      WRITE( out, "( ' Call CUTEST_cterminate' )" )
+      CALL CUTEST_cterminate( status )
+      IF ( status /= 0 ) GO to 900
+
       DEALLOCATE( X_type, H_row, H_col, HE_row, HE_row_ptr, HE_val_ptr, X,     &
                   X_l, X_u, G, Ji, Y, C_l, C_u, C, H_val, HE_val, H2_val,      &
                   J_val, J_var, J_fun, J2_val, VECTOR, RESULT,                 &

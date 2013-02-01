@@ -263,6 +263,18 @@
       CALL CUTEST_uterminate( status )
       IF ( status /= 0 ) GO to 900
 
+!  one more setup ...
+
+      WRITE( out, "( ' Call CUTEST_usetup ' )" )
+      CALL CUTEST_usetup( status, input, out, buffer, n, X, X_l, X_u )
+      IF ( status /= 0 ) GO to 900
+
+!  ... and terminal exit
+
+      WRITE( out, "( ' Call CUTEST_uterminate' )" )
+      CALL CUTEST_uterminate( status )
+      IF ( status /= 0 ) GO to 900
+
       DEALLOCATE( X_type, H_row, H_col, HE_row, HE_row_ptr, HE_val_ptr, X,     &
                   X_l, X_u, G, H_val, HE_val, VECTOR, RESULT, H2_val, H_band,  &
                   X_names, stat = alloc_stat )

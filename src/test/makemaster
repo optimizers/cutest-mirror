@@ -167,6 +167,19 @@ run_test_cuter_constrained: test_cutest_constrained
 	cat ../test/test_con_cuter.output
 	rm $(OBJ)/run_test
 
+run_test_cutest_constrained_debug: ctools test_cutest_constrained
+	echo " Exhaustive test of constrained tools"
+	$(SED) -f $(SEDS) ../test/ctest_debug.f90 > $(OBJ)/ctest_debug.f90
+	cd $(OBJ) ; echo "$(FORTRAN) $(RUNFFLAGS) $(SPECIAL) -o run_test \
+            $(C_TEST) ctest_debug.f90 -L$(OBJ) $(LIBS)"
+	cd $(OBJ) ; $(FORTRAN) $(RUNFFLAGS) $(SPECIAL) -o run_test \
+            $(C_TEST) ctest_debug.f90 -L$(OBJ) $(LIBS)
+	- $(OBJ)/run_test
+#	- $(OBJ)/run_test >& ../test/test_con.output
+#	cat ../test/test_con.output
+	rm $(OBJ)/run_test $(OBJ)/ctest_debug.f90
+
+
 tools: 
 	( cd ../tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      cutest PRECIS=$(PRECIS) PWD=$(PWD)/../tools )

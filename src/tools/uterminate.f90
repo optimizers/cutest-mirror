@@ -28,6 +28,7 @@
 
       CALL CUTEST_terminate_data( CUTEST_data_global,                          &
                                   status, alloc_status, bad_alloc )
+     IF ( status /= 0 ) RETURN
 
 !  deallocate thread-specific workspace
 
@@ -35,7 +36,19 @@
         CALL CUTEST_terminate_work( CUTEST_data_global,                        &
                                     CUTEST_work_global( thread ),              &
                                     status, alloc_status, bad_alloc )
+        IF ( status /= 0 ) RETURN
       END DO
+
+!  deallocate global work threads
+
+      DEALLOCATE( CUTEST_work_global, STAT = alloc_status )
+      IF ( alloc_status /= 0 ) THEN
+        status = 1000 + alloc_status
+        bad_alloc = 'CUTEST_work_global'
+        IF ( CUTEST_data_global%out > 0 ) WRITE( CUTEST_data_global%out,       &
+         "( ' ** Message from -CUTEST_uterminate-', /, ' Deallocation ',       &
+       &  'error for ', A, ', status = ', I0 )" ) bad_alloc, alloc_status
+      END IF
       RETURN
 
 !  End of subroutine CUTEST_uterminate

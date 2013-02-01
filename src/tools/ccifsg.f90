@@ -141,8 +141,9 @@
 
       INTEGER :: i, j, iel, k, ig, ii, ig1, l, ll, neling
       INTEGER :: nin, nvarel, nelow, nelup, istrgv, iendgv, ifstat, igstat
-      EXTERNAL :: RANGE 
       REAL ( KIND = wp ) :: ftt, gi, scalee
+      INTEGER, DIMENSION( 1 ) :: ICALCG
+      EXTERNAL :: RANGE 
 
 !  return if there are no constraints
 
@@ -182,7 +183,7 @@
 
 !  evaluate the element function values
 
-      CALL ELFUN( work%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,          &
+      CALL ELFUN( work%FUVALS, X, data%EPVALU, neling, data%ITYPEE,            &
                   data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,          &
                   data%ISTEP, work%ICALCF, data%ltypee, data%lstaev,           &
                   data%lelvar, data%lntvar, data%lstadh, data%lstep,           &
@@ -216,12 +217,13 @@
         work%GVALS( ig, 1 ) = work%FT( ig )
         work%GVALS( ig, 2 ) = 1.0_wp
 
-!  Otherwise, evaluate group IG.
+!  Otherwise, evaluate group ig.
 
       ELSE
-        CALL GROUP( work%GVALS, data%ng, work%FT, data%GPVALU, data%ng,        &
-                    data%ITYPEG, data%ISTGP, work%ICALCF, data%ltypeg,         &
-                    data%lstgp, data%lcalcf, data%lcalcg, data%lgpvlu,         &
+        ICALCG( 1 ) = ig
+        CALL GROUP( work%GVALS, data%ng, work%FT, data%GPVALU, 1,              &
+                    data%ITYPEG, data%ISTGP, ICALCG, data%ltypeg,              &
+                    data%lstgp, 1, data%lcalcg, data%lgpvlu,                   &
                     .FALSE., igstat )
         IF ( igstat /= 0 ) GO TO 930
       END IF
@@ -237,7 +239,7 @@
 !  evaluate the element function derivatives
 
       IF ( grad ) THEN
-        CALL ELFUN( work%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,        &
+        CALL ELFUN( work%FUVALS, X, data%EPVALU, neling, data%ITYPEE,          &
                     data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,        &
                     data%ISTEP, work%ICALCF, data%ltypee, data%lstaev,         &
                     data%lelvar, data%lntvar, data%lstadh, data%lstep,         &
@@ -248,9 +250,9 @@
 !  evaluate the group derivative values
 
         IF ( .NOT. data%GXEQX( ig ) ) THEN
-          CALL GROUP( work%GVALS, data%ng, work%FT, data%GPVALU, data%ng,      &
-                      data%ITYPEG, data%ISTGP, work%ICALCF, data%ltypeg,       &
-                      data%lstgp, data%lcalcf, data%lcalcg, data%lgpvlu,       &
+          CALL GROUP( work%GVALS, data%ng, work%FT, data%GPVALU, 1,            &
+                      data%ITYPEG, data%ISTGP, ICALCG, data%ltypeg,            &
+                      data%lstgp, 1, data%lcalcg, data%lgpvlu,                 &
                       .TRUE., igstat )
           IF ( igstat /= 0 ) GO TO 930
         END IF
@@ -355,7 +357,7 @@
 
             IF ( ll <= n ) THEN
               nnzgci = nnzgci + 1
-              GCI_val ( nnzgci ) = gi * work%W_ws( ll )
+              GCI_val( nnzgci ) = gi * work%W_ws( ll )
               GCI_var( nnzgci ) = ll
             END IF
           END DO
