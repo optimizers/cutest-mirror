@@ -28,7 +28,7 @@
 
 !  input the problem dimensions
 
-      REWIND input
+      REWIND( input )
       READ( input, "( 3I8 )" ) n, ng, nel
 
 !  input the problem type
@@ -77,7 +77,7 @@
         END DO
       END IF
 
-      REWIND input
+      REWIND( input )
       status = 0
       RETURN
 

@@ -71,6 +71,7 @@
  *                                         objective function), or of the
  *                                         objective if problem is
  *                                         unconstrained, in sparse format
+ * terminate  uterminate / cterminate     Remove existing internal workspace
  *
  *                                          CUTEr version:
  *                                           D. Orban, Montreal, January 2007
@@ -120,6 +121,9 @@ extern "C" {
 
   void mexFunction(int nlhs, mxArray *plhs[],
                    int nrhs, const mxArray *prhs[]);
+
+  mxArray *SparseVector(int n, int nnz, integer *index, double *val);
+
 
   mxArray *extractSparseVector(int nrow, int ncol, int nnz, int nnzV,
                                integer *irow, integer *jcol, double *val);
@@ -182,6 +186,9 @@ extern "C" {
     integer status;            /* Exit flag from CUTEst tools */
 
     char msgBuf[256];
+
+    int *iir = NULL;
+
 
     int bufLen, errCopy;
     double *nptr = NULL, *mptr = NULL, *nnzjptr = NULL, *nnzhptr = NULL;
@@ -857,14 +864,40 @@ extern "C" {
         c  = (doublereal *)mxGetData(plhs[0]);
 
         /* This must be improved ! */
-        nnzgci = CUTEst_nnzj > CUTEst_nvar ? CUTEst_nvar : CUTEst_nnzj;
-        plhs[1] = mxCreateSparse(CUTEst_nvar, 1, nnzgci, mxREAL);
+/*  nnzgci = CUTEst_nnzj > CUTEst_nvar ? CUTEst_nvar : CUTEst_nnzj; */
+        if (CUTEst_nnzj > CUTEst_nvar) 
+          nnzgci = CUTEst_nvar;
+        else
+          nnzgci = CUTEst_nnzj;
+
+#ifdef MXDEBUG
+        mexPrintf("iscons:: Before: nnzgci = %-d icon = %-d\n", nnzgci, icon);
+        mexPrintf("iscons::         nvar   = %-d\n",  CUTEst_nvar);
+#endif
+
+        ir = (integer *)mxCalloc(nnzgci, sizeof(integer));
+        g = (doublereal *)mxCalloc(nnzgci, sizeof(doublereal));
+        CUTEST_ccifsg( &status, &CUTEst_nvar, &icon, x, c, &nnzgci, &nnzgci, g,
+               ir, &somethingTrue);
+        if (status != 0) {
+            sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
+            mexErrMsgTxt(msgBuf);
+          }
+
+        /*
+        mexPrintf("iir[0] = %-d %f\n", iir[0], g[0]);
+        mexPrintf("iir[1] = %-d %f\n", iir[1], g[1]);
+        */
+        plhs[1] = SparseVector(CUTEst_nvar, nnzgci, ir, (double *)g);
+
+        mxFree(ir);
+        mxFree(g);
+
+        /*        plhs[1] = mxCreateSparse((mwSize)CUTEst_nvar, (mwSize)1, 
+                                 (mwSize)nnzgci, mxREAL);
         ir   = mxGetIr(plhs[1]);
         jptr = mxGetJc(plhs[1]);
         g    = (doublereal *)mxGetPr(plhs[1]);
-#ifdef MXDEBUG
-        mexPrintf("iscons:: Before: nnzgci = %-d\n", nnzgci);
-#endif
 
         CUTEST_ccifsg( &status, &CUTEst_nvar, &icon, x, c, &nnzgci, &nnzgci, g,
                (integer *)ir, &somethingTrue);
@@ -873,13 +906,20 @@ extern "C" {
             mexErrMsgTxt(msgBuf);
           }
 
+        mexPrintf("ir[0] = %-d %f\n", ir[0], g[0]);
+        mexPrintf("ir[1] = %-d %f\n", ir[1], g[1]);
+        mexPrintf("ir[2] = %-d %f\n", ir[2], g[2]);
+
+        /* Finalize sparse data structure for sparse gradient */
+        /* for (i = 0; i < nnzgci; i++) ir[i]--;    /* 0-based indexing */
+        /* jptr[0] = 0;
+        jptr[1] = nnzgci;
+
+        */
+
 #ifdef MXDEBUG
         mexPrintf("iscons:: After: nnzgci = %-d\n", nnzgci);
 #endif
-        /* Finalize sparse data structure for sparse gradient */
-        for (i = 0; i < nnzgci; i++) ir[i]--;    /* 0-based indexing */
-        jptr[0] = 0;
-        jptr[1] = nnzgci;
       }
 
       mxFree((void *)toolName);
@@ -1598,6 +1638,25 @@ mexErrMsgTxt("stop\n");
       return;
     }
 
+    if (strcmp(toolName, "terminate") == 0) {
+
+      if (nlhs != 0) mexErrMsgTxt("varnames returns no output\n");
+      if (nrhs > 1)
+        mexWarnMsgTxt("varnames does not take input arguments\n");
+
+      if (CUTEst_ncon > 0)
+        CUTEST_cterminate( &status );
+      else
+        CUTEST_uterminate( &status );
+
+      if (status != 0) {
+          sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
+          mexErrMsgTxt(msgBuf);
+      }
+      setupCalled = 0;
+      mxFree((void *)toolName);
+      return;
+    }
 
     sprintf(msgBuf, "Tool name %-s not recognized\n", toolName);
     mexErrMsgTxt(msgBuf);
@@ -1606,6 +1665,39 @@ mexErrMsgTxt("stop\n");
 
   /* -------------------------------------------------------------------------- */
   /* Helper functions */
+
+  /* Convert a sparse vector to sparse matlab format. 
+   */
+  mxArray *SparseVector(int n, int nnz, integer *index, double *val) {
+
+    mxArray *vector;    /* Output sparse vector as Matlab sparse matrix */
+    mwIndex *ir, *jptr; /* Index arrays of output vector */
+    double  *pr;        /* Value array of output vector */
+
+    int i, nnzActual = 0;
+
+    if (nnz < 0) return NULL;
+
+    vector = mxCreateSparse(n, 1, nnz, mxREAL);
+    if (vector == NULL) return NULL;
+    ir = mxGetIr(vector);
+    jptr = mxGetJc(vector);
+    pr = mxGetPr(vector);
+
+    for (i = 0; i < nnz; i++) {
+        ir[nnzActual] = (mwIndex)(index[i] - 1);  /* Indices are 0-based */
+        pr[nnzActual] = val[i];
+        nnzActual++;
+    }
+    jptr[0] = (mwIndex)0;
+    jptr[1] = (mwIndex)nnzActual;
+
+#ifdef MXDEBUG
+    mexPrintf("Sparse vector has %-d nonzeros\n", nnzActual);
+#endif
+
+    return vector;
+  }
 
   /* Extract a sparse vector from a CUTEst sparse matrix. The components
    * of the sparse vector are such that irow[i]=0. The rest of the

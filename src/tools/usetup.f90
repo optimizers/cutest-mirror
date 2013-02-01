@@ -193,6 +193,7 @@
 
 !  input the problem dimensions
 
+      REWIND( input )
       READ( input, "( 10I8 )" ) data%n, data%ng, data%nel, data%ntotel,        &
         data%nvrels, data%nnza, data%ngpvlu, data%nepvlu, neltyp, ngrtyp
       n = data%n
@@ -605,7 +606,7 @@
 !  input the type of each variable
 
       READ( input, 1010 ) ( data%ITYPEV( i ), i = 1, n )
-      CLOSE( input )
+!     CLOSE( input )
 
 !  partition the workspace arrays work%FUVALS, IWK and WK. Initialize certain 
 !  portions of IWK

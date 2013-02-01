@@ -94,3 +94,6 @@ else
 
     fprintf('  error = %7.1e\n', norm(H-full(Hsp))/(1+norm(H)));
 end
+fprintf('Terminating run...\n');
+cutest_terminate( )
+fprintf('Tests completed\n' );

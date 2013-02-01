@@ -68,6 +68,8 @@
 %                                     objective function), or of the
 %                                     objective if problem is
 %                                     unconstrained, in sparse format
+% cutest_terminate uterminate / 
+%                  cterminate         Remove existing internal workspace
 % --------------------------------------------------------------------------
 %
 % In order to unify the tools and be able to use the same Matlab commands on

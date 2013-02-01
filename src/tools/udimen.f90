@@ -20,9 +20,9 @@
 !  compute the basic array dimension for the unconstrained optimization tools
 !  --------------------------------------------------------------------------
 
-      REWIND input
+      REWIND( input )
       READ( input, "( I8 )" ) n
-      REWIND input
+      REWIND( input )
       status = 0
       RETURN
 
