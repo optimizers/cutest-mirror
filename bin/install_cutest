@@ -703,7 +703,14 @@ echo 'include $(PWD)/makemaster'                                   >> $MAKEFILE
 
 YESNO=""
 echo ' '
-echo ' Do you now wish to compile the package subset you selected earlier (Y/n)?'
+echo ' Do you now wish to compile the package subset you selected earlier ...'
+echo ' before you answer, you may wish to review and modify if necessary'
+echo ' the default compiler settings in the files'
+echo "   $PWD/makefiles/$VERSION"
+echo ' and'
+echo "   $PWD/bin/sys/$VERSION"
+echo ' (Y/n)?'
+
 while [[ $YESNO != 'Y' && $YESNO != 'N' ]]; do
     read YESNO
     if [[ $YESNO == "" ]]; then
