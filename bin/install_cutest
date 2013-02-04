@@ -24,7 +24,22 @@ fi
 # fi ;
 #}
 
-export ARCH=$PWD/arch
+#  locate the archdefs directory
+
+if [[ -z "$ARCHDEFS" ]]; then
+  if [[ ! -d "$PWD/../archdefs" ]]; then
+    echo ' environment variable ARCHDEFS is not set and the directory '
+    echo ' ../../arcrdefs does not exist. Install the archdefs package,'
+    echo ' set $ARCHDEFS to the archdefs directory and re-run.'
+    exit 1
+  else
+    export ARCH=$PWD/../archdefs
+  fi
+else
+  export ARCH=${ARCHDEFS}
+fi
+
+#export ARCH=$PWD/arch
 
 #  determine the platform and operating system used
 
