@@ -7,6 +7,13 @@
 #
 ###############################################################################
 
+if [[ ${CUTEST+set} != 'set' ]]; then
+    echo 'The environment variable CUTEST is not set. Aborting.'
+    exit 1
+fi
+
+. $CUTEST/bin/helper_functions
+
 # Default settings
 
 Initialize_Settings() {
@@ -94,24 +101,24 @@ Display_Usage() {
     printf 'Here is a summary of the available options.\n'
     printf 'See the man page for further details.\n\n'
     printf '  -A  or --architecture \tspecify architecture to use\n'
-    printf '  -p  or --package \tspecify package name\n'
-    printf '  -sp or --single  \trun single precision version of package\n'
-    printf '  -h  or --help    \tdisplay this help message\n'
-    printf '  -k  or --keep    \tkeep executable after run is over\n'
-    printf '  -r  or --rebuild \tforce recompilation of problem subroutines\n'
-    printf '  -o  or --output  \tset verbosity level\n'
-    printf '  -t  or --limit   \tset a time limit on the run\n'
-    printf '  -c  or --cfortran\tcompile mixed C/Fortran source code\n'
-    printf '  -b  or --blas    \tspecify BLAS library\n'
-    printf '  -K  or --lapack  \tspecify LAPACK library\n'
-    printf '  -g  or --debug   \tcompile debug version of executable\n'
-    printf '  -pg or --profile \tinstrument code for profiling\n'
-    printf '  -D  or --decode  \tspecify problem to decode and compile\n'
-    printf '  -u  or --uncons  \tspecify unconstrained problem (Matlab---deprecated)\n'
-    printf '  -Lpath           \tadd path to libraries path\n'
-    printf '  -lrary           \tlink in library.a or library.so\n'
-    printf '        --command \tdisplay compilation commands\n'
-    printf '        --config  \tdisplay current settings\n'
+    printf '  -p  or --package      \tspecify package name\n'
+    printf '  -sp or --single       \trun single precision version of package\n'
+    printf '  -h  or --help         \tdisplay this help message\n'
+    printf '  -k  or --keep         \tkeep executable after run is over\n'
+    printf '  -r  or --rebuild      \tforce recompilation of problem subroutines\n'
+    printf '  -o  or --output       \tset verbosity level\n'
+    printf '  -t  or --limit        \tset a time limit on the run\n'
+    printf '  -c  or --cfortran     \tcompile mixed C/Fortran source code\n'
+    printf '  -b  or --blas         \tspecify BLAS library\n'
+    printf '  -K  or --lapack       \tspecify LAPACK library\n'
+    printf '  -g  or --debug        \tcompile debug version of executable\n'
+    printf '  -pg or --profile      \tinstrument code for profiling\n'
+    printf '  -D  or --decode       \tspecify problem to decode and compile\n'
+    printf '  -u  or --uncons       \tspecify unconstrained problem (Matlab---deprecated)\n'
+    printf '  -Lpath                \tadd path to libraries path\n'
+    printf '  -lrary                \tlink in library.a or library.so\n'
+    printf '        --command       \tdisplay compilation commands\n'
+    printf '        --config        \tdisplay current settings\n'
     printf 'All other options are passed unchanged to sifdecoder\n'
 }
 
@@ -198,12 +205,11 @@ Decode_Problem() {
     ${RM} ELFUN.f GROUP.f RANGE.f EXTER.f
     ${RM} ELFUN.o GROUP.o RANGE.o EXTER.o
     if [[ ${SIFDECODE+set} == 'set' ]]; then
-        echo "sifdecode ${sd_opts[@]} $1"
+        echo "sifdecoder -A ${ARCH} ${sd_opts[@]} $1"
         ${SIFDECODE}/bin/sifdecoder -A ${ARCH} ${sd_opts[@]} $1
         [[ $? != 0 ]] && exit $?
     else
-        echo "${thisprog}: environment variable SIFDECODE not set"
-        echo "Either SifDecode is not installed or SIFDECODE is incorrectly set"
+        error "${thisprog}: environment variable SIFDECODE not set."
         exit 7
     fi
 }
@@ -274,10 +280,9 @@ ${CUTEST}/bin/envcheck
 
 if [[ -z "$ARCH" ]]; then
   if [[ -z "$MYARCH" ]]; then
-    echo ' no architecture specified and environment variable MYARCH is unset.'
-    echo ' Either specificy architecture with -A option or set variable MYARCH.'
-    echo ' and re-run.'
-    echo ''
+    error ' no architecture specified and environment variable MYARCH is unset.
+ Either specificy architecture with -A option or set variable MYARCH.
+ and re-run.'
     exit 2
   else
     ARCH=${MYARCH}
@@ -285,6 +290,10 @@ if [[ -z "$ARCH" ]]; then
 fi
 
 # Initialize architecture-dependent parts
+if [[ ! -e ${CUTEST}/bin/sys/${ARCH} ]]; then
+    error "ARCH=${ARCH} but ${CUTEST}/bin/sys/${ARCH} does not exist."
+    exit 3
+fi
 . ${CUTEST}/bin/sys/${ARCH}
 
 if (( show_config )); then
@@ -304,8 +313,8 @@ fi
 
 # Ensure that a package was specified
 if (( package_set == 0 )); then
-    echo "Please specify a package to run using -p"
-    echo "Try $0 --help for more information"
+    error "Please specify a package to run using -p
+Try $0 --help for more information"
     exit 1
 fi
 
@@ -319,9 +328,10 @@ if [[ -x ${CUTEST}/packages/${ARCH}/${PRECISION}/${PKG} ]]; then
 elif [[ -x ${CUTEST}/packages/defaults/${PKG} ]]; then
    . ${CUTEST}/packages/defaults/${PKG}
 else
-   echo "Cannot find a ${PKG} definitions file in "
-   echo "${CUTEST}/packages/${ARCH}/${PRECISION} or"
-   echo "${CUTEST}/packages/defaults"
+   error "Cannot find a ${PKG} definitions file in
+ ${CUTEST}/packages/${ARCH}/${PRECISION}
+or
+ ${CUTEST}/packages/defaults"
    exit 9
 fi
 [[ $? != 0 ]] && exit $?
@@ -364,15 +374,15 @@ ${MAKE} -s -f ${CUTEST}/makefiles/${ARCH} tools ${PKG}
 cd ${WorkingDir}
 
 # If needed, find the correct BLAS and package spec file
-(( $blas_set == 0 )) && BLAS=${CUTEST}/${PRECISION}/bin/linpac.o
-BLAS=-lblas
+#(( $blas_set == 0 )) && BLAS=${CUTEST}/${ARCH}/${PRECISION}/bin/linpac.o
+(( $blas_set == 0 )) && BLAS=-lblas
 if [[ ${SPECS} != "" ]]; then
   if [[ ! -e ${SPECS} ]]; then
      if [[ -e ${CUTEST}/src/${PACKDIR}/${SPECS} ]]; then
        ${LN} -fs ${CUTEST}/src/${PACKDIR}/${SPECS} ${SPECS}
-cat ${SPECS}
+       cat ${SPECS}
      else
-        printf "\nCannot find spec file ${SPECS}---skipping\n"
+        warning "Cannot find spec file ${SPECS}---skipping"
      fi
   fi
 fi
@@ -404,7 +414,7 @@ if [[ -e EXTER.f ]]; then
     [[ -e EXTER.o && -z EXTER.o ]] && ${RM} EXTER.o || EXTER="EXTER.o"
 fi
 
-# The package-dependent object files are either fully in full-specified 
+# The package-dependent object files are either fully in full-specified
 # indididual directories or in ${CUTEST}/${PRECISION}/bin
 PACKOBJS=( ${PACKOBJS} )
 nobjs=${#PACKOBJS[@]}
@@ -412,24 +422,25 @@ nobjs=${#PACKOBJS[@]}
 for (( i = 0; i < nobjs ; i++ ))
 do
 #   ${MAKE} -s ${PACKOBJS[$i]}
-    if [[ -e ${PACKOBJS[$i]} ]] ; then
-      PACKOBJS[$i]=${PACKOBJS[$i]}
-    else
-      PACKOBJS[$i]=${CUTEST}/objects/${ARCH}/${PRECISION}/${PACKOBJS[$i]}
-    fi
+    #if [[ -e ${PACKOBJS[$i]} ]] ; then
+    #  PACKOBJS[$i]=${PACKOBJS[$i]}
+    #else
+    #  PACKOBJS[$i]=${CUTEST}/objects/${ARCH}/${PRECISION}/${PACKOBJS[$i]}
+    #fi
+    [[ ! -e ${PACKOBJS[$i]} ]] && PACKOBJS[$i]=${CUTEST}/objects/${ARCH}/${PRECISION}/${PACKOBJS[$i]}
 done
 cd ${WorkingDir}
 
 # If user requested Matlab, the procedure is special
 if [[ ${PKG} == "matlab" ]]; then
     if [[ ${MATLAB+set} != 'set' ]]; then
-        echo "${thisprog}: environment variable MATLAB not set"
-        echo "Either Matlab is not installed or MATLAB is incorrectly set"
+        error "${thisprog}: environment variable MATLAB not set
+ Either Matlab is not installed or MATLAB is incorrectly set"
         exit 10
     fi
     MEXFORTRAN=${MATLAB}/bin/mex
     if [[ ! -x ${MEXFORTRAN} ]]; then
-        echo "Mex command ${MEXFORTRAN} does not exist or is not executable"
+        error "Mex command ${MEXFORTRAN} does not exist or is not executable"
         exit 11
     fi
     (( OUTPUT )) && printf '\nBuilding MEX file ...\n'
@@ -439,7 +450,7 @@ if [[ ${PKG} == "matlab" ]]; then
     $command
     Run_Post
     Clean_Up
-    exit 0
+    exit $?
 else
     # Link all the PACK and tools files together.
     (( OUTPUT )) && printf '\nLinking all the object files together ...\n'

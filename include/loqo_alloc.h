@@ -8,7 +8,7 @@
 #include <sys/types.h>
 #include <string.h>
 #ifndef GNU
-#include <malloc.h>
+#include <malloc/malloc.h>
 #endif
 
 #define MY_MALLOC_THRESH 1
