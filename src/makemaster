@@ -23,8 +23,12 @@ all_single: tools_single
                    dfo  PRECIS=single PWD=$(PWD)/dfo )
 	( cd filtersqp  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    filtersqp  PRECIS=single PWD=$(PWD)/filtersqp )
-	( cd gen  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
-                   gen  PRECIS=single PWD=$(PWD)/gen )
+	( cd gen77  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   gen77  PRECIS=single PWD=$(PWD)/gen77 )
+	( cd gen90  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   gen90  PRECIS=single PWD=$(PWD)/gen90 )
+	( cd genc  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   genc  PRECIS=single PWD=$(PWD)/genc )
 	( cd hrb  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    hrb  PRECIS=single PWD=$(PWD)/hrb )
 	( cd ipopt  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
@@ -76,8 +80,12 @@ all_double: tools_double
                    dfo  PRECIS=double PWD=$(PWD)/dfo )
 	( cd filtersqp  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    filtersqp  PRECIS=double PWD=$(PWD)/filtersqp )
-	( cd gen  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
-                   gen  PRECIS=double PWD=$(PWD)/gen )
+	( cd gen77  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   gen77  PRECIS=double PWD=$(PWD)/gen77 )
+	( cd gen90  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   gen90  PRECIS=double PWD=$(PWD)/gen90 )
+	( cd genc  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   genc  PRECIS=double PWD=$(PWD)/genc )
 	( cd hrb  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    hrb  PRECIS=double PWD=$(PWD)/hrb )
 	( cd ipopt  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
@@ -130,32 +138,32 @@ all_with_tao_double: all_double
 # all tools
 
 tools: tools_$(PRECIS)
-tools_single: 
+tools_single:
 	( cd tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      cutest PRECIS=single PWD=$(PWD)/tools )
-tools_double: 
+tools_double:
 	( cd tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      cutest PRECIS=double PWD=$(PWD)/tools )
 
 # all interface tests
 
 test: test_$(PRECIS)
-test_single: 
+test_single:
 	( cd test  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      test_cutest PRECIS=single PWD=$(PWD)/test )
-test_double: 
+test_double:
 	( cd test  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      test_cutest PRECIS=double PWD=$(PWD)/test )
 
 # all unconstrained tools and interface tests
 
 all_unconstrained: all_unconstrained_$(PRECIS)
-all_unconstrained_single: 
+all_unconstrained_single:
 	( cd tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      cutest_unconstrained PRECIS=single PWD=$(PWD)/tools )
 	( cd test  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      test_cutest_unconstrained PRECIS=single PWD=$(PWD)/test )
-all_unconstrained_double: 
+all_unconstrained_double:
 	( cd tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      cutest_unconstrained PRECIS=double PWD=$(PWD)/tools )
 	( cd test  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
@@ -164,12 +172,12 @@ all_unconstrained_double:
 # all constrained tools and interface tests
 
 all_constrained: all_constrained_$(PRECIS)
-all_constrained_single: 
+all_constrained_single:
 	( cd tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      cutest_constrained PRECIS=single PWD=$(PWD)/tools )
 	( cd test  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      test_cutest_constrained PRECIS=single PWD=$(PWD)/test )
-all_constrained_double: 
+all_constrained_double:
 	( cd tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      cutest_constrained PRECIS=double PWD=$(PWD)/tools )
 	( cd test  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
@@ -191,8 +199,12 @@ run_test_single: tools_single test_single
              run_test PRECIS=single PWD=$(PWD)/dfo )
 	( cd filtersqp  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
              run_test PRECIS=single PWD=$(PWD)/filtersqp )
-	( cd gen  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
-             run_test PRECIS=single PWD=$(PWD)/gen )
+	( cd gen77  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=single PWD=$(PWD)/gen77 )
+	( cd gen90  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=single PWD=$(PWD)/gen90 )
+	( cd genc  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=single PWD=$(PWD)/genc )
 	( cd hrb  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
              run_test PRECIS=single PWD=$(PWD)/hrb )
 	( cd ipopt  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
@@ -242,8 +254,12 @@ run_test_double: tools_double test_double
              run_test PRECIS=double PWD=$(PWD)/dfo )
 	( cd filtersqp  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
              run_test PRECIS=double PWD=$(PWD)/filtersqp )
-	( cd gen  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
-             run_test PRECIS=double PWD=$(PWD)/gen )
+	( cd gen77  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=double PWD=$(PWD)/gen77 )
+	( cd gen90  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=double PWD=$(PWD)/gen90 )
+	( cd genc  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=double PWD=$(PWD)/genc )
 	( cd hrb  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
              run_test PRECIS=double PWD=$(PWD)/hrb )
 	( cd ipopt  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
@@ -283,14 +299,14 @@ run_test_double: tools_double test_double
 
 #  book keeping
 
-clean: 
-	@printf ' %-9s\t\t' "Cleaning" 
+clean:
+	@printf ' %-9s\t\t' "Cleaning"
 	$(RM) $(OBJ)/*
 	@printf '[ OK ]\n'
 
-cleanall: 
+cleanall:
 	@printf ' %-14s\t\t' \
-          "Removing all $(PRECIS) precision object and module files" 
+          "Removing all $(PRECIS) precision object and module files"
 	$(RM) $(OBJ)/* $(MOD)/*
 #	ls $(OBJ) $(MOD)
 	@printf '[ OK ]\n'

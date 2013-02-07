@@ -1,12 +1,14 @@
 #!/bin/bash
 
-# Build script for cutest 
+# Build script for cutest
 # version for Bourne/bash shell
 
 # syntax: install_cutest
 
 # N. Gould, D. Orban & Ph. Toint
 # ( Last modified on 20 October 2012 at 11:00 GMT )
+
+. bin/helper_functions
 
 #  check input arguments (if any)
 
@@ -15,22 +17,13 @@ if [ $# != 0 ]; then
    exit 1
 fi
 
-#  function to create missing symblic links
-
-#cutest_create_missing_link () { 
-# if [[ -f $1 && ! -L $2 ]] ;
-#   then echo "creating missing link $2" ;
-##  else echo "link $2 already exists" ;
-# fi ;
-#}
-
 #  locate the archdefs directory
 
 if [[ -z "$ARCHDEFS" ]]; then
   if [[ ! -d "$PWD/../archdefs" ]]; then
-    echo ' environment variable ARCHDEFS is not set and the directory '
-    echo ' ../../arcrdefs does not exist. Install the archdefs package,'
-    echo ' set $ARCHDEFS to the archdefs directory and re-run.'
+    error ' environment variable ARCHDEFS is not set and the directory
+ ../../archdefs does not exist. Install the archdefs package,
+ set $ARCHDEFS to the archdefs directory and re-run.'
     exit 1
   else
     export ARCH=$PWD/../archdefs
@@ -44,7 +37,7 @@ fi
 #  determine the platform and operating system used
 
 CORRECT_PLATFORM="false"
-while [ $CORRECT_PLATFORM == "false" ]; do 
+while [ $CORRECT_PLATFORM == "false" ]; do
    echo ' Select platform'
    echo
    echo '   (1) Compaq (DEC) alpha'
@@ -58,11 +51,11 @@ while [ $CORRECT_PLATFORM == "false" ]; do
    echo '   (9) PC with 64-bit Athlon processor'
    echo '  (10) SGI workstation'
    echo '  (11) SUN workstation'
-   echo '  (12) MAC OS/X'   
-   echo '  (13) 64-bit MAC OS/X'   
+   echo '  (12) MAC OS/X'
+   echo '  (13) 64-bit MAC OS/X'
 
    read CHOICE
-   
+
    case  $CHOICE  in
        "1")
             CORRECT_PLATFORM="true"
@@ -70,14 +63,14 @@ while [ $CORRECT_PLATFORM == "false" ]; do
             export MACHINE="Compaq Alpha"
 
             CORRECT_OS="false"
-            while [ $CORRECT_OS == "false" ]; do 
+            while [ $CORRECT_OS == "false" ]; do
 
                echo ' Select operating system'
                echo
                echo '   (1) Digital Unix'
                echo '   (2) Tru-64 Unix'
                echo '   (3) Linux'
-               
+
                read CHOICE
 
                case  $CHOICE  in
@@ -114,13 +107,13 @@ while [ $CORRECT_PLATFORM == "false" ]; do
             export MACHINE="HP workstation"
 
             CORRECT_OS="false"
-            while [ $CORRECT_OS == "false" ]; do 
+            while [ $CORRECT_OS == "false" ]; do
 
                echo ' Select operating system'
                echo
                echo '   (1) HP-UX'
                echo '   (2) Linux'
-            
+
                read CHOICE
 
                case  $CHOICE  in
@@ -145,13 +138,13 @@ while [ $CORRECT_PLATFORM == "false" ]; do
             export MACHINE="IBM RS6000"
 
             CORRECT_OS="false"
-            while [ $CORRECT_OS == "false" ]; do 
+            while [ $CORRECT_OS == "false" ]; do
 
                echo ' Select operating system'
                echo
                echo '   (1) AIX'
                echo '   (2) Linux'
-           
+
                read CHOICE
 
                case  $CHOICE  in
@@ -176,13 +169,13 @@ while [ $CORRECT_PLATFORM == "false" ]; do
             export MACHINE="Intel-like PC"
 
             CORRECT_OS="false"
-            while [ $CORRECT_OS == "false" ]; do 
+            while [ $CORRECT_OS == "false" ]; do
 
                echo ' Select operating system'
                echo
                echo '   (1) Windows 2000/XP with MinGW/Msys'
                echo '   (2) Linux'
-           
+
                read CHOICE
 
                case  $CHOICE  in
@@ -207,13 +200,13 @@ while [ $CORRECT_PLATFORM == "false" ]; do
             export MACHINE="Intel-like PC with a 64-bit processor"
 
             CORRECT_OS="false"
-            while [ $CORRECT_OS == "false" ]; do 
+            while [ $CORRECT_OS == "false" ]; do
 
                echo ' Select operating system'
                echo
                echo '   (1) Windows 2000/XP with MinGW/Msys'
                echo '   (2) Linux'
-           
+
                read CHOICE
 
                case  $CHOICE  in
@@ -259,13 +252,13 @@ while [ $CORRECT_PLATFORM == "false" ]; do
             export MACHINE="SGI workstation"
 
             CORRECT_OS="false"
-            while [ $CORRECT_OS == "false" ]; do 
+            while [ $CORRECT_OS == "false" ]; do
 
                echo ' Select operating system'
                echo
                echo '   (1) IRIX'
                echo '   (2) Linux'
-            
+
                read CHOICE
 
                case  $CHOICE  in
@@ -290,7 +283,7 @@ while [ $CORRECT_PLATFORM == "false" ]; do
             export MACHINE="Sun workstation"
 
             CORRECT_OS="false"
-            while [ $CORRECT_OS == "false" ]; do 
+            while [ $CORRECT_OS == "false" ]; do
 
                echo ' Select operating system'
                echo
@@ -338,8 +331,7 @@ unalias source 2>/dev/null
 
 source $ARCH/system.$OS
 
-echo ' Select compiler'
-echo
+echo -e ' Select compiler\n'
 
 COMP=( `$LS $ARCH/compiler.${MCH}.${OS}.* $ARCH/compiler.all.all.* 2>/dev/null` )
 NUMBER=${#COMP[@]}
@@ -359,7 +351,7 @@ for i  in  ${LIST[@]}; do
   echo "        ($counter) ${COMP[$count]}"
 done
 
-while [ $CORRECT_COMPILER == "false" ]; do 
+while [ $CORRECT_COMPILER == "false" ]; do
    read CHOICE
    let CHOICE=CHOICE-1
    if (( 0 <= CHOICE && CHOICE < NUMBER )); then
@@ -387,21 +379,9 @@ NEWCC="false"
 #PLPLOT=""
 
 if [[ -e $CUTEST/versions/$VERSION ]]; then
-
-    YESNO=""
-    
-    echo " There is already a CUTEST installation with version $VERSION."
-    echo ' Do you wish to proceed ... existing version will be destroyed (N/y)?'
-    while [[ $YESNO != 'Y' && $YESNO != 'N' ]]; do
-        read YESNO
-        if [[ $YESNO == "" ]]; then
-          YESNO="N"
-        fi
-        YESNO=`echo $YESNO | tr a-z A-Z`
-    done
-    if [[ $YESNO == 'N' ]]; then
-      exit 4
-    fi    
+    warning " There is already a CUTEST installation with version $VERSION."
+    yesno_default_no ' Do you wish to proceed ... existing version will be destroyed'
+    [[ $? != 0 ]] && exit 4
 fi
 
 MATLABGCC="gcc-4.4"
@@ -410,7 +390,7 @@ matlab=""
 
 #echo $CMP
 
-while [ $CORRECT_SUBSET == "false" ]; do 
+while [ $CORRECT_SUBSET == "false" ]; do
    echo ' Select subset of CUTEST packages to be installed'
    echo ' (the chosen subset will optionally be installed below)'
    echo
@@ -423,7 +403,7 @@ while [ $CORRECT_SUBSET == "false" ]; do
    fi
 
   read CHOICE
-   
+
    case  $CHOICE  in
        "1")
             if [[ $CMP="gfortran" ]]; then
@@ -446,8 +426,8 @@ while [ $CORRECT_SUBSET == "false" ]; do
                 echo ' GNU compilers to allow for Matlab and CUTEst interaction'
               fi
             else
-              echo ' Matlab only supports gfortran/gcc '
-              echo ' Please give an integer between 2 and 4!'
+              warning ' Matlab only supports gfortran/gcc
+ Please give an integer between 2 and 4!'
             fi
 ;;
        "2")
@@ -483,8 +463,8 @@ while [ $CORRECT_SUBSET == "false" ]; do
                 echo ' GNU compilers to allow for Matlab and CUTEst interaction'
               fi
             else
-              echo ' Matlab only supports gfortran/gcc '
-              echo ' Please give an integer between 2 and 4!'
+              warning ' Matlab only supports gfortran/gcc
+ Please give an integer between 2 and 4!'
             fi
 ;;
        *)
@@ -504,7 +484,7 @@ for i  in  ${CCOMP[@]}; do
 done
 
 CORRECT_CCOMPILER="false"
-while [[ $CORRECT_CCOMPILER == "false" ]]; do 
+while [[ $CORRECT_CCOMPILER == "false" ]]; do
 
     let count=-1
     for i  in  ${LIST[@]}; do
@@ -514,7 +494,7 @@ while [[ $CORRECT_CCOMPILER == "false" ]]; do
     done
 
     read CHOICE
-   	(( CHOICE-- ))
+	(( CHOICE-- ))
 
     i=0
     while [[ $i -lt $NUMBER &&  $CORRECT_CCOMPILER == "false" ]]; do
@@ -549,39 +529,24 @@ PKGDIR=$CUTEST/packages/$VERSION
 echo "$MACHINE ($OPSYS) $COMPUSED" > $CUTEST/versions/$VERSION
 
 if [[ ! -e $OBJDIR ]]; then
-    $MKDIR $OBJDIR 
+    $MKDIR $OBJDIR
     $MKDIR $OBJDIR/double $OBJDIR/single
 else
-    if [[ ! -e $OBJDIR/double ]]; then
-    $MKDIR $OBJDIR/double
-    fi
-    if [[ ! -e $OBJDIR/single ]]; then
-    $MKDIR $OBJDIR/single
-    fi
+    [[ ! -e $OBJDIR/double ]] && $MKDIR $OBJDIR/double
+    [[ ! -e $OBJDIR/single ]] && $MKDIR $OBJDIR/single
 fi
 
 if [[ ! -e $MODDIR ]]; then
-    $MKDIR $MODDIR 
+    $MKDIR $MODDIR
     $MKDIR $MODDIR/double $MODDIR/single
 else
-    if [[ ! -e $MODDIR/double ]]; then
-    $MKDIR $MODDIR/double
-    fi
-    if [[ ! -e $MODDIR/single ]]; then
-    $MKDIR $MODDIR/single
-    fi
+    [[ ! -e $MODDIR/double ]] && $MKDIR $MODDIR/double
+    [[ ! -e $MODDIR/single ]] && $MKDIR $MODDIR/single
 fi
 
-if [[ ! -e $PKGDIR ]]; then
-$MKDIR $PKGDIR
-fi
-
-if [[ ! -e $PKGDIR/double ]]; then
-$MKDIR $PKGDIR/double
-fi
-if [[ ! -e $PKGDIR/single ]]; then
-$MKDIR $PKGDIR/single
-fi
+[[ ! -e $PKGDIR ]] && $MKDIR $PKGDIR
+[[ ! -e $PKGDIR/double ]] && $MKDIR $PKGDIR/double
+[[ ! -e $PKGDIR/single ]] && $MKDIR $PKGDIR/single
 
 #$CP $CUTEST/packages/defaults/* $PKGDIR/double/
 #$CP $CUTEST/packages/defaults/* $PKGDIR/single/
@@ -699,50 +664,27 @@ echo '#  Body of makefile'                                         >> $MAKEFILE
 echo ' '                                                           >> $MAKEFILE
 echo 'include $(PWD)/makemaster'                                   >> $MAKEFILE
 
+#  optionally edit the compiler and platform settings
+
+yesno_default_no ' Would you like to review and modify if necessary the compiler settings'
+[[ $? == 0 ]] && ${FCEDIT:-${VISUAL:-${EDITOR:-vim}}} $PWD/makefiles/$VERSION
+
+yesno_default_no ' Would you like to review and modify if necessary the system commands'
+[[ $? == 0 ]] && ${FCEDIT:-${VISUAL:-${EDITOR:-vim}}} $PWD/bin/sys/$VERSION
+
 #  optionally compile the selected packages
 
-YESNO=""
-echo ' '
-echo ' Do you now wish to compile the package subset you selected earlier ...'
-echo ' before you answer, you may wish to review and modify if necessary'
-echo ' the default compiler settings in the files'
-echo "   $PWD/makefiles/$VERSION"
-echo ' and'
-echo "   $PWD/bin/sys/$VERSION"
-echo ' (Y/n)?'
+yesno_default_yes ' Do you now wish to compile the package subset ...'
 
-while [[ $YESNO != 'Y' && $YESNO != 'N' ]]; do
-    read YESNO
-    if [[ $YESNO == "" ]]; then
-      YESNO="Y"
-    fi
-    YESNO=`echo $YESNO | tr a-z A-Z`
-done
+if [[ $? != 0 ]]; then
 
-if [[ $YESNO == 'Y' ]]; then
-
-    PREC=""
-    echo ' '
-    echo ' The package subset may be installed in either single or double precision'
-    echo ' Which precision do you require for the installed subset ? '
-    echo ' D for double precision (the default), S for single precision'
-    while [[ $PREC != 'S' && $PREC != 'D' ]]; do
-        read PREC
-        if [[ $PREC == "" ]]; then
-        PREC="D"
-    fi
-        PREC=`echo $PREC | tr a-z A-Z`
-    done 
-    if [[ $PREC == 'S' ]]; then
-      PREC="single"
-    else
-      PREC="double"
-    fi
+    echo -e '\n The package subset may be installed in (S)ingle or (D)ouble precision'
+    read -p ' Which precision do you require for the installed subset (D/s) ? ' -r -n 1 PREC;
+    [[ $PREC == [Dd] ]] && PREC='double' || PREC='single'
 
     cd $CUTEST/src/
 
-    echo ' '
-    echo "Installing the $PREC precision version"
+    echo -e "\nInstalling the $PREC precision version"
     OPTIONS="-s -f $CUTEST/makefiles/$VERSION"
     MACROS="PRECIS=$PREC PWD=$CUTEST/src CUTEST=$CUTEST"
     case  $SUBSET  in
@@ -770,36 +712,21 @@ if [[ $YESNO == 'Y' ]]; then
 
 #  optionally compile the selected packages in the other precision
 
-    if [[ $PREC == 'single' ]]; then
-      PREC="double"
-    else
-      PREC="single"
-    fi
+    [[ $PREC == 'single' ]] && PREC='double' || PREC='single'
 
-    YESNO2=""
-    echo ' '
-    echo "Do you also wish to install the $PREC precision version ? (N/y)"
+    yesno_default_no "Do you also wish to install the $PREC precision version"
 
-    while [[ $YESNO2 != 'Y' && $YESNO2 != 'N' ]]; do
-        read YESNO2
-        if [[ $YESNO2 == "" ]]; then
-        YESNO2="N"
-    fi
-        YESNO2=`echo $YESNO2 | tr a-z A-Z`
-    done
-    
-    if [[ $YESNO2 == 'Y' ]]; then
+    if [[ $? == 0 ]]; then
 
-        echo ' '
-        echo "Installing the $PREC precision version"
+        echo -e "\nInstalling the $PREC precision version"
         MACROS="PRECIS=$PREC PWD=$CUTEST/src CUTEST=$CUTEST"
         case  $SUBSET  in
         "all")
-            $MAKE $OPTIONS all_cuter $MACROS
+            $MAKE $OPTIONS all $MACROS
             [[ $? != 0 ]] && exit 2
 ;;
         "all_except_matlab")
-            $MAKE $OPTIONS all_cuter $MACROS
+            $MAKE $OPTIONS all $MACROS
             [[ $? != 0 ]] && exit 2
 ;;
         "all_unconstrained")
@@ -814,29 +741,21 @@ if [[ $YESNO == 'Y' ]]; then
     fi
 fi
 
-echo ''
-echo " Remember to set the environment variable"
+echo -e "\n Remember to set the environment variable"
 echo "  CUTEST to $CUTEST"
 echo " In addition, please update your MANPATH to include"
 echo "    $CUTEST/man"
 echo " and your PATH to include"
 echo "    $CUTEST/bin"
 echo ''
-echo " (see $CUTEST/doc/README.cshrc"
-echo "  and $CUTEST/doc/README.bashrc"
-echo "  for examples on how to do this)"
-echo ''
-echo " If you wish the version you have just installed to become your"
+echo " (see $CUTEST/doc/README.bashrc"
+echo "  for an example on how to do that)."
+echo -e "\n If you wish the version you have just installed to become your"
+echo " default CUTEst version, additionally set"
+echo "  MYARCH to $VERSION"
 if [[ $matlab == "true" ]]; then
-  echo " default CUTEst version, additionally set the environment variables"
-  echo "  MYARCH to $VERSION"
   echo " and"
   echo "  MYMATLABARCH to $VERSION"
-else
-  echo " default CUTEst version, additionally set the environment variable"
-  echo "  MYARCH to $VERSION"
 fi
 
-
 exit 0
-
