@@ -9,7 +9,7 @@ CALL CUTEST_ccfsg( status, n, m, X, C,
 nnzj, lj, J_val, J_var, J_fun, grad )
 .SH DESCRIPTION
 The CUTEST_ccfsg subroutine evaluates the values of the constraint functions of
-the problem decoded from a SIF file by the script \fIsifdecode\fP 
+the problem decoded from a SIF file by the script \fIsifdecoder\fP 
 at the point X, and possibly their gradients in the constrained minimization 
 case. The gradients are stored in sparse format. 
 
@@ -119,4 +119,4 @@ I. Bongartz, A.R. Conn, N.I.M. Gould and Ph.L. Toint,
 TOMS, \fB21\fP:1, pp.123-160, 1995.
 
 
-sifdecode(1)
+sifdecoder(1)

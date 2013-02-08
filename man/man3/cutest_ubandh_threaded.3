@@ -5,12 +5,12 @@ CUTEST_ubandh_threaded \- CUTEst tool to extract a banded matrix
 from the Hessian matrix.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_ubandh_threaded( status, n, goth, X, nsemib, BANDH, lbandh, thread )
+CALL CUTEST_ubandh_threaded( status, n, X, nsemib, BANDH, lbandh, maxsbw, thread )
 .SH DESCRIPTION
 The CUTEST_ubandh_threaded subroutine extracts the elements which lie within 
 a band of given semi-bandwidth out of the Hessian matrix of the objective
 function of the problem decoded from a SIF file by the script
-\fIsifdecode\fP at the point X.
+\fIsifdecoder\fP at the point X.
 
 The problem under consideration
 is to minimize or maximize an objective function
@@ -43,17 +43,11 @@ allocation/deallocation error, 2 for an array bound error,
 .B n \fP[in] - integer
 the number of variables for the problem,
 .TP
-.B goth \fP[in] - integer
-a logical variable which specifies whether the second derivatives of
-the groups and elements have already been set (goth = .TRUE.) or if
-they should be computed (goth = .FALSE.),
-.TP
 .B X \fP[in] - real/double precision
-when GOTH = .FALSE., the derivatives will be evaluated at X. Otherwise
-X is not used.
+the derivatives will be evaluated at X. 
 .TP
 .B nsemib \fP[in] - integer
-the required semi-bandwidth, i.e., the number of bands directly below
+the required semi-bandwidth, i.e., the required number of bands directly below
 the diagonal of the Hessian.
 .TP
 .B BANDH \fP[out] - real/double precision
@@ -68,17 +62,10 @@ the actual declared size of the leading dimension of BANDH (with
 lbandh no smaller than nsemib). N.B. the leading component of BANDH
 includes the index 0 so strictly, the size of the leading dimension is
 lbandh + 1.
-.LP
-.SH NOTE
-goth should be set to .TRUE. whenever
-.TP 3
-(1) a call has been made to CUTEST_udh_threaded, CUTEST_ush_threaded, CUTEST_ugrdh_threaded or 
-CUTEST_ugrsh_threaded at the current point, or 
 .TP
-(2) a previous call to CUTEST_ubandh_threaded, with goth = .FALSE., 
-at the current point has been made.
-.TP
-Otherwise, it should be set .FALSE.,
+.B maxsbw \fP[out] - integer
+the actual semi-bandwidth, i.e., the actual number of bands directly below
+the diagonal of the Hessian.
 .TP
 .B thread \fP[in] - integer
 thread chosen for the evaluation; threads are numbered
@@ -96,4 +83,4 @@ Environment, revisited\fP,
 I. Bongartz, A.R. Conn, N.I.M. Gould and Ph.L. Toint, 
 TOMS, \fB21\fP:1, pp.123-160, 1995.
 
-sifdecode(1).
+sifdecoder(1).

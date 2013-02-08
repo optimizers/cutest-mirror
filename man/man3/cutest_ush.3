@@ -8,7 +8,7 @@ CALL CUTEST_ush( status, n, X, nnzh, LH, H_val, H_row, H_col )
 .SH DESCRIPTION
 The CUTEST_ush subroutine evaluates X_typessian matrix of
 the objective function of the problem decoded from a SIF file by the script
-\fIsifdecode\fP at the point X. This Hessian matrix is stored as a sparse
+\fIsifdecoder\fP at the point X. This Hessian matrix is stored as a sparse
 matrix in coordinate format.
 
 The problem under consideration
@@ -78,4 +78,4 @@ Environment, revisited\fP,
 I. Bongartz, A.R. Conn, N.I.M. Gould and Ph.L. Toint, 
 TOMS, \fB21\fP:1, pp.123-160, 1995.
 
-cutest_csh(3M), sifdecode(1).
+cutest_csh(3M), sifdecoder(1).

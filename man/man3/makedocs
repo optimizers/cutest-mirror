@@ -65,7 +65,7 @@
 #foreach pack ( cutest_cshc )
 #foreach pack ( cutest_cvartype )
 #foreach pack ( cutest_probname )
-foreach pack ( cutest_ubandh )
+#foreach pack ( cutest_ubandh )
 #foreach pack ( cutest_udh )
 #foreach pack ( cutest_udimen )
 #foreach pack ( cutest_udimse )
