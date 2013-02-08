@@ -138,7 +138,7 @@ typedef struct VarTypes {
 
 /*
  * Prototypes for CUTEst FORTRAN routines found in libcutest.a
- * See http://cutest.rl.ac.uk/cutest-www/
+ * See  http://ccpforge.cse.rl.ac.uk/gf/project/cutest/
  */
 
 /* Setup routines */

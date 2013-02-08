@@ -5,7 +5,7 @@ CUTEST_ubandh \- CUTEst tool to extract a banded matrix out of the Hessian
 matrix.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_ubandh( status, n, goth, X, nsemib, BANDH, lbandh )
+CALL CUTEST_ubandh( status, n, X, nsemib, BANDH, lbandh, maxsbw )
 .SH DESCRIPTION
 The CUTEST_ubandh subroutine extracts the elements which lie within a band
 of given semi-bandwidth out of the Hessian matrix of the objective
@@ -43,18 +43,12 @@ allocation/deallocation error, 2 for an array bound error,
 .B n \fP[in] - integer
 the number of variables for the problem,
 .TP
-.B goth \fP[in] - integer
-a logical variable which specifies whether the second derivatives of
-the groups and elements have already been set (goth = .TRUE.) or if
-they should be computed (goth = .FALSE.),
-.TP
 .B X \fP[in] - real/double precision
-when GOTH = .FALSE., the derivatives will be evaluated at X. Otherwise
-X is not used.
+the derivatives will be evaluated at X. 
 .TP
 .B nsemib \fP[in] - integer
-the required semi-bandwidth, i.e., the number of bands directly below
-the diagonal of the Hessian.
+the required semi-bandwidth, i.e., the required number of bands directly below
+the diagonal of the band Hessian approximation.
 .TP
 .B BANDH \fP[out] - real/double precision
 a two-dimensional array of dimension (0:lbandh,n) which gives the
@@ -68,17 +62,10 @@ the actual declared size of the leading dimension of BANDH (with
 lbandh no smaller than nsemib). N.B. the leading component of BANDH
 includes the index 0 so strictly, the size of the leading dimension is
 lbandh + 1.
-.LP
-.SH NOTE
-goth should be set to .TRUE. whenever
-.TP 3
-(1) a call has been made to CUTEST_udh, CUTEST_ush, CUTEST_ugrdh or 
-CUTEST_ugrsh at the current point, or 
 .TP
-(2) a previous call to CUTEST_ubandh, with goth = .FALSE., 
-at the current point has been made.
-.TP
-Otherwise, it should be set .FALSE.
+.B maxsbw \fP[out] - integer
+the actual semi-bandwidth, i.e., the actual number of bands directly below
+the diagonal of the Hessian.
 .LP
 .SH AUTHORS
 I. Bongartz, A.R. Conn, N.I.M. Gould, D. Orban and Ph.L. Toint
