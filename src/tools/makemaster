@@ -61,7 +61,7 @@ CSEDS = $(CUTEST)/seds/cutersize.sed
 
 BASICS = $(LCS)(cutest.o) $(LCS)(probname.o) $(LCS)(varnames.o) \
          $(LCS)(newthread.o) $(LCS)(problem.o) $(LCS)(fortran_ops.o) \
-         $(LCS)(ccutest.o) 
+         $(LCS)(interface.o) $(LCS)(ccutest.o) 
 
 UCUTESTS = $(LCS)(usetup.o) $(LCS)(udimen.o) $(LCS)(udimse.o) $(LCS)(udimsh.o) \
            $(LCS)(unames.o) $(LCS)(uvartype.o) $(LCS)(ufn.o) $(LCS)(ugr.o) \
@@ -81,7 +81,7 @@ CCUTESTS = $(LCS)(csetup.o) $(LCS)(cdimen.o) $(LCS)(cdimse.o) $(LCS)(cdimsh.o) \
 
 BASICD = $(LCD)(cutest.o) $(LCD)(probname.o) $(LCD)(varnames.o) \
          $(LCD)(newthread.o) $(LCD)(problem.o) $(LCD)(fortran_ops.o) \
-         $(LCD)(ccutest.o) 
+         $(LCD)(interface.o) $(LCD)(ccutest.o) 
 
 UCUTESTD = $(LCD)(usetup.o) $(LCD)(udimen.o) $(LCD)(udimse.o) $(LCD)(udimsh.o) \
            $(LCD)(unames.o) $(LCD)(uvartype.o) $(LCD)(ufn.o) $(LCD)(ugr.o) \
@@ -231,6 +231,18 @@ $(LC)(cutest.o): ../tools/cutest.f90
 	$(RMARFILE) varnames.o
 	$(RMARFILE) connames.o
 	$(RMARFILE) newthread.o
+	$(MVMODS)
+	@printf '[ OK ]\n'
+
+interface.o: $(LC)(interface.o)
+
+$(LC)(interface.o): ../tools/interface.f90
+	@printf ' %-9s %-15s\t\t' "Compiling" "interface" 
+	$(SED) -f $(SEDS) ../tools/interface.f90 > $(OBJ)/interface.f90
+	cd $(OBJ); $(FORTRAN) -o interface.o $(FFLAGS) interface.f90 \
+                || ( printf ' %-26s' "=> Disabling optimization " ; \
+                   $(FORTRAN) -o interface.o $(FFLAGSN) interface.f90 )
+	cd $(OBJ); $(ARR) interface.o; $(RM) interface.f90 interface.o
 	$(MVMODS)
 	@printf '[ OK ]\n'
 
@@ -919,62 +931,3 @@ cleanall:
 	$(RM) $(OBJ)/* $(MOD)/*
 #	ls $(OBJ)/ $(MOD)/
 	@printf '[ OK ]\n'
-
-#cutest.f90
-#csetup.f90
-#cdimen.f90
-#cdimse.f90
-#cdimsh.f90
-#cdimsj.f90
-#cnames.f90
-#cvartype.f90
-#cfn.f90
-#cgr.f90
-#cofg.f90
-#ccfg.f90
-#ccfsg.f90
-#ccifg.f90
-#ccifsg.f90
-#cdh.f90
-#ceh.f90
-#cgrdh.f90
-#cidh.f90
-#csh.f90
-#cshc.f90
-#cish.f90
-#cjprod.f90
-#csgr.f90
-#csgreh.f90
-#csgrsh.f90
-#cprod.f90
-#chcprod.f90
-#creport.f90
-#usetup.f90
-#udimen.f90
-#udimse.f90
-#udimsh.f90
-#unames.f90
-#uvartype.f90
-#ufn.f90
-#ugr.f90
-#uofg.f90
-#udh.f90
-#ugrdh.f90
-#ush.f90
-#ueh.f90
-#ugreh.f90
-#ugrsh.f90
-#uhprod.f90
-#ubandh.f90
-#ureport.f90
-#probname.f90
-#varnames.f90
-#connames.f90
-
-#cutest_data.f90
-#cutest_interface.f90
-#cutest_prcis.f90
-#linpac.f90
-#others.f90
-#readin.f90
-

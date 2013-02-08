@@ -10,6 +10,8 @@
 !  History -
 !   fortran 2003 version released November 2012
 
+     USE CUTEst_interface_double
+
 !--------------------
 !   P r e c i s i o n
 !--------------------
