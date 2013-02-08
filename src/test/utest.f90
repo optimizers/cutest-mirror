@@ -10,6 +10,8 @@
 !  History -
 !   fortran 2003 version released November 2012
 
+     USE CUTEst_interface_double
+
 !--------------------
 !   P r e c i s i o n
 !--------------------
@@ -243,12 +245,14 @@
       WRITE( out, "( ' Call CUTEST_ubandh with goth = .FALSE.' )" )
       CALL CUTEST_ubandh( status, n, X, nsemib, H_band, lbandh, maxsbw )
       IF ( status /= 0 ) GO to 900
-      CALL WRITE_H_BAND( out, n, lbandh, H_band, nsemib, maxsbw )
+      CALL WRITE_H_BAND( out, n, lbandh, H_band, nsemib )
+!     CALL WRITE_H_BAND( out, n, lbandh, H_band, nsemib, maxsbw )
       goth = .TRUE.
       WRITE( out, "( ' Call CUTEST_ubandh with goth = .TRUE.' )" )
       CALL CUTEST_ubandh( status, n, X, nsemib, H_band, lbandh, maxsbw )
       IF ( status /= 0 ) GO to 900
-      CALL WRITE_H_BAND( out, n, lbandh, H_band, nsemib, maxsbw )
+      CALL WRITE_H_BAND( out, n, lbandh, H_band, nsemib )
+!     CALL WRITE_H_BAND( out, n, lbandh, H_band, nsemib, maxsbw )
 
 !  calls and time report
 
@@ -430,8 +434,10 @@
       END DO
       END SUBROUTINE WRITE_RESULT
 
-      SUBROUTINE WRITE_H_BAND( out, n, lbandh, H_band, nsemib, maxsbw )
-      INTEGER :: n, lbandh, maxsbw, out
+!     SUBROUTINE WRITE_H_BAND( out, n, lbandh, H_band, nsemib, maxsbw )
+      SUBROUTINE WRITE_H_BAND( out, n, lbandh, H_band, nsemib )
+      INTEGER :: n, lbandh, out
+!     INTEGER :: maxsbw
       REAL ( KIND = wp ), DIMENSION( 0 : lbandh, n ):: H_band
       INTEGER :: i, j
       WRITE( out, "( ' * H(band)' )" )

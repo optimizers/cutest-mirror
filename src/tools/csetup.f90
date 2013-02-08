@@ -72,8 +72,8 @@
 !   fortran 2003 version released in CUTEst, 28th December 2012
 
       SUBROUTINE CUTEST_csetup_threaded( status, input, out, threads,          &
-                                         IO_BUFFERS, n, m, X, X_l, X_u, Y,     &
-                                         C_l, C_u, EQUATN, LINEAR,             &
+                                         IO_BUFFERS, n, m, X, X_l, X_u,        &
+                                         Y, C_l, C_u, EQUATN, LINEAR,          &
                                          e_order, l_order, v_order )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )

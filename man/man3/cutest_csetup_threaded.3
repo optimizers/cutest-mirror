@@ -5,7 +5,7 @@ CUTEST_csetup_threaded \- CUTEst tool to set up the data structures for constrai
 minimization.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_csetup_threaded( status, input, out, threads, IO_BUFFER, 
+CALL CUTEST_csetup_threaded( status, input, out, threads, IO_BUFFERS, 
 n, m, X, X_l, X_u, Y, C_l, C_u, 
 EQUATN, LINEAR, e_order, l_order, v_order )
 .SH DESCRIPTION
@@ -73,7 +73,7 @@ the unit number for any error messages,
 .B threads \fP[in] - integer
 the total number of independent evaluation threads that are required,
 .TP
-.B IO_BUFFER \fP[in] - integer
+.B IO_BUFFERS \fP[in] - integer
 an array of different unit numbers, one entry for each thread, 
 for any internal input/output,
 .TP
