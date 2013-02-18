@@ -49,8 +49,9 @@
   910 CONTINUE
       status = 1
       IF ( out > 0 ) WRITE( out,                                               &
-        "( /, ' ** SUBROUTINE USETUP: allocation error for ', A, ' status = ', &
-       &  I0, /, ' Execution terminating ' )" ) TRIM( bad_alloc ), alloc_status
+        "( /, ' ** SUBROUTINE CUTEST_usetup: allocation error for ', A,        &
+       &      ' status = ', I0, /, ' Execution terminating ' )" )              &
+          TRIM( bad_alloc ), alloc_status
       RETURN
 
 !  End of subroutine CUTEST_usetup
@@ -130,8 +131,9 @@
   910 CONTINUE
       status = 1
       IF ( out > 0 ) WRITE( out,                                               &
-        "( /, ' ** SUBROUTINE USETUP: allocation error for ', A, ' status = ', &
-       &  I0, /, ' Execution terminating ' )" ) TRIM( bad_alloc ), alloc_status
+        "( /, ' ** SUBROUTINE CUTEST_usetup: allocation error for ', A,        &
+       &      ' status = ', I0, /, ' Execution terminating ' )" )              &
+          TRIM( bad_alloc ), alloc_status
       RETURN
 
 !  thread error
@@ -139,8 +141,8 @@
   940 CONTINUE
       status = 4
       IF ( out > 0 ) WRITE( out,                                               &
-        "( /, ' ** SUBROUTINE USETUP: argument threads must be positive,',     &
-       &  ' execution terminating ' )" )
+        "( /, ' ** SUBROUTINE CUTEST_usetup: argument threads must be ',       &
+       &      'positive, execution terminating ' )" )
       RETURN
 
 !  End of subroutine CUTEST_usetup_threaded
@@ -200,14 +202,14 @@
       IF ( n <= 0 ) THEN
         CLOSE( input )
         IF ( out > 0 ) WRITE( out,                                             &
-          "( /, ' ** SUNROUTINE USETUP: the problem uses no variables.',       &
+          "( /, ' ** SUNROUTINE CUTEST_usetup: the problem uses no variables.',&
          &       ' Execution terminating ' )" )
         status = 2 ; RETURN
       END IF
       IF ( data%ng <= 0 ) THEN
         CLOSE( input )
         IF ( out > 0 ) WRITE( out,                                             &
-           "( /, ' ** SUBROUTINE USETUP: the problem is vacuous.',             &
+           "( /, ' ** SUBROUTINE CUTEST_usetup: the problem is vacuous.',      &
           &      ' Execution terminating ' )" )
         status = 2 ; RETURN
       END IF
@@ -469,7 +471,7 @@
           IF ( ABS( data%KNDOFC( i ) ) >= 2 ) THEN
             CLOSE( input )
             IF ( out > 0 ) WRITE( out,                                         &
-              "( /, ' ** Program USETUP: the problem includes general',        &
+              "( /, ' ** Program CUTEST_usetup: the problem includes general', &
              &      ' constraints. Execution terminating ' )" )
             status = 2 ; RETURN
           END IF
@@ -645,8 +647,9 @@
   910 CONTINUE
       status = 1
       IF ( out > 0 ) WRITE( out,                                               &
-        "( /, ' ** SUBROUTINE USETUP: allocation error for ', A, ' status = ', &
-       &  I0, /, ' Execution terminating ' )" ) TRIM( bad_alloc ), alloc_status
+        "( /, ' ** SUBROUTINE CUTEST_usetup: allocation error for ', A,        &
+       &      ' status = ', I0, /, ' Execution terminating ' )" )              &
+          TRIM( bad_alloc ), alloc_status
       RETURN
 
 !  non-executable statements
@@ -662,8 +665,9 @@
  1130 FORMAT( 1X, A6, /, ( 1X, 72L1 ) )
  1140 FORMAT( 1X, A6, /, ( 1X, 8A10 ) )
  1180 FORMAT( 1X, A6, /, 1P, 2D16.6 )
- 2000 FORMAT( /, ' ** SUBROUTINE USETUP: array length ', A, ' too small.', /, &
-              ' -- Increase the dimension to at least ', I0, ' and restart.' )
+ 2000 FORMAT( /, ' ** SUBROUTINE CUTEST_usetup: array length ', A,             &
+                 ' too small.', /, ' -- Increase the dimension to at least ',  &
+                 I0, ' and restart.' )
 
 !  End of subroutine CUTEST_usetup_threadsafe
 

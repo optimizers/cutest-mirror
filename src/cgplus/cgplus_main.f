@@ -161,7 +161,7 @@ C  Non-executable statements.
  2010 FORMAT( ' Final objective function value  = ', 1P, D12.4, 
      *        /, ' Final norm of gradient          = ', 1P, D12.4,
      *        //, '                 X         G ' )
- 2020 FORMAT(  1X, A10, 1P, 2D12.4 )
+C2020 FORMAT(  1X, A10, 1P, 2D12.4 )
  2030 FORMAT(  /, ' ** Warning from CGPMA. The problem as stated',
      *            ' includes simple bounds. ', /,
      *            '    These bounds will be ignored. ' )

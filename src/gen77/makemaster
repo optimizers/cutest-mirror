@@ -145,7 +145,7 @@ $(OBJ)/gen77.o: ../gen77/gen77.f
 
 #  CUTEst interface main programs
 
-$(OBJ)/gen77_main.o: ../gen/gen77_main.f
+$(OBJ)/gen77_main.o: ../gen77/gen77_main.f
 	@printf ' %-9s %-15s\t\t' "Compiling" "gen77_main"
 	$(SED) -f $(SEDS) ../gen77/gen77_main.f > $(OBJ)/gen77_main.f
 	cd $(OBJ); $(FORTRAN) -o gen77_main.o $(FFLAGS77) gen77_main.f \

@@ -21,7 +21,7 @@ C
 C  --------------------------------------------------------------------
 
       INTEGER :: npm, nplus, n, m
-      INTEGER :: i, itern, ntotal, nv, na, ns, nnzj, ind, job, maxit 
+      INTEGER :: i, itern, ntotal, na, ns, nnzj, ind, job, maxit, ib 
       INTEGER :: lip, la, nt1, lws, liws, ii, nfree, iores
       INTEGER :: nboth, nnoneg, nlower, l, ir, ic, j, iounit, status
       INTEGER, PARAMETER :: out = 6, input = 55
@@ -275,7 +275,6 @@ C  Continue permuting the variables.
           END IF
    20   CONTINUE
       END IF
-      nv = na
 C     WRITE( out, "( ' n, m, k, l ', 4I7 )" ) 
 C    *  ntotal, m, nboth, nfree + 1
       DO 25 i = 1, ntotal

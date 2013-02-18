@@ -7,12 +7,11 @@ C  Nick Gould, for CGT Productions.
 C  September 2004
 C  Revised for CUTEst, January 2013
 C
-      INTEGER          NMAX  , LH, I, out, N , M , INPUT,
-     *                 LP, MP, LW, J, MAXIT   , L , NA   ,  status,
-     *                 IFLAG , INSPEC, IPRINT, LWA, LIWA, ISAVE( 44 )
+      INTEGER  I, out, N, M, INPUT, MAXIT, status
+      INTEGER  IFLAG , INSPEC, IPRINT, lwa, liwa, ISAVE( 44 )
       INTEGER :: io_buffer = 11
-      DOUBLE PRECISION F, EPS, GTOL  , GNORM , ZERO, ONE,
-     *                 PGTOL, FACTR, INFTY, DSAVE( 29 )
+      DOUBLE PRECISION F, GNORM, ZERO, ONE
+      DOUBLE PRECISION PGTOL, FACTR, INFTY, DSAVE( 29 )
       CHARACTER ( LEN = 60 ) :: TASK, CSAVE
       LOGICAL          LSAVE( 4 )
       PARAMETER      ( out  = 6 )
@@ -101,9 +100,7 @@ C
 C
 C  Set up algorithmic input data.
 C
-      LP     = out
-      MP     = out
-      IFLAG  = 0
+      IFLAG = 0
 C
 C  Optimization loo
 C
@@ -153,7 +150,7 @@ C
      *                       G( I )
   120 CONTINUE
       WRITE ( out, 2000 ) PNAME, N, INT( CALLS(1) ), INT( CALLS(2) ),
-     *                     IFLAG, F, CPU(1), CPU(2) 
+     *                    IFLAG, F, CPU(1), CPU(2) 
       CLOSE( INPUT  )
       CALL CUTEST_uterminate( status )
       STOP

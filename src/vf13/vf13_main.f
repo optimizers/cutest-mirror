@@ -15,10 +15,10 @@ C
       CHARACTER ( LEN = 10 ) :: pname
       DOUBLE PRECISION :: f, acc
       DOUBLE PRECISION, PARAMETER :: accreq = 1.0D-7
-      DOUBLE PRECISION :: dummy, CPU( 2 ), CALLS( 7 )
+      DOUBLE PRECISION :: CPU( 2 ), CALLS( 7 )
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: IW
       DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: X, BL, BU, G, W
-      DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: C, V, CL, CU
+      DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: C, CL, CU
       DOUBLE PRECISION, ALLOCATABLE, DIMENSION( :, : ) :: CN
       CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : )  :: VNAME
       CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : )  :: CNAME
@@ -142,9 +142,6 @@ C  perform another iteration of the minimization
      *        /, '     I      C ', /, ( I6, 1P, D12.4 ) )
  2080 FORMAT( /, ' Objective function ' )
  2090 FORMAT( /, ' Constraint ', I6 )
- 2100 FORMAT( /, ' Set up time = ', 0P, F12.2,
-     *        /, '  Solve time = ', 0P, F12.2,
-     *        /, '  Total time = ', 0P, F12.2, ' seconds' )
  2110 FORMAT( /, ' the objective function value: ', 1P, D12.4, /,
      *        /, ' the variables:', /,
      *        '     I name          value    lower bound upper bound', 

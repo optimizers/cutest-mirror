@@ -64,8 +64,7 @@ LRMARFILE = $(CUTEST)/bin/rmarfile $(AR) $(GREP) $(LLC)
 
 #  compilation agenda
 
-$(PACKAGE) = $(OBJ)/gen90.o
-
+$(PACKAGE) = $(OBJ)/$(package).o $(OBJ)/$(package)_main.o
 gen90 =  $(OBJ)/gen90.o  $(OBJ)/gen90_main.o
 
 U_TEST = u_elfun.o u_group.o u_range.o
@@ -145,7 +144,7 @@ $(OBJ)/gen90.o: ../gen90/gen90.f90
 
 #  CUTEst interface main programs
 
-$(OBJ)/gen90_main.o: ../gen/gen90_main.f90
+$(OBJ)/gen90_main.o: ../gen90/gen90_main.f90
 	@printf ' %-9s %-15s\t\t' "Compiling" "gen90_main"
 	$(SED) -f $(SEDS) ../gen90/gen90_main.f90 > $(OBJ)/gen90_main.f90
 	cd $(OBJ); $(FORTRAN) -o gen90_main.o $(FFLAGS) gen90_main.f90 \

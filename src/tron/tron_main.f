@@ -7,12 +7,11 @@ C  Nick Gould, for CGT Productions.
 C  September 2004.
 C  Revised for CUTEst, January 2013
 C
-      INTEGER          NMAX  , LH, I, out, N , INPUT
-     *                 LP, MP, LW, J, MAXIT   , L , NA   , P,
-     *                 IFLAG , INSPEC, PMAX, NNZH, NNZH2,
+      INTEGER          LH, I, out, N, INPUT, J, MAXIT, L, P,
+     *                 IFLAG, INSPEC, NNZH, NNZH2,
      *                 status, ISAVE( 3 )
       INTEGER :: io_buffer = 11
-      DOUBLE PRECISION F, EPS, GTOL  , GNORM , ZERO, ONE, DSAVE( 3 ),
+      DOUBLE PRECISION F, GTOL  , GNORM , ZERO, ONE, DSAVE( 3 ),
      *                 FRTOL, FATOL, FMIN, CGTOL, DELTA, GNORM0
       CHARACTER ( LEN = 60 ) :: TASK
       PARAMETER      ( out  = 6 )
@@ -92,8 +91,6 @@ C
 C
 C  Set up algorithmic input data.
 C
-      LP     = out
-      MP     = out
       IFLAG  = 0
 C
 C  Optimization loo

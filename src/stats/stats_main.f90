@@ -42,8 +42,6 @@ Program STATS_main
   Integer :: i
 
   Real( Kind = wp ), Dimension( : ), Allocatable :: x, bl, bu, v, cl, cu
-  Real ( KIND = wp ), Dimension( 2 ) :: CPU( 2 )
-  Real ( KIND = wp ), Dimension( 7 ) :: CALLS( 7 )
   DOUBLE PRECISION, PARAMETER :: infty = 9.0D+19
   Character( len = 10 ) :: pname
   Integer :: e_order, l_order, v_order
@@ -290,10 +288,6 @@ Program STATS_main
   Stop
 
   CALL CUTEST_uterminate( status )
-  STOP
-
-  910 CONTINUE
-  WRITE( out, "( ' CUTEst error, status = ', i0, ', stopping' )")  status
   STOP
 
 !  Non-executable statements.

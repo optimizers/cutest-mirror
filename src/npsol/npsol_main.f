@@ -17,7 +17,7 @@ C  Set up parameters, variables and arrays required by constrained tools
       INTEGER, PARAMETER :: input = 55, out = 6
       INTEGER, PARAMETER :: io_buffer = 11
       INTEGER :: n, m, ldcj, ldr, liwork, lwork, npm, i, ib, ic, j
-      INTEGER :: ioptns, iprint, ncnln, inform, iter, status
+      INTEGER :: ioptns, iprint, nclin, ncnln, inform, iter, status, lda
       DOUBLE PRECISION :: f
       DOUBLE PRECISION, PARAMETER :: zero = 0.0D+0
       DOUBLE PRECISION :: CPU( 2 ), CALLS( 7 )

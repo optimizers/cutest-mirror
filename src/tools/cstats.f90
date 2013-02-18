@@ -74,11 +74,6 @@
 
 !  ------------------------------------------------------------------------
 
-!  local variables
-
-      INTEGER :: lirnh, alloc_status
-      CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
-
       nonlinear_variables_objective = data%nnov
       nonlinear_variables_constraints = data%nnjv
       equality_constraints = data%meq

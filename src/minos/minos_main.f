@@ -23,7 +23,7 @@ C  ------- these may need to be altered - see also funcon below --------
 C  ---------------------------------------------------------------------
       INTEGER :: ispecs, iprint, isumm, ns, l_j, status
       INTEGER :: m, n, ne, nb, nncon, nnjac, nnobj, iobj, inform, mincor
-      INTEGER :: i, ii, j, k, jslack, njac, ninf, nnov, nnjv, neq, nlc
+      INTEGER :: i, ii, j, k, jslack, njac, ninf, neq, nlc
       INTEGER, PARAMETER :: input = 55, out = 6
       INTEGER, PARAMETER :: io_buffer = 11
       INTEGER :: NAME1( 1 ), NAME2( 1 )

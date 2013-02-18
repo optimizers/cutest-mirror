@@ -25,7 +25,7 @@ C Nick - stupid use of common does not allow allocatable arrays
       DOUBLE PRECISION :: PRAXIS_evalf
       EXTERNAL :: PRAXIS_evalf
       COMMON / CPRAX / V, X, D, Q0, Q1, dmin, epsmch, fx, h, qd0, qd1,
-     *                 qf1, small, t, xldt, xm2, xm4, dseed, scbd, n,         
+     *                 qf1, small, t, xldt, xm2, xm4, dseed, scbd, n,
      *                 nl, nf, lp, jprint, nmx, illcin, ktm, nfmax,
      *                 jranch
 
@@ -46,7 +46,7 @@ C  number which, when added to one, gives a result greater than one.
 C  JRANCH = 1 to use BRENT's random,                                            
 C  JRANCH = 2 to use function DRANDM.                                           
 
-      jranch = 1                                                                
+      jranch = 1
       CALL RANINI( 4.0D0 )
 
 C  DSEED is an initial seed for DRANDM,                                         

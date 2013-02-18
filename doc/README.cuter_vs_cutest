@@ -304,14 +304,14 @@ or equivalently
         CEH(         n, m, X, m, Y, HE_nel, HE_row, lhe_row, lhe_ptr,      &
              HE_row_ptr, HE_val, lhe_val, HE_val_ptr, byrows )
 -->
- CUTEST_ceh( status, n, m, X,    Y, HE_nel, lhe_ptr, HE_row_ptr,              &
+ CUTEST_ceh( status, n, m, X,    Y, HE_nel, lhe_ptr, HE_row_ptr,           &
              HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val, byrows )
 .............................................................................
 
 .............................................................................
-         CSGREH(        n, m, X, grlagf, m, Y, J_ne, l_j,                  &
-                 J_val, J_var, J_fun, HE_nel, HE_row, lhe_row, lhe_ptr,    &
-                 HE_row_ptr, HE_val, lhe_val, HE_val_ptr, byrows )
+        CSGREH(        n, m, X, grlagf, m, Y, J_ne, l_j,                  &
+                J_val, J_var, J_fun, HE_nel, HE_row, lhe_row, lhe_ptr,    &
+                HE_row_ptr, HE_val, lhe_val, HE_val_ptr, byrows )
 -->
  CUTEST_csgreh( status, n, m, X, Y, grlagf,    J_ne, l_j,                  &
                 J_val, J_var, J_fun, HE_nel, lhe_ptr, HE_row_ptr,          &
@@ -319,13 +319,13 @@ or equivalently
 .............................................................................
 
 .............................................................................
-         CPROD(         n, m, goth, X, m, Y, VECTOR, RESULT )
+        CPROD(          n, m, goth, X, m, Y, VECTOR, RESULT )
 -->
  CUTEST_chprod( status, n, m, goth, X,    Y, VECTOR, RESULT )
 .............................................................................
 
 .............................................................................
-         CPROD1(         n, m, goth, X, m, Y, VECTOR, RESULT )
+        CPROD1(          n, m, goth, X, m, Y, VECTOR, RESULT )
 -->
  CUTEST_chcprod( status, n, m, goth, X,    Y, VECTOR, RESULT )
 .............................................................................
@@ -333,7 +333,8 @@ or equivalently
 .............................................................................
         CJPROD(         n, m, gotj, jtrans, X, VECTOR, n, RESULT, m )
 -->
- CUTEST_cjprod( status, n, m, gotj, jtrans, X, VECTOR, n, RESULT, m )
+ CUTEST_cjprod( status, n, m, gotj, jtrans, X, VECTOR, lvector,           &
+                RESULT, lresult )
 .............................................................................
 
 .............................................................................
@@ -346,8 +347,8 @@ new tools:
 
  CUTEST_cterminate( status )
 
- CUTEST_cstats( status, nonlinear_variables_objective,              &
-                nonlinear_variables_constraints,                    &   
+ CUTEST_cstats( status, nonlinear_variables_objective,                    &
+                nonlinear_variables_constraints,                          &   
                 equality_constraints, linear_constraints )
 
 Package support removed

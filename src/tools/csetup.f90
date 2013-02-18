@@ -42,6 +42,8 @@
 
 !  set the data
 
+write(6,*) SIZE( X ), n
+write(6,*) SIZE( Y ), m
       CALL CUTEST_csetup_threadsafe( CUTEST_data_global,                       &
                                      CUTEST_work_global( 1 ),                  &
                                      status, input, out, io_buffer,            &
@@ -55,8 +57,9 @@
   910 CONTINUE
       status = 1
       IF ( out > 0 ) WRITE( out,                                               &
-        "( /, ' ** SUBROUTINE CSETUP: allocation error for ', A, ' status = ', &
-       &  I0, /, ' Execution terminating ' )" ) TRIM( bad_alloc ), alloc_status
+        "( /, ' ** SUBROUTINE CUTEST_csetup: allocation error for ', A,        &
+       & ' status = ', I0, /, ' Execution terminating ' )" )                   &
+           TRIM( bad_alloc ), alloc_status
       RETURN
 
 !  End of subroutine CUTEST_csetup
@@ -143,8 +146,9 @@
   910 CONTINUE
       status = 1
       IF ( out > 0 ) WRITE( out,                                               &
-        "( /, ' ** SUBROUTINE CSETUP: allocation error for ', A, ' status = ', &
-       &  I0, /, ' Execution terminating ' )" ) TRIM( bad_alloc ), alloc_status
+        "( /, ' ** SUBROUTINE CUTEST_csetup: allocation error for ', A,        &
+       & ' status = ', I0, /, ' Execution terminating ' )" )                   &
+           TRIM( bad_alloc ), alloc_status
       RETURN
 
 !  thread error
@@ -152,8 +156,8 @@
   940 CONTINUE
       status = 4
       IF ( out > 0 ) WRITE( out,                                               &
-        "( /, ' ** SUBROUTINE CSETUP: argument threads must be positive,',     &
-       &  ' execution terminating ' )" )
+        "( /, ' ** SUBROUTINE CUTEST_csetup: argument threads must be',        &
+       &  ' positive, execution terminating ' )" )
       RETURN
 
 !  End of subroutine CUTEST_csetup_threaded
@@ -210,6 +214,8 @@
       work%io_buffer = io_buffer
       debug = .FALSE.
       debug = debug .AND. out > 0
+write(6,*) SIZE( X ), n
+write(6,*) SIZE( Y ), m
 
 !  input the problem dimensions
 
@@ -220,14 +226,14 @@
       IF ( n <= 0 ) THEN
         CLOSE( input )
         IF ( out > 0 ) WRITE( out,                                             &
-          "( /, ' ** SUBROUTINE CSETUP: the problem uses no variables.',       &
-          &     ' Execution terminating ' )" )
+          "( /, ' ** SUBROUTINE CUTEST_csetup: the problem uses no',           &
+          &     ' variables. Execution terminating ' )" )
         status = 2 ; RETURN
       END IF
       IF ( data%ng <= 0 ) THEN
         CLOSE( input )
         IF ( out > 0 ) WRITE( out,                                             &
-          "( /, ' ** SUBROUTINE CSETUP: the problem is vacuous.',              &
+          "( /, ' ** SUBROUTINE CUTEST_csetup: the problem is vacuous.',       &
           &     ' Execution terminating ' )" )
         status = 2 ; RETURN
       END IF
@@ -657,9 +663,9 @@
         END IF
       END DO
       IF ( m == 0 .AND. out > 0 ) WRITE( out,                                  &
-        "( /, ' ** SUBROUTINE CSETUP: Warning. The problem has',            &
-       &      ' no general constraints. ', /,                                  &
-       &      ' ** Other tools may be preferable ** ' )" )
+        "( /, ' ** SUBROUTINE CUTEST_csetup: Warning. The problem has no',     &
+       &      ' general constraints. ', /,  ' ** Other tools may be',          &
+      &       ' preferable ** ' )" )
       IF ( SIZE( Y ) < m ) THEN
         CLOSE( input )
         IF ( out > 0 ) WRITE( out, 2000 ) 'Y', m
@@ -1369,8 +1375,9 @@
   910 CONTINUE
       status = 1
       IF ( out > 0 ) WRITE( out,                                               &
-        "( /, ' ** SUBROUTINE CSETUP: allocation error for ', A, ' status = ', &
-       &  I0, /, ' Execution terminating ' )" ) bad_alloc, alloc_status
+        "( /, ' ** SUBROUTINE CUTEST_csetup: allocation error for ', A,        &
+       &   ' status = ', I0, /, ' Execution terminating ' )" )                 &
+         bad_alloc, alloc_status
       RETURN
 
 !  non-executable statements
@@ -1386,8 +1393,9 @@
  1130 FORMAT( 1X, A6, /, ( 1X, 72L1 ) )
  1140 FORMAT( 1X, A6, /, ( 1X, 8A10 ) )
  1180 FORMAT( 1X, A6, /, 1P, 2D16.6 )
- 2000 FORMAT( /, ' ** SUBROUTINE CSETUP: array length ', A, ' too small.', /, &
-              ' -- Increase the dimension to at least ', I0, ' and restart.' )
+ 2000 FORMAT( /, ' ** SUBROUTINE CUTEST_csetup: array length ', A,             &
+                 ' too small.', /, ' -- Increase the dimension to at least ',  &
+                 I0, ' and restart.' )
 
 !  End of subroutine CUTEST_csetup_threadsafe
 

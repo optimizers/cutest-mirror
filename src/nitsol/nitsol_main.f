@@ -323,7 +323,7 @@ C  function and Jacobian-vector product  evaluation subroutines
         CALL CUTEST_cjprod( status, N, N, JKNOWN, .FALSE., 
      *                      X, V, n, Z, n )
         IF ( status .NE. 0 ) THEN
-          WRITE( out, "( ' CUTEst error, status = ', i0, ', stopping')") 
+          WRITE( out, "( ' CUTEst error, status = ', i0, ', stopping')")
      *       status
           STOP
         END IF

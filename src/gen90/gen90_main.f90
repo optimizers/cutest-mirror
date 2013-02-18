@@ -153,9 +153,6 @@ PROGRAM GEN90_main
    WRITE( out, "( ' CUTEst error, status = ', i0, ', stopping' )" )  status
    STOP
 
- 990 CONTINUE
-   WRITE( out, "( ' Allocation error, status = ', I0 )" ) status
-   STOP
 !
 !  Non-executable statements.
 !
