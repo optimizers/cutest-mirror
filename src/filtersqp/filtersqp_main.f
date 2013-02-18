@@ -100,7 +100,7 @@ c     ... read spec.par parameter file (or use defaults)
      .             idummy,nout,rho,idummy)
 
 c     ... initialization
-      call initialize_NLP(n,m,nout,blo,bup,x,lam,equatn,
+      call initialize_NLP(n,m,blo,bup,x,lam,equatn,
      .                    linear,cstype,xnames,gnames)
       
 c  compute the numbers of nonzeros in the constraint Jacobian and Hessian
@@ -183,8 +183,6 @@ c     ... write solution onto a files
      .     '-----------------------------'
       close(1)
 
- 7000 format(2A)
- 7001 format(4(I4,3X,A10,'|')) 
  7002 format(A,5G15.7)
  7003 format(A,5G15.7,A)
  9001 format(A,7(1X,I6))
@@ -217,7 +215,7 @@ c     * gdotx           - forms v = G.x for Hessian G called by bqpd
 c     
 c     *******************************************************************
 
-      subroutine initialize_NLP (n, m, nout, blo, bup, x, lam, equatn, 
+      subroutine initialize_NLP (n, m, blo, bup, x, lam, equatn, 
      .                           linear, cstype, xnames, gnames )
 
       implicit none
@@ -225,7 +223,7 @@ c     *******************************************************************
       integer, parameter :: io_buffer = 11
 
 c     ... decalartion of passed parameters -- scalars
-      integer n, m, nout
+      integer n, m
 
 c     ... decalartion of passed parameters -- arrays
       double precision    blo(n+m), bup(n+m), x(n), lam(n+m)
@@ -303,7 +301,7 @@ c     ... declaration of passed parameters -- arrays
 
 c     ... declaration of internal variables
       logical jtrans, grad
-      integer lc, lcjac1, lcjac2, status
+      integer lcjac1, lcjac2, status
 
 c     ... IEEE floatig point exception handling
 c     external  ieee_handler, abort
@@ -313,7 +311,6 @@ c     external  ieee_flags
 
 c     =======================  procedure body  =========================
 
-      lc     = m
       lcjac1 = n
       lcjac2 = m
       jtrans = .true.
@@ -440,7 +437,6 @@ c     ... declaration of passed parameters -- arrays
 c     ... declaration of internal variables
       logical grlagf
       integer i, ii, j, jj, pjp, status
-      double precision    dummy
 
 c     ... IEEE floatig point exception handling
 c     external  ieee_handler, abort
@@ -547,7 +543,7 @@ cGRD      print *,'la  ',(la(i),i=1,la(0)-1)
 cGRD      print *,'a   ',(a(i),i=1,la(0)-1)
 cGRD      print *,'jp  ',(la(i),i=la(0),la(0)+m+1)
 
- 999  continue
+c999  continue
  1001 format(G12.4,3I5)
       
       return
@@ -673,7 +669,7 @@ c     ... set length of Hessian storage used here
       l_hess  = hess_length 
       li_hess = 1 + 2*hess_length
 
- 999  continue
+c999  continue
       return
 
   910 continue

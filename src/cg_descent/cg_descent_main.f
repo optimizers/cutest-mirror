@@ -13,17 +13,17 @@ C  to accomodate version 1.4 of CG_DESCENT.
 C  Dominique Orban, July 2007
 
       IMPLICIT NONE
-      INTEGER :: lp, mp, i, method, iter, nf, ng, nxpand, nsecnt
-      INTEGER :: n, m, msave, status, stat, icall, IPRINT( 2 )
+      INTEGER :: i, iter, n, nf, ng, nxpand, nsecnt
+      INTEGER :: status, stat
       INTEGER :: io_buffer = 11
       INTEGER, PARAMETER :: out  = 6
       INTEGER, PARAMETER :: input = 55, inspec = 56, outcp = 57
-      DOUBLE PRECISION :: f, tol, gnorm, stpmin, stpmax, tlev
+      DOUBLE PRECISION :: f, tol, gnorm
       LOGICAL :: bounds
-      DOUBLE PRECISION :: delta, sigma, epsilon, theta, gamma,stopfa
+      DOUBLE PRECISION :: delta, sigma, epsilon, gamma,stopfa
       DOUBLE PRECISION :: rho, eta, psi0, psi1, psi2, quadcu, rstrtf
       DOUBLE PRECISION :: maxitf, feps, awlffct, qdecay
-      LOGICAL :: quadst, prntlv, prntfi, strule, erule, awolfe
+      LOGICAL :: quadst, prntlv, prntfi, strule, awolfe
       LOGICAL :: step, prtrul, debug
       DOUBLE PRECISION, PARAMETER :: biginf = 9.0D+19, zero = 0.0D0
       DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: X, G, D
@@ -32,7 +32,6 @@ C  Dominique Orban, July 2007
       CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : )  :: XNAMES
       CHARACTER ( LEN = 17 ), PARAMETER :: cgparm = 'cg_descent_f.parm'
       CHARACTER ( LEN = 15 ) :: spcdat
-      CHARACTER ( LEN = 80 ) :: rest
       DOUBLE PRECISION :: CPU( 2 ), CALLS( 4 )
       EXTERNAL :: CG_DESCENT_EVALF, CG_DESCENT_EVALG
 
@@ -100,8 +99,6 @@ C  Set up algorithmic input data.
      *    bounds = .TRUE.
    10 CONTINUE
       IF ( bounds ) WRITE( out, 2030 )
-      lp = out
-      mp = out
 
 C  Set up initial step length if requested
 
@@ -163,58 +160,9 @@ C  Non-executable statements.
  2010 FORMAT( ' Final objective function value  = ', 1P, D12.4, 
      *        /, ' Final norm of gradient          = ', 1P, D12.4,
      *        //, '                 X         G ' )
-C2020 FORMAT(  1X, A10, 1P, 2D12.4 )
  2030 FORMAT(  /, ' ** Warning from CGDMA. The problem as stated',
      *            ' includes simple bounds. ', /,
      *            '    These bounds will be ignored. ' )
-C 2100 FORMAT( 1P, D10.3, 4X, 
-C     * 'delta        Wolfe line search parameter',
-C     * /, 1P, D10.3, 4X, 
-C     * 'sigma        Wolfe line search parameter',
-C     * /, 1P, D10.3, 4X, 
-C     * 'epsilon      approximate Wolfe threshold factor',
-C     * /, 1P, D10.3, 4X, 
-C     * 'theta        update',
-C     * /, 1P, D10.3, 4X, 
-C     * 'gamma        required decay factor in interval',
-C     * /, 1P, D10.3, 4X, 
-C     * 'rho          growth factor in bracket',
-C     * /, 1P, D10.3, 4X, 
-C     * 'eta          lower bound for cg''s beta_k',
-C     * /, 1P, D10.3, 4X, 
-C     * 'psi0         factor used in very initial starting guess',
-C     * /, 1P, D10.3, 4X, 
-C     * 'psi1         factor previous step multiplied by in QuadStep',
-C     * /, 1P, D10.3, 4X, 
-C     * 'psi2         factor previous step is multipled by for startup')
-C 2110 FORMAT( 1P, D10.3, 4X, 
-C     * 'QuadCutOff   lower bound on rel change in f before QuadStep',
-C     * /, 1P, D10.3, 4X, 
-C     * 'restart_fac  restart cg in restart_fac*n iterations',
-C     * /, 1P, D10.3, 4X, 
-C     * 'maxit_fac    terminate in maxit_fac*n iterations',
-C     * /, 1P, D10.3, 4X, 
-C     * 'feps         stop when value change <= feps*|f|',
-C     * /, I10, 4X, 
-C     * 'nexpand      number of grow/shrink allowed in bracket',
-C     * /, I10, 4X, 
-C     * 'nsecant      number of secant steps allowed in line search',
-C     * /, L10, 4X, 
-C     * 'QuadStep     use initial quad interpolation in line search',
-C     * /, L10, 4X, 
-C     * 'PrintLevel   F (no print) T (intermediate results)')
-C 2120 FORMAT(  L10, 4X, 
-C     * 'PrintFinal   F (no print) T (print error messages, ',
-C     * 'final error)',
-C     * /, L10, 4X, 
-C     * 'StopRule     F (|grad|_infty <= tol) T (... <= tol*(1+|f|))',
-C     * /, L10, 4X, 
-C     * 'ERule        F (eps_k = eps|f|) T (eps_k = eps)',
-C     * /, L10, 4X, 
-C     * 'AWolfe       F (Wolfe) T (+approx Wolfe) 2 (epsilon pert)',
-C     * /, L10, 4X, 
-C     * 'Step         F (no initial line search guess) T (guess in ',
-C     * 'gnorm')
       END
 
       SUBROUTINE CG_DESCENT_evalf( f, X, n )

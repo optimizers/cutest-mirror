@@ -6,19 +6,19 @@ C
 C  Nick Gould and Ph. Toint, for CGT Productions.
 C  Revised for CUTEst, January 2013
 C
-      INTEGER :: N, M, status, LP, MP, LW, I MAXIT, iflag
+      INTEGER :: N, M, status, LP, MP, LW, I, MAXIT, iflag
       INTEGER :: icall, IPRINT( 2 )
       INTEGER, PARAMETER :: input = 55, out = 6 , inspec = 46
       INTEGER, PARAMETER :: io_buffer = 11
-      DOUBLE PRECISION F, EPS, XTOL, GTOL  , GNORM , BIGINF, DMACHR,
-     *                 ZERO  , STPMIN, STPMAX
-      LOGICAL          DIAGCO, BOUNDS
-      PARAMETER      ( BIGINF = 9.0D+19, ZERO = 0.0D0 )
+      DOUBLE PRECISION F, EPS, XTOL, GTOL, GNORM, BIGINF
+      DOUBLE PRECISION one, ZERO, STPMIN, STPMAX
+      LOGICAL DIAGCO, BOUNDS
+      PARAMETER ( BIGINF = 9.0D+19, ZERO = 0.0D0, one = 1.0D0 )
       CHARACTER ( LEN = 10 ) :: PNAME, SPCDAT
       DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: X, G, DIAG, W
       CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : )  :: XNAMES
-      EXTERNAL         LB2
-      COMMON         / LB3 / MP, LP, GTOL, STPMIN, STPMAX
+      EXTERNAL LB2
+      COMMON / LB3 / MP, LP, GTOL, STPMIN, STPMAX
       DOUBLE PRECISION :: CPU( 2 ), CALLS( 4 )
 C     
 C  Open the Spec file for the method.

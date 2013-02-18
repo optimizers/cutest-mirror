@@ -43,7 +43,7 @@ while [ $CORRECT_PLATFORM == "false" ]; do
    echo '   (1) Compaq (DEC) alpha'
    echo '   (2) Cray'
    echo '   (3) HP workstation'
-   echo '   (4) IBM RS/6000'
+   echo '   (4) IBM PowerPC'
    echo '   (5) PC'
    echo '   (6) PC with generic 64-bit processor'
    echo '   (7) PC with 64-bit Itanium processor'
@@ -134,8 +134,8 @@ while [ $CORRECT_PLATFORM == "false" ]; do
 ;;
        "4")
             CORRECT_PLATFORM="true"
-            export MCH="rs6"
-            export MACHINE="IBM RS6000"
+            export MCH="ppc"
+            export MACHINE="IBM PowerPC"
 
             CORRECT_OS="false"
             while [ $CORRECT_OS == "false" ]; do
@@ -422,8 +422,8 @@ while [ $CORRECT_SUBSET == "false" ]; do
                 FORTRAN="$MATLABGFORTRAN"
                 CC="$MATLABGCC"
                 NEWCC="true"
-                echo " Warning: $MATLABGCC and $MATLABGFORTRAN override more modern"
-                echo ' GNU compilers to allow for Matlab and CUTEst interaction'
+                warning "$MATLABGCC and $MATLABGFORTRAN override more modern\n
+ GNU compilers to allow for Matlab and CUTEst interaction"
               fi
             else
               warning ' Matlab only supports gfortran/gcc
@@ -459,8 +459,8 @@ while [ $CORRECT_SUBSET == "false" ]; do
                 FORTRAN="$MATLABGFORTRAN"
                 CC="$MATLABGCC"
                 NEWCC="true"
-                echo " Warning: $MATLABGCC and $MATLABGFORTRAN override more modern"
-                echo ' GNU compilers to allow for Matlab and CUTEst interaction'
+                warning "$MATLABGCC and $MATLABGFORTRAN override more modern\n
+ GNU compilers to allow for Matlab and CUTEst interaction"
               fi
             else
               warning ' Matlab only supports gfortran/gcc

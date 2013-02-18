@@ -15,7 +15,7 @@
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
       INTEGER :: m, maxfun, lw, liw, status, iprint, i, mgeq, nfix, ierr
       INTEGER, DIMENSION(:), ALLOCATABLE :: IW
-      REAL( KIND = wp ) :: rhobeg, rhoend, f
+      REAL( KIND = wp ) :: rhobeg, rhoend
       REAL( KIND = wp ), PARAMETER :: infty = 1.0D+19
       REAL( KIND = wp ), DIMENSION(:), ALLOCATABLE :: W
       REAL( KIND = wp ), DIMENSION( 2 ) :: CPU
@@ -180,10 +180,6 @@
           '     i name          value    lower bound upper bound',             &
           ' linear? ', &
           /, ( I6, 1X, A10, 1P, 3D12.4, 5X, L1 ) )
-3000 FORMAT( /,'  ** Program CSETUP: array length ', A6, ' too small.',        &
-          /,'  -- Miminimization abandoned.', &
-          /,'  -- Increase the parameter ', A6, ' by at least ', I0,           &
-            ' and restart.'  )
 3020 FORMAT( /,'  ** Warning from COBYLA_main. **',                            &
           /,'     In the problem as stated , ', I0,                            &
             ' variables are fixed: they are changed to free.' )
@@ -209,11 +205,7 @@
       REAL( KIND = wp ), INTENT( OUT ) :: C( m )
       REAL( KIND = wp ), PARAMETER :: biginf = 9.0D+19
 
-!     DOUBLE PRECISION   BL( n ), BU( n )
-!     DOUBLE PRECISION   CL( MCON ), CU( MCON )
-!     COMMON /FCOBFN/    BL, BU, CL, CU, MGEQ, MCON
-
-      INTEGER ::  mgeq, mcon, i, mt, status
+      INTEGER ::  mgeq, i, mt, status
 
 !  Evaluate the objective function and constraints.
 

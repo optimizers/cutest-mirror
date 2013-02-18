@@ -400,10 +400,10 @@ C  Try to handle abnormal SNOPT inform codes gracefully
 
 C  Non-executable statements
 
- 2000 FORMAT( /, ' ** SUBROUTINE SNOPT_main: array length ', A, 
-     *        ' too small.', /, ' -- Minimization abandoned.',
-     *        /, ' -- Increase the parameter ', A, ' by at least ', I0,
-     *           ' and restart.'  )
+C2000 FORMAT( /, ' ** SUBROUTINE SNOPT_main: array length ', A, 
+C    *        ' too small.', /, ' -- Minimization abandoned.',
+C    *        /, ' -- Increase the parameter ', A, ' by at least ', I0,
+C    *           ' and restart.'  )
  2010 FORMAT( /, ' ** PROGRAM SNOPT_main: No Specs file found.' )
  2020 FORMAT( /, 24('*'), ' CUTEst statistics ', 24('*') //
      *    ,' Code used               :  SNOPT',    /
@@ -473,7 +473,7 @@ C*********************************************************************
 
 C  Local variables
 
-      INTEGER :: i, j, k, indv, indf, jstrt, ndev, nnzj, status
+      INTEGER :: i, j, k, indv, indf, jstrt, nnzj, status
       LOGICAL :: grad
 
       IF ( mode .EQ. 0 ) THEN
@@ -484,8 +484,7 @@ C  Local variables
 
 C  Jacobian is stored in dense format
 
-      nden = IU( 1 )
-      IF ( nden .EQ. 1 ) THEN
+      IF ( IU( 1 ) .EQ. 1 ) THEN
         CALL CUTEST_ccfg( status, n, m, X, C, .FALSE., m, n, JAC, grad )
         IF ( status .NE. 0 ) GO TO 910
 

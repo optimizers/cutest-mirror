@@ -7,8 +7,8 @@ C  STENMIN test driver for problems derived from SIF files.
 C  Ph. Toint, January 1996, for CGT Productions.
 C  Revised for CUTEst, Nick Gould, January 2013
 
-      INTEGER :: n, nz, lirn, licn, ilim, method, grdflg, hsnflg, ndigit 
-      INTEGER :: msg, lwrk, liwrk, termcd, inform, i, status
+      INTEGER :: n, nz, lirn, licn, ilim, method, grdflg, hsnflg, ndigit
+      INTEGER :: nnzh, msg, lwrk, liwrk, termcd, inform, i, status
       INTEGER, PARAMETER :: input = 55, out = 6, inspec = 46
       INTEGER, PARAMETER :: io_buffer = 11
       DOUBLE PRECISION :: fscale, gradtl, steptl, fpls, stepmx, gnorm

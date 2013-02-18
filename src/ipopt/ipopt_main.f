@@ -145,7 +145,6 @@ C     Display CUTEst statistics
      *     ,' Solve time              =      ', 0P, F10.2, ' seconds' //
      *     ,/,66('*') / )
 
- 9999 CONTINUE
       END
 
 C Copyright (C) 2002, Carnegie Mellon University and others.
@@ -232,12 +231,6 @@ C
       integer IDAT(*)
       integer IERR
 C
-C-------------------------------------------------------------------------------
-C                            Local varibales
-C-------------------------------------------------------------------------------
-C
-      double precision dummy
-C
 C*******************************************************************************
 C
 C                           Executable Statements
@@ -250,7 +243,6 @@ C     Call COFG to obtain value of objective function
 C
       call CUTEST_cofg( ierr,  N, X, F, DAT, .false.)
 
- 9999 continue
       return
       end
 C Copyright (C) 2002, Carnegie Mellon University and others.
@@ -355,7 +347,6 @@ C     Call COFG to obtain gradient of objective function
 C
       call CUTEST_cofg( ierr, N, X, f, GRAD, .true.)
 
- 9999 continue
       return
       end
 C Copyright (C) 2002, Carnegie Mellon University and others.
@@ -445,12 +436,6 @@ C
       integer IDAT(*)
       integer IERR
 C
-C-------------------------------------------------------------------------------
-C                            Local varibales
-C-------------------------------------------------------------------------------
-C
-      double precision dummy
-C
 C*******************************************************************************
 C
 C                           Executable Statements
@@ -463,7 +448,6 @@ C     Call CCFG to obtain constraint values, but without slacks
 C
       call CUTEST_ccfg( ierr, N, M, X, G, .FALSE., 1, 1, DAT, .FALSE.)
 
- 9999 continue
       return
       end
 C Copyright (C) 2002, Carnegie Mellon University and others.
@@ -568,7 +552,6 @@ C                            Local varibales
 C-------------------------------------------------------------------------------
 C
       integer i, nele_jac
-      double precision X0(N)
 C
 C*******************************************************************************
 C
@@ -594,7 +577,6 @@ C
      1        NZ, A, IDAT(1), IDAT(1+NZ), .TRUE.)
       endif
 
- 9999 continue
       return
       end
 C Copyright (C) 2002, Carnegie Mellon University and others.
@@ -760,6 +742,5 @@ C           enddo
          endif
       endif
 
- 9999 continue
       return
       end
