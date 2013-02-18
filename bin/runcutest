@@ -275,7 +275,7 @@ Initialize_Settings
 Parse_Arguments "$@"
 
 # Check that environment is correctly defined
-${CUTEST}/bin/envcheck
+${CUTEST}/bin/cutest_envcheck
 [[ $? != 0 ]] && exit $?
 
 if [[ -z "$ARCH" ]]; then
