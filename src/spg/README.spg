@@ -10,7 +10,7 @@
 WHAT IS SPG?
 -----------
 
-SPG is a sprectral n augmented Lagrangian code for large-scale constrained 
+SPG is a sprectral projected gradient code for large-scale bound-constrained
 optimization that does not necessarily use matrix factorization.
 
 HOW DO I GET SPG?
