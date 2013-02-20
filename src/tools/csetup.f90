@@ -42,8 +42,6 @@
 
 !  set the data
 
-write(6,*) SIZE( X ), n
-write(6,*) SIZE( Y ), m
       CALL CUTEST_csetup_threadsafe( CUTEST_data_global,                       &
                                      CUTEST_work_global( 1 ),                  &
                                      status, input, out, io_buffer,            &
@@ -214,8 +212,6 @@ write(6,*) SIZE( Y ), m
       work%io_buffer = io_buffer
       debug = .FALSE.
       debug = debug .AND. out > 0
-write(6,*) SIZE( X ), n
-write(6,*) SIZE( Y ), m
 
 !  input the problem dimensions
 

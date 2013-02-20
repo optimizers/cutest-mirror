@@ -108,6 +108,10 @@ gradient of the i-th constraint function,
 the actual declared size of the leading dimension of J_val (with lj1
 no smaller than n if jtrans is .TRUE. or m if jtrans is .FALSE.),
 .TP
+.B lj2 \fP[in] - integer
+the actual declared size of the trailing dimension of J_val (with lj2
+no smaller than m if jtrans is .TRUE. or n if jtrans is .FALSE.),
+.TP
 .B J_val \fP[out] - real/double precision
 a two-dimensional array of dimension (lj1, lj2) which gives the
 value of the Jacobian matrix of the constraint functions, or its
