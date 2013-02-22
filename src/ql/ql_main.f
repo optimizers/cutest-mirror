@@ -79,7 +79,7 @@ C  Determine the name of the problem
 
       CALL CUTEST_probname( status, pname )
       IF ( status /= 0 ) GO TO 910
-      WRITE( out, "( /, ' Problem: ', A10 )" ) pname 
+C     WRITE( out, "( /, ' Problem: ', A10 )" ) pname 
 
 C  Set up the initial estimate of the solution and
 C  right-hand-side of the Kuhn-Tucker system.
@@ -114,7 +114,7 @@ C  Allocate more arrays
 
       la1 = MAX( m_total, 1 )
       lu = m_total + n + n
-      lwork = 3 * n * n / 2 + 10 * n + 2 * m_total + 1
+      lwork = 3 * n * n / 2 + 10 * n + 2 * m_total + 14
       liwork = n
       ALLOCATE( A( la1, n ), B( m_total ), U( lu ),
      &          WORK( lwork ), IWORK( liwork ), STAT = alloc_stat )
