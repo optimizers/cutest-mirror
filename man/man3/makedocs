@@ -4,7 +4,8 @@
 #               cutest_cdimen cutest_cdimse cutest_cdimsh cutest_cdimsj \
 #               cutest_ceh cutest_cfn cutest_cgr cutest_cgrdh cutest_chcprod \
 #               cutest_chprod cutest_cidh cutest_cish cutest_cjprod \
-#               cutest_cnames cutest_cofg cutest_connames cutest_creport \
+#               cutest_cnames cutest_cofg cutest_cofsg \
+#               cutest_connames cutest_creport \
 #               cutest_csetup cutest_cstats cutest_csetup cutest_csgr \
 #               cutest_csgreh cutest_csgrsh cutest_csh cutest_cshc \
 #               cutest_cvartype cutest_probname cutest_ubandh cutest_udh \
@@ -19,7 +20,8 @@
 #               cutest_cgrdh_threaded cutest_chcprod_threaded \
 #               cutest_chprod_threaded cutest_cidh_threaded \
 #               cutest_cish_threaded cutest_cjprod_threaded \
-#               cutest_cofg_threaded cutest_creport_threaded \
+#               cutest_cofg_threaded \
+#               cutest_cofsg_threaded cutest_creport_threaded \
 #               cutest_csetup_threaded cutest_csgr_threaded \
 #               cutest_csgreh_threaded cutest_csgrsh_threaded \
 #               cutest_csh_threaded cutest_cshc_threaded \
@@ -47,7 +49,6 @@
 #foreach pack ( cutest_cdimsj )
 #foreach pack ( cutest_ceh )
 #foreach pack ( cutest_cfn )
-foreach pack ( cutest_cgr cutest_cgr_threaded )
 #foreach pack ( cutest_cgr )
 #foreach pack ( cutest_cgrdh )
 #foreach pack ( cutest_chcprod )
@@ -57,6 +58,8 @@ foreach pack ( cutest_cgr cutest_cgr_threaded )
 #foreach pack ( cutest_cjprod )
 #foreach pack ( cutest_cnames )
 #foreach pack ( cutest_cofg )
+foreach pack ( cutest cutest_cofsg cutest_cofsg_threaded )
+#foreach pack ( cutest_cofsg )
 #foreach pack ( cutest_connames )
 #foreach pack ( cutest_creport )
 #foreach pack ( cutest_csetup )
@@ -101,6 +104,7 @@ foreach pack ( cutest_cgr cutest_cgr_threaded )
 #foreach pack ( cutest_cish_threaded )
 #foreach pack ( cutest_cjprod_threaded )
 #foreach pack ( cutest_cofg_threaded )
+#foreach pack ( cutest_cofsg_threaded )
 #foreach pack ( cutest_creport_threaded )
 #foreach pack ( cutest_csetup_threaded )
 #foreach pack ( cutest_csgr_threaded )

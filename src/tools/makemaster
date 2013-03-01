@@ -71,10 +71,10 @@ UCUTESTS = $(LCS)(usetup.o) $(LCS)(udimen.o) $(LCS)(udimse.o) $(LCS)(udimsh.o) \
 
 CCUTESTS = $(LCS)(csetup.o) $(LCS)(cdimen.o) $(LCS)(cdimse.o) $(LCS)(cdimsh.o) \
            $(LCS)(cdimsj.o) $(LCS)(cnames.o) $(LCS)(cvartype.o) $(LCS)(cfn.o) \
-           $(LCS)(cgr.o) $(LCS)(cofg.o) $(LCS)(ccfg.o) $(LCS)(ccfsg.o) \
-           $(LCS)(ccifg.o) $(LCS)(ccifsg.o) $(LCS)(cdh.o) $(LCS)(ceh.o) \
-           $(LCS)(cgrdh.o) $(LCS)(cidh.o) $(LCS)(csh.o) $(LCS)(cshc.o) \
-           $(LCS)(cish.o) $(LCS)(cjprod.o) $(LCS)(cstats.o) \
+           $(LCS)(cgr.o) $(LCS)(cofg.o) $(LCS)(cofsg.o) $(LCS)(ccfg.o) \
+           $(LCS)(ccfsg.o) $(LCS)(ccifg.o) $(LCS)(ccifsg.o) $(LCS)(cdh.o) \
+           $(LCS)(ceh.o) $(LCS)(cgrdh.o) $(LCS)(cidh.o) $(LCS)(csh.o) \
+           $(LCS)(cshc.o) $(LCS)(cish.o) $(LCS)(cjprod.o) $(LCS)(cstats.o) \
            $(LCS)(csgr.o) $(LCS)(csgreh.o) $(LCS)(csgrsh.o) $(LCS)(chprod.o) \
            $(LCS)(chcprod.o) $(LCS)(creport.o) $(LCS)(connames.o) \
            $(LCS)(cterminate.o) 
@@ -91,10 +91,10 @@ UCUTESTD = $(LCD)(usetup.o) $(LCD)(udimen.o) $(LCD)(udimse.o) $(LCD)(udimsh.o) \
           
 CCUTESTD = $(LCD)(csetup.o) $(LCD)(cdimen.o) $(LCD)(cdimse.o) $(LCD)(cdimsh.o) \
            $(LCD)(cdimsj.o) $(LCD)(cnames.o) $(LCD)(cvartype.o) $(LCD)(cfn.o) \
-           $(LCD)(cgr.o) $(LCD)(cofg.o) $(LCD)(ccfg.o) $(LCD)(ccfsg.o) \
-           $(LCD)(ccifg.o) $(LCD)(ccifsg.o) $(LCD)(cdh.o) $(LCD)(ceh.o) \
-           $(LCD)(cgrdh.o) $(LCD)(cidh.o) $(LCD)(csh.o) $(LCD)(cshc.o) \
-           $(LCD)(cish.o) $(LCD)(cjprod.o) $(LCD)(cstats.o) \
+           $(LCD)(cgr.o) $(LCD)(cofg.o) $(LCD)(cofsg.o) $(LCD)(ccfg.o) \
+           $(LCD)(ccfsg.o) $(LCD)(ccifg.o) $(LCD)(ccifsg.o) $(LCD)(cdh.o) \
+           $(LCD)(ceh.o) $(LCD)(cgrdh.o) $(LCD)(cidh.o) $(LCD)(csh.o) \
+           $(LCD)(cshc.o) $(LCD)(cish.o) $(LCD)(cjprod.o) $(LCD)(cstats.o) \
            $(LCD)(csgr.o) $(LCD)(csgreh.o) $(LCD)(csgrsh.o) $(LCD)(chprod.o) \
            $(LCD)(chcprod.o) $(LCD)(creport.o) $(LCD)(connames.o) \
            $(LCD)(cterminate.o) 
@@ -189,6 +189,7 @@ $(LC)(cutest.o): ../tools/cutest.f90
 	$(RMARFILE) cfn.o
 	$(RMARFILE) cgr.o
 	$(RMARFILE) cofg.o
+	$(RMARFILE) cofsg.o
 	$(RMARFILE) ccfg.o
 	$(RMARFILE) ccfsg.o
 	$(RMARFILE) ccifg.o
@@ -375,6 +376,18 @@ $(LC)(cofg.o): ../tools/cofg.f90
                 || ( printf ' %-26s' "=> Disabling optimization " ; \
                    $(FORTRAN) -o cofg.o $(FFLAGSN) cofg.f90 )
 	cd $(OBJ); $(ARR) cofg.o; $(RM) cofg.f90 cofg.o
+#	$(MVMODS)
+	@printf '[ OK ]\n'
+
+cofsg.o: $(LC)(cofsg.o)
+
+$(LC)(cofsg.o): ../tools/cofsg.f90
+	@printf ' %-9s %-15s\t\t' "Compiling" "cofsg" 
+	$(SED) -f $(SEDS) ../tools/cofsg.f90 > $(OBJ)/cofsg.f90
+	cd $(OBJ); $(FORTRAN) -o cofsg.o $(FFLAGS) cofsg.f90 \
+                || ( printf ' %-26s' "=> Disabling optimization " ; \
+                   $(FORTRAN) -o cofsg.o $(FFLAGSN) cofsg.f90 )
+	cd $(OBJ); $(ARR) cofsg.o; $(RM) cofsg.f90 cofsg.o
 #	$(MVMODS)
 	@printf '[ OK ]\n'
 

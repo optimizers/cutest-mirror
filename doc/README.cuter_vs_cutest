@@ -309,8 +309,8 @@ or equivalently
 .............................................................................
 
 .............................................................................
-        CSGREH(        n, m, X, grlagf, m, Y, J_ne, l_j,                  &
-                J_val, J_var, J_fun, HE_nel, HE_row, lhe_row, lhe_ptr,    &
+        CSGREH(        n, m, X, grlagf, m, Y, J_ne, l_j,                   &
+                J_val, J_var, J_fun, HE_nel, HE_row, lhe_row, lhe_ptr,     &
                 HE_row_ptr, HE_val, lhe_val, HE_val_ptr, byrows )
 -->
  CUTEST_csgreh( status, n, m, X, Y, grlagf,    J_ne, l_j,                  &
@@ -345,11 +345,27 @@ or equivalently
 
 new tools:
 
+ CUTEST_cofsg( status, n, X, f, nnzg, lg, G_val, G_var, grad )
+
  CUTEST_cterminate( status )
 
  CUTEST_cstats( status, nonlinear_variables_objective,                    &
                 nonlinear_variables_constraints,                          &   
                 equality_constraints, linear_constraints )
+
+New Packages supported
+----------------------
+
+ALGENCAN
+BOBYQA
+Direct Search
+filterSD
+NEWUOA
+NLPQLP
+PENNON
+QL
+SPG
+SQIC
 
 Package support removed
 -----------------------
@@ -361,3 +377,5 @@ ve14 has been superceded by GALAHAD's qpb with its own CUTEet interface.
 ve09 is no longer available from HSL.
 hsl_ve12 has been superceded by GALAHAD's qpb with its own CUTEet interface.
 osl was withdran by IBM in 2004 and is no longer available.
+
+
