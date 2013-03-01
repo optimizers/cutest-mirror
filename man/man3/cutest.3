@@ -170,8 +170,10 @@ evaluate the objective function and constraint values.
 evaluate the gradients of the objective function and constraints.
 .TP
 .B cutest_cofg \fP(unthreaded) and \fBcutest_cofg_threaded \fP(threaded)
-evaluate both the values and gradients of the objective function and 
-constraints.
+evaluate both the value and gradient of the objective function.
+.TP
+.B cutest_cofsg \fP(unthreaded) and \fBcutest_cofsg_threaded \fP(threaded)
+evaluate both the value and sparse gradient of the objective function.
 .TP
 .B cutest_csgr \fP(unthreaded) and \fBcutest_csgr_threaded \fP(threaded)
 evaluate the sparse gradients of the objective function and constraints.
@@ -183,12 +185,10 @@ evaluate the values and gradients of the constraints.
 evaluate the values and sparse gradients of the constraints.
 .TP
 .B cutest_ccifg \fP(unthreaded) and \fBcutest_ccifg_threaded \fP(threaded)
-evaluate the value and gradient of the objective function or 
-an individual constraint.
+evaluate the value and gradient of an individual constraint.
 .TP
 .B cutest_ccifsg \fP(unthreaded) and \fBcutest_ccifsg_threaded \fP(threaded)
-evaluate the value and sparse gradient of the objective function or 
-an individual constraint.
+evaluate the value and sparse gradient of an individual constraint.
 .TP
 .B cutest_cdh \fP(unthreaded) and \fBcutest_cdh_threaded \fP(threaded)
 evaluate the Hessian of the Lagrangian function as a dense matrix.
@@ -196,7 +196,6 @@ evaluate the Hessian of the Lagrangian function as a dense matrix.
 .B cutest_cidh \fP(unthreaded) and \fBcutest_cidh_threaded \fP(threaded)
 evaluate the Hessian of the objective function or 
 an individual constraint as a dense matrix.
-Lagrangian function as a dense matrix.
 .TP
 .B cutest_cgrdh \fP(unthreaded) and \fBcutest_cgrdh_threaded \fP(threaded)
 evaluate the constraint Jacobian and Hessian of the Lagrangian function
@@ -315,6 +314,8 @@ cutest_cgr(3M),
 cutest_cgr_threaded(3M),
 cutest_cofg(3M),
 cutest_cofg_threaded(3M),
+cutest_cofsg(3M),
+cutest_cofsg_threaded(3M),
 cutest_csgr(3M),
 cutest_csgr_threaded(3M),
 cutest_ccfg(3M),

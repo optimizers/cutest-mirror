@@ -330,7 +330,7 @@
 
             IF ( ll <= n ) THEN
               nnzgci = nnzgci + 1
-              GCI_val ( nnzgci ) = gi * work%W_ws( ll )
+              GCI_val( nnzgci ) = gi * work%W_ws( ll )
               GCI_var( nnzgci ) = ll
             END IF
           END DO 

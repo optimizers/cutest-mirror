@@ -108,6 +108,7 @@ C  Set up tool names.
       TFN    = NULLSTR( 'CUTEST_cfn' )
       TGR    = NULLSTR( 'CUTEST_cgr' )
       TOFG   = NULLSTR( 'CUTEST_cofg' )
+      TOFSG  = NULLSTR( 'CUTEST_cofsg' )
       TSGR   = NULLSTR( 'CUTEST_csgr' )
       TCFG   = NULLSTR( 'CUTEST_ccfg' )
       TCFSG  = NULLSTR( 'CUTEST_ccfsg' )
@@ -519,6 +520,88 @@ C  Copy G, if it is required.
             PLHS( 2 ) = MXCREATEFULL( n, 1, 0 )
             pr = MXGETPR( PLHS( 2 ) )
             CALL MXCOPYREAL8TOPTR( G, pr, n )
+         END IF
+
+      ELSE IF ( EQUAL( TOOL, TOFSG ) ) THEN
+
+C  Check number of input and output arguments.
+
+         IF ( nrhs .NE. 2 ) THEN
+            msg = 'CUTEST_cofsg requires x as input.'
+            CALL MEXERRMSGTXT( msg )
+         END IF
+         IF ( nlhs .NE. 1 .AND. nlhs .NE. 2 ) THEN
+            msg = 'CUTEST_cofsg returns one or two output arguments.'
+            CALL MEXERRMSGTXT( msg )
+         END IF
+
+C  Copy second input argument into X.
+
+         iptr = PRHS( 2 )
+         CALL GETVEC( iptr, X, nvar, n )
+
+C  Decide if the gradient is required.
+
+         grad = .FALSE.
+         IF ( nlhs .EQ. 2 ) grad = .TRUE.
+
+C  Get the value of the objective function, and possibly its gradient.
+
+         CALL CUTEST_cofsg( status, nvar, X, f, nnzgci, NNZIMAX, SGCI, 
+     *                      INDVARI, grad )
+         IF ( status .NE. 0 ) GO TO 910
+
+C  Copy F.
+
+         PLHS( 1 ) = MXCREATEFULL( 1, 1, 0 )
+         pr = MXGETPR( PLHS( 1 ) )
+         CALL MXCOPYREAL8TOPTR( f, pr, 1 )
+
+C  Copy G, if it is required.
+
+         IF ( grad ) THEN
+
+C  Make sure NNZIMAX is big enough.
+
+            IF ( nnzgci .GT. NNZIMAX ) THEN
+               msg = 'Number of nonzeros in sparse gradient exceeds ' //
+     *               'declared size of sparse gradient in MEX-file.'
+               CALL MEXERRMSGTXT( msg )
+            END IF
+
+C  Substract one to indices because Matlab uses C array storage
+
+            DO 123 j = 1, nnzgci
+               INDVARI( j ) = INDVARI( j ) - 1
+  123       CONTINUE
+
+C  Set column indices for the vector, still using C arrays
+
+            ONES( 1 ) = 0
+            DO 124 j = 2, nvar
+               ONES( j ) = -1
+  124       CONTINUE
+            ONES( nvar + 1 ) = nnzgci
+
+C      Make room for the sparse vector SGCI
+
+            PLHS( 2 ) = MXCREATESPARSE( 1, nvar, nnzgci, 0 )
+            pr3 = PLHS( 2 )
+
+C      Copy the values of SGCI
+
+            pr2 = MXGETPR( pr3 )
+            CALL MXCOPYREAL8TOPTR( SGCI, pr2, nnzgci )
+
+C      Copy the row indices
+
+            ir = MXGETIR( pr3 )
+            CALL MXCOPYINTEGER4TOPTR( INDVARI, ir, nnzgci )
+
+C      Copy the column indices
+
+            jc = MXGETJC( pr3 )
+            CALL MXCOPYINTEGER4TOPTR( ONES, jc, nvar+1 )
          END IF
 
       ELSE IF ( EQUAL( TOOL, TCFG ) ) THEN
@@ -1621,3 +1704,6 @@ C  Copy CALLS
       msg = '** CUTEst error, status = ' // msg_status // ', aborting'
       CALL MEXERRMSGTXT( msg )
       END
+
+
+

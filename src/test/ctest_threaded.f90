@@ -34,7 +34,7 @@
 !--------------------------------
 
       INTEGER :: n, m, H_ne, HE_nel, HE_val_ne, HE_row_ne, J_ne, Ji_ne, status
-      INTEGER :: l_h2_1, l_h, lhe_ptr, lhe_val, lhe_row, alloc_stat
+      INTEGER :: l_h2_1, l_h, lhe_ptr, lhe_val, lhe_row, l_g, G_ne, alloc_stat
       INTEGER :: nonlinear_variables_objective, nonlinear_variables_constraints
       INTEGER :: equality_constraints, linear_constraints
       REAL ( KIND = wp ) :: f, ci
@@ -43,10 +43,10 @@
       CHARACTER ( len = 10 ) ::  p_name
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: H_row, H_col, X_type
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: HE_row, HE_row_ptr, HE_val_ptr
-      INTEGER, ALLOCATABLE, DIMENSION( : ) :: J_var, J_fun
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: G_var, J_var, J_fun
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: X, X_l, X_u, G, Ji
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: Y, C_l, C_u, C, J_val
-      REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: H_val, HE_val
+      REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) ::  G_val, H_val, HE_val
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: VECTOR, RESULT
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : , : ) :: H2_val
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : , : ) :: J2_val
@@ -182,6 +182,25 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
       grad = .FALSE.
       WRITE( out, "( ' CALL CUTEST_cofg with grad = .FALSE.' )" )
       CALL CUTEST_cofg_threaded( status, n, X, f, G, grad, thread )
+      IF ( status /= 0 ) GO to 900
+      CALL WRITE_f( out, f )
+
+!  compute the objective function and sparse gradient values
+
+      l_g = n
+      ALLOCATE( G_val( l_g ), G_var( l_g ), stat = alloc_stat )
+      IF ( alloc_stat /= 0 ) GO TO 990
+      grad = .TRUE.
+      WRITE( out, "( ' CALL CUTEST_cofsg with grad = .TRUE.' )" )
+      CALL CUTEST_cofsg( status, n, X, f,                                      &
+                         G_ne, l_g, G_val, G_var, grad, thread )
+      IF ( status /= 0 ) GO to 900
+      CALL WRITE_f( out, f )
+      CALL WRITE_SG( out, G_ne, l_g, G_val, G_var )
+      grad = .FALSE.
+      WRITE( out, "( ' CALL CUTEST_cofsg with grad = .FALSE.' )" )
+      CALL CUTEST_cofsg( status, n, X, f,                                      &
+                         G_ne, l_g, G_val, G_var, grad, thread )
       IF ( status /= 0 ) GO to 900
       CALL WRITE_f( out, f )
 
@@ -672,6 +691,17 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
         WRITE( out, "( ' * ', I7, ES12.4 )" ) i, G( i )
       END DO
       END SUBROUTINE WRITE_G
+
+      SUBROUTINE WRITE_SG( out, G_ne, lG, G, J_var )
+      INTEGER :: G_ne, lG, out
+      INTEGER, DIMENSION( lG ) :: J_var
+      REAL ( KIND = wp ), DIMENSION( lG ) :: G
+      INTEGER :: i
+      WRITE( out, "( ' *       i      G' )" )
+      DO i = 1, G_ne
+        WRITE( out, "( ' * ', I7, ES12.4 )" ) J_var( i ), G( i )
+      END DO
+      END SUBROUTINE WRITE_SG
 
       SUBROUTINE WRITE_JI( out, n, icon, Ji )
       INTEGER :: n, icon, out

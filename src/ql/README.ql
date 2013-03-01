@@ -1,9 +1,9 @@
 
-                    ********************************
-      	            *                              *
-                    *   USING QL WITH CUTEst   *
-                    *                              *
-                    ********************************
+                    *****************************
+      	            *                           *
+                    *   USING QL WITH CUTEst    *
+                    *                           *
+                    *****************************
 
               ( Last modified on 20 Feb 2013 at 11:50:00 )
 
@@ -13,7 +13,7 @@ WHAT IS QL?
 QL is a small-scale convex quadratic programming code.
 
 HOW DO I GET QL?
---------------------
+---------------
 
 QL was written and is maintained by 
 
@@ -27,7 +27,7 @@ It is available from
 
 
 CREATING THE OBJECT FILES FOR QL
-------------------------------------
+--------------------------------
 
 Having obtained the file QL.zip, create the directories, say, ql, 
 and set an environment variable $QL to point to this. Now issue the command
@@ -44,7 +44,7 @@ binary files here will be chosen in preference to anything in $QL.
 QL is only available in double precision.
 
 USING THE QL INTERFACE TOOL
-----------------------------
+---------------------------
 
 Suppose you wish to solve the problem written in SIF format contained
 in the file probname.SIF.

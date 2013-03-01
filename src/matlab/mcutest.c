@@ -14,6 +14,9 @@
  * obj        uofg / cofg                 Evaluate objective function value
  *                                         and its gradient if requested
  *
+ * sobj       cofsg                        Evaluate objective function value
+ *                                         and its sparse gradient if requested
+ *
  * objcons    cfn                         Evaluate objective and constraints
  *
  * cons       ccfg / ccifg                Evaluate constraint bodies
@@ -626,6 +629,67 @@ extern "C" {
           sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
           mexErrMsgTxt(msgBuf);
         }
+
+      mxFree((void *)toolName);
+      return;
+    }
+
+    /* Return function value and sparse gradient if requested.
+     * Usage:  f = sobj(x)  or  [f,sg] = sobj(x)
+     */
+    if (strcmp(toolName, "sobj") == 0) {
+
+      if (nrhs != 2) mexErrMsgTxt("sobj: Please specify x\n");
+      if (nlhs < 1) mexErrMsgTxt("sobj: Please specify an output argument\n");
+      if (nlhs > 2) mexErrMsgTxt("sobj: Too many output arguments\n");
+
+      if (! mxIsDouble(prhs[1]))
+        mexErrMsgTxt("sobj: Input array must have type double\n");
+
+      if (mxGetNumberOfElements(prhs[1]) != CUTEst_nvar)
+        mexErrMsgTxt("sobj: Input array has erroneous size\n");
+
+      x  = (doublereal *)mxGetData(prhs[1]);
+      plhs[0] = mxCreateDoubleMatrix(1, 1, mxREAL);
+      f  = (doublereal *)mxGetData(plhs[0]);
+
+      /*
+      if (nlhs == 2) {
+
+        plhs[1] = mxCreateDoubleMatrix(CUTEst_nvar, 1, mxREAL);
+        g  = (doublereal *)mxGetData(plhs[1]);
+        } */
+
+      if (CUTEst_ncon == 0) {
+        sprintf(msgBuf, onlyConst, toolName);
+        mexWarnMsgTxt(msgBuf);
+      }
+      else
+        if (nlhs == 1) {
+          CUTEST_cofsg( &status, &CUTEst_nvar, x, f,  &zero,  &zero, 
+                        NULL, NULL, &somethingFalse);
+          if (status != 0) {
+            sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
+            mexErrMsgTxt(msgBuf);
+          }
+          }
+        else {
+          nnzgci = CUTEst_nvar;
+          ir = (integer *)mxCalloc(nnzgci, sizeof(integer));
+          g = (doublereal *)mxCalloc(nnzgci, sizeof(doublereal));
+          CUTEST_cofsg( &status, &CUTEst_nvar, x, f, &nnzgci, &nnzgci, g,
+                        ir, &somethingTrue);
+          if (status != 0) {
+            sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
+            mexErrMsgTxt(msgBuf);
+          }
+          plhs[1] = SparseVector(CUTEst_nvar, nnzgci, ir, (double *)g);
+
+          mxFree(ir);
+          mxFree(g);
+        }
+
+
 
       mxFree((void *)toolName);
       return;

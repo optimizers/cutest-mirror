@@ -111,6 +111,7 @@ typedef struct VarTypes {
 
 #define CUTEST_cfn      FUNDERSCORE(cutest_cfn)
 #define CUTEST_cofg     FUNDERSCORE(cutest_cofg)
+#define CUTEST_cofsg    FUNDERSCORE(cutest_cofsg)
 #define CUTEST_ccfg     FUNDERSCORE(cutest_ccfg)
 #define CUTEST_cgr      FUNDERSCORE(cutest_cgr)
 #define CUTEST_csgr     FUNDERSCORE(cutest_csgr)
@@ -213,6 +214,9 @@ void CUTEST_cfn( integer *status,  integer *n, integer *m, doublereal *x,
           doublereal *f, doublereal *c );
 void CUTEST_cofg( integer *status, integer *n, doublereal *x, doublereal *f, 
            doublereal *g, logical *grad );
+void CUTEST_cofsg( integer *status, integer *n, doublereal *x, doublereal *f, 
+                   integer *nnzg, integer *lg, 
+                   doublereal *sg, integer *ivsg, logical *grad );
 void CUTEST_ccfg( integer *status, integer *n, integer *m, doublereal *x, 
 	    doublereal *c, logical *jtrans, integer *lcjac1, integer *lcjac2,
 	    doublereal *cjac, logical *grad );

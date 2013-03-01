@@ -60,6 +60,7 @@ C  separable function.
      &                    n, m, X, X_l, X_u,                    
      &                    Y, C_l, C_u, EQUATN, LINEAR, 1, 0, 0 )
       IF ( status /= 0 ) GO TO 910
+      CLOSE( input )
 
 C  count the number of equality constraints
 

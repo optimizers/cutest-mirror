@@ -259,6 +259,17 @@
        REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: G
        LOGICAL, INTENT( IN ) :: grad
        END SUBROUTINE CUTEST_cofg
+
+       SUBROUTINE CUTEST_cofsg( status, n, X, f, nnzg, lg, G_val, G_var, grad )
+       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+       INTEGER, INTENT( IN ) :: n, lg
+       INTEGER, INTENT( OUT ) :: status, nnzg
+       REAL ( KIND = wp ), INTENT( OUT ) :: f
+       LOGICAL, INTENT( IN ) :: grad
+       INTEGER, INTENT( OUT ), DIMENSION( lg ) :: G_var
+       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lg ) :: G_val
+       END SUBROUTINE CUTEST_cofsg
        
        SUBROUTINE CUTEST_cdimsj( cutest_status, nnzj )
        INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
