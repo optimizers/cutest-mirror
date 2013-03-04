@@ -1,12 +1,12 @@
-#  Main body of the installation makefile for CUTEst PENNON interface
+#  Main body of the installation makefile for CUTEst PENNLP interface
 
 #  N. Gould, D. Orban and Ph. L. Toint.
 #  This version: 28 II 2013
 
 #  package
 
-PACKAGE = PENNON
-package = pennon
+PACKAGE = PENNLP
+package = pennlp
 
 SHELL = /bin/$(BINSHELL)
 
@@ -80,6 +80,8 @@ $(package)_double: $($(PACKAGE))
 
 run_test: tools test_cutest_constrained $(package) $(OBJ)/$(package)_test.o
 	echo " Test of constrained $(package)"
+	echo "$(FORTRAN) $(RUNFFLAGS) $(SPECIAL) -o run_test \
+            $(package)_main.o $(package)_test.o $(C_TEST) -L$(OBJ) $(LIBS)"
 	cd $(OBJ) ; $(FORTRAN) $(RUNFFLAGS) $(SPECIAL) -o run_test \
             $(package)_main.o $(package)_test.o $(C_TEST) -L$(OBJ) $(LIBS)
 	ln -fs $(CUTEST)/src/test/c_OUTSDIF.d ../$(package)/OUTSDIF.d

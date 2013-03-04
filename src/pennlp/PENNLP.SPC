@@ -28,34 +28,3 @@
 1.0e0     cgtolup      update of tolerance of the conjugate gradient algorithm
 1.0e0     uinitbox     initial multiplier box constraints
 1.0e0     uinitnc      initial multiplier nonlinear constraints
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
