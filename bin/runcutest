@@ -403,7 +403,7 @@ do
 done
 
 EXTER=""
-[[ -e EXTER.f && -z EXTER.f ]] && ${RM} EXTER.f
+[[ -e EXTER.f && ! -s EXTER.f ]] && ${RM} EXTER.f
 if [[ -e EXTER.f ]]; then
     ${CP} EXTER.f EXTER.f90
     command="${FORTRAN} ${PROBFLAGS} EXTER.f90"

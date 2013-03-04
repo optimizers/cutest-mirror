@@ -3,6 +3,11 @@
 #  N. Gould, D. Orban and Ph. L. Toint.
 #  This version: 19 XI 2012
 
+#  package
+
+PACKAGE = TEST
+package = test
+
 SHELL = /bin/$(BINSHELL)
 
 #  compiler flags
@@ -68,9 +73,14 @@ SUCC = precision version) compiled successfully
 
 #  main compilations and runs
 
-all: run_test_cutest
+all: $(package)
 
 #  basic packages
+
+$(package): $(package)_$(PRECIS)
+	@printf ' %-21s\n' "CUTEst: $(package) ($(PRECIS) $(SUCC)" 
+$(package)_single: $(OBJ)/$(package)_main.o 
+$(package)_double: $(OBJ)/$(package)_main.o
 
 test_cutest: test_cutest_$(PRECIS)
 	@printf ' %-21s\n' "CUTEST: tests ($(PRECIS) $(SUCC)" 
@@ -262,6 +272,19 @@ $(OBJ)/c_exter.o: ../test/c_exter.f
                 || ( printf ' %-26s' "=> Disabling optimization " ; \
                    $(FORTRAN) -o c_exter.o $(FFLAGS77N) c_exter.f )
 	$(RM) $(OBJ)/c_exter.f
+	@printf '[ OK ]\n'
+
+#  CUTEst interface main programs
+
+$(OBJ)/$(package)_main.o: ../$(package)/$(package)_main.f90
+	@printf ' %-9s %-15s\t\t' "Compiling" "$(package)_main" 
+	$(SED) -f $(SEDS) ../$(package)/$(package)_main.f90 > \
+          $(OBJ)/$(package)_main.f90
+	cd $(OBJ); $(FORTRAN) -o $(package)_main.o $(FFLAGS) \
+             $(package)_main.f90 \
+              || ( printf ' %-26s' "=> Disabling optimization " ; \
+              $(FORTRAN) -o $(package)_main.o $(FFLAGS77N) $(package)_main.f90 )
+	$(RM) $(OBJ)/$(package)_main.f90 $(OBJ)/*.mod
 	@printf '[ OK ]\n'
 
 #  book keeping

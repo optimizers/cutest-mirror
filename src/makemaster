@@ -63,6 +63,8 @@ all_single: tools_single
                    npsol  PRECIS=single PWD=$(PWD)/npsol )
 	( cd pds  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    pds  PRECIS=single PWD=$(PWD)/pds )
+	( cd pennlp  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   pennlp  PRECIS=single PWD=$(PWD)/pennlp )
 	( cd praxis  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    praxis  PRECIS=single PWD=$(PWD)/praxis )
 	( cd ql  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
@@ -71,12 +73,16 @@ all_single: tools_single
                    snopt  PRECIS=single PWD=$(PWD)/snopt )
 	( cd spg  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    spg  PRECIS=single PWD=$(PWD)/spg )
+	( cd sqic  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   sqic  PRECIS=single PWD=$(PWD)/sqic )
 	( cd stats  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    stats  PRECIS=single PWD=$(PWD)/stats )
 	( cd stenmin  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    stenmin  PRECIS=single PWD=$(PWD)/stenmin )
 	( cd tenmin  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    tenmin  PRECIS=single PWD=$(PWD)/tenmin )
+	( cd test  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   test  PRECIS=single PWD=$(PWD)/test )
 	( cd tron  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    tron  PRECIS=single PWD=$(PWD)/tron )
 	( cd uncmin  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
@@ -136,6 +142,8 @@ all_double: tools_double
                    npsol  PRECIS=double PWD=$(PWD)/npsol )
 	( cd pds  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    pds  PRECIS=double PWD=$(PWD)/pds )
+	( cd pennlp  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   pennlp  PRECIS=double PWD=$(PWD)/pennlp )
 	( cd praxis  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    praxis  PRECIS=double PWD=$(PWD)/praxis )
 	( cd ql  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
@@ -144,12 +152,16 @@ all_double: tools_double
                    snopt  PRECIS=double PWD=$(PWD)/snopt )
 	( cd spg  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    spg  PRECIS=double PWD=$(PWD)/spg )
+	( cd sqic  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   sqic  PRECIS=double PWD=$(PWD)/sqic )
 	( cd stats  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    stats  PRECIS=double PWD=$(PWD)/stats )
 	( cd stenmin  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    stenmin  PRECIS=double PWD=$(PWD)/stenmin )
 	( cd tenmin  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    tenmin  PRECIS=double PWD=$(PWD)/tenmin )
+	( cd test  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   test  PRECIS=double PWD=$(PWD)/test )
 	( cd tron  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    tron  PRECIS=double PWD=$(PWD)/tron )
 	( cd uncmin  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
@@ -267,6 +279,8 @@ run_test_single: tools_single test_single
              run_test PRECIS=single PWD=$(PWD)/npsol )
 	( cd pds  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
              run_test PRECIS=single PWD=$(PWD)/pds )
+	( cd pennlp  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=single PWD=$(PWD)/pennlp )
 	( cd praxis  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
              run_test PRECIS=single PWD=$(PWD)/praxis )
 	( cd ql  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
@@ -275,6 +289,8 @@ run_test_single: tools_single test_single
              run_test PRECIS=single PWD=$(PWD)/snopt )
 	( cd spg  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
              run_test  PRECIS=single PWD=$(PWD)/spg )
+	( cd sqic  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test  PRECIS=single PWD=$(PWD)/sqic )
 	( cd stats  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
              run_test PRECIS=single PWD=$(PWD)/stats )
 	( cd stenmin  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
@@ -336,6 +352,8 @@ run_test_double: tools_double test_double
              run_test PRECIS=double PWD=$(PWD)/npsol )
 	( cd pds  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
              run_test PRECIS=double PWD=$(PWD)/pds )
+	( cd pennlp  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test PRECIS=double PWD=$(PWD)/pennlp )
 	( cd praxis  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
              run_test PRECIS=double PWD=$(PWD)/praxis )
 	( cd ql  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
@@ -344,6 +362,8 @@ run_test_double: tools_double test_double
              run_test PRECIS=double PWD=$(PWD)/snopt )
 	( cd spg  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
              run_test  PRECIS=double PWD=$(PWD)/spg )
+	( cd sqic  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test  PRECIS=double PWD=$(PWD)/sqic )
 	( cd stats  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
              run_test PRECIS=double PWD=$(PWD)/stats )
 	( cd stenmin  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
