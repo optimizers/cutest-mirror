@@ -1,3 +1,8 @@
+!     ( Last modified on 28 Feb 2013 at 15:50:00 )
+
+!  Dummy PENNLPF for testing pennlp_main interface to CUTEst
+!  Nick Gould, 28th February 2013
+
       SUBROUTINE PENNLPF( n, m_lin, m, nnzg, nnzh,
      &                    X_l, X_u, C_l, C_u, X, Y, 
      &                    PENNON_evalof, PENNON_evalog, PENNON_evaloh,
@@ -31,6 +36,6 @@ C  trial calls
       DRESULTS( 4 ) = Y( 1 ) * DRESULTS( 3 )
       DRESULTS( 3 ) = ABS( DRESULTS( 3 ) )
       DRESULTS( 5 ) = 1.0D0
-      status = 0
+      status = 5
       RETURN
       END

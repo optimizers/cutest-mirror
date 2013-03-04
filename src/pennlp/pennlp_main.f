@@ -1,25 +1,26 @@
 C     ( Last modified on 28 Feb 2013 at 09:00:00 )
 
-      PROGRAM PENNON_main
-      implicit none
+      PROGRAM PENNLP_main
 
 C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 C
-C     Driver for running PENNON on CUTEst problems.
+C     Driver for running PENNLP on CUTEst problems.
 C
 C     Nick Gould, February 2013
 C     
 C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+      IMPLICIT none
+
 C  Set up parameters, variables and arrays required by constrained tools
 
       INTEGER, PARAMETER :: input = 55, indr = 46, out = 6
       INTEGER, PARAMETER :: io_buffer = 11
-      INTEGER :: alloc_stat, status, m, m_lin, i
+      INTEGER :: alloc_stat, status, i, m, m_lin, pennlp_status
       INTEGER :: IOPTIONS( 17 ), IRESULTS( 4 )
       DOUBLE PRECISION, PARAMETER :: zero = 0.0D+0, half = 5.0D-1
       DOUBLE PRECISION, PARAMETER :: cutest_inf = 1.0D+19
-      DOUBLE PRECISION, PARAMETER :: pennon_inf = 2.0D+38
+      DOUBLE PRECISION, PARAMETER :: pennlp_inf = 2.0D+38
       DOUBLE PRECISION :: CPU( 2 ), CALLS( 7 )
       DOUBLE PRECISION :: DOPTIONS( 13 ), DRESULTS( 5 )
       CHARACTER * 10 :: pname
@@ -27,18 +28,18 @@ C  Set up parameters, variables and arrays required by constrained tools
       DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: C_l, C_u, Y
       LOGICAL, ALLOCATABLE, DIMENSION( : ) :: EQUATN, LINEAR
       CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : ) :: X_names
-      EXTERNAL :: PENNON_evalof, PENNON_evalog, PENNON_evaloh
-      EXTERNAL :: PENNON_evalcf, PENNON_evalcg, PENNON_evalch
+      EXTERNAL :: PENNLP_evalof, PENNLP_evalog, PENNLP_evaloh
+      EXTERNAL :: PENNLP_evalcf, PENNLP_evalcg, PENNLP_evalch
 
 C  common needed to pass assumed size array dimensions
 
       INTEGER :: n, max_nnzg, max_nnzh
-      COMMON / PENNON_common / n, max_nnzg, max_nnzh
-      SAVE / PENNON_common /
+      COMMON / PENNLP_common / n, max_nnzg, max_nnzh
+      SAVE / PENNLP_common /
 
 C  open the Spec file for the package
 
-      OPEN( indr, FILE = 'PENNON.SPC', FORM = 'FORMATTED', 
+      OPEN( indr, FILE = 'PENNLP.SPC', FORM = 'FORMATTED', 
      &      STATUS = 'OLD')
       REWIND( indr )
 
@@ -75,7 +76,7 @@ C  cgtolup      update of tolerance of the conjugate gradient algorithm
 C  uinitbox     initial multiplier box constraints
 C  uinitnc      initial multiplier nonlinear constraints
 
-      READ( indr, "( 30( G10.8, / ) )" ) 
+      READ( indr, "( 29( G10.8, / ), G10.8 )" ) 
      &  IOPTIONS( 1 : 17 ), DOPTIONS( 1 : 13 )
       CLOSE( indr )
 
@@ -116,16 +117,16 @@ C  count the number of linear constraints
       END DO 
       DEALLOCATE( EQUATN, LINEAR )
        
-C  match PENNON's infinite bound value
+C  match PENNLP's infinite bound value
 
       DO i = 1, n
-        IF ( X_l( i ) < - cutest_inf ) X_l( i ) = - pennon_inf
-        IF ( X_u( i ) > cutest_inf ) X_u( i ) = pennon_inf
+        IF ( X_l( i ) < - cutest_inf ) X_l( i ) = - pennlp_inf
+        IF ( X_u( i ) > cutest_inf ) X_u( i ) = pennlp_inf
       END DO
 
       DO i = 1, m
-        IF ( C_l( i ) < - cutest_inf ) C_l( i ) = - pennon_inf
-        IF ( C_u( i ) > cutest_inf ) C_u( i ) = pennon_inf
+        IF ( C_l( i ) < - cutest_inf ) C_l( i ) = - pennlp_inf
+        IF ( C_u( i ) > cutest_inf ) C_u( i ) = pennlp_inf
       END DO
 
 C  how many nonzeros are there in the Hessian of the Lagrangian
@@ -144,26 +145,27 @@ C  call solver
 
       CALL PENNLPF( n, m_lin, m, max_nnzg, max_nnzh,
      &              X_l, X_u, C_l, C_u, X, Y, 
-     &              PENNON_evalof, PENNON_evalog, PENNON_evaloh,
-     &              PENNON_evalcf, PENNON_evalcg, PENNON_evalch,
-     &              IOPTIONS, DOPTIONS, IRESULTS, DRESULTS, status )
+     &              PENNLP_evalof, PENNLP_evalog, PENNLP_evaloh,
+     &              PENNLP_evalcf, PENNLP_evalcg, PENNLP_evalch,
+     &              IOPTIONS, DOPTIONS, IRESULTS, DRESULTS, 
+     &              pennlp_status )
 
 C  Output final objective function value and timing information
 
       IF ( out .GT. 0 ) THEN
         CALL CUTEST_creport( status, CALLS, CPU )
-        IF ( status == 0 ) THEN
+        IF ( pennlp_status >= 0 .AND. pennlp_status <= 2 ) THEN
           CALL CUTEST_varnames( status, n, X_names )
           IF ( status /= 0 ) GO TO 910
           WRITE( out,"(' Objective function value:', ES12.4 )" ) 
      &      DRESULTS( 1 )
           WRITE ( out, "( /, ' Solution:',
-     &       /, '              X         X_l          X_u ',
-     &       /, ( A10, 1P, 3D12.4 ) )" ) 
+     &       /, ' name            X          X_l         X_u ',
+     &       /, ( 1X, A10, 1P, 3D12.4 ) )" ) 
      &       ( X_names( i ), X( i ), X_l( i ), X_u( i ), i = 1, n )
         ENDIF
         WRITE ( out, 2000 ) pname, n, m, CALLS( 1 ), CALLS( 2 ), 
-     &    CALLS( 5 ), CALLS( 6 ), status, DRESULTS( 1 ), 
+     &    CALLS( 5 ), CALLS( 6 ), pennlp_status, DRESULTS( 1 ), 
      &    CPU( 1 ), CPU( 2 )
       END IF
       DEALLOCATE( X, X_l, X_u, C_l, C_u, Y, x_names, STAT = status )
@@ -182,7 +184,7 @@ C  Output final objective function value and timing information
 C  Non-executable statements
 
  2000 FORMAT( /, 24('*'), ' CUTEst statistics ', 24('*') //
-     &    ,' Package used            :  PENNON',    /
+     &    ,' Package used            :  PENNLP',    /
      &    ,' Problem                 :  ', A10,    /
      &    ,' # variables             =      ', I10 /
      &    ,' # constraints           =      ', I10 /
@@ -199,7 +201,7 @@ C  Non-executable statements
 
 C  ===========================================================================
 
-      SUBROUTINE PENNON_evalof( X, f )
+      SUBROUTINE PENNLP_evalof( X, f )
 
 C  compute f(x)
 
@@ -215,7 +217,7 @@ C  local variables
 C  common needed to pass assumed size array dimensions
 
       INTEGER :: n, max_nnzg, max_nnzh
-      COMMON / PENNON_common / n, max_nnzg, max_nnzh
+      COMMON / PENNLP_common / n, max_nnzg, max_nnzh
 
 C  evaluate f
 
@@ -234,7 +236,7 @@ C  check for errors
 
 C  ===========================================================================
 
-      SUBROUTINE PENNON_evalog( X, nnzg, G_var, G_val )
+      SUBROUTINE PENNLP_evalog( X, nnzg, G_var, G_val )
 
 C  compute nabla_x f(x) in sparse format
 
@@ -250,7 +252,7 @@ C  local variables
 C  common needed to pass assumed size array dimensions
 
       INTEGER :: n, lg, lh
-      COMMON / PENNON_common / n, lg, lh
+      COMMON / PENNLP_common / n, lg, lh
 
 C  evaluate the gradient
 
@@ -269,7 +271,7 @@ C  check for errors
 
 C  ===========================================================================
 
-      SUBROUTINE PENNON_evaloh( X, nnzh, H_row, H_col, H_val )
+      SUBROUTINE PENNLP_evaloh( X, nnzh, H_row, H_col, H_val )
 
 C  compute nabla_xx f(x) in sparse format
 
@@ -284,7 +286,7 @@ C  local variables
 C  common needed to pass assumed size array dimensions
 
       INTEGER :: n, lg, lh
-      COMMON / PENNON_common / n, lg, lh
+      COMMON / PENNLP_common / n, lg, lh
 
 C  evaluate the Hessian
 
@@ -303,7 +305,7 @@ C  check for errors
 
 C  ===========================================================================
 
-      SUBROUTINE PENNON_evalcf( i, X, ci )
+      SUBROUTINE PENNLP_evalcf( i, X, ci )
 
 C  compute c_i(x)
 
@@ -320,7 +322,7 @@ C  local variables
 C  common needed to pass assumed size array dimensions
 
       INTEGER :: n, max_nnzg, max_nnzh
-      COMMON / PENNON_common / n, max_nnzg, max_nnzh
+      COMMON / PENNLP_common / n, max_nnzg, max_nnzh
 
 C  evaluate the constraint function
 
@@ -339,7 +341,7 @@ C  check for errors
 
 C  ===========================================================================
 
-      SUBROUTINE PENNON_evalcg( i, X, nnzgci, GCI_var, GCI_val )
+      SUBROUTINE PENNLP_evalcg( i, X, nnzgci, GCI_var, GCI_val )
 
 C  compute nabla_x c_i(x) in sparse format
 
@@ -355,7 +357,7 @@ C  local variables
 C  common needed to pass assumed size array dimensions
 
       INTEGER :: n, lg, lh
-      COMMON / PENNON_common / n, lg, lh
+      COMMON / PENNLP_common / n, lg, lh
 
 C  evaluate the gradient
 
@@ -374,7 +376,7 @@ C  check for errors
 
 C  ===========================================================================
 
-      SUBROUTINE PENNON_evalch( i, X, nnzh, H_row, H_col, H_val )
+      SUBROUTINE PENNLP_evalch( i, X, nnzh, H_row, H_col, H_val )
 
 C  compute nabla_xx c_i(x) in sparse format
 
@@ -389,7 +391,7 @@ C  local variables
 C  common needed to pass assumed size array dimensions
 
       INTEGER :: n, lg, lh
-      COMMON / PENNON_common / n, lg, lh
+      COMMON / PENNLP_common / n, lg, lh
 
 C  evaluate the Hessian
 

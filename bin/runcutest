@@ -380,7 +380,7 @@ if [[ ${SPECS} != "" ]]; then
   if [[ ! -e ${SPECS} ]]; then
      if [[ -e ${CUTEST}/src/${PACKDIR}/${SPECS} ]]; then
        ${LN} -fs ${CUTEST}/src/${PACKDIR}/${SPECS} ${SPECS}
-       cat ${SPECS}
+#       cat ${SPECS}
      else
         warning "Cannot find spec file ${SPECS}---skipping"
      fi
