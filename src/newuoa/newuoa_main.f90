@@ -10,8 +10,8 @@
 
       IMPLICIT NONE
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: m, maxfun, lw, status, iprint, i, mgeq, nfix, ierr, npt
-      REAL( KIND = wp ) :: rhobeg, rhoend, f
+      INTEGER :: maxfun, lw, status, iprint, i, ierr, npt
+      REAL( KIND = wp ) :: rhobeg, rhoend
       REAL( KIND = wp ), PARAMETER :: infty = 1.0D+19
       REAL( KIND = wp ), DIMENSION( : ), ALLOCATABLE :: W
       REAL( KIND = wp ), DIMENSION( 2 ) :: CPU
@@ -129,10 +129,6 @@
 2110 FORMAT( /, ' The variables:', /, &
           '     i name          value    lower bound upper bound',             &
           /, ( I6, 1X, A10, 1P, 3D12.4 ) )
-3000 FORMAT( /,'  ** Program USETUP: array length ', A6, ' too small.',        &
-          /,'  -- Miminimization abandoned.', &
-          /,'  -- Increase the parameter ', A6, ' by at least ', I0,           &
-            ' and restart.'  )
 
 !  End of NEWUOA_main
 

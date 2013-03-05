@@ -12,10 +12,9 @@
 
       IMPLICIT NONE
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-      INTEGER :: n, m, maxfun, lw, status, iprint, i, mgeq, nfix, ierr, npt
+      INTEGER :: n, status, i, ierr
       INTEGER :: type, maxf, stype, sedge, stopc, iaux, istat
       LOGICAL :: right, stddev
-      REAL( KIND = wp ) :: rhobeg, rhoend, f
       REAL( KIND = wp ) :: sigma, alpha, beta, gamma, stepi, stepf
       REAL( KIND = wp ), PARAMETER :: infty = 1.0D+19
       REAL( KIND = wp ), DIMENSION( : ), ALLOCATABLE :: X0, SSTEPI, AUX

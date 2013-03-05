@@ -317,7 +317,7 @@
       lhe_row_int = lhe_row ; lhe_val_int = lhe_val
       IF ( data%numcon > 0 ) THEN
         CALL CUTEST_assemble_element_hessian(                                  &
-                        data%ng, data%nel,data% ntotel, data%nvrels,           &
+                        data%ng, data%nel, data% ntotel, data%nvrels,          &
                         data%nnza, data%maxsel, data%nvargp,                   &
                         data%lnguvl, data%lnhuvl, data%ISTADH, data%ICNA,      &
                         data%ISTADA, data%INTVAR, data%IELVAR,                 &
@@ -328,13 +328,13 @@
                         work%GSCALE_used, data%ESCALE,                         &
                         data%GXEQX, data%INTREP,                               &
                         work%ISWKSP, work%W_ws, work%W_el, work%W_in,          &
-                        work%H_el, work%H_in, RANGE, ne, lhe_row_int,          &
+                        work%H_el, work%H_in, RANGE, ne, lhe_ptr, lhe_row_int, &
                         lhe_val_int, work%H_row, HE_row_ptr, work%H_val,       &
                         HE_val_ptr, byrows, 0, data%out, data%out,             &
                         work%io_buffer, alloc_status, bad_alloc, status )
       ELSE
         CALL CUTEST_assemble_element_hessian(                                  &
-                        data%ng, data%nel,data% ntotel, data%nvrels,           &
+                        data%ng, data%nel, data% ntotel, data%nvrels,          &
                         data%nnza, data%maxsel, data%nvargp,                   &
                         data%lnguvl, data%lnhuvl, data%ISTADH, data%ICNA,      &
                         data%ISTADA, data%INTVAR, data%IELVAR,                 &
@@ -344,7 +344,7 @@
                         work%GVALS( : , 2 ), work%GVALS( : , 3 ),              &
                         data%GSCALE, data%ESCALE, data%GXEQX, data%INTREP,     &
                         work%ISWKSP, work%W_ws, work%W_el, work%W_in,          &
-                        work%H_el, work%H_in, RANGE, ne, lhe_row_int,          &
+                        work%H_el, work%H_in, RANGE, ne, lhe_ptr, lhe_row_int, &
                         lhe_val_int, work%H_row, HE_row_ptr, work%H_val,       &
                         HE_val_ptr, byrows, 0, data%out, data%out,             &
                         work%io_buffer, alloc_status, bad_alloc, status )
