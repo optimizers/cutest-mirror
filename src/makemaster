@@ -73,8 +73,8 @@ all_single: tools_single
                    snopt  PRECIS=single PWD=$(PWD)/snopt )
 	( cd spg  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    spg  PRECIS=single PWD=$(PWD)/spg )
-	( cd sqic  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
-                   sqic  PRECIS=single PWD=$(PWD)/sqic )
+#	( cd sqic  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+#                  sqic  PRECIS=single PWD=$(PWD)/sqic )
 	( cd stats  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    stats  PRECIS=single PWD=$(PWD)/stats )
 	( cd stenmin  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
@@ -152,8 +152,8 @@ all_double: tools_double
                    snopt  PRECIS=double PWD=$(PWD)/snopt )
 	( cd spg  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    spg  PRECIS=double PWD=$(PWD)/spg )
-	( cd sqic  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
-                   sqic  PRECIS=double PWD=$(PWD)/sqic )
+#	( cd sqic  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+#                  sqic  PRECIS=double PWD=$(PWD)/sqic )
 	( cd stats  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    stats  PRECIS=double PWD=$(PWD)/stats )
 	( cd stenmin  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
@@ -289,8 +289,8 @@ run_test_single: tools_single test_single
              run_test PRECIS=single PWD=$(PWD)/snopt )
 	( cd spg  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
              run_test  PRECIS=single PWD=$(PWD)/spg )
-	( cd sqic  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
-             run_test  PRECIS=single PWD=$(PWD)/sqic )
+#	( cd sqic  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+#             run_test  PRECIS=single PWD=$(PWD)/sqic )
 	( cd stats  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
              run_test PRECIS=single PWD=$(PWD)/stats )
 	( cd stenmin  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
@@ -362,8 +362,8 @@ run_test_double: tools_double test_double
              run_test PRECIS=double PWD=$(PWD)/snopt )
 	( cd spg  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
              run_test  PRECIS=double PWD=$(PWD)/spg )
-	( cd sqic  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
-             run_test  PRECIS=double PWD=$(PWD)/sqic )
+#	( cd sqic  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+#             run_test  PRECIS=double PWD=$(PWD)/sqic )
 	( cd stats  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
              run_test PRECIS=double PWD=$(PWD)/stats )
 	( cd stenmin  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \

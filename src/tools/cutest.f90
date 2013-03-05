@@ -1309,28 +1309,33 @@
                 nnzh = nnzh + 1
                 IF ( nnzh > lh_val .OR. nnzh > lh_row .OR. nnzh > lh_col ) THEN
                   nlh = lh_row ; ulh = nnzh - 1 ; mlh = nnzh
+!                 write(6,*) ' extending h_row ', lh_row, ulh, nlh, mlh
                   CALL CUTEST_extend_array( H_row, lh_row, ulh, nlh, mlh,      &
                                             buffer, status, alloc_status )
                   IF ( status /= 0 ) THEN
                     bad_alloc = 'H_row' ; GO TO 980 ; END IF
                   lh_row = nlh
                   nlh = lh_col ; ulh = nnzh - 1 ; mlh = nnzh
+!                 write(6,*) ' extending h_col ', lh_col, ulh, nlh, mlh
                   CALL CUTEST_extend_array( H_col, lh_col, ulh, nlh, mlh,      &
                                             buffer, status, alloc_status )
                   IF ( status /= 0 ) THEN
                     bad_alloc = 'H_col' ; GO TO 980 ; END IF
                   lh_col = nlh
                   nlh = lh_val ; ulh = nnzh - 1 ; mlh = nnzh
+!                 write(6,*) ' extending h_val ', lh_val, ulh, nlh, mlh
                   CALL CUTEST_extend_array( H_val, lh_val, ulh, nlh, mlh,      &
                                             buffer, status, alloc_status )
                   IF ( status /= 0 ) THEN
                     bad_alloc = 'H' ; GO TO 980 ; END IF
                   lh_val = nlh
+!                  write(6,*) ' extending h_val done '
                 END IF
                 H_row( nnzh ) = i ; H_col( nnzh ) = j ; H_val( nnzh ) = hesnew
                 IF ( newpt == llink ) THEN
                   nlh = llink
                   ulh = newpt; mlh = llink + 1
+!                 write(6,*) ' extending link_col ', llink, ulh, nlh, mlh
                   CALL CUTEST_extend_array( LINK_col, llink, ulh, nlh, mlh,    &
                                             buffer, status, alloc_status )
                   IF ( status /= 0 ) THEN
@@ -1338,11 +1343,13 @@
                   llink = nlh
                   nlh = lpos
                   ulh = newpt; mlh = lpos + 1
+!                 write(6,*) ' extending pos_in_h ', lpos, ulh, nlh, mlh
                   CALL CUTEST_extend_array( POS_in_H, lpos, ulh, nlh, mlh,     &
                                             buffer, status, alloc_status )
                   IF ( status /= 0 ) THEN
                     bad_alloc = 'POS_in_H' ; GO TO 980 ; END IF
                   lpos = nlh
+!                 write(6,*) ' extending pos_in_h done '
                 END IF
                 newpt = newpt + 1
                 LINK_col( istart ) = newpt
@@ -1357,10 +1364,10 @@
 !                LINK_col( newpt  ) = - 1
 !                newpt = newpt + 1
 !               POS_in_H( newpt ) = - 1
-              ELSE
 
 !  continue searching the linked list for an entry in row i, column j
 
+              ELSE
                 IF ( H_row( POS_in_H( istart ) ) == i ) THEN
                   ip = POS_in_H( istart )
                   H_val( ip ) = H_val( ip ) + hesnew
@@ -1931,7 +1938,7 @@
                         IELING, ISTADG, ISTAEV, ISTAGV, ISVGRP, ITYPEE,        &
                         A, GUVALS, HUVALS, GVALS2, GVALS3, GSCALE, ESCALE,     &
                         GXEQX, INTREP, IW_asmbl, GRAD_el, W_el, W_in, H_el,    &
-                        H_in, RANGE, ne, lhe_row, lhe_val,                     &
+                        H_in, RANGE, ne, lhe_ptr, lhe_row, lhe_val,            &
                         HE_row, HE_row_ptr, HE_val, HE_val_ptr, BYROWS,        &
                         iprint, out, error, buffer, alloc_status, bad_alloc,   &
                         status )
@@ -1954,7 +1961,8 @@
 !   fortran 2003 version released in CUTEst, 26th November 2012
 
       INTEGER, INTENT( IN ) :: ng, nel, ntotel, nvrels, nnza, maxsel, iprint
-      INTEGER, INTENT( IN ) :: nvargp, lnguvl, lnhuvl, out, error, buffer
+      INTEGER, INTENT( IN ) :: nvargp, lnguvl, lnhuvl, lhe_ptr
+      INTEGER, INTENT( IN ) :: out, error, buffer
       INTEGER, INTENT( INOUT ) :: lhe_row, lhe_val
       INTEGER, INTENT( OUT ) :: ne, status, alloc_status
       LOGICAL, INTENT( IN ) :: byrows
@@ -1966,8 +1974,8 @@
       INTEGER, INTENT( IN ), DIMENSION( ntotel ) :: IELING
       INTEGER, INTENT( IN ), DIMENSION( nvargp ) :: ISVGRP
       INTEGER, INTENT( IN ), DIMENSION( nel ) :: ITYPEE
-      INTEGER, DIMENSION( ng + 1 ) :: HE_row_ptr
-      INTEGER, DIMENSION( ng + 1 ) :: HE_val_ptr 
+      INTEGER, DIMENSION( lhe_ptr ) :: HE_row_ptr
+      INTEGER, DIMENSION( lhe_ptr ) :: HE_val_ptr 
       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( nnza ) :: A
       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( lnguvl ) :: GUVALS
       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( lnhuvl ) :: HUVALS

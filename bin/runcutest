@@ -373,9 +373,11 @@ ${MAKE} -s -f ${CUTEST}/makefiles/${ARCH} tools ${PKG}
 #[[ ${PKG} != "matlab" ]] && ${MAKE} -s ${DRIVER}
 cd ${WorkingDir}
 
-# If needed, find the correct BLAS and package spec file
+# If needed, find the correct BLAS
 #(( $blas_set == 0 )) && BLAS=${CUTEST}/${ARCH}/${PRECISION}/bin/linpac.o
-(( $blas_set == 0 )) && BLAS=-lblas
+#(( $blas_set == 0 )) && BLAS=-lblas
+
+# If needed, use the package spec file
 if [[ ${SPECS} != "" ]]; then
   if [[ ! -e ${SPECS} ]]; then
      if [[ -e ${CUTEST}/src/${PACKDIR}/${SPECS} ]]; then

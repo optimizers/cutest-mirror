@@ -332,6 +332,7 @@
         WRITE( out, "( ' CALL CUTEST_cdimen ' )" )
         WRITE( out, "( ' * n = ', I0, ', m = ', I0 )" ) n, m
         l_h2_1 = n
+
         ALLOCATE( X( n ), X_l( n ), X_u( n ), G( n ), Ji( n ),                 &
                   X_names( n ), X_type( n ), stat = alloc_stat )
         IF ( alloc_stat /= 0 ) GO TO 990
@@ -358,7 +359,7 @@
         IF ( only_print_small )                                                &
           CALL WRITE_Y( out, m, Y, C_l, C_u, EQUATION, LINEAR )
 
-X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
+!X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
 
 !  obtain numbers of nonlinear variables, and equality and linear constraints
 
