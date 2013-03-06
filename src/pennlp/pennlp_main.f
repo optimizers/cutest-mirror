@@ -106,7 +106,7 @@ C  separable function.
 
       CALL CUTEST_csetup( status, input, out, io_buffer, 
      &                    n, m, X, X_l, X_u,                    
-     &                    Y, C_l, C_u, EQUATN, LINEAR, 1, 0, 0 )
+     &                    Y, C_l, C_u, EQUATN, LINEAR, 0, 2, 0 )
       IF ( status /= 0 ) GO TO 910
 
 C  count the number of linear constraints
@@ -291,7 +291,7 @@ C  common needed to pass assumed size array dimensions
 C  evaluate the Hessian
 
       CALL CUTEST_cish( status, n, X, 0, 
-     &                  nnzh, lh, H_val, H_row, H_col )
+     &                  nnzh, lh, H_val, H_col, H_row )
 
 C  check for errors
 
