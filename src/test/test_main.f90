@@ -33,6 +33,7 @@
 
       INTEGER :: n, m, H_ne, HE_nel, HE_val_ne, HE_row_ne, J_ne, Ji_ne, status
       INTEGER :: l_h2_1, l_h, lhe_ptr, lhe_val, lhe_row, l_g, G_ne, alloc_stat
+      INTEGER :: lbandh, nsemib, maxsbw, i, icon, iprob, l_j, l_j2_1, l_j2_2
       INTEGER :: nonlinear_variables_objective, nonlinear_variables_constraints
       INTEGER :: equality_constraints, linear_constraints
       REAL ( KIND = wp ) :: f, ci
@@ -1095,7 +1096,7 @@
       END SUBROUTINE WRITE_H_dense
 
       SUBROUTINE WRITE_J_dense( out, n, m, l_j2_1, l_j2_2, J2_val )
-      INTEGER :: n, m, l_J2_1, out
+      INTEGER :: n, m, l_j2_1, l_j2_2, out
       REAL ( KIND = wp ), DIMENSION( l_j2_1, l_j2_2 ) :: J2_val
       INTEGER :: i, j
       WRITE( out, "( ' * J(dense)' )" )
@@ -1128,7 +1129,7 @@
       END SUBROUTINE WRITE_J_dense
 
       SUBROUTINE WRITE_JT_dense( out, n, m, l_j2_1, l_j2_2, J2_val )
-      INTEGER :: n, m, l_J2_1, out
+      INTEGER :: n, m, l_j2_1, l_j2_2, out
       REAL ( KIND = wp ), DIMENSION( l_j2_1, l_j2_2 ) :: J2_val
       INTEGER :: i, j
       WRITE( out, "( ' * J(transpose)(dense)' )" )
@@ -1250,7 +1251,7 @@
 
 !     SUBROUTINE WRITE_H_BAND( out, n, lbandh, H_band, nsemib, maxsbw )
       SUBROUTINE WRITE_H_BAND( out, n, lbandh, H_band, nsemib )
-      INTEGER :: n, lbandh, out
+      INTEGER :: n, lbandh, out, nsemib
 !     INTEGER :: maxsbw
       REAL ( KIND = wp ), DIMENSION( 0 : lbandh, n ):: H_band
       INTEGER :: i, j

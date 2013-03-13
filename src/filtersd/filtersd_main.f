@@ -20,17 +20,23 @@ C  Revised for CUTEst, Nick Gould, January 2013
 
       IMPLICIT DOUBLE PRECISION ( a-h, o-z )
 
-      INTEGER :: status
+      INTEGER :: status, m, n, mxm1, mxmc, mxgr, mxf, mxiws, mxws, nout
+      INTEGER :: iprint, kmax, maxf, max_iter, mlp, len_iws, len_ws, mc
+      INTEGER :: maxgr, maxsc, maxu, maxiu, maxla, maxg, maxa, nv, ipeq
+      INTEGER :: nnzj, ifail, nout1, itn, nft, ngt, kk, ll, kkk, lll
+      INTEGER :: iter, npv, ngr, ninf, k
       INTEGER, PARAMETER :: input = 7
       INTEGER, PARAMETER :: mbar = 5
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: iws
+      DOUBLE PRECISION :: rho, htol, rgtol, ainfty, fmin, f, h, ubd
+      DOUBLE PRECISION :: dnorm, rgnorm, hJt, eps, tol, emin, hJ, vstep
       DOUBLE PRECISION :: v( mbar )
       DOUBLE PRECISION :: CPU( 2 ), CALLS( 7 )
       DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: x, bl, bu, al
       DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: ws
       CHARACTER, allocatable, dimension( : ) :: cstype
       CHARACTER ( len = 10 ) :: pname
-      CHARACTER :: ch
+C     CHARACTER :: ch
 
       COMMON / epsc / eps, tol, emin
       COMMON / defaultc / ainfty, ubd, mlp, mxf
@@ -46,7 +52,7 @@ C  Revised for CUTEst, Nick Gould, January 2013
 C  open the relevant data input file
 
       OPEN( input, FILE = 'OUTSDIF.d', FORM = 'FORMATTED',
-     *      STATUS = 'OLD' )
+     &      STATUS = 'OLD' )
       REWIND( input )
 
 C  compute problem dimensions
@@ -58,13 +64,13 @@ C  compute problem dimensions
 C  allocate space 
 
       ALLOCATE( x( n + m ), bl( n + m ), bu( n + m ), al( n + m ),
-     *          cstype( m ), STAT = status )
+     &          cstype( m ), STAT = status )
       if ( status /= 0 ) GO TO 990
 
 C   read FILTERSD.SPC parameter file (or use defaults)
 
       CALL READPAR( iprint, kmax, maxf, max_iter, mlp, len_iws, len_ws,
-     *              nout, rho, htol, rgtol, maxgr, maxsc, ainfty )
+     &              nout, rho, htol, rgtol, maxgr, maxsc, ainfty )
 
       IF ( kmax < 0 ) kmax = n
       mxmc = maxsc
@@ -94,8 +100,8 @@ C  call the optimization package
 
    10 CONTINUE
       CALL filterSD( n, m, x, al, f, fmin, cstype, bl, bu, ws, iws, v, 
-     *               nv, maxa, maxla, maxu, maxiu, kmax, maxg, rho, 
-     *               htol, rgtol, max_iter, iprint, nout, ifail )
+     &               nv, maxa, maxla, maxu, maxiu, kmax, maxg, rho, 
+     &               htol, rgtol, max_iter, iprint, nout, ifail )
 
       IF ( ifail .eq. 4 .AND. h .gt. ubd ) THEN
         ubd = 11.D-1 * h
@@ -104,13 +110,13 @@ C  call the optimization package
 
       CALL CUTEST_creport( status, CALLS, CPU )
 
-      OPEN( 99, STATUS = 'old', ERR = 998 )
-  997 CONTINUE
-      READ( 99, *, END = 999 ) ch
-      GO TO 997
-  998 CONTINUE
-      OPEN( 99 )
-  999 CONTINUE
+C     OPEN( 99, STATUS = 'old', ERR = 998 )
+C 997 CONTINUE
+C     READ( 99, *, END = 999 ) ch
+C     GO TO 997
+C 998 CONTINUE
+C     OPEN( 99 )
+C 999 CONTINUE
 
 C     nout1 = 99
       nout1 = 0
@@ -118,23 +124,23 @@ C     nout1 = 99
         IF ( ifail .eq. 0 ) THEN
           IF ( ABS( f ) .lt. 1.D5 .and. ABS( f ) .ge. 1.D0 ) THEN
             WRITE( nout1, 1111) 
-     *        pname, n, m, f, h, rgnorm, k, itn, nft, ngt
+     &        pname, n, m, f, h, rgnorm, k, itn, nft, ngt
           ELSE
             WRITE( nout1, 2222 ) 
-     *        pname, n, m, f, h, rgnorm, k, itn, nft, ngt
+     &        pname, n, m, f, h, rgnorm, k, itn, nft, ngt
           END IF
         ELSE IF ( ifail .EQ. 3 )THEN
           WRITE( nout1, 3333 ) 
-     *      pname, n, m, hJt, h, rgnorm, k, itn, nft, ngt, ifail
+     &      pname, n, m, hJt, h, rgnorm, k, itn, nft, ngt, ifail
         ELSE
           WRITE( nout1, 3333 ) 
-     *      pname, n, m, f, h, rgnorm, k, itn, nft, ngt, ifail
+     &      pname, n, m, f, h, rgnorm, k, itn, nft, ngt, ifail
         END IF
       END IF
 
       IF ( nout .GT. 0 )
-     *  WRITE ( nout, 2000 ) pname, n, m, CALLS( 1 ), CALLS( 2 ), 
-     *   CALLS( 5 ), CALLS( 6 ), ifail, f, CPU( 1 ), CPU( 2 )
+     &  WRITE ( nout, 2000 ) pname, n, m, CALLS( 1 ), CALLS( 2 ), 
+     &   CALLS( 5 ), CALLS( 6 ), ifail, f, CPU( 1 ), CPU( 2 )
 
       DEALLOCATE( x, bl, bu, al, CSTYPE, iws, ws, STAT = status )
       CALL CUTEST_cterminate( status )
@@ -142,7 +148,7 @@ C     nout1 = 99
 
   910 CONTINUE
       WRITE( 6,  "( ' CUTEst error, status = ', i0, ', stopping' )") 
-     *   status
+     &   status
       STOP
 
   990 CONTINUE
@@ -152,43 +158,45 @@ C     nout1 = 99
 C  Non-executable statements
 
  2000 FORMAT( /, 24('*'), ' CUTEst statistics ', 24('*') //
-     *    ,' Package used            :  filterSD',    /
-     *    ,' Problem                 :  ', A10,    /
-     *    ,' # variables             =      ', I10 /
-     *    ,' # constraints           =      ', I10 /
-     *    ,' # objective functions   =        ', F8.2 /
-     *    ,' # objective gradients   =        ', F8.2 / 
-     *    ,' # constraints functions =        ', F8.2 /
-     *    ,' # constraints gradients =        ', F8.2 /
-     *    ,' Exit code               =      ', I10 /
-     *    ,' Final f                 = ', E15.7 /
-     *    ,' Set up time             =      ', 0P, F10.2, ' seconds' /
-     *    ,' Solve time              =      ', 0P, F10.2, ' seconds' //
-     *     66('*') / )
+     &    ,' Package used            :  filterSD',    /
+     &    ,' Problem                 :  ', A10,    /
+     &    ,' # variables             =      ', I10 /
+     &    ,' # constraints           =      ', I10 /
+     &    ,' # objective functions   =        ', F8.2 /
+     &    ,' # objective gradients   =        ', F8.2 / 
+     &    ,' # constraints functions =        ', F8.2 /
+     &    ,' # constraints gradients =        ', F8.2 /
+     &    ,' Exit code               =      ', I10 /
+     &    ,' Final f                 = ', E15.7 /
+     &    ,' Set up time             =      ', 0P, F10.2, ' seconds' /
+     &    ,' Solve time              =      ', 0P, F10.2, ' seconds' //
+     &     66('*') / )
 
  1111 FORMAT( A9, I4, I5, ' ', G14.7, ' ', E9.3, E10.3, 2I4, 2I6 )
  2222 FORMAT( A9, I4, I5, ' ', E14.6, ' ', E9.3, E10.3, 2I4, 2I6 )
  3333 FORMAT( A9, I4, I5, ' ', E14.6, ' ', E9.3, E10.3, 2I4, 2I6, 
-     *       ' fail', I2 )
+     &       ' fail', I2 )
       END
 
 C  initialization subroutine
 
       SUBROUTINE INITIALIZE( n, m, nnzj, x, bl, bu, ws, iws, len_iws )
       IMPLICIT DOUBLE PRECISION (a-h, o-z)
-      DIMENSION x(*), bl(*), bu(*), ws(*), iws(len_iws)
+      INTEGER :: n, m, nnzj, len_iws
+      INTEGER :: iws(len_iws)
+      DOUBLE PRECISION :: x(*), bl(*), bu(*), ws(*)
       CHARACTER ( len = 10 ) pname
       LOGICAL :: equatn(m),  linear(m)
       INTEGER, PARAMETER :: input = 7
       INTEGER, PARAMETER :: io_buffer = 11
-      INTEGER :: status
+      INTEGER :: status, maxa, ip, i, j, k, lj
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: iuser
       COMMON / pnamec / pname
       COMMON / maxac / maxa
 
       CALL CUTEST_csetup(status, input, 6, io_buffer, n, m, x, bl, bu,
-     *                   ws,bl(n+1), bu(n+1), equatn, linear,
-     *                   0, 0, 0 )
+     &                   ws,bl(n+1), bu(n+1), equatn, linear,
+     &                   0, 0, 0 )
       IF ( status /= 0 ) GO TO 910
 
       CALL CUTEST_probname( status, pname )
@@ -207,7 +215,7 @@ C  Note nonzero column indices are in ascending order
 C  followed by n zero column indices (objective function)
 
       CALL CUTEST_csgr( status, n, m, x, x(n+1), .FALSE.,
-     *                  nnzj, lj, ws, iuser, iws( 1 ) )
+     &                  nnzj, lj, ws, iuser, iws( 1 ) )
       IF ( status /= 0 ) GO TO 910
 
 C  iws partitions -
@@ -254,7 +262,7 @@ C  iws( 3 * nnzj + 4 : 3 * nnzj + m + 3 ) = n + row pointer start
 
   910 CONTINUE
       WRITE( 6,  "( ' CUTEst error, status = ', i0, ', stopping' )") 
-     *   status
+     &   status
       STOP
 
   990 CONTINUE
@@ -266,13 +274,16 @@ C  function and constraint evaluation routine
 
       SUBROUTINE FUNCTIONS( n, m, x, f, c, user, iuser )
       IMPLICIT DOUBLE PRECISION (a-h, o-z)
-      DIMENSION x(*), c(*), user(*), iuser(*)
+      INTEGER :: n, m
+      DOUBLE PRECISION :: f
+      INTEGER :: iuser(*)
+      DOUBLE PRECISION :: x(*), c(*), user(*)
       INTEGER :: status
 
       CALL CUTEST_cfn(status, n, m, x, f, c)
       IF ( status /= 0 ) THEN
         write( 6, "( ' CUTEst error, status = ',  i0, ',  stopping' )") 
-     *     status
+     &     status
         STOP
       END IF
       RETURN
@@ -282,15 +293,17 @@ C  function and constraint gradients evaluation routine
 
       SUBROUTINE GRADIENTS( n, m, x, a, user, iuser )
       IMPLICIT DOUBLE PRECISION( a-h, o-z )
-      DIMENSION x(*), a(*), user(*), iuser(*)
-      INTEGER :: status
+      INTEGER :: n, m
+      INTEGER :: iuser(*)
+      DOUBLE PRECISION :: x(*), a(*), user(*)
+      INTEGER :: status, i, nnzj, maxa
       COMMON / maxac / maxa
 
       CALL CUTEST_csgr( status, n, m, x, x( n + 1 ), .false., 
-     *                  nnzj, maxa, a, iuser, iuser( maxa + 1 ) )
+     &                  nnzj, maxa, a, iuser, iuser( maxa + 1 ) )
       IF ( status /= 0 ) THEN
         write( 6, "( ' CUTEst error, status = ', i0, ', stopping' )") 
-     *     status
+     &     status
         STOP
       END IF
 C     print 4, 'a(ij) =', (a(k), k=1, nnzj)
@@ -310,8 +323,8 @@ C   4 format(A/(5E15.7))
 
 C  extracted and modified from filterSQP
 
-      SUBROUTINE READPAR( iprint, kmax, maxf, maxiter, mlp, mxiws, mxws, 
-     *                    nout, rho, htol, rgtol, maxgr, maxsc, ainfty )
+      SUBROUTINE READPAR( iprint, kmax, maxf, maxiter, mlp, mxiws, mxws,
+     &                    nout, rho, htol, rgtol, maxgr, maxsc, ainfty )
 
       IMPLICIT NONE
 

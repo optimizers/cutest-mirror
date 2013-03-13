@@ -818,7 +818,7 @@ C#include "../../algencan/hessdat.com"
       include "cutest.com"
 
 C     LOCAL SCALARS
-      integer col,i,lin, status
+      integer col,i,lin
       double precision val
 
       flag = 0
@@ -916,7 +916,7 @@ C#include "../../algencan/dim.par"
       include "cutest.com"
 
 C     LOCAL SCALARS
-      integer dum2,fu2,fun,i,jcnnztmp,sind,var, status
+      integer fu2,fun,i,jcnnztmp,sind,var, status
 
 C     LOCAL ARRAYS
       double precision dum3(1)

@@ -77,7 +77,7 @@ CCUTESTS = $(LCS)(csetup.o) $(LCS)(cdimen.o) $(LCS)(cdimse.o) $(LCS)(cdimsh.o) \
            $(LCS)(cshc.o) $(LCS)(cish.o) $(LCS)(cjprod.o) $(LCS)(cstats.o) \
            $(LCS)(csgr.o) $(LCS)(csgreh.o) $(LCS)(csgrsh.o) $(LCS)(chprod.o) \
            $(LCS)(chcprod.o) $(LCS)(creport.o) $(LCS)(connames.o) \
-           $(LCS)(cterminate.o) 
+           $(LCS)(cterminate.o) $(LCS)(lqp.o) 
 
 BASICD = $(LCD)(cutest.o) $(LCD)(probname.o) $(LCD)(varnames.o) \
          $(LCD)(newthread.o) $(LCD)(problem.o) $(LCD)(fortran_ops.o) \
@@ -97,7 +97,7 @@ CCUTESTD = $(LCD)(csetup.o) $(LCD)(cdimen.o) $(LCD)(cdimse.o) $(LCD)(cdimsh.o) \
            $(LCD)(cshc.o) $(LCD)(cish.o) $(LCD)(cjprod.o) $(LCD)(cstats.o) \
            $(LCD)(csgr.o) $(LCD)(csgreh.o) $(LCD)(csgrsh.o) $(LCD)(chprod.o) \
            $(LCD)(chcprod.o) $(LCD)(creport.o) $(LCD)(connames.o) \
-           $(LCD)(cterminate.o) 
+           $(LCD)(cterminate.o)  $(LCD)(lqp.o) 
 
 CUTESTS = $(BASICS) $(UCUTESTS) $(CCUTESTS)
 CUTESTD = $(BASICD) $(UCUTESTD) $(CCUTESTD)
@@ -617,6 +617,18 @@ $(LC)(cterminate.o): ../tools/cterminate.f90
                    $(FORTRAN) -o cterminate.o $(FFLAGSN) cterminate.f90 )
 	cd $(OBJ); $(ARR) cterminate.o; $(RM) cterminate.f90 cterminate.o
 #	$(MVMODS)
+	@printf '[ OK ]\n'
+
+lqp.o: $(LC)(lqp.o)
+
+$(LC)(lqp.o): ../tools/lqp.f90
+	@printf ' %-9s %-15s\t\t' "Compiling" "lqp" 
+	$(SED) -f $(SEDS) ../tools/lqp.f90 > $(OBJ)/lqp.f90
+	cd $(OBJ); $(FORTRAN) -o lqp.o $(FFLAGS) lqp.f90 \
+                || ( printf ' %-26s' "=> Disabling optimization " ; \
+                   $(FORTRAN) -o lqp.o $(FFLAGSN) lqp.f90 )
+	cd $(OBJ); $(ARR) lqp.o; $(RM) lqp.f90 lqp.o
+	$(MVMODS)
 	@printf '[ OK ]\n'
 
 usetup.o: $(LC)(usetup.o)
