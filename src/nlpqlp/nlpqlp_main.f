@@ -87,8 +87,8 @@ C  Allocate suitable arrays
 C  Set up the data structures necessary to hold the group partially
 C  separable function.
 
-      CALL CUTEST_csetup( status, input, out, io_buffer, 
-     &                    n, m, X( : n, 1 ), X_l, X_u,                    
+      CALL CUTEST_csetup( status, input, out, io_buffer,
+     &                    n, m, X( : n, 1 ), X_l, X_u,
      &                    Y, C_l, C_u, EQUATN, LINEAR, 1, 0, 0 )
       IF ( status /= 0 ) GO TO 910
       DEALLOCATE( LINEAR )
@@ -120,7 +120,7 @@ C  Allocate more arrays
       lkwa = n + 25
       lactiv = 2 * m_total + 10
       la1 = MAX( m_total, 1 )
-      ALLOCATE( U( lu ), CON( m_total, l_par ), A( la1, n1 ), WA( lwa ), 
+      ALLOCATE( U( lu ), CON( m_total, l_par ), A( la1, n1 ), WA( lwa ),
      &          KWA( lkwa ), ACTIVE( lactiv ), STAT = alloc_stat )
       IF ( alloc_stat /= 0 ) GO TO 990
 
@@ -255,12 +255,3 @@ C  Non-executable statements
      &     66('*') / )
 
       END
-
-
-
-
-
-
-
-
-

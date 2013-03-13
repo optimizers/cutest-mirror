@@ -262,7 +262,13 @@ static int spec = 0;
 	}
 
 	/* Determine number of nonzeros in Hessian of Lagrangian */
-	CDIMSH( &CUTEst_nnzh );
+	CUTEST_cdimsh( &status, &CUTEst_nnzh );
+
+        if( status ) {
+             printf("** CUTEst error, status = %d, aborting\n", status);
+             exit(status);
+    	 }
+
 
 	if( CUTEst_nnzh > 0 )
 	{
@@ -457,7 +463,7 @@ static int spec = 0;
 	printf( "# Eval H(x) \t%-6d\n", count_h );
 										
 	/* Get CUTEst statistics */
-	CUTEST_creprt( &status, calls, cpu );
+	CUTEST_creport( &status, calls, cpu );
 
   	if( status ) {
            printf("** CUTEst error, status = %d, aborting\n", status);

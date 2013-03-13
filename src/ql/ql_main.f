@@ -15,7 +15,7 @@ C  Set up parameters, variables and arrays required by constrained tools
       INTEGER, PARAMETER :: input = 55, indr = 46, out = 6
       INTEGER, PARAMETER :: io_buffer = 11
       INTEGER :: liwork, lwork, i, j, alloc_stat, status
-      INTEGER :: n, m, m_e, iprint, ifail, lu, la1, lh1, lj1
+      INTEGER :: n, m, m_e, iprint, ifail, lu, la1, lh1, lj1, m_total
       DOUBLE PRECISION :: f, eps, t
       DOUBLE PRECISION, PARAMETER :: zero = 0.0D+0, half = 5.0D-1
       DOUBLE PRECISION, PARAMETER :: infinity = 1.0D+19
