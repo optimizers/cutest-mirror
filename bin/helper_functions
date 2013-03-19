@@ -17,15 +17,20 @@ yesno_default_yes() {
 
 warning() {
     # The line below is output in light red.
-    echo -e " \0033[1;31mWarning: $1 \0033[00m"
+    echo -e " \0033[0;31;47mWARNING: $1 \0033[00m"
 }
 
 error() {
     # The line below is output in bright red.
-    echo -e " \0033[0;31mError: $1 \0033[00m"
+    echo -e "\0033[1;31;47mERROR: $1 \0033[00m"
 }
 
 success() {
-    # The line below is output in green.
-    echo -e " \0033[0;32mSuccess: $1 \0033[00m"
+    # The line below is output in bright green.
+    echo -e " \0033[0;32;47mSuccess: $1 \0033[00m"
+}
+
+message() {
+    # The line below is output in blue.
+    echo -e " \0033[0;34;47mMessage: $1 \0033[00m"
 }

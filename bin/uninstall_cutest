@@ -79,11 +79,12 @@ while [[ $finished != 'true' ]]; do
 
     #if [[  $YESNO == 'Y'  ]]; then
     if [[ $? != 0 ]]; then
-
         echo " Removing object files and libraries ... "
         \rm -f -r $CUTEST/objects/$VERSION
         echo " Removing module information files ... "
         \rm -f -r $CUTEST/modules/$VERSION
+        echo " Removing non-standard package files ... "
+        \rm -f -r $CUTEST/packages/$VERSION
         echo " Removing AMPL executable ... "
         \rm -f -r $CUTEST/ampl_bin/$VERSION
         echo " Removing environment information file ... "
