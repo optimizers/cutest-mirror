@@ -189,6 +189,16 @@ tools_double:
 	( cd tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      cutest PRECIS=double PWD=$(PWD)/tools )
 
+#  all tools and their matlab interface
+
+all_matlab: all_matlab_$(PRECIS)
+all_matlab_single: tools_single
+	( cd matlab ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                       all PRECIS=single PWD=$(PWD)/matlab )
+all_matlab_double: tools_double
+	( cd matlab ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                       all PRECIS=double PWD=$(PWD)/matlab )
+
 # all interface tests
 
 test: test_$(PRECIS)

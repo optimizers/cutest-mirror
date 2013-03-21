@@ -1,42 +1,73 @@
+## If you are using the C shell (csh) or the enhanced C shell (tcsh),
+## what you need to add to your .cshrc file looks similar to the following:
 
-##
-## CUTEr
-##
-## If you are using the C shell (csh) or the
-## enhanced C shell (tcsh),
-## what you need to add to your .cshrc file
-## looks similar to the following.
-##
+## for precise locations, see the output from the install script
 
-##	This sets the environment variable CUTER
-##	(uncomment as appropriate)
-## setenv CUTER /usr/local/Cuter
-## setenv CUTER /usr/share/Cuter
-## setenv CUTER /opt/Cuter
-setenv CUTER ${HOME}/Cuter
+## -----------------------
+## SIFDecode (if required)
+## -----------------------
 
-##     This sets the environment variable MYCUTER
-##     (uncomment as appropriate)
-## setenv MYCUTER ${HOME}/CUTEr.large.sun.sol.f90
-## setenv MYCUTER ${HOME}/mycuter
-## setenv MYCUTER ${HOME}/Cuter4Solaris
-setenv MYCUTER  ${CUTER}/CUTEr.large.sun.sol.f90
+## This sets the environment variable SIFDECODE to the main SIFDecode directory
+## NB. This must correspond to the output from the install script
 
-##     This sets the environment variable MASTSIF
-##     pointing to your source of SIF problems.
-##     (uncomment as appropriate)
-## setenv MASTSIF ${HOME}/Optimisation/Problems/mastsif
-## setenv MASTSIF /usr/share/optimization/sif
-setenv MASTSIF ${CUTER}/common/sif
+setenv SIFDECODE ${HOME}/sifdecode
 
-##     This updates the environment variable MATLABPATH
-setenv MATLABPATH ${MYCUTER}/double/bin:${MYCUTER}/single/bin:${CUTER}/common/src/matlab
+## This updates the search path for manual pages
 
-##     This updates the library path
-setenv LD_LIBRARY_PATH $MYCUTER/double/lib:$MYCUTER/single/lib:${LD_LIBRARY_PATH}
+setenv MANPATH ${SIFDECODE}/man:${MANPATH}
 
-##     This updates the search path for manual pages
-setenv MANPATH ${CUTER}/common/man:${MANPATH}
+## This updates the search path for executables
 
-##     This updates the search path for executables
-set path=(${CUTER} ${MYCUTER}/bin $path)
+set path=(${SIFDECODE}/bin $path)
+
+## --------------------
+## CUTEst (if required)
+## --------------------
+
+## This sets the environment variable CUTEST to the main CUTEst directory
+## NB. This must correspond to the output from the install script
+
+setenv CUTEST ${HOME}/cutest
+
+## This updates the search path for manual pages
+
+setenv MANPATH ${CUTEST}/man:${MANPATH}
+
+## This updates the search path for executables
+
+set path=(${CUTEST}/bin $path)
+
+## This updates the environment variable MATLABPATH
+
+setenv MATLABPATH ${CUTEST}/src/matlab:$(MATLABPATH)
+
+## ---------------------
+## GALAHAD (if required)
+## ---------------------
+
+## This sets the environment variable GALAHAD to the main GALAHAD directory
+## NB. This must correspond to the output from the install script
+
+setenv GALAHAD ${HOME}/galahad
+
+## This updates the search path for manual pages
+
+setenv MANPATH ${GALAHAD}/man:${MANPATH}
+
+## This updates the search path for executables
+
+set path=(${GALAHAD}/bin $path)
+
+## This updates the environment variable MATLABPATH
+
+setenv MATLABPATH ${GALAHAD}/src/matlab:$(MATLABPATH)
+
+## -------------------------------
+## SIF test problems (if required)
+## -------------------------------
+
+## This sets the environment variable MASTSIF pointing to your source of 
+## SIF problems
+
+setenv MASTSIF ${SIFDECODE}/sif
+

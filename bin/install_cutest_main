@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -vx
 
 # partial build script for cutest
 # version for Bourne/bash shell
@@ -8,13 +8,36 @@
 # N. Gould, D. Orban & Ph. Toint
 # ( Last modified on 18 March 2013 at 13:45 GMT )
 
+#  function to compile selected subset
+
+cutest_compile () { 
+  echo -e "\n Installing the $PREC precision version"
+  MACROS="PRECIS=$PREC PWD=$CUTEST/src CUTEST=$CUTEST"
+
+  if (( $MATLAB_REQUIRED )) && [[ $PREC == 'double' ]] ; then
+    if (( $DRYRUN )) ; then
+      echo "$MAKE $OPTIONS all all_matlab $MACROS"
+    else
+      $MAKE $OPTIONS all all_matlab $MACROS
+      [[ $? != 0 ]] && exit 2
+    fi
+  else
+    if (( $DRYRUN )) ; then
+      echo "$MAKE $OPTIONS all $MACROS"
+    else
+      $MAKE $OPTIONS all $MACROS
+      [[ $? != 0 ]] && exit 2
+    fi
+  fi
+}
+
 export CUTEST=`dirs -l`
 export CUTEST=`echo $CUTEST | $SED 's"/tmp_mnt""'`
 
 if [[ -e $CUTEST/versions/$VERSION ]]; then
     warning " There is already an installed CUTEST version $VERSION"
     yesno_default_no ' Do you wish to proceed ... existing version will be destroyed'
-    [[ $? != 0 ]] && exit 4
+    [[ $? != 1 ]] && exit 4
 fi
 
 #  create architecture-dependent object and module directories
@@ -62,14 +85,8 @@ MOD='$CUTEST/modules/'$VERSION'/$PRECIS'
 FFLAGS="$LIBCMD"' '`eval echo $MODCMD`' '"$F90"
 echo 'FFLAGS="'$FFLAGS' '$OPENMP'"'                                >> $SYSFILE
 echo 'PROBFLAGS="'$FFLAGS' '$BASIC' '$OPTIMIZATION' '$F77' "'      >> $SYSFILE
-#echo 'CUTESTUSED="'$CUTESTUSED'"'                                 >> $SYSFILE
 echo 'BLAS="'$BLAS'"'                                              >> $SYSFILE
 echo 'LAPACK="'$LAPACK'"'                                          >> $SYSFILE
-#echo 'HSL="'$HSL'"'                                                >> $SYSFILE
-#echo 'METIS="'$METIS'"'                                            >> $SYSFILE
-#echo 'PARDISO="'$PARDISO'"'                                        >> $SYSFILE
-#echo 'WSMP="'$WSMP'"'                                              >> $SYSFILE
-#echo 'PLPLOT="'$PLPLOT'"'                                          >> $SYSFILE
 
 #  write out the cutest/makefile/ file for this architecture
 
@@ -94,11 +111,11 @@ echo ' '                                                           >> $MAKEFILE
 echo '#  Directory for binaries'                                   >> $MAKEFILE
 echo ' '                                                           >> $MAKEFILE
 echo 'PRECIS = double'                                             >> $MAKEFILE
-echo 'OBJ = $(CUTEST)/objects/$(VERSION)/$(PRECIS)'             >> $MAKEFILE
-echo 'OBJS = $(CUTEST)/objects/$(VERSION)/single'               >> $MAKEFILE
-echo 'OBJD = $(CUTEST)/objects/$(VERSION)/double'               >> $MAKEFILE
-echo 'MOD = $(CUTEST)/modules/$(VERSION)/$(PRECIS)'             >> $MAKEFILE
-echo 'SEDS = $(CUTEST)/seds/$(PRECIS).sed'                      >> $MAKEFILE
+echo 'OBJ = $(CUTEST)/objects/$(VERSION)/$(PRECIS)'                >> $MAKEFILE
+echo 'OBJS = $(CUTEST)/objects/$(VERSION)/single'                  >> $MAKEFILE
+echo 'OBJD = $(CUTEST)/objects/$(VERSION)/double'                  >> $MAKEFILE
+echo 'MOD = $(CUTEST)/modules/$(VERSION)/$(PRECIS)'                >> $MAKEFILE
+echo 'SEDS = $(CUTEST)/seds/$(PRECIS).sed'                         >> $MAKEFILE
 echo 'MVMODS = '"$MVMODS"                                          >> $MAKEFILE
 echo ' '                                                           >> $MAKEFILE
 echo '#  Compiler options'                                         >> $MAKEFILE
@@ -122,7 +139,6 @@ echo 'F95SUFFIX  = '$F95SUFFIX                                     >> $MAKEFILE
 echo 'TIMER = '$TIMER                                              >> $MAKEFILE
 echo 'NOT95 = '$NOT95                                              >> $MAKEFILE
 echo 'NOT64 = '$NOT64                                              >> $MAKEFILE
-#echo 'PLPLOTUSED = '$PLPLOTUSED                                   >> $MAKEFILE
 echo ' '                                                           >> $MAKEFILE
 echo 'AMPLDIR   = '$AMPLLIBDIR                                     >> $MAKEFILE
 echo 'CC        = '$CC                                             >> $MAKEFILE
@@ -138,12 +154,6 @@ echo '#  Libraries'                                                >> $MAKEFILE
 echo ' '                                                           >> $MAKEFILE
 echo 'BLAS = '$BLAS                                                >> $MAKEFILE
 echo 'LAPACK = '$LAPACK                                            >> $MAKEFILE
-#echo 'HSL = '$HSL                                                 >> $MAKEFILE
-#echo 'METIS = '$METIS                                             >> $MAKEFILE
-#echo 'PARDISO = '$PARDISO                                         >> $MAKEFILE
-#echo 'WSMP = '$WSMP                                               >> $MAKEFILE
-#echo 'PLPLOT = '$PLPLOT                                           >> $MAKEFILE
-#echo 'CUTESTUSED = '$CUTESTUSED                                   >> $MAKEFILE
 echo 'CUTESTUSED = '                                               >> $MAKEFILE
 echo ' '                                                           >> $MAKEFILE
 echo '#  Shell used'                                               >> $MAKEFILE
@@ -152,7 +162,7 @@ echo 'BINSHELL = '$BINSHELL                                        >> $MAKEFILE
 echo ' '                                                           >> $MAKEFILE
 echo '#  Set directories for optional packages'                    >> $MAKEFILE
 echo ' '                                                           >> $MAKEFILE
-echo 'include $(CUTEST)/src/makedefs/packages'                  >> $MAKEFILE
+echo 'include $(CUTEST)/src/makedefs/packages'                     >> $MAKEFILE
 echo ' '                                                           >> $MAKEFILE
 echo '#  Body of makefile'                                         >> $MAKEFILE
 echo ' '                                                           >> $MAKEFILE
@@ -160,54 +170,35 @@ echo 'include $(PWD)/makemaster'                                   >> $MAKEFILE
 
 #  optionally compile the selected packages
 
-yesno_default_yes ' Do you now wish to compile the package subset ...'
+yesno_default_yes ' Would you like to compile CUTEst ...'
 
 if [[ $? != 0 ]]; then
   cd $CUTEST/src/
-
-  echo -e '\n The package subset may be installed in (S)ingle or (D)ouble precision'
-  read -p ' Which precision do you require for the installed subset (D/s) ? ' -r -n 1 PREC;
-  [[ $PREC == [Dd] ]] && PREC='double' || PREC='single'
-
-  echo -e "\nInstalling the $PREC precision version"
   OPTIONS="-s -f $CUTEST/makefiles/$VERSION"
-  MACROS="PRECIS=$PREC PWD=$CUTEST/src CUTEST=$CUTEST"
 
-  if (( $MATLAB_REQUIRED )) && [[ $PREC == 'double' ]] ; then
-    $MAKE $OPTIONS all_matlab $MACROS
-    [[ $? != 0 ]] && exit 2
-  else
-    $MAKE $OPTIONS all $MACROS
-    [[ $? != 0 ]] && exit 2
+  if [[ $GALAHAD_REQPREC == "" ]] ; then
+    echo -e '\n CUTEst may be compiled in (S)ingle or (D)ouble precision or (B)oth.'
+    read -p ' Which precision do you require for the installed subset (D/s/b) ? ' -r -n 1 GALAHAD_REQPREC;
+    if [[ $GALAHAD_REQPREC == "" ]] ; then
+      GALAHAD_REQPREC="D"
+    fi
   fi
+
+  if [[ $GALAHAD_REQPREC == [Ss] ]] ; then
+    PREC='single' 
+  else
+    PREC='double' 
+  fi
+  cutest_compile
 
 #  optionally compile the selected packages in the other precision
 
-  [[ $PREC == 'single' ]] && PREC='double' || PREC='single'
-
-  yesno_default_no "Do you also wish to install the $PREC precision version"
-
-  if [[ $? == 0 ]]; then
-
-    echo -e "\nInstalling the $PREC precision version"
-    MACROS="PRECIS=$PREC PWD=$CUTEST/src CUTEST=$CUTEST"
-
-    if (( $MATLAB_REQUIRED )) && [[ $PREC == 'double' ]] ; then
-      if (( $DRYRUN )) ; then
-        echo "$MAKE $OPTIONS all_matlab $MACROS"
-      else
-        $MAKE $OPTIONS all_matlab $MACROS
-        [[ $? != 0 ]] && exit 2
-      fi
-    else
-      if (( $DRYRUN )) ; then
-        echo "$MAKE $OPTIONS all $MACROS"
-      else
-        $MAKE $OPTIONS all $MACROS
-        [[ $? != 0 ]] && exit 2
-      fi
-    fi
+  if [[ $GALAHAD_REQPREC == [Bb] ]] ; then
+    PREC='single' 
+    cutest_compile
   fi
+  success 'CUTEst successfully installed'
 fi
 
 #exit 0
+
