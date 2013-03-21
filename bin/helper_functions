@@ -3,9 +3,9 @@
 
 yesno_default_no() {
     read -p "$1 (y/N)? " -r -n 1 answer;
-    [[ $answer == [Yy] ]] && retval=0 || retval=1
+    [[ $answer == [Yy] ]] && retval=1 || retval=0
     echo
-    return $retval  # retval=0 means user chose against default option.
+    return $retval  # retval=1 means user chose against default option.
 }
 
 yesno_default_yes() {

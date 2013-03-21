@@ -85,8 +85,6 @@ while [[ $finished != 'true' ]]; do
         \rm -f -r $CUTEST/modules/$VERSION
         echo " Removing non-standard package files ... "
         \rm -f -r $CUTEST/packages/$VERSION
-        echo " Removing AMPL executable ... "
-        \rm -f -r $CUTEST/ampl_bin/$VERSION
         echo " Removing environment information file ... "
         \rm -f -r $CUTEST/bin/sys/$VERSION
         echo " Removing make information file ... "
