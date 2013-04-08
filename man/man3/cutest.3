@@ -111,6 +111,9 @@ evaluate the Hessian of the objective function as a dense matrix.
 .B cutest_ugrdh \fP(unthreaded) and \fBcutest_ugrdh_threaded \fP(threaded)
 evaluate the objective gradient and dense Hessian.
 .TP
+.B cutest_ushp \fP(both unthreaded and threaded)
+evaluate the sparsity pattern of the Hessian of the objective function.
+.TP
 .B cutest_ush \fP(unthreaded) and \fBcutest_ush_threaded \fP(threaded)
 evaluate the Hessian of the objective function as a sparse matrix.
 .TP
@@ -200,6 +203,9 @@ an individual constraint as a dense matrix.
 .B cutest_cgrdh \fP(unthreaded) and \fBcutest_cgrdh_threaded \fP(threaded)
 evaluate the constraint Jacobian and Hessian of the Lagrangian function
 as dense matrices.
+.TP
+.B cutest_cshp \fP(both unthreaded and threaded)
+evaluate the sparsity pattern of the Hessian of the Lagrangian function.
 .TP
 .B cutest_csh \fP(unthreaded) and \fBcutest_csh_threaded \fP(threaded)
 evaluate the Hessian of the Lagrangian function as a sparse matrix.

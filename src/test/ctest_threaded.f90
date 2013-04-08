@@ -376,6 +376,13 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
       ALLOCATE( H_val( l_h ), H_row( l_h ), H_col( l_h ), stat = alloc_stat )
       IF ( alloc_stat /= 0 ) GO TO 990
 
+!  compute the sparsity pattern of the Hessian
+
+      WRITE( out, "( ' Call CUTEST_cshp' )" )
+      CALL CUTEST_cshp( status, n, H_ne, l_h, H_row, H_col )
+      IF ( status /= 0 ) GO to 900
+      CALL WRITE_H_sparsity_pattern( out, H_ne, l_h, H_row, H_col )
+
 !  compute the sparse Hessian value
 
       WRITE( out, "( ' CALL CUTEST_csh' )" )
@@ -822,6 +829,30 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
         END DO
       END DO
       END SUBROUTINE WRITE_JT_dense
+
+      SUBROUTINE WRITE_H_sparsity_pattern( out, H_ne, l_h, H_row, H_col )
+      INTEGER :: l_h, H_ne, out
+      INTEGER, DIMENSION( l_h ) :: H_row, H_col
+      INTEGER :: i
+      WRITE( out, "( ' * H(sparse)' )" )
+      WRITE( out, "( ' * ', 4( '    row    col' ) )" )
+      DO i = 1, H_ne, 4
+        IF ( i + 3 <= H_ne ) THEN
+          WRITE( out, "( ' * ',  4( 2I7 ) )" )                                 &
+            H_row( i ), H_col( i ), H_row( i + 1 ), H_col( i + 1 ),            &
+            H_row( i + 2 ), H_col( i + 2 ), H_row( i + 3 ), H_col( i + 3 )
+        ELSE IF ( i + 2 <= H_ne ) THEN
+          WRITE( out, "( ' * ',  3( 2I7 ) )" )                                 &
+            H_row( i ), H_col( i ), H_row( i + 1 ), H_col( i + 1 ),            &
+            H_row( i + 2 ), H_col( i + 2 )
+        ELSE IF ( i + 1 <= H_ne ) THEN
+          WRITE( out, "( ' * ',  2( 2I7 ) )" )                                 &
+            H_row( i ), H_col( i ), H_row( i + 1 ), H_col( i + 1 )
+        ELSE
+          WRITE( out, "( ' * ',  2I7 )" ) H_row( i ), H_col( i )
+        END IF
+      END DO
+      END SUBROUTINE WRITE_H_sparsity_pattern
 
       SUBROUTINE WRITE_H_sparse( out, H_ne, l_h, H_val, H_row, H_col )
       INTEGER :: l_h, H_ne, out
