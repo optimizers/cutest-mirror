@@ -103,9 +103,14 @@
        END SUBROUTINE CUTEST_ugrdh
        
        SUBROUTINE CUTEST_udimsh( cutest_status, nnzh )
-       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
        INTEGER, INTENT( OUT ) :: cutest_status, nnzh
        END SUBROUTINE CUTEST_udimsh
+       
+       SUBROUTINE CUTEST_ushp( cutest_status, n, nnzh, lh, IRNH, ICNH )
+       INTEGER, INTENT( IN ) :: n, lh
+       INTEGER, INTENT( OUT ) :: cutest_status, nnzh
+       INTEGER, INTENT( OUT ), DIMENSION( lh ) :: IRNH, ICNH
+       END SUBROUTINE CUTEST_ushp
        
        SUBROUTINE CUTEST_ush( cutest_status, n, X, nnzh, lh, H, IRNH, ICNH )
        INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
@@ -368,6 +373,12 @@
        SUBROUTINE CUTEST_cdimsh( cutest_status, nnzh )
        INTEGER, INTENT( OUT ) :: cutest_status, nnzh
        END SUBROUTINE CUTEST_cdimsh
+       
+       SUBROUTINE CUTEST_cshp( cutest_status, n, nnzh, lh, IRNH, ICNH )
+       INTEGER, INTENT( IN ) :: n, lh
+       INTEGER, INTENT( OUT ) :: cutest_status, nnzh
+       INTEGER, INTENT( OUT ), DIMENSION( lh ) :: IRNH, ICNH
+       END SUBROUTINE CUTEST_cshp
        
        SUBROUTINE CUTEST_csh( cutest_status, n, m, X, Y,                       &
                               nnzh, lh, H, IRNH, ICNH  )
