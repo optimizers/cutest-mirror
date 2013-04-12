@@ -1190,6 +1190,13 @@
             IF ( alloc_status /= 0 ) THEN 
               bad_alloc = 'POS_in'; GO TO 980 ; END IF
           END IF
+
+          IF ( .NOT. ALLOCATED( H_val ) ) THEN
+            lh_val = MAX( lh_row, lh_col, lh_val )
+            CALL CUTEST_allocate_array( H_val, lh_val, alloc_status )
+            IF ( alloc_status /= 0 ) THEN
+              bad_alloc = 'H_val' ; GO TO 980 ; END IF
+            END IF
         END IF
         LINK_col( : n ) = - 1 ; POS_in_H( : n ) = - 1
         newpt = n
