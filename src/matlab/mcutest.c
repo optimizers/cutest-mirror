@@ -137,7 +137,7 @@ extern "C" {
   void quicksortFollow(mwIndex x[], double follower[],
                        mwIndex first, mwIndex last);
 
-  void quicksort_cutest(mwIndex numbers[], double values[], 
+  void quicksort_cutest(mwIndex numbers[], double values[],
                         mwIndex left, mwIndex right);
 
   int partition(mwIndex y[], double follower[], mwIndex f, mwIndex l);
@@ -358,12 +358,12 @@ extern "C" {
       mexPrintf("Calling [UC]SETUP\n");
 #endif
       if (CUTEst_ncon > 0)
-        CUTEST_csetup( &status, &funit, &iout, &io_buffer, 
+        CUTEST_csetup( &status, &funit, &iout, &io_buffer,
                        &CUTEst_nvar, &CUTEst_ncon, x, bl, bu,
-                       v, cl, cu, equatn, linear, 
+                       v, cl, cu, equatn, linear,
                        &e_order, &l_order, &v_order );
       else
-        CUTEST_usetup( &status, &funit, &iout, &io_buffer, 
+        CUTEST_usetup( &status, &funit, &iout, &io_buffer,
                        &CUTEst_nvar, x, bl, bu );
       if (status != 0) {
           sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
@@ -666,7 +666,7 @@ extern "C" {
       }
       else
         if (nlhs == 1) {
-          CUTEST_cofsg( &status, &CUTEst_nvar, x, f,  &zero,  &zero, 
+          CUTEST_cofsg( &status, &CUTEst_nvar, x, f,  &zero,  &zero,
                         NULL, NULL, &somethingFalse);
           if (status != 0) {
             sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
@@ -675,15 +675,15 @@ extern "C" {
           }
         else {
           nnzgci = CUTEst_nvar;
-          ir = (integer *)mxCalloc(nnzgci, sizeof(integer));
+          ir = mxCalloc(nnzgci, sizeof(integer));
           g = (doublereal *)mxCalloc(nnzgci, sizeof(doublereal));
           CUTEST_cofsg( &status, &CUTEst_nvar, x, f, &nnzgci, &nnzgci, g,
-                        ir, &somethingTrue);
+                        (integer *)ir, &somethingTrue);
           if (status != 0) {
             sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
             mexErrMsgTxt(msgBuf);
           }
-          plhs[1] = SparseVector(CUTEst_nvar, nnzgci, ir, (double *)g);
+          plhs[1] = SparseVector(CUTEst_nvar, nnzgci, (integer *)ir, (double *)g);
 
           mxFree(ir);
           mxFree(g);
@@ -794,10 +794,10 @@ extern "C" {
         }
 
         if (nlhs == 1)         /* Only constraint value is requested */
-          CUTEST_ccifg( &status, &CUTEst_nvar, &icon, x, c, 
+          CUTEST_ccifg( &status, &CUTEst_nvar, &icon, x, c,
                         NULL, &somethingFalse);
         else           /* Constraint value and gradient are requested */
-          CUTEST_ccifg( &status, &CUTEst_nvar, &icon, x, c, 
+          CUTEST_ccifg( &status, &CUTEst_nvar, &icon, x, c,
                         g, &somethingTrue);
       }
       if (status != 0) {
@@ -840,10 +840,10 @@ extern "C" {
       J  = (doublereal *)mxGetData(plhs[1]);
 
       if (nrhs == 2)             /* g = gradient of objective function */
-        CUTEST_cgr( &status, &CUTEst_nvar, &CUTEst_ncon, x, NULL, 
+        CUTEST_cgr( &status, &CUTEst_nvar, &CUTEst_ncon, x, NULL,
             &somethingFalse, g, &somethingFalse, &CUTEst_ncon, &CUTEst_nvar, J);
       else                                /* g = gradient of Lagrangian */
-        CUTEST_cgr( &status, &CUTEst_nvar, &CUTEst_ncon, x, v, 
+        CUTEST_cgr( &status, &CUTEst_nvar, &CUTEst_ncon, x, v,
             &somethingTrue, g, &somethingFalse, &CUTEst_ncon, &CUTEst_nvar, J);
       if (status != 0) {
           sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
@@ -929,7 +929,7 @@ extern "C" {
 
         /* This must be improved ! */
 /*  nnzgci = CUTEst_nnzj > CUTEst_nvar ? CUTEst_nvar : CUTEst_nnzj; */
-        if (CUTEst_nnzj > CUTEst_nvar) 
+        if (CUTEst_nnzj > CUTEst_nvar)
           nnzgci = CUTEst_nvar;
         else
           nnzgci = CUTEst_nnzj;
@@ -939,10 +939,10 @@ extern "C" {
         mexPrintf("iscons::         nvar   = %-d\n",  CUTEst_nvar);
 #endif
 
-        ir = (integer *)mxCalloc(nnzgci, sizeof(integer));
+        ir = mxCalloc(nnzgci, sizeof(integer));
         g = (doublereal *)mxCalloc(nnzgci, sizeof(doublereal));
         CUTEST_ccifsg( &status, &CUTEst_nvar, &icon, x, c, &nnzgci, &nnzgci, g,
-               ir, &somethingTrue);
+                       (integer *)ir, &somethingTrue);
         if (status != 0) {
             sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
             mexErrMsgTxt(msgBuf);
@@ -952,12 +952,12 @@ extern "C" {
         mexPrintf("iir[0] = %-d %f\n", iir[0], g[0]);
         mexPrintf("iir[1] = %-d %f\n", iir[1], g[1]);
         */
-        plhs[1] = SparseVector(CUTEst_nvar, nnzgci, ir, (double *)g);
+        plhs[1] = SparseVector(CUTEst_nvar, nnzgci, (integer *)ir, (double *)g);
 
         mxFree(ir);
         mxFree(g);
 
-        /*        plhs[1] = mxCreateSparse((mwSize)CUTEst_nvar, (mwSize)1, 
+        /*        plhs[1] = mxCreateSparse((mwSize)CUTEst_nvar, (mwSize)1,
                                  (mwSize)nnzgci, mxREAL);
         ir   = mxGetIr(plhs[1]);
         jptr = mxGetJc(plhs[1]);
@@ -1029,10 +1029,10 @@ extern "C" {
       jcol = (integer *)mxCalloc(nnzjplusn, sizeof(integer));
 
       if (nrhs == 2)
-        CUTEST_csgr( &status, &CUTEst_nvar, &CUTEst_ncon, x, NULL, 
+        CUTEST_csgr( &status, &CUTEst_nvar, &CUTEst_ncon, x, NULL,
           &somethingFalse, &nnzjplusn, &nnzjplusn, J, jcol, irow);
       else
-        CUTEST_csgr( &status, &CUTEst_nvar, &CUTEst_ncon, x, v, 
+        CUTEST_csgr( &status, &CUTEst_nvar, &CUTEst_ncon, x, v,
           &somethingTrue, &nnzjplusn, &nnzjplusn, J, jcol, irow);
       if (status != 0) {
           sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
@@ -1391,12 +1391,12 @@ extern "C" {
 #endif
 
         if (jtrans)
-          CUTEST_cgrdh( &status, &CUTEst_nvar, &CUTEst_ncon, x, v, 
-                        &gradf, g, &jtrans, &CUTEst_nvar, &CUTEst_ncon, J, 
+          CUTEST_cgrdh( &status, &CUTEst_nvar, &CUTEst_ncon, x, v,
+                        &gradf, g, &jtrans, &CUTEst_nvar, &CUTEst_ncon, J,
                         &CUTEst_nvar, H);
         else
-          CUTEST_cgrdh( &status, &CUTEst_nvar, &CUTEst_ncon, x, v, 
-                        &gradf, g, &jtrans, &CUTEst_ncon, &CUTEst_nvar, J, 
+          CUTEST_cgrdh( &status, &CUTEst_nvar, &CUTEst_ncon, x, v,
+                        &gradf, g, &jtrans, &CUTEst_ncon, &CUTEst_nvar, J,
                         &CUTEst_nvar, H);
       } else {
         plhs[0] = mxCreateDoubleMatrix(CUTEst_nvar, 1, mxREAL);
@@ -1445,17 +1445,17 @@ extern "C" {
       /* Make enough room for the full Hessian (both triangles) */
       H = (doublereal *)mxCalloc(2*CUTEst_nnzh, sizeof(doublereal));
       irow = (integer *)mxCalloc(2*CUTEst_nnzh, sizeof(integer));
-      jcol = (integer *)mxCalloc(2*CUTEst_nnzh, sizeof(integer)); 
+      jcol = (integer *)mxCalloc(2*CUTEst_nnzh, sizeof(integer));
       /*      H = (doublereal *)mxCalloc(16, sizeof(doublereal));
       irow = (integer *)mxCalloc(16, sizeof(integer));
       jcol = (integer *)mxCalloc(16, sizeof(integer)); */
 
       /* Pretend only one triangle was allocated */
       if (CUTEst_ncon > 0)
-        CUTEST_csh( &status, &CUTEst_nvar, &CUTEst_ncon, x, v, 
+        CUTEST_csh( &status, &CUTEst_nvar, &CUTEst_ncon, x, v,
              &CUTEst_nnzh, &CUTEst_nnzh, H, irow, jcol);
       else
-        CUTEST_ush( &status, &CUTEst_nvar, x, 
+        CUTEST_ush( &status, &CUTEst_nvar, x,
              &CUTEst_nnzh, &CUTEst_nnzh, H, irow, jcol);
 
       if (status != 0) {
@@ -1492,7 +1492,7 @@ mexErrMsgTxt("stop\n");
       plhs[0] = coordToMatlabSparse(CUTEst_nvar, CUTEst_nvar,
                                     CUTEst_nnzh + offdiag_nnzh,
                                     irow, jcol,
-                                    (double *)H); 
+                                    (double *)H);
       mxFree(jcol);
       mxFree(irow);
       mxFree(H);
@@ -1538,10 +1538,10 @@ mexErrMsgTxt("stop\n");
       jcol = (integer *)mxCalloc(nnzh2, sizeof(integer));
 
       if (CUTEst_ncon > 0)
-        CUTEST_cish( &status, &CUTEst_nvar, x, &icon, 
+        CUTEST_cish( &status, &CUTEst_nvar, x, &icon,
                      &nnzhi, &CUTEst_nnzh, H, irow, jcol);
       else
-        CUTEST_ush( &status, &CUTEst_nvar, x, 
+        CUTEST_ush( &status, &CUTEst_nvar, x,
                     &nnzhi, &CUTEst_nnzh, H, irow, jcol);
 
       if (status != 0) {
@@ -1626,7 +1626,7 @@ mexErrMsgTxt("stop\n");
         J = (doublereal *)mxCalloc(nnzjplusn, sizeof(doublereal));
 
         /* Pretend only one triangle of H was allocated */
-        CUTEST_csgrsh( &status, &CUTEst_nvar, &CUTEst_ncon, x, v, &gradf, 
+        CUTEST_csgrsh( &status, &CUTEst_nvar, &CUTEst_ncon, x, v, &gradf,
                 &nnzjplusn, &nnzjplusn, J, jcol2, irow2, &CUTEst_nnzh,
                 &CUTEst_nnzh, H, irow, jcol);
         if (status != 0) {
@@ -1730,7 +1730,7 @@ mexErrMsgTxt("stop\n");
   /* -------------------------------------------------------------------------- */
   /* Helper functions */
 
-  /* Convert a sparse vector to sparse matlab format. 
+  /* Convert a sparse vector to sparse matlab format.
    */
   mxArray *SparseVector(int n, int nnz, integer *index, double *val) {
 
@@ -1906,7 +1906,7 @@ mexErrMsgTxt("stop\n");
     return;
   }
 
-  void quicksort_cutest(mwIndex numbers[], double values[], 
+  void quicksort_cutest(mwIndex numbers[], double values[],
                         mwIndex low, mwIndex up) {
     int current, low_current, up_current;
     double dcurrent;
@@ -1943,7 +1943,7 @@ mexErrMsgTxt("stop\n");
       quicksort_cutest(numbers, values, low, current-1);
     if (up > current)
       quicksort_cutest(numbers, values, current+1, up);
-  }  
+  }
 
 #ifdef __cplusplus
 }
