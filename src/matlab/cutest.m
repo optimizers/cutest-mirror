@@ -11,6 +11,8 @@
 % cutest_obj      uofg / cofg         Evaluate objective function value
 %                                     and its gradient if requested
 %
+% cutest_grad     ugr / cgr           Evaluate objective gradient
+%
 % cutest_objcons  cfn                 Evaluate objective and constraints
 %
 % cutest_cons     ccfg / ccifg        Evaluate constraint bodies
@@ -68,7 +70,7 @@
 %                                     objective function), or of the
 %                                     objective if problem is
 %                                     unconstrained, in sparse format
-% cutest_terminate uterminate / 
+% cutest_terminate uterminate /
 %                  cterminate         Remove existing internal workspace
 % --------------------------------------------------------------------------
 %
