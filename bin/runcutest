@@ -12,7 +12,9 @@ if [[ ${CUTEST+set} != 'set' ]]; then
     exit 1
 fi
 
-. $CUTEST/bin/helper_functions
+. $CUTEST/bin/cutest_envcheck
+[[ $? != 0 ]] && exit $?
+. $ARCHDEFS/bin/helper_functions
 
 # Default settings
 
@@ -275,7 +277,7 @@ Initialize_Settings
 Parse_Arguments "$@"
 
 # Check that environment is correctly defined
-${CUTEST}/bin/cutest_envcheck
+. ${CUTEST}/bin/cutest_envcheck
 [[ $? != 0 ]] && exit $?
 
 if [[ -z "$ARCH" ]]; then
