@@ -8,7 +8,14 @@
 # N. Gould, D. Orban & Ph. Toint
 # ( Last modified on 20 October 2012 at 11:00 GMT )
 
-. bin/helper_functions
+if [[ ! -e ./install_cutest ]]; then
+    echo 'Error: This script must be run from the top-level CUTEst directory.'
+    exit 1
+fi
+. ./bin/cutest_envcheck
+[[ $? != 0 ]] && exit $?
+
+. $ARCHDEFS/bin/helper_functions
 
 #  check input arguments (if any)
 

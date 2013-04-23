@@ -8,7 +8,12 @@
 # N. Gould, D. Orban & Ph. Toint
 # ( Last modified on 20 October 2012 at 11:00 GMT )
 
-. bin/helper_functions
+if [[ ! -e ./install_cutest ]]; then
+    echo 'Error: This script must be run from the top-level CUTEst directory.'
+    exit 1
+fi
+
+. $ARCHDEFS/bin/helper_functions
 
 #  check input arguments (if any)
 
@@ -16,23 +21,6 @@ if [ $# != 0 ]; then
    echo "Use: install_cutest"
    exit 1
 fi
-
-#  locate the archdefs directory
-
-if [[ -z "$ARCHDEFS" ]]; then
-  if [[ ! -d "$PWD/../archdefs" ]]; then
-    error ' environment variable ARCHDEFS is not set and the directory
- ../../archdefs does not exist. Install the archdefs package,
- set $ARCHDEFS to the archdefs directory and re-run.'
-    exit 1
-  else
-    export ARCH=$PWD/../archdefs
-  fi
-else
-  export ARCH=${ARCHDEFS}
-fi
-
-#export ARCH=$PWD/arch
 
 #  determine the platform and operating system used
 
@@ -329,11 +317,11 @@ done
 
 unalias source 2>/dev/null
 
-source $ARCH/system.$OS
+source $ARCHDEFS/system.$OS
 
 echo -e ' Select compiler\n'
 
-COMP=( `$LS $ARCH/compiler.${MCH}.${OS}.* $ARCH/compiler.all.all.* 2>/dev/null` )
+COMP=( `$LS $ARCHDEFS/compiler.${MCH}.${OS}.* $ARCHDEFS/compiler.all.all.* 2>/dev/null` )
 NUMBER=${#COMP[@]}
 LIST=( ${COMP[@]} )
 let count=-1
@@ -364,7 +352,7 @@ while [ $CORRECT_COMPILER == "false" ]; do
    fi
 done
 
-source $ARCH/$COMPILER
+source $ARCHDEFS/$COMPILER
 
 export CUTEST=`dirs -l`
 export CUTEST=`echo $CUTEST | $SED 's"/tmp_mnt""'`
@@ -381,11 +369,11 @@ NEWCC="false"
 if [[ -e $CUTEST/versions/$VERSION ]]; then
     warning " There is already a CUTEST installation with version $VERSION."
     yesno_default_no ' Do you wish to proceed ... existing version will be destroyed'
-    [[ $? != 0 ]] && exit 4
+    [[ $? == 0 ]] && exit 4
 fi
 
-MATLABGCC="gcc-4.4"
-MATLABGFORTRAN="gfortran-4.4"
+MATLABGCC="gcc-4.3"
+MATLABGFORTRAN="gfortran-4.3"
 matlab=""
 
 #echo $CMP
@@ -412,17 +400,15 @@ while [ $CORRECT_SUBSET == "false" ]; do
               matlab="true"
               if [[ $CMP="gfortran" ]]; then
                 type -P $MATLABGFORTRAN &>/dev/null || \
-              { echo " Warning: you need to install $MATLABGFORTRAN/$MATLABGCC" \
-                echo ' to allow for Matlab and CUTEst interaction. Aborting ' \
-                 >&2; exit 3; }
+              { error " you need to install $MATLABGFORTRAN/$MATLABGCC
+ to allow for Matlab and CUTEst interaction. Aborting "; exit 3; }
                 type -P $MATLABGCC &>/dev/null || \
-              { echo ' Warning: you need to install $MATLABGCC' \
-                echo ' to allow for Matlab and CUTEst interaction. Aborting ' \
-                 >&2; exit 3; }
+              { error " Warning: you need to install $MATLABGCC
+ to allow for Matlab and CUTEst interaction. Aborting "; exit 3; }
                 FORTRAN="$MATLABGFORTRAN"
                 CC="$MATLABGCC"
                 NEWCC="true"
-                warning "$MATLABGCC and $MATLABGFORTRAN override more modern\n
+                warning "$MATLABGCC and $MATLABGFORTRAN override more modern
  GNU compilers to allow for Matlab and CUTEst interaction"
               fi
             else
@@ -474,7 +460,7 @@ done
 
 #CCOMPILER=ccompiler.all.all.gcc
 #CCOMP=( `$LS $ARCH/ccompiler.${MCH}.${OS}.*`)
-CCOMP=( `$LS $ARCH/ccompiler.${MCH}.${OS}.* $ARCH/ccompiler.all.all.*`)
+CCOMP=( `$LS $ARCHDEFS/ccompiler.${MCH}.${OS}.* $ARCHDEFS/ccompiler.all.all.*`)
 NUMBER=${#CCOMP[@]}
 LIST=( ${CCOMP[@]} )
 let count=-1
@@ -515,7 +501,7 @@ while [[ $CORRECT_CCOMPILER == "false" ]]; do
     fi
 done
 
-source $ARCH/$CCOMPILER
+source $ARCHDEFS/$CCOMPILER
 if [[ $NEWCC == "true" ]]; then
   CC=$MATLABGCC
 fi
@@ -667,16 +653,16 @@ echo 'include $(PWD)/makemaster'                                   >> $MAKEFILE
 #  optionally edit the compiler and platform settings
 
 yesno_default_no ' Would you like to review and modify if necessary the compiler settings'
-[[ $? == 0 ]] && ${FCEDIT:-${VISUAL:-${EDITOR:-vim}}} $PWD/makefiles/$VERSION
+[[ $? == 1 ]] && ${FCEDIT:-${VISUAL:-${EDITOR:-vim}}} $PWD/makefiles/$VERSION
 
 yesno_default_no ' Would you like to review and modify if necessary the system commands'
-[[ $? == 0 ]] && ${FCEDIT:-${VISUAL:-${EDITOR:-vim}}} $PWD/bin/sys/$VERSION
+[[ $? == 1 ]] && ${FCEDIT:-${VISUAL:-${EDITOR:-vim}}} $PWD/bin/sys/$VERSION
 
 #  optionally compile the selected packages
 
 yesno_default_yes ' Do you now wish to compile the package subset ...'
 
-if [[ $? != 0 ]]; then
+if [[ $? == 1 ]]; then
 
     echo -e '\n The package subset may be installed in (S)ingle or (D)ouble precision'
     read -p ' Which precision do you require for the installed subset (D/s) ? ' -r -n 1 PREC;
@@ -716,7 +702,7 @@ if [[ $? != 0 ]]; then
 
     yesno_default_no "Do you also wish to install the $PREC precision version"
 
-    if [[ $? == 0 ]]; then
+    if [[ $? == 1 ]]; then
 
         echo -e "\nInstalling the $PREC precision version"
         MACROS="PRECIS=$PREC PWD=$CUTEST/src CUTEST=$CUTEST"
