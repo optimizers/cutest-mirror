@@ -77,7 +77,7 @@ To get CUTEst working, here is what you need to do:
 
     and optionally (for Matlab use)
 
-       MATLAB        <- your system Matlab installation directory
+       MYMATLAB      <- your system Matlab installation directory
        MYMATLABARCH  <- the "architecture" you wish to use with Matlab (if any)
 
     as indicated by the installation scripts, to ensure that
