@@ -437,12 +437,11 @@ cd ${WorkingDir}
 
 # If user requested Matlab, the procedure is special
 if [[ ${PKG} == "matlab" ]]; then
-    if [[ ${MATLAB+set} != 'set' ]]; then
-        error "${thisprog}: environment variable MATLAB not set
- Either Matlab is not installed or MATLAB is incorrectly set"
+    if [[ ${MYMATLAB+set} != 'set' ]]; then
+        error "${thisprog}: environment variable MYMATLAB not set"
         exit 10
     fi
-    MEXFORTRAN=${MATLAB}/bin/mex
+    MEXFORTRAN=${MYMATLAB}/bin/mex
     if [[ ! -x ${MEXFORTRAN} ]]; then
         error "Mex command ${MEXFORTRAN} does not exist or is not executable"
         exit 11

@@ -185,6 +185,28 @@ If the above does not work as expected for you, please e-mail
 dominique.orban@gerad.ca with a description of the commands you run, the
 results you get and error messages, if any.
 
+
+Decoding a problem from inside Matlab
+-------------------------------------
+
+At the Matlab prompt, type
+
+    >> setenv('DYLD_LIBRARY_PATH', '/usr/local/bin:/opt/local/lib:')
+    >> !sifdecoder LUBRIFC
+
+The problem should be decoded in the current directory. More programmatically,
+you may use constructions such as
+
+    >> probname='LUBRIFC';
+    >> cmd = ['sifdecoder ', probname];  % Note the trailing blank.
+    >> unix(cmd);
+
+In order to create a MEX file, you can proceed similarly
+
+    >> cmd=['runcutest -p matlab -D ', probname];
+    >> unix(cmd);
+
+
 Good luck!
 
 
