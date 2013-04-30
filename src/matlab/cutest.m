@@ -70,6 +70,11 @@
 %                                     objective function), or of the
 %                                     objective if problem is
 %                                     unconstrained, in sparse format
+%
+% varnames       varnames             Obtain variable names as strings
+%
+% connames       cnames               Obtain constraint names as strings
+%
 % cutest_terminate uterminate /
 %                  cterminate         Remove existing internal workspace
 % --------------------------------------------------------------------------

@@ -14,6 +14,8 @@
  * obj        uofg / cofg                 Evaluate objective function value
  *                                         and its gradient if requested
  *
+ * grad       ugr / cgr                  Evaluate objective function gradient
+ *
  * sobj       cofsg                        Evaluate objective function value
  *                                         and its sparse gradient if requested
  *
@@ -74,6 +76,11 @@
  *                                         objective function), or of the
  *                                         objective if problem is
  *                                         unconstrained, in sparse format
+ *
+ * varnames   varnames                    Obtain variable names as strings
+ *
+ * connames   cnames                      Obtain constraint names as strings
+ *
  * terminate  uterminate / cterminate     Remove existing internal workspace
  *
  *                                          CUTEr version:
@@ -661,8 +668,18 @@ extern "C" {
         } */
 
       if (CUTEst_ncon == 0) {
+        /* sobj does not apply to unconstrained problems.
+         * Return dense gradient if requested.
+         */
         sprintf(msgBuf, onlyConst, toolName);
         mexWarnMsgTxt(msgBuf);
+        if (nlhs == 1)
+          CUTEST_uofg( &status, &CUTEst_nvar, x, f, NULL, &somethingFalse);
+        else {
+          plhs[1] = mxCreateDoubleMatrix(CUTEst_nvar, 1, mxREAL);
+          g  = (doublereal *)mxGetData(plhs[1]);
+          CUTEST_uofg( &status, &CUTEst_nvar, x, f, g, &somethingTrue);
+        }
       }
       else
         if (nlhs == 1) {
@@ -1704,9 +1721,9 @@ mexErrMsgTxt("stop\n");
 
     if (strcmp(toolName, "terminate") == 0) {
 
-      if (nlhs != 0) mexErrMsgTxt("varnames returns no output\n");
+      if (nlhs != 0) mexErrMsgTxt("terminate returns no output\n");
       if (nrhs > 1)
-        mexWarnMsgTxt("varnames does not take input arguments\n");
+        mexWarnMsgTxt("terminate does not take input arguments\n");
 
       if (CUTEst_ncon > 0)
         CUTEST_cterminate( &status );
