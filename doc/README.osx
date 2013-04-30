@@ -156,56 +156,8 @@ There are two items you may need to modify in the above to suit your system:
    era), please change -march= accordingly. Acceptable values can be found in
    the gcc man page (man gcc).
 
-You should be all set. Let's try and decode a problem and load it up in Matlab:
-
-    $ cuter2matlab LUBRIFC
-    $ matlab &
-    >> prob = cutest_setup()   % This is the Matlab prompt
-
-    prob =
-
-         n: 3751
-         m: 2500
-      nnzh: 8749
-      nnzj: 1572494
-         x: [3751x1 double]
-        bl: [3751x1 double]
-        bu: [3751x1 double]
-         v: [2500x1 double]
-        cl: [2500x1 double]
-        cu: [2500x1 double]
-    equatn: [2500x1 logical]
-    linear: [2500x1 logical]
-      name: 'LUBRIFC   '
-
-    >> [f,g] = cutest_obj(prob.x);
-
-
-If the above does not work as expected for you, please e-mail
-dominique.orban@gerad.ca with a description of the commands you run, the
-results you get and error messages, if any.
-
-
-Decoding a problem from inside Matlab
--------------------------------------
-
-At the Matlab prompt, type
-
-    >> setenv('DYLD_LIBRARY_PATH', '/usr/local/bin:/opt/local/lib:')
-    >> !sifdecoder LUBRIFC
-
-The problem should be decoded in the current directory. More programmatically,
-you may use constructions such as
-
-    >> probname='LUBRIFC';
-    >> cmd = ['sifdecoder ', probname];  % Note the trailing blank.
-    >> unix(cmd);
-
-In order to create a MEX file, you can proceed similarly
-
-    >> cmd=['runcutest -p matlab -D ', probname];
-    >> unix(cmd);
-
+You should be all set. See $CUTEST/src/matlab/README.matlab for more
+information on the Matlab interface.
 
 Good luck!
 
