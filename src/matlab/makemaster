@@ -12,7 +12,7 @@ SHELL = /bin/$(BINSHELL)
 
 #  Mex compiler
 
-MEX = $(MATLAB)/bin/mex
+MEX = $(MYMATLAB)/bin/mex
 
 #  compiler flags
 
@@ -97,7 +97,7 @@ all: $(package)
 #  basic packages
 
 $(package): $(package)_$(PRECIS)
-	@printf ' %-21s\n' "CUTEst: $(package) ($(PRECIS) $(SUCC)" 
+	@printf ' %-21s\n' "CUTEst: $(package) ($(PRECIS) $(SUCC)"
 #$(package)_single: $(OBJS)/utools.o $(OBJS)/ctools.o $(OBJS)/mcutest.o
 #$(package)_double: $(OBJD)/utools.o $(OBJD)/ctools.o $(OBJD)/mcutest.o
 $(package)_single: $(OBJS)/mcutest.o
@@ -105,13 +105,13 @@ $(package)_double: $(OBJD)/mcutest.o
 
 #  dependent packages
 
-tools: 
+tools:
 	( cd ../tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      cutest PRECIS=$(PRECIS) PWD=$(PWD)/../tools )
-utools: 
+utools:
 	( cd ../tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      cutest_unconstrained PRECIS=$(PRECIS) PWD=$(PWD)/../tools )
-ctools: 
+ctools:
 	( cd ../tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      cutest_constrained PRECIS=$(PRECIS) PWD=$(PWD)/../tools )
 
@@ -122,9 +122,9 @@ ctools:
 utools.o: $(OBJ)/utools.o
 
 $(OBJ)/utools.o: utools $(MAT_BASIC) utools.F
-	@printf ' %-9s %-15s\t\t' "Compiling" "utools" 
+	@printf ' %-9s %-15s\t\t' "Compiling" "utools"
 	$(SED) -f $(SEDS) utools.F > $(OBJ)/utools.F
-	cd $(OBJ) ; $(MEX) -c $(MFLAGS) utools.F 
+	cd $(OBJ) ; $(MEX) -c $(MFLAGS) utools.F
 	$(RM) $(OBJ)/utools.F
 	@printf '[ OK ]\n'
 
@@ -133,9 +133,9 @@ $(OBJ)/utools.o: utools $(MAT_BASIC) utools.F
 ctools.o: $(OBJ)/ctools.o
 
 $(OBJ)/ctools.o: ctools $(MAT_BASIC) ctools.F
-	@printf ' %-9s %-15s\t\t' "Compiling" "ctools" 
+	@printf ' %-9s %-15s\t\t' "Compiling" "ctools"
 	$(SED) -f $(SEDS) ctools.F > $(OBJ)/ctools.F
-	cd $(OBJ) ; $(MEX) -c $(MFLAGS) ctools.F 
+	cd $(OBJ) ; $(MEX) -c $(MFLAGS) ctools.F
 	$(RM) $(OBJ)/ctools.F
 	@printf '[ OK ]\n'
 
@@ -144,9 +144,9 @@ $(OBJ)/ctools.o: ctools $(MAT_BASIC) ctools.F
 mcutest.o: $(OBJ)/mcutest.o
 
 $(OBJ)/mcutest.o: tools mcutest.c
-	@printf ' %-9s %-15s\t\t' "Compiling" "mcutest" 
+	@printf ' %-9s %-15s\t\t' "Compiling" "mcutest"
 	$(CP) mcutest.c $(OBJ)/mcutest.c
-	cd $(OBJ) ; $(MEX) -c $(MFLAGS) -I$(CUTEST)/include mcutest.c 
+	cd $(OBJ) ; $(MEX) -c $(MFLAGS) -I$(CUTEST)/include mcutest.c
 	$(RM) $(OBJ)/mcutest.c
 	@printf '[ OK ]\n'
 
@@ -155,23 +155,23 @@ $(OBJ)/mcutest.o: tools mcutest.c
 gtools.o: $(MLC)(gtools.o)
 
 $(MLC)(gtools.o): gtools.F
-	@printf ' %-9s %-15s\t\t' "Compiling" "gtools" 
+	@printf ' %-9s %-15s\t\t' "Compiling" "gtools"
 	$(CP) gtools.F $(OBJ)/gtools.F
 	cd $(OBJ) ; $(MEX) $(MFLAGS) -c gtools.F
 	cd $(OBJ) ; $(MARR) gtools.o
-	$(RM) $(OBJ)/utools.o $(OBJ)/ctools.o 
+	$(RM) $(OBJ)/utools.o $(OBJ)/ctools.o
 	@printf '[ OK ]\n'
 
 #  book keeping
 
-clean: 
-	@printf ' %-9s\t\t' "Cleaning" 
+clean:
+	@printf ' %-9s\t\t' "Cleaning"
 	$(RM) $(OBJ)/*
 	@printf '[ OK ]\n'
 
-cleanall: 
+cleanall:
 	@printf ' %-14s\t\t' \
-          "Removing all $(PRECIS) precision object and module files" 
+          "Removing all $(PRECIS) precision object and module files"
 	$(RM) $(OBJ)/* $(MOD)/*
 	@printf '[ OK ]\n'
 
