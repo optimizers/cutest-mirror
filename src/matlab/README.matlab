@@ -12,7 +12,8 @@ Getting started
 
 Make sure you have correctly set the following environment variables:
 
-  MYMATLAB      directory containing Matlab's mex executable
+  MYMATLAB      directory containing Matlab. Matlab's mex executable
+                should be found under $MYMATLAB/bin.
   MYMATLABARCH  CUTEst architecture built with Matlab support.
 
 
