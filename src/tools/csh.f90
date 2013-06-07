@@ -150,7 +150,7 @@
                   1, ifstat )
       IF ( ifstat /= 0 ) GO TO 930
 
-!  evaluate the element function values
+!  evaluate the element function derivatives
 
       CALL ELFUN( work%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,          &
                   data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,          &
