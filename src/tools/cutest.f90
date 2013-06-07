@@ -792,6 +792,10 @@
           bad_alloc = 'FUVALS' ; GO TO 600 ; END IF
       END IF
 
+!  set defalt gradient and Hessian values to zero
+
+      FUVALS( lgxi + 1 : lggfx ) = 0.0_wp
+
 !  mark remaining arrays as unallocated
 
       array_status = .FALSE.
