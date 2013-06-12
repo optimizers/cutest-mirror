@@ -227,7 +227,7 @@ To get CUTEst working, here is what you need to do:
 
     to see how each CUTEST tool is called, and those in
 
-       $CUTEST/package/gen
+       $CUTEST/src/gen
 
     as examples of fortran 77, 90 and C calls.
 
