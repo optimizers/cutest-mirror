@@ -202,7 +202,7 @@ To get CUTEst working, here is what you need to do:
 
     along with files
 
-       $CUTEST/package/"mypack"
+       $CUTEST/packages/defaults/"mypack"
        $CUTEST/src/"mypack"/"mypack"_main.f/f90/c
        $CUTEST/src/"mypack"/"mypack"_test.f/f90/c
        $CUTEST/src/"mypack"/"MYPACK".SPC
@@ -229,7 +229,13 @@ To get CUTEst working, here is what you need to do:
 
        $CUTEST/src/gen
 
-    as examples of fortran 77, 90 and C calls.
+    and 
+
+       $CUTEST/packages/defaults/gen77
+       $CUTEST/packages/defaults/gen90
+       $CUTEST/packages/defaults/genc
+
+    as examples of fortran 77, 90 and C calls and linking instructions
 
     If you have further questions, please contact us. And if you would
     like us to include your interface in the distribution for others to
