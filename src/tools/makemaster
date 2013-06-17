@@ -161,13 +161,13 @@ lapack: $(LLC)(lapack.o)
 
 test_cutest_unconstrained: cutest
 	echo " Exhaustive test of unconstrained tools"
-	( cd test ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
-                    test_cutest_unconstrained PRECIS=$(PRECIS) PWD=$(PWD)/test )
+	( cd ../test ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                    test_cutest_unconstrained PRECIS=$(PRECIS) PWD=$(PWD)/../test )
 
 test_cutest_constrained: cutest
 	echo " Exhaustive test of constrained tools"
-	( cd test ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
-                    test_cutest_constrained PRECIS=$(PRECIS) PWD=$(PWD)/test )
+	( cd ../test ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                    test_cutest_constrained PRECIS=$(PRECIS) PWD=$(PWD)/../test )
 
 #  individual compilations
 

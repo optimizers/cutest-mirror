@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.0 - 29/12/2012 AT 13:50 GMT.
+! THIS VERSION: CUTEST 1.1 - 14/06/2013 AT 14:00 GMT.
 
 !-*-*-*-*-*-*-  C U T E S T   C D I M S H    S U B R O U T I N E  -*-*-*-*-*-*-
 
@@ -68,20 +68,17 @@
 
 !  local variables
 
-      INTEGER :: lirnh, alloc_status
+      INTEGER :: alloc_status
       CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
 
-!  guess required space
-
-      lirnh = 10000
       CALL CUTEST_size_sparse_hessian(                                         &
                       data%n, data%ng, data%nel, data%ntotel, data%nvrels,     &
                       data%nvargp, data%IELVAR, data%IELING,                   &
                       data%ISTADG, data%ISTAEV, data%ISTAGV, data%ISVGRP,      &
-                      data%GXEQX, data%out, work%io_buffer, status,            &
-                      alloc_status, bad_alloc, lirnh, work%H_row,              &
-                      work%LINK_col, work%POS_in_H, work%llink, work%lpos,     &
-                      nnzh )
+                      data%GXEQX, data%out, status,                            &
+                      alloc_status, bad_alloc, work%hessian_setup_complete,    &
+                      work%ROW_start, work%POS_in_H, work%USED, work%lrowst,   &
+                      work%lpos, work%lused, nnzh )
 
       RETURN
 

@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.0 - 07/04/2013 AT 10:10 GMT.
+! THIS VERSION: CUTEST 1.1 - 14/06/2013 AT 13:30 GMT.
 
 !-*-*-*-*-*-*-*-*-*-*-*-*-*- C U T E S T   M O D U l E -*-*-*-*-*-*-*-*-*-*-*-*-
 
@@ -134,17 +134,21 @@
 
       TYPE, PUBLIC :: CUTEST_work_type
         INTEGER :: nc2of, nc2og, nc2oh, nc2cf, nc2cg, nc2ch, nhvpr, pnc
-        INTEGER :: llink, lpos
+        INTEGER :: llink, lrowst, lpos, lused, lfilled
         INTEGER :: lh_row = lmin
         INTEGER :: lh_col = lmin
         INTEGER :: lh_val = lmin
         INTEGER :: io_buffer = io_buffer
         LOGICAL :: array_status = .FALSE.
+        LOGICAL :: hessian_setup_complete = .FALSE.
         LOGICAL :: firstg
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: ICALCF
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISTAJC
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: LINK_col
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: ROW_start
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: POS_in_H
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: USED
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: FILLED
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: H_row
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: H_col
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISWKSP
@@ -1041,10 +1045,10 @@
                       ISTAEV, ISTAGV, ISVGRP, A, GUVALS, lnguvl, HUVALS,       &
                       lnhuvl, GVALS2, GVALS3, GSCALE, ESCALE, GXEQX,           &
                       ITYPEE, INTREP, RANGE, iprint, error, out,               &
-                      buffer, fixed_structure, use_band, nsemib,               &
-                      status, alloc_status, bad_alloc, array_status,           &
-                      lh_row, lh_col, lh_val, H_row, H_col, H_val,             &
-                      LINK_col, POS_in_H, llink, lpos,                         &
+                      fixed_structure, use_band, nsemib, status,               &
+                      alloc_status, bad_alloc, hessian_setup_complete,         &
+                      lh_row, lh_col, lh_val, H_row, H_col, H_val, ROW_start,  &
+                      POS_in_H, USED, FILLED, lrowst, lpos, lused, lfilled,    &
                       GRAD_el, W_el, W_in, H_el, H_in,                         &
                       nnzh, maxsbw, DIAG, OFFDIA )
 
@@ -1057,17 +1061,18 @@
 !     25th 1995 as ASMBL_assemble_hessian as part of the ASMBL module
 !   update released with GALAHAD Version 2.0. February 16th 2005
 !   fortran 2003 version released in CUTEst, 5th November 2012
+!   completely revised version 14th June 2013
 
 !-----------------------------------------------
 !   D u m m y   A r g u m e n t s
 !-----------------------------------------------
 
       INTEGER, INTENT( IN ) :: n, nel, ng, maxsel, nsemib, nvargp, nnza
-      INTEGER, INTENT( IN ) :: nvrels, ntotel, buffer
+      INTEGER, INTENT( IN ) :: nvrels, ntotel
       INTEGER, INTENT( IN ) :: lnguvl, lnhuvl, iprint, error, out
       INTEGER, INTENT( OUT ) :: status, alloc_status
       LOGICAL, INTENT( IN ) :: fixed_structure, use_band
-      LOGICAL, INTENT( INOUT ) :: array_status
+      LOGICAL, INTENT( INOUT ) :: hessian_setup_complete
       CHARACTER ( LEN = 24 ) :: bad_alloc
       INTEGER, INTENT( IN ), DIMENSION( nnza ) :: ICNA
       INTEGER, INTENT( IN ), DIMENSION( ng  + 1 ) :: ISTADA, ISTADG, ISTAGV
@@ -1090,9 +1095,12 @@
 !   D u m m y   A r g u m e n t s   f o r   W o r k s p a c e 
 !--------------------------------------------------------------
 
-      INTEGER, INTENT( INOUT ) :: lh_row, lh_col, lh_val, llink, lpos
-      INTEGER, ALLOCATABLE, DIMENSION( : ) :: LINK_col
+      INTEGER, INTENT( INOUT ) :: lh_row, lh_col, lh_val
+      INTEGER, INTENT( INOUT ) :: lrowst, lpos, lused, lfilled
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: ROW_start
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: POS_in_H
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: USED
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: FILLED
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: H_row
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: H_col
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: H_val
@@ -1131,9 +1139,8 @@
 !   L o c a l   V a r i a b l e s
 !-----------------------------------------------
 
-      INTEGER :: i, ii, j, jj, k, ig, ip, l, newpt, nin, nlh, ulh, mlh
-      INTEGER :: iell, iel, ihnext, nvarel, ig1, listvs, listve
-      INTEGER :: ielh, inext, ijhess, irow, jcol, jcolst, istart
+      INTEGER :: i, ii, j, k, kk, ig, l, ijhess, irow, jcol, jcolst
+      INTEGER :: iel, iell, ielh, nvarel, ig1, listvs, listve, n_filled, nin
       REAL ( KIND = wp ) :: wki, hesnew, gdash, g2dash, scalee
       CHARACTER ( LEN = 2 ), DIMENSION( 36, 36 ) :: MATRIX
 !     CHARACTER ( LEN = 80 ) :: array
@@ -1145,74 +1152,83 @@
         maxsbw = 0
         DIAG = 0.0_wp ; OFFDIA = 0.0_wp
 
-!  if a co-ordinate scheme is to be used, allocate arrays to hold the link
-!  list which points to the row numbers  which are used in the columns of
-!  the assembled Hessian
-
-!  LINK_col(.) gives the link list. The list for column j starts
-!                 in LINK_col( J ) and ends when LINK_col(k) = - 1
-!  POS_in_H(.) gives the position in H of the current link
+!  if a co-ordinate scheme is to be used, determine the rows structure of the 
+!  second derivative matrix of a groups partially separable function with 
+!  possible repititions if this has not already been done
 
       ELSE
-        IF ( .NOT. array_status ) THEN
-          array_status = .TRUE.
-          llink = MIN( lh_row, lh_col, lh_val ) + n
-          lpos = MIN( lh_row, lh_col, lh_val ) + n
-        
-          CALL CUTEST_allocate_array( LINK_col, llink, alloc_status )
+        IF ( .NOT. hessian_setup_complete ) THEN
+          CALL CUTEST_sparse_hessian_by_rows(                                  &
+                          n, ng, nel, ntotel, nvrels, nvargp, IELVAR,          &
+                          IELING, ISTADG, ISTAEV, ISTAGV, ISVGRP, GXEQX,       &
+                          error, status, alloc_status, bad_alloc,              &
+                          ROW_start, POS_in_H, lrowst, lpos )
+          IF ( status /= 0 ) RETURN
+
+!  allocate workspace if required
+
+          lused = n
+          CALL CUTEST_allocate_array( USED, lused, alloc_status )
           IF ( alloc_status /= 0 ) THEN
-            bad_alloc = 'LINK_col' ; GO TO 980 ; END IF
-        
-          CALL CUTEST_allocate_array( POS_in_H, lpos, alloc_status )
+            bad_alloc = 'USED' ; GO TO 980 ; END IF
+
+          lfilled = n
+          CALL CUTEST_allocate_array( FILLED, lfilled, alloc_status )
           IF ( alloc_status /= 0 ) THEN
-            bad_alloc = 'POS_in_H' ; GO TO 980 ; END IF
-        
+            bad_alloc = 'FILLED' ; GO TO 980 ; END IF
+
+!  now pass through the nonzeros, setting up the position in the future 
+!  H_row and H_col arrays of the data gathered from the groups
+
+          USED = 0
+          k = 1
+          DO i = 1, n
+            n_filled = 0
+            DO l = ROW_start( i ), ROW_start( i + 1 ) - 1
+              j = POS_in_H( l )
+              IF ( USED( j ) == 0 ) THEN
+                n_filled = n_filled + 1
+                FILLED( n_filled ) = j
+                USED( j ) = k
+                POS_in_H( l ) = k
+                k = k + 1
+              ELSE
+                POS_in_H( l ) = USED( j )
+              END IF
+            END DO
+            USED( FILLED( 1 : n_filled ) ) = 0
+          END DO
+          nnzh = k - 1
+
+!  allocate space for the row and column indices and values
+
+          lh_row = nnzh 
           CALL CUTEST_allocate_array( H_row, lh_row, alloc_status )
           IF ( alloc_status /= 0 ) THEN
             bad_alloc = 'H_row' ; GO TO 980 ; END IF
-        
+
+          lh_col = nnzh
           CALL CUTEST_allocate_array( H_col, lh_col, alloc_status )
           IF ( alloc_status /= 0 ) THEN
             bad_alloc = 'H_col' ; GO TO 980 ; END IF
-        
+
+          lh_val = nnzh
           CALL CUTEST_allocate_array( H_val, lh_val, alloc_status )
           IF ( alloc_status /= 0 ) THEN
             bad_alloc = 'H_val' ; GO TO 980 ; END IF
+
+          hessian_setup_complete = .TRUE.
         ELSE
-          k = MIN( lh_row, lh_col, lh_val ) + n
-          IF ( llink < k ) THEN
-            DEALLOCATE( LINK_col ) ; llink = k
-            ALLOCATE( LINK_col( llink ), STAT = alloc_status )
-            IF ( alloc_status /= 0 ) THEN
-              bad_alloc = 'LINK_c'; GO TO 980 ; END IF
-          END IF
-        
-          k = MIN( lh_row, lh_col, lh_val ) + n
-          IF ( lpos < k ) THEN 
-            DEALLOCATE( POS_in_H ) ; lpos = k
-            ALLOCATE( POS_in_H( lpos ), STAT = alloc_status )
-            IF ( alloc_status /= 0 ) THEN 
-              bad_alloc = 'POS_in'; GO TO 980 ; END IF
-          END IF
-
-          IF ( .NOT. ALLOCATED( H_val ) ) THEN
-            lh_val = MAX( lh_row, lh_col, lh_val )
-            CALL CUTEST_allocate_array( H_val, lh_val, alloc_status )
-            IF ( alloc_status /= 0 ) THEN
-              bad_alloc = 'H_val' ; GO TO 980 ; END IF
-            END IF
+          nnzh = lh_row
         END IF
-        LINK_col( : n ) = - 1 ; POS_in_H( : n ) = - 1
-        newpt = n
-
-!  make an initial allocation of the space required to hold the Hessian
-
-        nnzh = 0
+        H_val( : nnzh ) = 0.0_wp
       END IF
 
-!  ------------------------------------------------------
-!  Form the rank-one second order term for the I-th group
-!  ------------------------------------------------------
+!  ---------------------------------------
+!  set the row and column lists and values
+!  ---------------------------------------
+
+!  consider the rank-one second order term for the i-th group
 
       DO ig = 1, ng
         IF ( GXEQX( ig ) ) CYCLE
@@ -1309,69 +1325,15 @@
 !  Case 2: co-ordinate storage scheme
 
             ELSE
-              istart = j
- 150          CONTINUE
-              inext = LINK_col( istart )
 
-!  the (i,j)-th location is empty. Place the new entry in this location and
-!  add another link to the list
+!  there is an entry in position (i,j) to be stored in 
+!  H_row/col(COL(ROW_start(i)))
 
-              IF ( inext == - 1 ) THEN
-                nnzh = nnzh + 1
-                IF ( nnzh > lh_val .OR. nnzh > lh_row .OR. nnzh > lh_col ) THEN
-                  nlh = lh_row ; ulh = nnzh - 1 ; mlh = nnzh
-                  CALL CUTEST_extend_array( H_row, lh_row, ulh, nlh, mlh,      &
-                                            buffer, status, alloc_status )
-                  IF ( status /= 0 ) THEN
-                    bad_alloc = 'H_row' ; GO TO 980 ; END IF
-                  lh_row = nlh
-                  nlh = lh_col ; ulh = nnzh - 1 ; mlh = nnzh
-                  CALL CUTEST_extend_array( H_col, lh_col, ulh, nlh, mlh,      &
-                                            buffer, status, alloc_status )
-                  IF ( status /= 0 ) THEN
-                    bad_alloc = 'H_col' ; GO TO 980 ; END IF
-                  lh_col = nlh
-                  nlh = lh_val ; ulh = nnzh - 1 ; mlh = nnzh
-                  CALL CUTEST_extend_array( H_val, lh_val, ulh, nlh, mlh,      &
-                                            buffer, status, alloc_status )
-                  IF ( status /= 0 ) THEN
-                    bad_alloc = 'H' ; GO TO 980 ; END IF
-                  lh_val = nlh
-                END IF
-                H_row( nnzh ) = i ; H_col( nnzh ) = j ; H_val( nnzh ) = hesnew
-                IF ( newpt == llink ) THEN
-                  nlh = llink
-                  ulh = newpt; mlh = llink + 1
-                  CALL CUTEST_extend_array( LINK_col, llink, ulh, nlh, mlh,    &
-                                            buffer, status, alloc_status )
-                  IF ( status /= 0 ) THEN
-                    bad_alloc = 'LINK_col' ; GO TO 980 ; END IF
-                  llink = nlh
-                  nlh = lpos
-                  ulh = newpt; mlh = lpos + 1
-                  CALL CUTEST_extend_array( POS_in_H, lpos, ulh, nlh, mlh,     &
-                                            buffer, status, alloc_status )
-                  IF ( status /= 0 ) THEN
-                    bad_alloc = 'POS_in_H' ; GO TO 980 ; END IF
-                  lpos = nlh
-                END IF
-                newpt = newpt + 1
-                LINK_col( istart ) = newpt
-                POS_in_H( istart ) = nnzh
-                LINK_col( newpt  ) = - 1
-                POS_in_H( newpt ) = - 1
-
-!  continue searching the linked list for an entry in row i, column j
-
-              ELSE
-                IF ( H_row( POS_in_H( istart ) ) == i ) THEN
-                  ip = POS_in_H( istart )
-                  H_val( ip ) = H_val( ip ) + hesnew
-                ELSE
-                  istart = inext
-                  GO TO 150
-                END IF
-              END IF
+              kk = POS_in_H( ROW_start( i ) )
+              H_row( kk ) = i
+              H_col( kk ) = j
+              H_val( kk ) = H_val( kk ) + hesnew
+              ROW_start( i ) = ROW_start( i ) + 1
             END IF
           END DO
         END DO
@@ -1381,9 +1343,7 @@
 
       W_el( : maxsel ) = 0.0_wp
 
-! ---------------------------------------------------------
-! Add on the low rank first order terms for the ig-th group
-! ---------------------------------------------------------
+!  now consider the low rank first order terms for the i-th group
 
       DO ig = 1, ng
         IF ( .NOT. fixed_structure .AND. GSCALE( ig ) == 0.0_wp ) CYCLE
@@ -1399,13 +1359,12 @@
 
 !  see if the group has any nonlinear elements
 
-        DO iell = ISTADG( ig ), ISTADG( ig1 ) - 1
+        DO iell = ISTADG( ig ), ISTADG( ig + 1 ) - 1
           iel = IELING( iell )
           listvs = ISTAEV( iel )
           listve = ISTAEV( iel + 1 ) - 1
           nvarel = listve - listvs + 1
           ielh = ISTADH( iel )
-          ihnext = ielh
           scalee = ESCALE( iell )
           DO l = listvs, listve
             j = IELVAR( l )
@@ -1454,24 +1413,18 @@
                 W_el( l - listvs + 1 ) = 0.0_wp
               END IF
 
-!  Find the entry in row I of this column
+!  find the entry in row i of this column
 
               DO k = listvs, l
                 i = IELVAR( k )
 
-!  skip all elements which lie outside a band of width nsemib
+!  skip all elements which lie outside a band of width nsemib; only the upper 
+!  triangle of the matrix is stored
 
                 IF ( use_band .AND. i /= 0 ) maxsbw = MAX( maxsbw, ABS( j - i ))
                 IF ( ABS( i - j ) <= nsemib .AND. i /= 0 ) THEN
-
-!  only the upper triangle of the matrix is stored
-
-                  IF ( i <= j ) THEN
-                    ii = i
-                    jj = j
-                  ELSE
-                    ii = j
-                    jj = i
+                  IF ( i > j ) THEN
+                    ii = i ; i = j ; j = ii
                   END IF
 
 !  obtain the appropriate storage location in H for the new entry
@@ -1479,11 +1432,11 @@
                   IF ( INTREP( iel ) ) THEN
                     hesnew = scalee * H_el( k - listvs + 1 )
                   ELSE
-                    hesnew = scalee * HUVALS( ihnext ) * gdash
+                    hesnew = scalee * HUVALS( ielh ) * gdash
                   END IF
                   IF ( iprint >= 100 ) WRITE( 6, "( ' Row ', I6, ' Column ',   &
                  &   I6, ' used from element ', I6, ' value = ', ES24.16 )" )  &
-                    ii, jj, iel, hesnew
+                    i, j, iel, hesnew
 
 !  Case 1: band matrix storage scheme
 
@@ -1491,104 +1444,42 @@
 
 !  The entry belongs on the diagonal
 
-                    IF ( ii == jj ) THEN
-                      DIAG( ii ) = DIAG( ii ) + hesnew
-                      IF ( k /= l ) DIAG( ii ) = DIAG( ii ) + hesnew
+                    IF ( i == j ) THEN
+                      DIAG( i ) = DIAG( i ) + hesnew
+                      IF ( k /= l ) DIAG( i ) = DIAG( i ) + hesnew
 
 !  the entry belongs off the diagonal
 
                     ELSE
-                      OFFDIA( jj - ii, ii ) = OFFDIA( jj - ii, ii ) + hesnew
+                      OFFDIA( j - i, i ) = OFFDIA( j - i, i ) + hesnew
                     END IF
 
 !  Case 2: co-ordinate storage scheme
 
                   ELSE
-                    istart = jj
-  230               CONTINUE
-                    inext = LINK_col( istart )
-                    IF ( inext == - 1 ) THEN
 
-!  the (i,j)-th location is empty. Place the new entry in this location
-!  and add another link to the list
+!  there is an entry in position (i,j) to be stored in 
+!  H_row/col(COL(ROW_start(i)))
 
-                      nnzh = nnzh + 1
-                      
-                      IF ( nnzh > lh_val .OR.                                  &
-                           nnzh > lh_row .OR. nnzh > lh_col ) THEN
-                        nlh = lh_row ; ulh = nnzh - 1; mlh = nnzh
-                        CALL CUTEST_extend_array( H_row, lh_row, ulh, nlh,     &
-                                                  mlh, buffer, status,         &
-                                                  alloc_status )
-                        IF ( status /= 0 ) THEN
-                           bad_alloc = 'H_row' ; GO TO 980 ; END IF
-                        lh_row = nlh
-                        nlh = lh_col ; ulh = nnzh - 1; mlh = nnzh
-                        CALL CUTEST_extend_array( H_col, lh_col, ulh, nlh,     &
-                                                  mlh, buffer, status,         &
-                                                  alloc_status )
-                        IF ( status /= 0 ) THEN
-                           bad_alloc = 'H_col' ; GO TO 980 ; END IF
-                        lh_col = nlh
-                        nlh = lh_val ; ulh = nnzh - 1 ; mlh = nnzh
-                        CALL CUTEST_extend_array( H_val, lh_val, ulh, nlh,     &
-                                                  mlh, buffer, status,         &
-                                                  alloc_status )
-                        IF ( status /= 0 ) THEN
-                           bad_alloc = 'H' ; GO TO 980 ; END IF
-                        lh_val = nlh
-                      END IF   
-                      H_row( nnzh ) = ii ; H_col( nnzh ) = jj
-                      H_val( nnzh ) = hesnew
-                      IF ( k /= l .AND. ii == jj )                             &
-                        H_val( nnzh ) = hesnew + hesnew
-                      IF ( newpt == llink ) THEN
-                        nlh = llink
-                        ulh = newpt; mlh = llink + 1
-                        CALL CUTEST_extend_array( LINK_col, llink, ulh, nlh,   &
-                                                  mlh, buffer, status,         &
-                                                  alloc_status )
-                        IF ( status /= 0 ) THEN
-                          bad_alloc = 'LINK_col' ; GO TO 980 ; END IF
-                        llink = nlh
-                        nlh = lpos
-                        ulh = newpt; mlh = lpos + 1
-                        CALL CUTEST_extend_array( POS_in_H, lpos, ulh, nlh,    &
-                                                  mlh, buffer, status,         &
-                                                  alloc_status )
-                        IF ( status /= 0 ) THEN
-                          bad_alloc = 'POS_in_H' ; GO TO 980 ; END IF
-                        lpos = nlh
-                      END IF
-                      newpt = newpt + 1
-                      LINK_col( istart ) = newpt
-                      POS_in_H( istart ) = nnzh
-                      LINK_col( newpt  ) = - 1
-                      POS_in_H( newpt ) = - 1
-
-!  continue searching the linked list for an entry in row i, column j
-
-                    ELSE
-                      IF ( H_row( POS_in_H( istart ) ) == ii ) THEN
-                        ip = POS_in_H( istart )
-                        H_val( ip ) = H_val( ip ) + hesnew
-                        IF( k /= l .AND. ii == jj )                            &
-                          H_val( ip ) = H_val( ip ) + hesnew
-                      ELSE
-                        istart = inext
-                        GO TO 230
-                      END IF
-                    END IF
+                    kk = POS_in_H( ROW_start( i ) )
+                    H_row( kk ) = i
+                    H_col( kk ) = j
+                    H_val( kk ) = H_val( kk ) + hesnew
+                    ROW_start( i ) = ROW_start( i ) + 1
                   END IF
                 END IF
-                ihnext = ihnext + 1
               END DO
-            ELSE
-              ihnext = ihnext + l - listvs + 1
             END IF
           END DO
         END DO
       END DO
+      
+!  restore the starting addresses
+
+      DO i = n - 1, 1, - 1
+        ROW_start( i + 1 ) = ROW_start( i )
+      END DO
+      ROW_start( 1 ) = 1
 
 !  ---------------------------------------
 !  For debugging, print the nonzero values
@@ -1662,31 +1553,30 @@
 
       SUBROUTINE CUTEST_assemble_hessian_pattern(                              &
                       n, ng, nel, ntotel, nvrels, nvargp,                      &
-                      ISTADH, IELVAR, IELING, ISTADG,                          &
-                      ISTAEV, ISTAGV, ISVGRP, GXEQX,                           &
-                      iprint, error, out, buffer, nsemib,                      &
-                      status, alloc_status, bad_alloc, array_status,           &
-                      lh_row, lh_col, H_row, H_col,                            &
-                      LINK_col, POS_in_H, llink, lpos, nnzh )
+                      IELVAR, IELING, ISTADG, ISTAEV, ISTAGV, ISVGRP, GXEQX,   &
+                      iprint, error, out, status, alloc_status, bad_alloc,     &
+                      hessian_setup_complete,                                  &
+                      lh_row, lh_col, H_row, H_col, ROW_start, POS_in_H,       &
+                      USED, FILLED, lrowst, lpos, lused, lfilled, nnzh )
 
 !  Determine the sparisity pattern of the second derivative matrix of a groups 
 !  partially separable function in co-ordinate format
 
 !  History -
-!   fortran 2003 version released in CUTEst, 7th April 2013
+!   fortran 2003 version released in CUTEst, 14th June 2013
 
 !-----------------------------------------------
 !   D u m m y   A r g u m e n t s
 !-----------------------------------------------
 
-      INTEGER, INTENT( IN ) :: n, nel, ng, nvargp, nsemib
-      INTEGER, INTENT( IN ) :: nvrels, ntotel, buffer
+      INTEGER, INTENT( IN ) :: n, nel, ng, nvargp
+      INTEGER, INTENT( IN ) :: nvrels, ntotel
       INTEGER, INTENT( IN ) :: iprint, error, out
       INTEGER, INTENT( OUT ) :: status, alloc_status, nnzh
-      LOGICAL, INTENT( INOUT ) :: array_status
+      LOGICAL, INTENT( INOUT ) :: hessian_setup_complete
       CHARACTER ( LEN = 24 ) :: bad_alloc
       INTEGER, INTENT( IN ), DIMENSION( ng  + 1 ) :: ISTADG, ISTAGV
-      INTEGER, INTENT( IN ), DIMENSION( nel + 1 ) :: ISTAEV, ISTADH
+      INTEGER, INTENT( IN ), DIMENSION( nel + 1 ) :: ISTAEV
       INTEGER, INTENT( IN ), DIMENSION( nvrels ) :: IELVAR
       INTEGER, INTENT( IN ), DIMENSION( ntotel ) :: IELING
       INTEGER, INTENT( IN ), DIMENSION( nvargp ) :: ISVGRP
@@ -1696,87 +1586,94 @@
 !   D u m m y   A r g u m e n t s   f o r   W o r k s p a c e 
 !--------------------------------------------------------------
 
-      INTEGER, INTENT( INOUT ) :: lh_row, lh_col, llink, lpos
-      INTEGER, ALLOCATABLE, DIMENSION( : ) :: LINK_col
-      INTEGER, ALLOCATABLE, DIMENSION( : ) :: POS_in_H
+      INTEGER, INTENT( INOUT ) :: lh_row, lh_col, lrowst, lpos, lused, lfilled
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: H_row
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: H_col
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: ROW_start
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: POS_in_H
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: USED
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: FILLED
 
 !-----------------------------------------------
 !   L o c a l   V a r i a b l e s
 !-----------------------------------------------
 
-      INTEGER :: i, ii, j, jj, k, ig, l, newpt, nlh, ulh, mlh, ielh
-      INTEGER :: iell, iel, ihnext, ig1, listvs, listve, inext, istart
+      INTEGER :: i, ii, j, k, kk, ig, l, iel
+      INTEGER :: iell, listvs, listve, n_filled
       CHARACTER ( LEN = 2 ), DIMENSION( 36, 36 ) :: MATRIX
 !     CHARACTER ( LEN = 80 ) :: array
 
-!  if a co-ordinate scheme is to be used, allocate arrays to hold the link
-!  list which points to the row numbers  which are used in the columns of
-!  the assembled Hessian
+!  determine the rows structure of the second derivative matrix of a 
+!  groups partially separable function with possible repititions
 
-!  LINK_col(.) gives the link list. The list for column j starts
-!                 in LINK_col( J ) and ends when LINK_col(k) = - 1
-!  POS_in_H(.) gives the position in H of the current link
+      IF ( .NOT. hessian_setup_complete ) THEN
+        CALL CUTEST_sparse_hessian_by_rows(                                    &
+                        n, ng, nel, ntotel, nvrels, nvargp,                    &
+                        IELVAR, IELING, ISTADG, ISTAEV, ISTAGV, ISVGRP, GXEQX, &
+                        error, status, alloc_status, bad_alloc,                &
+                        ROW_start, POS_in_H, lrowst, lpos )
+        IF ( status /= 0 ) RETURN
 
-      IF ( .NOT. array_status ) THEN
-        array_status = .TRUE.
-        llink = MIN( lh_row, lh_col ) + n
-        lpos = MIN( lh_row, lh_col ) + n
-      
-        CALL CUTEST_allocate_array( LINK_col, llink, alloc_status )
+!  allocate workspace if required
+
+        lused = n
+        CALL CUTEST_allocate_array( USED, lused, alloc_status )
         IF ( alloc_status /= 0 ) THEN
-          bad_alloc = 'LINK_col' ; GO TO 980 ; END IF
-      
-        CALL CUTEST_allocate_array( POS_in_H, lpos, alloc_status )
+          bad_alloc = 'USED' ; GO TO 980 ; END IF
+
+        lfilled = n
+        CALL CUTEST_allocate_array( FILLED, lfilled, alloc_status )
         IF ( alloc_status /= 0 ) THEN
-          bad_alloc = 'POS_in_H' ; GO TO 980 ; END IF
-      
+          bad_alloc = 'FILLED' ; GO TO 980 ; END IF
+
+!  now pass through the nonzeros, setting up the position in the future 
+!  H_row and H_col arrays of the data gathered from the groups
+
+        USED = 0
+        k = 1
+        DO i = 1, n
+          n_filled = 0
+          DO l = ROW_start( i ), ROW_start( i + 1 ) - 1
+            j = POS_in_H( l )
+            IF ( USED( j ) == 0 ) THEN
+              n_filled = n_filled + 1
+              FILLED( n_filled ) = j
+              USED( j ) = k
+              POS_in_H( l ) = k
+              k = k + 1
+            ELSE
+              POS_in_H( l ) = USED( j )
+            END IF
+          END DO
+          USED( FILLED( 1 : n_filled ) ) = 0
+        END DO
+        nnzh = k - 1
+
+!  allocate space for the row and column indices
+
+        lh_row = nnzh 
         CALL CUTEST_allocate_array( H_row, lh_row, alloc_status )
         IF ( alloc_status /= 0 ) THEN
           bad_alloc = 'H_row' ; GO TO 980 ; END IF
-      
+
+        lh_col = nnzh
         CALL CUTEST_allocate_array( H_col, lh_col, alloc_status )
         IF ( alloc_status /= 0 ) THEN
           bad_alloc = 'H_col' ; GO TO 980 ; END IF
-      
-      ELSE
-        k = MIN( lh_row, lh_col ) + n
-        IF ( llink < k ) THEN
-          DEALLOCATE( LINK_col ) ; llink = k
-          ALLOCATE( LINK_col( llink ), STAT = alloc_status )
-          IF ( alloc_status /= 0 ) THEN
-            bad_alloc = 'LINK_c'; GO TO 980 ; END IF
-        END IF
-      
-        k = MIN( lh_row, lh_col ) + n
-        IF ( lpos < k ) THEN 
-          DEALLOCATE( POS_in_H ) ; lpos = k
-          ALLOCATE( POS_in_H( lpos ), STAT = alloc_status )
-          IF ( alloc_status /= 0 ) THEN 
-            bad_alloc = 'POS_in'; GO TO 980 ; END IF
-        END IF
       END IF
-      LINK_col( : n ) = - 1 ; POS_in_H( : n ) = - 1
-      newpt = n
 
-!  make an initial allocation of the space required to hold the Hessian
+!  ----------------------------
+!  set the row and column lists
+!  ----------------------------
 
-      nnzh = 0
-
-!  ------------------------------------------------------
-!  Form the rank-one second order term for the I-th group
-!  ------------------------------------------------------
+!  consider the rank-one second order term for the i-th group
 
       DO ig = 1, ng
         IF ( GXEQX( ig ) ) CYCLE
-        IF ( iprint >= 100 ) WRITE( out,                                       &
-          "( ' Group ', I5, ' rank-one terms ' )" ) ig
-        ig1 = ig + 1
         listvs = ISTAGV( ig )
-        listve = ISTAGV( ig1 ) - 1
+        listve = ISTAGV( ig + 1 ) - 1
 
-!  form the j-th column of the rank-one matrix
+!  Form the j-th column of the rank-one matrix
 
         DO l = listvs, listve
           j = ISVGRP( l )
@@ -1788,188 +1685,63 @@
             i = ISVGRP( k )
             IF ( i == 0 .OR. i > j ) CYCLE
 
-!  Skip all elements which lie outside a band of width nsemib
+!  there is an entry in position (i,j) to be stored in 
+!  H_row/col(COL(ROW_start(i)))
 
-            IF ( j - i > nsemib ) CYCLE
-            IF ( iprint >= 100 ) WRITE( out,                                   &
-              "( ' Row ', I6, ' column ', I6, ' used' )" ) i, j
-
-!  obtain the appropriate storage location in H for the new entry
-
-!  Case 1: band matrix storage scheme
-
-            istart = j
- 150        CONTINUE
-            inext = LINK_col( istart )
-
-!  the (i,j)-th location is empty. Place the new entry in this location and
-!  add another link to the list
-
-            IF ( inext == - 1 ) THEN
-              nnzh = nnzh + 1
-              IF ( nnzh > lh_row .OR. nnzh > lh_col ) THEN
-                nlh = lh_row ; ulh = nnzh - 1 ; mlh = nnzh
-                CALL CUTEST_extend_array( H_row, lh_row, ulh, nlh, mlh,        &
-                                          buffer, status, alloc_status )
-                IF ( status /= 0 ) THEN
-                  bad_alloc = 'H_row' ; GO TO 980 ; END IF
-                lh_row = nlh
-                nlh = lh_col ; ulh = nnzh - 1 ; mlh = nnzh
-                CALL CUTEST_extend_array( H_col, lh_col, ulh, nlh, mlh,        &
-                                          buffer, status, alloc_status )
-                IF ( status /= 0 ) THEN
-                  bad_alloc = 'H_col' ; GO TO 980 ; END IF
-                lh_col = nlh
-              END IF
-              H_row( nnzh ) = i ; H_col( nnzh ) = j
-              IF ( newpt == llink ) THEN
-                nlh = llink
-                ulh = newpt; mlh = llink + 1
-                CALL CUTEST_extend_array( LINK_col, llink, ulh, nlh, mlh,      &
-                                          buffer, status, alloc_status )
-                IF ( status /= 0 ) THEN
-                  bad_alloc = 'LINK_col' ; GO TO 980 ; END IF
-                llink = nlh
-                nlh = lpos
-                ulh = newpt; mlh = lpos + 1
-                CALL CUTEST_extend_array( POS_in_H, lpos, ulh, nlh, mlh,       &
-                                          buffer, status, alloc_status )
-                IF ( status /= 0 ) THEN
-                  bad_alloc = 'POS_in_H' ; GO TO 980 ; END IF
-                lpos = nlh
-              END IF
-              newpt = newpt + 1
-              LINK_col( istart ) = newpt
-              POS_in_H( istart ) = nnzh
-              LINK_col( newpt  ) = - 1
-              POS_in_H( newpt ) = - 1
-
-!  continue searching the linked list for an entry in row i, column j
-
-            ELSE
-              IF ( H_row( POS_in_H( istart ) ) /= i ) THEN
-                istart = inext
-                GO TO 150
-              END IF
-            END IF
+            kk = POS_in_H( ROW_start( i ) )
+            H_row( kk ) = i
+            H_col( kk ) = j
+            ROW_start( i ) = ROW_start( i ) + 1
           END DO
         END DO
       END DO
 
-! ---------------------------------------------------------
-! Add on the low rank first order terms for the ig-th group
-! ---------------------------------------------------------
+!  now consider the low rank first order terms for the i-th group
 
       DO ig = 1, ng
-        IF ( iprint >= 100 ) WRITE( out,                                       &
-          "( ' Group ', I5, ' second-order terms ' )" )  ig
-        ig1 = ig + 1
 
 !  see if the group has any nonlinear elements
 
-        DO iell = ISTADG( ig ), ISTADG( ig1 ) - 1
+        DO iell = ISTADG( ig ), ISTADG( ig + 1 ) - 1
           iel = IELING( iell )
           listvs = ISTAEV( iel )
           listve = ISTAEV( iel + 1 ) - 1
-          ielh = ISTADH( iel )
-          ihnext = ielh
           DO l = listvs, listve
             j = IELVAR( l )
+
+!  find the entry in row i of this column
+
             IF ( j /= 0 ) THEN
-
-!  find the entry in row I of this column
-
               DO k = listvs, l
                 i = IELVAR( k )
 
-!  skip all elements which lie outside a band of width nsemib
-
-                IF ( ABS( i - j ) <= nsemib .AND. i /= 0 ) THEN
-
 !  only the upper triangle of the matrix is stored
 
-                  IF ( i <= j ) THEN
-                    ii = i
-                    jj = j
-                  ELSE
-                    ii = j
-                    jj = i
+                IF ( i /= 0 ) THEN
+                  IF ( i > j ) THEN
+                    ii = i ; i = j ; j = ii
                   END IF
 
-!  obtain the appropriate storage location in H for the new entry
+!  there is an entry in position (i,j) to be stored in 
+!  H_row/col(COL(ROW_start(i)))
 
-                  IF ( iprint >= 100 ) WRITE( 6, "( ' Row ', I6, ' Column ',   &
-                 &   I6, ' used from element ', I6 )" ) ii, jj, iel
-
-!  Case 1: band matrix storage scheme
-
-                  istart = jj
-  230             CONTINUE
-                  inext = LINK_col( istart )
-
-!  the (i,j)-th location is empty. Place the new entry in this location
-!  and add another link to the list
-
-                  IF ( inext == - 1 ) THEN
-                    nnzh = nnzh + 1
-                    IF ( nnzh > lh_row .OR. nnzh > lh_col ) THEN
-                      nlh = lh_row ; ulh = nnzh - 1; mlh = nnzh
-                      CALL CUTEST_extend_array( H_row, lh_row, ulh, nlh,       &
-                                                mlh, buffer, status,           &
-                                                alloc_status )
-                      IF ( status /= 0 ) THEN
-                         bad_alloc = 'H_row' ; GO TO 980 ; END IF
-                      lh_row = nlh
-                      nlh = lh_col ; ulh = nnzh - 1; mlh = nnzh
-                      CALL CUTEST_extend_array( H_col, lh_col, ulh, nlh,       &
-                                                mlh, buffer, status,           &
-                                                alloc_status )
-                      IF ( status /= 0 ) THEN
-                         bad_alloc = 'H_col' ; GO TO 980 ; END IF
-                      lh_col = nlh
-                    END IF   
-                    H_row( nnzh ) = ii ; H_col( nnzh ) = jj
-                    IF ( newpt == llink ) THEN
-                      nlh = llink
-                      ulh = newpt; mlh = llink + 1
-                      CALL CUTEST_extend_array( LINK_col, llink, ulh, nlh,     &
-                                                mlh, buffer, status,           &
-                                                alloc_status )
-                      IF ( status /= 0 ) THEN
-                        bad_alloc = 'LINK_col' ; GO TO 980 ; END IF
-                      llink = nlh
-                      nlh = lpos
-                      ulh = newpt; mlh = lpos + 1
-                      CALL CUTEST_extend_array( POS_in_H, lpos, ulh, nlh,      &
-                                                mlh, buffer, status,           &
-                                                alloc_status )
-                      IF ( status /= 0 ) THEN
-                        bad_alloc = 'POS_in_H' ; GO TO 980 ; END IF
-                      lpos = nlh
-                    END IF
-                    newpt = newpt + 1
-                    LINK_col( istart ) = newpt
-                    POS_in_H( istart ) = nnzh
-                    LINK_col( newpt  ) = - 1
-                    POS_in_H( newpt ) = - 1
-
-!  continue searching the linked list for an entry in row i, column j
-
-                  ELSE
-                    IF ( H_row( POS_in_H( istart ) ) /= ii ) THEN
-                      istart = inext
-                      GO TO 230
-                    END IF
-                  END IF
+                  kk = POS_in_H( ROW_start( i ) )
+                  H_row( kk ) = i
+                  H_col( kk ) = j
+                  ROW_start( i ) = ROW_start( i ) + 1
                 END IF
-                ihnext = ihnext + 1
               END DO
-            ELSE
-              ihnext = ihnext + l - listvs + 1
             END IF
           END DO
         END DO
       END DO
+      
+!  restore the starting addresses
+
+      DO i = n - 1, 1, - 1
+        ROW_start( i + 1 ) = ROW_start( i )
+      END DO
+      ROW_start( 1 ) = 1
 
 !  ---------------------------------------
 !  For debugging, print the nonzero values
@@ -2027,25 +1799,26 @@
 !-  C U T E S T _ s i z e _ s p a r s e  _ h e s s i a n  S U B R O U T I N E -
 
       SUBROUTINE CUTEST_size_sparse_hessian(                                   &
-                      n, ng, nel, ntotel, nvrels, nvargp,                      &
-                      IELVAR, IELING, ISTADG, ISTAEV, ISTAGV, ISVGRP, GXEQX,   &
-                      error, buffer, status, alloc_status, bad_alloc,          &
-                      lh_row, H_row, LINK_col, POS_in_H, llink, lpos, nnzh )
+                      n, ng, nel, ntotel, nvrels, nvargp, IELVAR, IELING,      &
+                      ISTADG, ISTAEV, ISTAGV, ISVGRP, GXEQX, error, status,    &
+                      alloc_status, bad_alloc, hessian_setup_complete,         &
+                      ROW_start, POS_in_H, USED, lrowst, lpos, lused, nnzh )
 
 !  Determine the number of nonzeros in the second derivative matrix of a 
 !  groups partially separable function in co-ordinate format
 
 !  History -
 !   Derived from CUTEst_assemble_hessian in this module
-!   fortran 2003 version released in CUTEst, 25th November 2012
+!   fortran 2003 version released in CUTEst, 14th June 2013
 
 !-----------------------------------------------
 !   D u m m y   A r g u m e n t s
 !-----------------------------------------------
 
       INTEGER, INTENT( IN ) :: n, ng, nvargp
-      INTEGER, INTENT( IN ) :: nvrels, ntotel, nel, error, buffer
+      INTEGER, INTENT( IN ) :: nvrels, ntotel, nel, error
       INTEGER, INTENT( OUT ) :: status, nnzh, alloc_status
+      LOGICAL, INTENT( IN ) :: hessian_setup_complete
       CHARACTER ( LEN = 24 ) :: bad_alloc
       INTEGER, INTENT( IN ), DIMENSION( ng  + 1 ) :: ISTADG, ISTAGV
       INTEGER, INTENT( IN ), DIMENSION( nel + 1 ) :: ISTAEV
@@ -2058,51 +1831,132 @@
 !   D u m m y   A r g u m e n t s   f o r   W o r k s p a c e 
 !--------------------------------------------------------------
 
-      INTEGER, INTENT( INOUT ) :: lh_row, llink, lpos
-      INTEGER, ALLOCATABLE, DIMENSION( : ) :: LINK_col
+      INTEGER, INTENT( INOUT ) :: lrowst, lpos, lused
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: ROW_start
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: POS_in_H
-      INTEGER, ALLOCATABLE, DIMENSION( : ) :: H_row
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: USED
 
 !-----------------------------------------------
 !   L o c a l   V a r i a b l e s
 !-----------------------------------------------
 
-      INTEGER :: i, ii, iel, iell, ig, j, jj, k, l, listvs, listve, inext
-      INTEGER :: istart, newpt, nlh, ulh, mlh
+      INTEGER :: i, j, k, l
 
-!  if a co-ordinate scheme is to be used, allocate arrays to hold the link
-!  list which points to the row numbers  which are used in the columns of
-!  the assembled Hessian
+!  determine the rows structure of the second derivative matrix of a 
+!  groups partially separable function with possible repititions
 
-!  LINK_col(.) gives the link list. The list for column j starts
-!              in LINK_col(j) and ends when LINK_col(k) = - 1
-!  POS_in_H(.) gives the position in H of the current link
+      IF ( .NOT. hessian_setup_complete ) THEN
+        CALL CUTEST_sparse_hessian_by_rows(                                    &
+                        n, ng, nel, ntotel, nvrels, nvargp,                    &
+                        IELVAR, IELING, ISTADG, ISTAEV, ISTAGV, ISVGRP, GXEQX, &
+                        error, status, alloc_status, bad_alloc,                &
+                        ROW_start, POS_in_H, lrowst, lpos )
+        IF ( status /= 0 ) RETURN
 
-      llink = lh_row + n
-      lpos = lh_row + n
-      
-      CALL CUTEST_allocate_array( LINK_col, llink, alloc_status )
+!  allocate workspace if required
+
+        lused = n
+        CALL CUTEST_allocate_array( USED, lused, alloc_status )
+        IF ( alloc_status /= 0 ) THEN
+          bad_alloc = 'USED' ; GO TO 980 ; END IF
+      END IF
+
+!  now pass through the nonzeros, removing duplicates
+
+      USED = 0
+      k = 1
+      DO i = 1, n
+        DO l = ROW_start( i ), ROW_start( i + 1 ) - 1
+          j = POS_in_H( l )
+          IF ( USED( j ) /= i ) THEN
+            USED( j ) = i
+            k = k + 1
+          END IF
+        END DO
+      END DO
+      nnzh = k - 1
+
+!  deallocate temporary storage
+
+      DEALLOCATE( POS_in_H, ROW_start, USED, STAT = alloc_status )
+
+!  successful return
+
+      status = 0
+      RETURN
+
+!  unsuccessful returns
+
+  980 CONTINUE
+      WRITE( error, "( ' ** Message from -CUTEST_size_sparse_hessian-',        &
+     &    /, ' Allocation error (status = ', I0, ') for ', A )" )              &
+        alloc_status, bad_alloc
+      RETURN
+
+!  end of subroutine CUTEST_size_sparse_hessian
+
+     END SUBROUTINE CUTEST_size_sparse_hessian
+
+! -*- C U T E S T _ s p a r s e _ h e s s i a n _ b y _ r o w s  SUBROUTINE -*-
+
+      SUBROUTINE CUTEST_sparse_hessian_by_rows(                                &
+                      n, ng, nel, ntotel, nvrels, nvargp,                      &
+                      IELVAR, IELING, ISTADG, ISTAEV, ISTAGV, ISVGRP, GXEQX,   &
+                      error, status, alloc_status, bad_alloc,                  &
+                      ROW_start, POS_in_H, lrowst, lpos )
+
+!  Determine the rows structure of the second derivative matrix of a 
+!  groups partially separable function with possible repititions
+
+!  History -
+!   Derived from CUTEst_assemble_hessian in this module
+!   fortran 2003 version released in CUTEst, 14th June 2013
+
+!-----------------------------------------------
+!   D u m m y   A r g u m e n t s
+!-----------------------------------------------
+
+      INTEGER, INTENT( IN ) :: n, ng, nvargp
+      INTEGER, INTENT( IN ) :: nvrels, ntotel, nel, error
+      INTEGER, INTENT( OUT ) :: status, alloc_status
+      CHARACTER ( LEN = 24 ) :: bad_alloc
+      INTEGER, INTENT( IN ), DIMENSION( ng  + 1 ) :: ISTADG, ISTAGV
+      INTEGER, INTENT( IN ), DIMENSION( nel + 1 ) :: ISTAEV
+      INTEGER, INTENT( IN ), DIMENSION( nvrels ) :: IELVAR
+      INTEGER, INTENT( IN ), DIMENSION( ntotel ) :: IELING
+      INTEGER, INTENT( IN ), DIMENSION( nvargp ) :: ISVGRP
+      LOGICAL, INTENT( IN ), DIMENSION( ng  ) :: GXEQX
+
+!---------------------------------------------------------------
+!   D u m m y   A r g u m e n t s   f o r   W o r k s p a c e 
+!--------------------------------------------------------------
+
+      INTEGER, INTENT( INOUT ) :: lrowst, lpos
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: ROW_start
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: POS_in_H
+
+!-----------------------------------------------
+!   L o c a l   V a r i a b l e s
+!-----------------------------------------------
+
+      INTEGER :: i, ii, iel, iell, ig, j, k, l, listvs, listve
+
+!  allocate workspace
+
+      lrowst = n + 1
+      CALL CUTEST_allocate_array( ROW_start, lrowst, alloc_status )
       IF ( alloc_status /= 0 ) THEN
-        bad_alloc = 'LINK_col' ; GO TO 980 ; END IF
-    
-      CALL CUTEST_allocate_array( POS_in_H, lpos, alloc_status )
-      IF ( alloc_status /= 0 ) THEN
-        bad_alloc = 'POS_in_H' ; GO TO 980 ; END IF
-    
-      CALL CUTEST_allocate_array( H_row, lh_row, alloc_status )
-      IF ( alloc_status /= 0 ) THEN
-        bad_alloc = 'H_row' ; GO TO 980 ; END IF
-        
-      LINK_col( : n ) = - 1 ; POS_in_H( : n ) = - 1
-      newpt = n
+        bad_alloc = 'ROW_start' ; GO TO 980 ; END IF
 
-!  make an initial allocation of the space required to hold the Hessian
+!  ======
+!  PASS 1
+!  ======
 
-      nnzh = 0
+!  ROW_start(i+1) will hold the number of entries (with repeats) in row i
 
-!  ------------------------------------------------------
-!  Form the rank-one second order term for the i-th group
-!  ------------------------------------------------------
+      ROW_start( 2 : n + 1 ) = 0
+
+!  consider the rank-one second order term for the i-th group
 
       DO ig = 1, ng
         IF ( GXEQX( ig ) ) CYCLE
@@ -2115,69 +1969,20 @@
           j = ISVGRP( l )
           IF ( j == 0 ) CYCLE
 
-!  find the entry in row I of this column
+!  find the entry in row i of this column
 
           DO k = listvs, listve
             i = ISVGRP( k )
             IF ( i == 0 .OR. i > j ) CYCLE
+            ROW_start( i + 1 ) = ROW_start( i + 1 ) + 1
 
-!  obtain the appropriate storage location in H for the new entry
+!  there is an entry in position (i,j)
 
-            istart = j
- 150        CONTINUE
-            inext = LINK_col( istart )
-            IF ( inext == - 1 ) THEN
-
-!  the (i,j)-th location is empty. Place the new entry in this location and
-!  add another link to the list
-
-              nnzh = nnzh + 1
-              IF ( nnzh > lh_row ) THEN
-                nlh = lh_row ; ulh = nnzh - 1 ; mlh = nnzh
-                CALL CUTEST_extend_array( H_row, lh_row, ulh, nlh, mlh,        &
-                                          buffer, status, alloc_status )
-                IF ( status /= 0 ) THEN
-                  bad_alloc = 'H_row' ; GO TO 980 ; END IF
-                lh_row = nlh
-              END IF
-              H_row( nnzh ) = i
-              IF ( newpt == llink ) THEN
-                nlh = llink
-                ulh = newpt; mlh = llink + 1
-                CALL CUTEST_extend_array( LINK_col, llink, ulh, nlh, mlh,      &
-                                          buffer, status, alloc_status )
-                IF ( status /= 0 ) THEN
-                  bad_alloc = 'LINK_col' ; GO TO 980 ; END IF
-                llink = nlh
-                nlh = lpos
-                ulh = newpt; mlh = lpos + 1
-                CALL CUTEST_extend_array( POS_in_H, lpos, ulh, nlh, mlh,       &
-                                          buffer, status, alloc_status )
-                IF ( status /= 0 ) THEN
-                  bad_alloc = 'POS_in_H' ; GO TO 980 ; END IF
-                lpos = nlh
-              END IF
-              newpt = newpt + 1
-              LINK_col( istart ) = newpt
-              POS_in_H( istart ) = nnzh
-              LINK_col( newpt  ) = - 1
-              POS_in_H( newpt ) = - 1
-            ELSE
-
-!  continue searching the linked list for an entry in row i, column j
-
-              IF ( H_row( POS_in_H( istart ) ) /= i ) THEN
-                istart = inext
-                GO TO 150
-              END IF
-            END IF
           END DO
         END DO
       END DO
 
-! --------------------------------------------------------
-! Add on the low rank first order terms for the i-th group
-! --------------------------------------------------------
+!  now consider the low rank first order terms for the i-th group
 
       DO ig = 1, ng
 
@@ -2199,73 +2004,115 @@
 !  only the upper triangle of the matrix is stored
 
                 IF ( i /= 0 ) THEN
-                  IF ( i <= j ) THEN
-                    ii = i
-                    jj = j
-                  ELSE
-                    ii = j
-                    jj = i
+                  IF ( i > j ) THEN
+                    ii = i ; i = j ; j = ii
                   END IF
 
-!  obtain the appropriate storage location in H for the new entry
+!  there is an entry in position (i,j)
 
-                  istart = jj
-  230             CONTINUE
-                  inext = LINK_col( istart )
-                  IF ( inext == - 1 ) THEN
-
-!  the (i,j)-th location is empty. Place the new entry in this location
-!  and add another link to the list
-
-                    nnzh = nnzh + 1
-                    IF ( nnzh > lh_row ) THEN
-                      nlh = lh_row ; ulh = nnzh - 1; mlh = nnzh
-                      CALL CUTEST_extend_array( H_row, lh_row, ulh, nlh,       &
-                                                mlh, buffer, status,           &
-                                                alloc_status )
-                      IF ( status /= 0 ) THEN
-                         bad_alloc = 'H_row' ; GO TO 980 ; END IF
-                      lh_row = nlh
-                    END IF   
-                    H_row( nnzh ) = ii
-                    IF ( newpt == llink ) THEN
-                      nlh = llink
-                      ulh = newpt; mlh = llink + 1
-                      CALL CUTEST_extend_array( LINK_col, llink, ulh, nlh,     &
-                                                mlh, buffer, status,           &
-                                                alloc_status )
-                      IF ( status /= 0 ) THEN
-                        bad_alloc = 'LINK_col' ; GO TO 980 ; END IF
-                      llink = nlh
-                      nlh = lpos
-                      ulh = newpt; mlh = lpos + 1
-                      CALL CUTEST_extend_array( POS_in_H, lpos, ulh, nlh,      &
-                                                mlh, buffer, status,           &
-                                                alloc_status )
-                      IF ( status /= 0 ) THEN
-                        bad_alloc = 'POS_in_H' ; GO TO 980 ; END IF
-                      lpos = nlh
-                    END IF
-                    newpt = newpt + 1
-                    LINK_col( istart ) = newpt
-                    POS_in_H( istart ) = nnzh
-                    LINK_col( newpt  ) = - 1
-                    POS_in_H( newpt ) = - 1
-                  ELSE
-
-!  continue searching the linked list for an entry in row i, column j
-
-                    IF ( H_row( POS_in_H( istart ) ) /= ii ) THEN
-                      istart = inext
-                      GO TO 230
-                    END IF
-                  END IF
+                  ROW_start( i + 1 ) = ROW_start( i + 1 ) + 1
                 END IF
               END DO
             END IF
           END DO
         END DO
       END DO
+      
+!  ROW_start(i) is changed to give the starting address for the list of 
+!  column entries (with repeats) in row i (and ROW_start(n+1) points one
+!  beyond the end)
+
+!  compute starting addesses
+
+      ROW_start( 1 ) = 1
+      DO i = 2, n + 1
+        ROW_start( i ) = ROW_start( i ) +  ROW_start( i - 1 )
+      END DO
+
+!  ======
+!  PASS 2
+!  ======
+
+!  set the lists of column entries in each row
+
+!  allocate space for column indices
+
+      lpos = ROW_start( n + 1 ) - 1
+      CALL CUTEST_allocate_array( POS_in_H, lpos, alloc_status )
+      IF ( alloc_status /= 0 ) THEN
+        bad_alloc = 'ROW_start' ; GO TO 980 ; END IF
+write(6,*) ' space required ', lpos
+
+!  consider the rank-one second order term for the i-th group
+
+      DO ig = 1, ng
+        IF ( GXEQX( ig ) ) CYCLE
+        listvs = ISTAGV( ig )
+        listve = ISTAGV( ig + 1 ) - 1
+
+!  Form the j-th column of the rank-one matrix
+
+        DO l = listvs, listve
+          j = ISVGRP( l )
+          IF ( j == 0 ) CYCLE
+
+!  find the entry in row i of this column
+
+          DO k = listvs, listve
+            i = ISVGRP( k )
+            IF ( i == 0 .OR. i > j ) CYCLE
+            POS_in_H( ROW_start( i ) ) = j
+            ROW_start( i ) = ROW_start( i ) + 1
+
+!  there is an entry in position (i,j)
+
+          END DO
+        END DO
+      END DO
+
+!  now consider the low rank first order terms for the i-th group
+
+      DO ig = 1, ng
+
+!  see if the group has any nonlinear elements
+
+        DO iell = ISTADG( ig ), ISTADG( ig + 1 ) - 1
+          iel = IELING( iell )
+          listvs = ISTAEV( iel )
+          listve = ISTAEV( iel + 1 ) - 1
+          DO l = listvs, listve
+            j = IELVAR( l )
+
+!  find the entry in row i of this column
+
+            IF ( j /= 0 ) THEN
+              DO k = listvs, l
+                i = IELVAR( k )
+
+!  only the upper triangle of the matrix is stored
+
+                IF ( i /= 0 ) THEN
+                  IF ( i > j ) THEN
+                    ii = i ; i = j ; j = ii
+                  END IF
+
+!  there is an entry in position (i,j)
+
+                  POS_in_H( ROW_start( i ) ) = j
+                  ROW_start( i ) = ROW_start( i ) + 1
+                END IF
+              END DO
+            END IF
+          END DO
+        END DO
+      END DO
+      
+!  restore the starting addresses
+
+      DO i = n - 1, 1, - 1
+        ROW_start( i + 1 ) = ROW_start( i )
+      END DO
+      ROW_start( 1 ) = 1
 
 !  successful return
 
@@ -2275,14 +2122,14 @@
 !  unsuccessful returns
 
   980 CONTINUE
-      WRITE( error, "( ' ** Message from -CUTEST_size_sparse_hessian-',        &
+      WRITE( error, "( ' ** Message from -CUTEST_sparse_hessian_by_rows-',     &
      &    /, ' Allocation error (status = ', I0, ') for ', A )" )              &
         alloc_status, bad_alloc
       RETURN
 
-!  end of subroutine CUTEST_size_sparse_hessian
+!  end of subroutine CUTEST_sparse_hessian_by_rows
 
-     END SUBROUTINE CUTEST_size_sparse_hessian
+     END SUBROUTINE CUTEST_sparse_hessian_by_rows
 
 ! - C U T E S T _ a s s e m b l e _ e l e m e n t _ h e s s i a n  SUBROUTINE  -
 
@@ -2416,11 +2263,11 @@
         IF ( HE_val_ptr( ne + 1 ) >= lhe_val ) THEN
           nlh = 3 * HE_val_ptr( ne + 1 ) / 2 ; ulh = HE_val_ptr( ne ) - 1
           mlh = HE_val_ptr( ne + 1 )
-          CALL CUTEST_extend_array( HE_val, lhe_row, ulh, nlh, mlh, buffer,    &
+          CALL CUTEST_extend_array( HE_val, lhe_val, ulh, nlh, mlh, buffer,    &
                                     status, alloc_status )
           IF ( status /= 0 ) THEN
              bad_alloc = 'HE_val' ; GO TO 980 ; END IF
-          lhe_row = nlh
+          lhe_val = nlh
         END IF
 
 !  record the row indices involved in super-element ne
@@ -2532,7 +2379,9 @@
           gdash = GSCALE( ig ) * GVALS2( ig )
           IF ( iprint >= 100 ) WRITE( out, * ) ' GVALS2(ig) ', GVALS2(IG)
         END IF
-        IF ( gdash == 0.0_wp ) CYCLE
+        IF ( gdash == 0.0_wp ) THEN
+          CYCLE
+        END IF
 
 !  map the problem variables to the elemental variables
 
@@ -2604,30 +2453,28 @@
 
 !  only the upper triangle of the matrix is stored
 
-              IF ( i <= j ) THEN
-                ii = i ; jj = j
-              ELSE
-                ii = j ; jj = i
+              IF ( i > j ) THEN
+                ii = i ; i = j ; j = ii
               END IF
 
 !  obtain the appropriate storage location in H for the new entry
 
               IF ( INTREP( iel ) ) THEN
-                 hesnew = scalee * H_el( k - listvs + 1 )
+                hesnew = scalee * H_el( k - listvs + 1 )
               ELSE
-                 hesnew = scalee * HUVALS( ihnext ) * gdash
+                hesnew = scalee * HUVALS( ihnext ) * gdash
               END IF
               IF ( iprint >= 100 ) WRITE( out, "( ' Row ', I6, ' Column ',     &
              & I6, ' used from element ', I6, ' value = ', ES24.16 )" )        &
-                ii, jj, iel, hesnew
+                i, j, iel, hesnew
               IF ( byrows ) THEN
-                 ihi = HE_val_ptr( ne ) - 1 + nvarg * ( ii - 1 ) -             &
-                    ( ( ii - 1 ) * ii ) / 2 + jj
+                ihi = HE_val_ptr( ne ) - 1 + nvarg * ( i - 1 ) -               &
+                   ( ( i - 1 ) * i ) / 2 + j
               ELSE
-                 ihi = HE_val_ptr( ne ) - 1 + ii + ( jj * ( jj - 1 ) ) / 2
+                ihi = HE_val_ptr( ne ) - 1 + i + ( j * ( j - 1 ) ) / 2
               END IF
               HE_val( ihi ) = HE_val( ihi ) + hesnew
-              IF ( k /= l .AND. ii == jj )                                     &
+              IF ( k /= l .AND. i == j )                                       &
                 HE_val( ihi ) = HE_val( ihi ) + hesnew
               ihnext = ihnext + 1
             END DO
@@ -3741,6 +3588,12 @@
          bad_alloc = 'work%ICALCF' ; GO TO 600 ; END IF
      END IF
 
+     IF ( ALLOCATED( work%ROW_start ) ) THEN
+       DEALLOCATE( work%ROW_start, STAT = alloc_status )
+       IF ( alloc_status /= 0 ) THEN
+         bad_alloc = 'work%ROW_start' ; GO TO 600 ; END IF
+     END IF
+
      IF ( ALLOCATED( work%LINK_col ) ) THEN
        DEALLOCATE( work%LINK_col, STAT = alloc_status )
        IF ( alloc_status /= 0 ) THEN
@@ -3751,6 +3604,18 @@
        DEALLOCATE( work%POS_in_H, STAT = alloc_status )
        IF ( alloc_status /= 0 ) THEN
          bad_alloc = 'work%POS_in_H' ; GO TO 600 ; END IF
+     END IF
+
+     IF ( ALLOCATED( work%USED ) ) THEN
+       DEALLOCATE( work%USED, STAT = alloc_status )
+       IF ( alloc_status /= 0 ) THEN
+         bad_alloc = 'work%USED' ; GO TO 600 ; END IF
+     END IF
+
+     IF ( ALLOCATED( work%FILLED ) ) THEN
+       DEALLOCATE( work%FILLED, STAT = alloc_status )
+       IF ( alloc_status /= 0 ) THEN
+         bad_alloc = 'work%FILLED' ; GO TO 600 ; END IF
      END IF
 
      IF ( ALLOCATED( work%H_row ) ) THEN
@@ -3849,6 +3714,7 @@
          bad_alloc = 'work%LOGIC' ; GO TO 600 ; END IF
      END IF
      work%array_status = .FALSE.
+     work%hessian_setup_complete = .FALSE.
      RETURN
 
 !  unsuccessful returns

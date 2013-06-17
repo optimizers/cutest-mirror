@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.0 - 07/04/2013 AT 10:00 GMT.
+! THIS VERSION: CUTEST 1.1 - 14/06/2013 AT 14:00 GMT.
 
 !-*-*-*-*-*-*-*-  C U T E S T    U S H P  S U B R O U T I N E  -*-*-*-*-*-*-*-
 
@@ -69,13 +69,13 @@
 
       CALL CUTEST_assemble_hessian_pattern(                                    &
              n, data%ng, data%nel, data%ntotel, data%nvrels, data%nvargp,      &
-             data%ISTADH, data%IELVAR, data%IELING, data%ISTADG,               &
+             data%IELVAR, data%IELING, data%ISTADG,                            &
              data%ISTAEV, data%ISTAGV, data%ISVGRP, data%GXEQX,                &
-             0, data%out, data%out, work%io_buffer,                            &
-             n, status, alloc_status, bad_alloc,                               &
-             work%array_status, work%lh_row, work%lh_col,                      &
-             work%H_row, work%H_col,                                           &
-             work%LINK_col, work%POS_in_H, work%llink, work%lpos, nnzh )
+             0, data%out, data%out, status, alloc_status, bad_alloc,           &
+             work%hessian_setup_complete, work%lh_row, work%lh_col,            &
+             work%H_row, work%H_col, work%ROW_start, work%POS_in_H, work%USED, &
+             work%FILLED, work%lrowst, work%lpos, work%lused, work%lfilled,    &
+             nnzh )
 
 !  check for errors
 
