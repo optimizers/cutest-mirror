@@ -481,36 +481,38 @@
 
       IF ( data%numcon > 0 ) THEN
         CALL CUTEST_assemble_hessian(                                          &
-             n, data%ng, data%nel, data%ntotel, data%nvrels, data%nnza,        &
-             data%maxsel, data%nvargp, data%ISTADH,                            &
-             data%ICNA, data%ISTADA, data%INTVAR, data%IELVAR, data%IELING,    &
-             data%ISTADG, data%ISTAEV, data%ISTAGV, data%ISVGRP, data%A,       &
-             work%FUVALS, data%lnguvl, work%FUVALS, data%lnhuvl,               &
-             work%GVALS( : , 2 ), work%GVALS( :  , 3 ), work%GSCALE_used,      &
-             data%ESCALE, data%GXEQX, data%ITYPEE, data%INTREP, RANGE,         &
-             0, data%out, data%out, work%io_buffer, .TRUE., .FALSE.,           &
-             n, status, alloc_status, bad_alloc,                               &
-             work%array_status, work%lh_row, work%lh_col, work%lh_val,         &
-             work%H_row, work%H_col, work%H_val,                               &
-             work%LINK_col, work%POS_in_H, work%llink, work%lpos,              &
-             work%W_ws, work%W_el, work%W_in, work%H_el, work%H_in,            &
-             nnzh = nnzh )
+               n, data%ng, data%nel, data%ntotel, data%nvrels, data%nnza,      &
+               data%maxsel, data%nvargp, data%ISTADH,                          &
+               data%ICNA, data%ISTADA, data%INTVAR, data%IELVAR, data%IELING,  &
+               data%ISTADG, data%ISTAEV, data%ISTAGV, data%ISVGRP, data%A,     &
+               work%FUVALS, data%lnguvl, work%FUVALS, data%lnhuvl,             &
+               work%GVALS( : , 2 ), work%GVALS( :  , 3 ), work%GSCALE_used,    &
+               data%ESCALE, data%GXEQX, data%ITYPEE, data%INTREP, RANGE,       &
+               0, data%out, data%out, .TRUE., .FALSE.,                         &
+               n, status, alloc_status, bad_alloc,                             &
+               work%array_status, work%lh_row, work%lh_col, work%lh_val,       &
+               work%H_row, work%H_col, work%H_val, work%ROW_start,             &
+               work%POS_in_H, work%USED, work%FILLED,                          &
+               work%lrowst, work%lpos, work%lused, work%lfilled,               &
+               work%W_ws, work%W_el, work%W_in, work%H_el, work%H_in,          &
+               nnzh = nnzh )
       ELSE
         CALL CUTEST_assemble_hessian(                                          &
-             n, data%ng, data%nel, data%ntotel, data%nvrels, data%nnza,        &
-             data%maxsel, data%nvargp, data%ISTADH,                            &
-             data%ICNA, data%ISTADA, data%INTVAR, data%IELVAR, data%IELING,    &
-             data%ISTADG, data%ISTAEV, data%ISTAGV, data%ISVGRP, data%A,       &
-             work%FUVALS, data%lnguvl, work%FUVALS, data%lnhuvl,               &
-             work%GVALS( : , 2 ), work%GVALS( :  , 3 ), data%GSCALE,           &
-             data%ESCALE, data%GXEQX, data%ITYPEE, data%INTREP, RANGE,         &
-             0, data%out, data%out, work%io_buffer, .TRUE., .FALSE.,           &
-             n, status, alloc_status, bad_alloc,                               &
-             work%array_status, work%lh_row, work%lh_col, work%lh_val,         &
-             work%H_row, work%H_col, work%H_val,                               &
-             work%LINK_col, work%POS_in_H, work%llink, work%lpos,              &
-             work%W_ws, work%W_el, work%W_in, work%H_el, work%H_in,            &
-             nnzh = nnzh )
+               n, data%ng, data%nel, data%ntotel, data%nvrels, data%nnza,      &
+               data%maxsel, data%nvargp, data%ISTADH,                          &
+               data%ICNA, data%ISTADA, data%INTVAR, data%IELVAR, data%IELING,  &
+               data%ISTADG, data%ISTAEV, data%ISTAGV, data%ISVGRP, data%A,     &
+               work%FUVALS, data%lnguvl, work%FUVALS, data%lnhuvl,             &
+               work%GVALS( : , 2 ), work%GVALS( :  , 3 ), data%GSCALE,         &
+               data%ESCALE, data%GXEQX, data%ITYPEE, data%INTREP, RANGE,       &
+               0, data%out, data%out, .TRUE., .FALSE.,                         &
+               n, status, alloc_status, bad_alloc,                             &
+               work%array_status, work%lh_row, work%lh_col, work%lh_val,       &
+               work%H_row, work%H_col, work%H_val, work%ROW_start,             &
+               work%POS_in_H, work%USED, work%FILLED,                          &
+               work%lrowst, work%lpos, work%lused, work%lfilled,               &
+               work%W_ws, work%W_el, work%W_in, work%H_el, work%H_in,          &
+               nnzh = nnzh )
       END IF
 
 !  check for errors in the assembly

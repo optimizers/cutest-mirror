@@ -83,10 +83,11 @@
  *
  * terminate  uterminate / cterminate     Remove existing internal workspace
  *
- *                                          CUTEr version:
- *                                           D. Orban, Montreal, January 2007
- *                                          CUTEst version additions:
- *                                           Nick Gould, January 2013
+ *                                        CUTEr version:
+ *                                         D. Orban, Montreal, January 2007
+ *                                        CUTEst version additions:
+ *                                         Nick Gould, January 2013
+ *                                        This version, June 17 2013 11:45 GMT
  */
 
 /* -------------------------------------------------------------------------- */
@@ -122,6 +123,7 @@ extern "C" {
   static integer CUTEst_ncon = 0;                  /* number of constraints */
   static integer CUTEst_nnzj = 0;                        /* nnz in Jacobian */
   static integer CUTEst_nnzh = 0;        /* nnz in upper triangular Hessian */
+  static integer CUTEst_dertype = 2;     /* derivative type */
   static char setupCalled = 0;     /* Flag to indicate if setup was called */
   static char dataFileOpen = 0;     /* Flag to indicate if OUTSDIf is open */
   static char onlyConst[] = "%-s only available for constrained problems\n";
@@ -181,7 +183,7 @@ extern "C" {
 
     int  nFields = sizeof(fieldNames)/sizeof(fieldNames[0]);
 
-    integer      icon, *icon_ptr;
+    integer      icon, *icon_ptr, *dertype_ptr;
 
     integer      zero = 0;
     integer     *irow, *jcol, *irow2, *jcol2;
@@ -259,11 +261,11 @@ extern "C" {
     /* ------------------------------------------------------------------ */
 
     /* Obtain problem dimensions.
-     * usage: dims()
+     * usage: cutest_dims()
      */
     if (strcmp(toolName, "dims") == 0) {
-      if (nlhs != 2) mexErrMsgTxt("Dims returns 2 output values\n");
-      if (nrhs > 1) mexWarnMsgTxt("Dims takes no input argument\n");
+      if (nlhs != 2) mexErrMsgTxt("cutest_dims returns 2 output values\n");
+      if (nrhs > 1) mexWarnMsgTxt("cutest_dims takes no input argument\n");
 
 #ifdef MXDEBUG
       mexPrintf("Opening data file\n");
@@ -299,28 +301,61 @@ extern "C" {
     }
 
     /* Setup problem and return a Matlab structure with all data.
-     * Usage:  prob = setup()
+     * Usage:  prob = cutest_setup()
      */
     if (strcmp(toolName, "setup") == 0) {
-      if (nlhs != 1) mexErrMsgTxt("Setup returns one output\n");
-      if (nrhs > 1)
-        if (nrhs < 4)
-          mexWarnMsgTxt("Setup takes 0 or 3 arguments\n");
-        else {
+
+      if (setupCalled) mexErrMsgTxt("cutest_setup: cutest_terminate must be called first\n");
+
+      if (nlhs != 1) mexErrMsgTxt("cutest_setup returns one output\n");
+      if (nrhs > 1) {
+        if (nrhs == 2) {
+          if (! isInteger(prhs[1]) && ! mxIsDouble(prhs[1]))
+            mexErrMsgTxt("cutest_setup: derivative type must be integer\n");
+
+          if (isInteger(prhs[1])) {
+            dertype_ptr = (integer *)mxGetData(prhs[2]);
+            CUTEst_dertype = dertype_ptr[0];
+          } else {
+            CUTEst_dertype = (integer)*mxGetPr(prhs[1]);
+          }
+        }
+        else if (nrhs == 5) {
           /* Check input arguments type */
-          for (i = 1; i < 4; i++)
+          if (! isInteger(prhs[1]) && ! mxIsDouble(prhs[1]))
+            mexErrMsgTxt("cutest_setup: derivative type must be integer\n");
+
+          if (isInteger(prhs[1])) {
+            dertype_ptr = (integer *)mxGetData(prhs[1]);
+            CUTEst_dertype = dertype_ptr[0];
+          } else {
+
+            CUTEst_dertype = (integer)*mxGetPr(prhs[1]);
+          }
+          for (i = 2; i < 5; i++)
             if (!mxIsLogicalScalar(prhs[i]))
-              mexWarnMsgTxt("Setup args must be logicals\n");
+              mexWarnMsgTxt("Setup args 2-4 must be logicals\n");
 
           /* Read input arguments */
-          eFirst  = mxGetLogicals(prhs[1]);
-          lFirst  = mxGetLogicals(prhs[2]);
-          nvFirst = mxGetLogicals(prhs[3]);
+          eFirst  = mxGetLogicals(prhs[2]);
+          lFirst  = mxGetLogicals(prhs[3]);
+          nvFirst = mxGetLogicals(prhs[4]);
 
           /*          efirst = *eFirst  ? TRUE_ : FALSE_;
           lfirst = *lFirst  ? TRUE_ : FALSE_;
           nvfrst = *nvFirst ? TRUE_ : FALSE_; */
+        } 
+        else {
+            mexErrMsgTxt("setup takes 0, 1 or 4 arguments\n");
         }
+      } 
+      else {
+        CUTEst_dertype = 2;
+      }
+
+      if (CUTEst_dertype < 0 || CUTEst_dertype > 2) {
+        CUTEst_dertype = 2;
+      }
 
 #ifdef MXDEBUG
       mexPrintf("Opening data file\n");
@@ -398,14 +433,27 @@ extern "C" {
 #ifdef MXDEBUG
       mexPrintf("Calling CDIMSH/CDIMSJ\n");
 #endif
-      CUTEST_cdimsh( &status, &CUTEst_nnzh);
-      if (status != 0) {
-          sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
-          mexErrMsgTxt(msgBuf);
+
+      if (CUTEst_dertype == 2) {
+        if (CUTEst_ncon > 0)
+          CUTEST_cdimsh( &status, &CUTEst_nnzh);
+        else
+          CUTEST_udimsh( &status, &CUTEst_nnzh);
+
+        if (status != 0) {
+            sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
+            mexErrMsgTxt(msgBuf);
+          }
+      } else {
+        CUTEst_nnzh = - 1 ;
+      } 
+      if (CUTEst_dertype > 0) {
+        if (CUTEst_ncon > 0) {
+          CUTEST_cdimsj( &status, &CUTEst_nnzj);
+          CUTEst_nnzj -= CUTEst_nvar;
         }
-      if (CUTEst_ncon > 0) {
-        CUTEST_cdimsj( &status, &CUTEst_nnzj);
-        CUTEst_nnzj -= CUTEst_nvar;
+      } else {
+        CUTEst_nnzj = - 1 ;
       }
 #ifdef MXDEBUG
       mexPrintf("  nnzh = %-d, nnzj = %-d\n", CUTEst_nnzh, CUTEst_nnzj);
@@ -467,10 +515,10 @@ extern "C" {
 
     /* ------------------------------------------------------------------ */
 
-    if (! setupCalled) mexErrMsgTxt("setup() must be called first\n");
+    if (! setupCalled) mexErrMsgTxt("cutest_setup must be called first\n");
 
     /* Obtain variable names
-     * Usage: vnames = CUTEST_varnames( &status, )
+     * Usage: vnames = cutest_varnames( &status, )
      */
     if (strcmp(toolName, "varnames") == 0) {
 
@@ -480,7 +528,7 @@ extern "C" {
 
       MALLOC(Fvnames, CUTEst_nvar * STR_LEN, char);
       if (!Fvnames)
-        mexErrMsgTxt("varnames: Error allocating room for variable names\n");
+        mexErrMsgTxt("cutest_varnames: Error allocating room for variable names\n");
 
       CUTEST_varnames( &status, &CUTEst_nvar, Fvnames);
 
@@ -512,7 +560,7 @@ extern "C" {
     /* ------------------------------------------------------------------ */
 
     /* Obtain constraint names
-     * Usage: cnames = CUTEST_connames( &status, )
+     * Usage: cnames = cutest_connames( &status, )
      */
     if (strcmp(toolName, "connames") == 0) {
 
@@ -521,13 +569,13 @@ extern "C" {
         mexErrMsgTxt(msgBuf);
       }
 
-      if (nlhs != 1) mexErrMsgTxt("connames returns a single output\n");
+      if (nlhs != 1) mexErrMsgTxt("cutest_connames returns a single output\n");
       if (nrhs > 1)
-        mexWarnMsgTxt("connames does not take input arguments\n");
+        mexWarnMsgTxt("cutest_connames does not take input arguments\n");
 
       MALLOC(Fcnames, CUTEst_ncon * STR_LEN, char);
       if (!Fcnames)
-        mexErrMsgTxt("connames: Error allocating room for constraint names\n");
+        mexErrMsgTxt("cutest_connames: Error allocating room for constraint names\n");
 
       CUTEST_connames( &status, &CUTEst_ncon, Fcnames);
       if (status != 0) {
@@ -563,7 +611,7 @@ extern "C" {
     /* ------------------------------------------------------------------ */
 
     /* Evaluate objective function value and constraint bodies.
-     * Usage:  [f,c] = objcons(x)
+     * Usage:  [f,c] = cutest_objcons(x)
      */
     if (strcmp(toolName, "objcons") == 0) {
 
@@ -571,14 +619,14 @@ extern "C" {
         sprintf(msgBuf, onlyConst, toolName);
         mexWarnMsgTxt(msgBuf);
       }
-      if (nrhs != 2) mexErrMsgTxt("objcons: Please specify x\n");
-      if (nlhs != 2) mexErrMsgTxt("objcons: Need two output arguments\n");
+      if (nrhs != 2) mexErrMsgTxt("cutest_objcons: Please specify x\n");
+      if (nlhs != 2) mexErrMsgTxt("cutest_objcons: Need two output arguments\n");
 
       if (! mxIsDouble(prhs[1]))
-        mexErrMsgTxt("objcons: Input array must have type double\n");
+        mexErrMsgTxt("cutest_objcons: Input array must have type double\n");
 
       if (mxGetNumberOfElements(prhs[1]) != CUTEst_nvar)
-        mexErrMsgTxt("objcons: Input array has erroneous size\n");
+        mexErrMsgTxt("cutest_objcons: Input array has erroneous size\n");
 
       x = (doublereal *)mxGetData(prhs[1]);
       plhs[0] = mxCreateDoubleMatrix(1, 1, mxREAL);
@@ -599,19 +647,19 @@ extern "C" {
     /* =============== Dense first derivative tools ===================== */
 
     /* Return function value and gradient if requested.
-     * Usage:  f = obj(x)  or  [f,g] = obj(x)
+     * Usage:  f = cutest_obj(x)  or  [f,g] = cutest_obj(x)
      */
     if (strcmp(toolName, "obj") == 0) {
 
-      if (nrhs != 2) mexErrMsgTxt("obj: Please specify x\n");
-      if (nlhs < 1) mexErrMsgTxt("obj: Please specify an output argument\n");
-      if (nlhs > 2) mexErrMsgTxt("obj: Too many output arguments\n");
+      if (nrhs != 2) mexErrMsgTxt("cutest_obj: Please specify x\n");
+      if (nlhs < 1) mexErrMsgTxt("cutest_obj: Please specify an output argument\n");
+      if (nlhs > 2) mexErrMsgTxt("cutest_obj: Too many output arguments\n");
 
       if (! mxIsDouble(prhs[1]))
-        mexErrMsgTxt("obj: Input array must have type double\n");
+        mexErrMsgTxt("cutest_obj: Input array must have type double\n");
 
       if (mxGetNumberOfElements(prhs[1]) != CUTEst_nvar)
-        mexErrMsgTxt("obj: Input array has erroneous size\n");
+        mexErrMsgTxt("cutest_obj: Input array has erroneous size\n");
 
       x  = (doublereal *)mxGetData(prhs[1]);
       plhs[0] = mxCreateDoubleMatrix(1, 1, mxREAL);
@@ -642,19 +690,19 @@ extern "C" {
     }
 
     /* Return function value and sparse gradient if requested.
-     * Usage:  f = sobj(x)  or  [f,sg] = sobj(x)
+     * Usage:  f = cutest_sobj(x)  or  [f,sg] = cutest_sobj(x)
      */
     if (strcmp(toolName, "sobj") == 0) {
 
-      if (nrhs != 2) mexErrMsgTxt("sobj: Please specify x\n");
-      if (nlhs < 1) mexErrMsgTxt("sobj: Please specify an output argument\n");
-      if (nlhs > 2) mexErrMsgTxt("sobj: Too many output arguments\n");
+      if (nrhs != 2) mexErrMsgTxt("cutest_sobj: Please specify x\n");
+      if (nlhs < 1) mexErrMsgTxt("cutest_sobj: Please specify an output argument\n");
+      if (nlhs > 2) mexErrMsgTxt("cutest_sobj: Too many output arguments\n");
 
       if (! mxIsDouble(prhs[1]))
-        mexErrMsgTxt("sobj: Input array must have type double\n");
+        mexErrMsgTxt("cutest_sobj: Input array must have type double\n");
 
       if (mxGetNumberOfElements(prhs[1]) != CUTEst_nvar)
-        mexErrMsgTxt("sobj: Input array has erroneous size\n");
+        mexErrMsgTxt("cutest_sobj: Input array has erroneous size\n");
 
       x  = (doublereal *)mxGetData(prhs[1]);
       plhs[0] = mxCreateDoubleMatrix(1, 1, mxREAL);
@@ -715,19 +763,19 @@ extern "C" {
     /* ------------------------------------------------------------------ */
 
     /* Return function gradient.
-     * Usage:  g = grad(x).
+     * Usage:  g = cutest_grad(x).
      */
     if (strcmp(toolName, "grad") == 0) {
 
-      if (nrhs != 2) mexErrMsgTxt("grad: Please specify x\n");
-      if (nlhs < 1) mexErrMsgTxt("grad: Please specify an output argument\n");
-      if (nlhs > 2) mexErrMsgTxt("grad: Too many output arguments\n");
+      if (nrhs != 2) mexErrMsgTxt("cutest_grad: Please specify x\n");
+      if (nlhs < 1) mexErrMsgTxt("cutest_grad: Please specify an output argument\n");
+      if (nlhs > 2) mexErrMsgTxt("cutest_grad: Too many output arguments\n");
 
       if (! mxIsDouble(prhs[1]))
-        mexErrMsgTxt("grad: Input array must have type double\n");
+        mexErrMsgTxt("cutest_grad: Input array must have type double\n");
 
       if (mxGetNumberOfElements(prhs[1]) != CUTEst_nvar)
-        mexErrMsgTxt("grad: Input array has erroneous size\n");
+        mexErrMsgTxt("cutest_grad: Input array has erroneous size\n");
 
       x  = (doublereal *)mxGetData(prhs[1]);
       plhs[0] = mxCreateDoubleMatrix(CUTEst_nvar, 1, mxREAL);
@@ -746,8 +794,8 @@ extern "C" {
     /* ------------------------------------------------------------------ */
 
     /* Return constraint bodies and Jacobian if requested.
-     * Usage:   c = cons(x)    or    [c,J] = cons(x)
-     *         ci = cons(x,i)  or  [ci,gi] = cons(x,i)
+     * Usage:   c = cutest_cons(x)    or    [c,J] = cutest_cons(x)
+     *         ci = cutest_cons(x,i)  or  [ci,gi] = cutest_cons(x,i)
      */
     if (strcmp(toolName, "cons") == 0) {
 
@@ -756,19 +804,19 @@ extern "C" {
         mexWarnMsgTxt(msgBuf);
       }
       if (nrhs < 2 || nrhs > 4)
-        mexErrMsgTxt("cons: Please specify x and possibly index\n");
-      if (nlhs < 1) mexErrMsgTxt("cons: Please specify an output argument\n");
-      if (nlhs > 2) mexErrMsgTxt("cons: Too many output arguments\n");
+        mexErrMsgTxt("cutest_cons: Please specify x and possibly index\n");
+      if (nlhs < 1) mexErrMsgTxt("cutest_cons: Please specify an output argument\n");
+      if (nlhs > 2) mexErrMsgTxt("cutest_cons: Too many output arguments\n");
 
       if (! mxIsDouble(prhs[1]))
-        mexErrMsgTxt("cons: Input array must have type double\n");
+        mexErrMsgTxt("cutest_cons: Input array must have type double\n");
 
       if (mxGetNumberOfElements(prhs[1]) != CUTEst_nvar)
-        mexErrMsgTxt("cons: Input array has erroneous size\n");
+        mexErrMsgTxt("cutest_cons: Input array has erroneous size\n");
 
       if (nrhs == 3) {
         if (! isInteger(prhs[2]) && ! mxIsDouble(prhs[2]))
-          mexErrMsgTxt("cons: Constraint index must be integer\n");
+          mexErrMsgTxt("cutest_cons: Constraint index must be integer\n");
 
         if (isInteger(prhs[2])) {
           icon_ptr = (integer *)mxGetData(prhs[2]);
@@ -778,7 +826,7 @@ extern "C" {
 
         if (icon <= 0 || icon > CUTEst_ncon) {
           sprintf(msgBuf,
-                   "cons: Invalid constraint index %-d\n", icon);
+                   "cutest_cons: Invalid constraint index %-d\n", icon);
           mexErrMsgTxt(msgBuf);
         }
       }
@@ -829,7 +877,7 @@ extern "C" {
     /* ------------------------------------------------------------------ */
 
     /* Return the gradient of the objective or Lagrangian and Jacobian
-     * Usage:  [g,J] = lagjac(x)  or  [g,J] = lagjac(x,v)
+     * Usage:  [g,J] = cutest_lagjac(x)  or  [g,J] = cutest_lagjac(x,v)
      */
     if (strcmp(toolName, "lagjac") == 0) {
 
@@ -838,16 +886,16 @@ extern "C" {
         mexWarnMsgTxt(msgBuf);
       }
       if (nrhs < 2 || nrhs > 3)
-        mexErrMsgTxt("lagjac: Please specify x and possibly v\n");
+        mexErrMsgTxt("cutest_lagjac: Please specify x and possibly v\n");
       if (nlhs != 2)
-        mexErrMsgTxt("lagjac: Two output arguments returned\n");
+        mexErrMsgTxt("cutest_lagjac: Two output arguments returned\n");
 
       if (! mxIsDouble(prhs[1]))
-        mexErrMsgTxt("lagjac: Input array must be of type double\n");
+        mexErrMsgTxt("cutest_lagjac: Input array must be of type double\n");
 
       if (nrhs == 3)
         if (! mxIsDouble(prhs[2]))
-          mexErrMsgTxt("lagjac: Input array must have type double\n");
+          mexErrMsgTxt("cutest_lagjac: Input array must have type double\n");
 
       x = (doublereal *)mxGetData(prhs[1]);
       if (nrhs == 3) v = (doublereal *)mxGetData(prhs[2]);
@@ -875,8 +923,8 @@ extern "C" {
 
     /* Return constraint bodies and sparse Jacobian
      * or return a single constraint value and its gradient in sparse format
-     * Usage:  [c,J] = scons(x)
-     *         [ci, sgci] = scons(x, i)
+     * Usage:  [c,J] = cutest_scons(x)
+     *         [ci, sgci] = cutest_scons(x, i)
      */
     if (strcmp(toolName, "scons") == 0) {
 
@@ -885,19 +933,19 @@ extern "C" {
         mexWarnMsgTxt(msgBuf);
       }
       if (nrhs < 2 || nrhs > 4)
-        mexErrMsgTxt("scons: Please specify x and possibly index\n");
+        mexErrMsgTxt("cutest_scons: Please specify x and possibly index\n");
       if (nlhs != 2)
-        mexErrMsgTxt("scons: Two output arguments returned\n");
+        mexErrMsgTxt("cutest_scons: Two output arguments returned\n");
 
       if (! mxIsDouble(prhs[1]))
-        mexErrMsgTxt("scons: Input array must be of type double\n");
+        mexErrMsgTxt("cutest_scons: Input array must be of type double\n");
 
       if (mxGetNumberOfElements(prhs[1]) != CUTEst_nvar)
-        mexErrMsgTxt("scons: Input array has erroneous size\n");
+        mexErrMsgTxt("cutest_scons: Input array has erroneous size\n");
 
       if (nrhs == 3) {
         if (! isInteger(prhs[2]) && ! mxIsDouble(prhs[2]))
-          mexErrMsgTxt("iscons: Constraint index must be integer\n");
+          mexErrMsgTxt("cutest_iscons: Constraint index must be integer\n");
 
         if (isInteger(prhs[2])) {
           icon_ptr = (integer *)mxGetData(prhs[2]);
@@ -907,7 +955,7 @@ extern "C" {
 
         if (icon <= 0 || icon > CUTEst_ncon) {
           sprintf(msgBuf,
-                  "iscons: Invalid constraint index %-d\n",icon);
+                  "cutest_iscons: Invalid constraint index %-d\n",icon);
           mexErrMsgTxt(msgBuf);
         }
       }
@@ -1011,7 +1059,7 @@ extern "C" {
 
     /* Return the sparse Jacobian and gradient of either the objective
      * function or the Lagrangian.
-     * Usage:  [g,J] = slagjac(x) or [g,J] = slagjac(x,v)
+     * Usage:  [g,J] = cutest_slagjac(x) or [g,J] = cutest_slagjac(x,v)
      */
     if (strcmp(toolName, "slagjac") == 0) {
 
@@ -1020,16 +1068,19 @@ extern "C" {
         mexWarnMsgTxt(msgBuf);
       }
       if (nrhs < 2 || nrhs > 3)
-        mexErrMsgTxt("slagjac: Please specify x and possibly v\n");
+        mexErrMsgTxt("cutest_slagjac: Please specify x and possibly v\n");
       if (nlhs != 2)
-        mexErrMsgTxt("slagjac: Two output arguments returned\n");
+        mexErrMsgTxt("cutest_slagjac: Two output arguments returned\n");
 
       if (! mxIsDouble(prhs[1]))
-        mexErrMsgTxt("slagjac: Input array must be of type double\n");
+        mexErrMsgTxt("cutest_slagjac: Input array must be of type double\n");
 
       if (nrhs == 3)
         if (! mxIsDouble(prhs[2]))
-          mexErrMsgTxt("slagjac: Input array must be of type double\n");
+          mexErrMsgTxt("cutest_slagjac: Input array must be of type double\n");
+
+      if (CUTEst_dertype < 1) mexErrMsgTxt("cutest_slagjac: cutest_setup must be called with derivative type set to 1 or 2\n");
+
 
       x = (doublereal *)mxGetData(prhs[1]);
       if (nrhs == 3)
@@ -1079,8 +1130,8 @@ extern "C" {
     /* ------------------------------------------------------------------ */
 
     /* Return the product of the Jacobian at x with a vector p.
-     * Usage:  r = Jprod(x, p)  recomputes J(x)
-     *         r = Jprod(p)     assumes J(x) has been computed previously.
+     * Usage:  r = cutest_Jprod(x, p)  recomputes J(x)
+     *         r = cutest_Jprod(p)     assumes J(x) has been computed previously.
      */
 
     if (strcmp(toolName, "Jprod") == 0) {
@@ -1090,16 +1141,16 @@ extern "C" {
         mexWarnMsgTxt(msgBuf);
       }
       if (nrhs < 2 || nrhs > 3)
-        mexErrMsgTxt("Jprod: Please specify x if J(x) should be recomputed and vector p\n");
+        mexErrMsgTxt("cutest_Jprod: Please specify x if J(x) should be recomputed and vector p\n");
 
       if (nlhs != 1)
-        mexErrMsgTxt("Jprod: A single output argument is returned\n");
+        mexErrMsgTxt("cutest_Jprod: A single output argument is returned\n");
 
       if (! mxIsDouble(prhs[1]))
-        mexErrMsgTxt("Jprod: Input array must be of type double\n");
+        mexErrMsgTxt("cutest_Jprod: Input array must be of type double\n");
 
       if (mxGetN(prhs[1]) != 1 || mxGetM(prhs[1]) != CUTEst_nvar) {
-        sprintf(msgBuf, "Jprod: input must be %-d X 1", CUTEst_nvar);
+        sprintf(msgBuf, "cutest_Jprod: input must be %-d X 1", CUTEst_nvar);
         mexErrMsgTxt(msgBuf);
       }
 
@@ -1107,9 +1158,9 @@ extern "C" {
         p = (doublereal *)mxGetData(prhs[1]);
       else {
         if (! mxIsDouble(prhs[2]))
-          mexErrMsgTxt("Jprod: Input array must be of type double\n");
+          mexErrMsgTxt("cutest_Jprod: Input array must be of type double\n");
         if (mxGetN(prhs[2]) != 1 || mxGetM(prhs[2]) != CUTEst_nvar) {
-          sprintf(msgBuf, "Jprod: input must be %-d X 1", CUTEst_nvar);
+          sprintf(msgBuf, "cutest_Jprod: input must be %-d X 1", CUTEst_nvar);
           mexErrMsgTxt(msgBuf);
         }
 
@@ -1138,8 +1189,8 @@ extern "C" {
     /* ------------------------------------------------------------------ */
 
     /* Return the product of the transpose Jacobian at x with a vector p.
-     * Usage:  r = Jtprod(x, p) recomputes J(x)
-     *         r = Jtprod(p)    assumes J(x) has been computed previously.
+     * Usage:  r = cutest_Jtprod(x, p) recomputes J(x)
+     *         r = cutest_Jtprod(p) assumes J(x) has been computed previously.
      */
 
     if (strcmp(toolName, "Jtprod") == 0) {
@@ -1149,29 +1200,29 @@ extern "C" {
         mexWarnMsgTxt(msgBuf);
       }
       if (nrhs < 2 || nrhs > 3)
-        mexErrMsgTxt("Jtprod: Please specify x if J(x) should be recomputed and vector p\n");
+        mexErrMsgTxt("cutest_Jtprod: Please specify x if J(x) should be recomputed and vector p\n");
 
       if (nlhs != 1)
-        mexErrMsgTxt("Jtprod: A single output argument is returned\n");
+        mexErrMsgTxt("cutest_Jtprod: A single output argument is returned\n");
 
       if (! mxIsDouble(prhs[1]))
-        mexErrMsgTxt("Jtprod: Input array must be of type double\n");
+        mexErrMsgTxt("cutest_Jtprod: Input array must be of type double\n");
 
       if (nrhs == 2) {   /* p is the only input argument */
         if (mxGetN(prhs[1]) != 1 || mxGetM(prhs[1]) != CUTEst_ncon) {
-          sprintf(msgBuf,"Jtprod: input must be %-d X 1", CUTEst_ncon);
+          sprintf(msgBuf,"cutest_Jtprod: input must be %-d X 1", CUTEst_ncon);
           mexErrMsgTxt(msgBuf);
         }
         p = (doublereal *)mxGetData(prhs[1]);
       } else {
         if (! mxIsDouble(prhs[2]))
-          mexErrMsgTxt("Jprod: Input array must be of type double\n");
+          mexErrMsgTxt("cutest_Jtprod: Input array must be of type double\n");
         if (mxGetN(prhs[1]) != 1 || mxGetM(prhs[1]) != CUTEst_nvar) {
-          sprintf(msgBuf, "Jprod: input must be %-d X 1", CUTEst_nvar);
+          sprintf(msgBuf, "cutest_Jtprod: input must be %-d X 1", CUTEst_nvar);
           mexErrMsgTxt(msgBuf);
         }
         if (mxGetN(prhs[2]) != 1 || mxGetM(prhs[2]) != CUTEst_ncon) {
-          sprintf(msgBuf, "Jprod: input must be %-d X 1", CUTEst_ncon);
+          sprintf(msgBuf, "cutest_Jtprod: input must be %-d X 1", CUTEst_ncon);
           mexErrMsgTxt(msgBuf);
         }
 
@@ -1203,34 +1254,34 @@ extern "C" {
      * unconstrained or of the Lagrangian if the problem is constrained.
      * If the problem is constrained and the user wants the Hessian of the
      * objective, they should call (sp)hess().
-     * Usage:  H = hess(x) if the problem has no general constraints, or
-     *         H = hess(x, v) otherwise.
+     * Usage:  H = cutest_hess(x) if the problem has no general constraints, or
+     *         H = cutest_hess(x, v) otherwise.
      */
     if (strcmp(toolName, "hess") == 0) {
 
       if (CUTEst_ncon > 0) {
         if (nrhs != 3)
-          mexErrMsgTxt("hess: Specify primal and dual variables\n");
+          mexErrMsgTxt("cutest_hess: Specify primal and dual variables\n");
         if (! mxIsDouble(prhs[1]))
-          mexErrMsgTxt("hess: Input array must have type double\n");
+          mexErrMsgTxt("cutest_hess: Input array must have type double\n");
         if (mxGetNumberOfElements(prhs[1]) != CUTEst_nvar)
-          mexErrMsgTxt("hess: Input array has erroneous size\n");
+          mexErrMsgTxt("cutest_hess: Input array has erroneous size\n");
         x = (doublereal *)mxGetData(prhs[1]);
 
         if (mxGetNumberOfElements(prhs[2]) != CUTEst_ncon)
-          mexErrMsgTxt("hess: Input array has erroneous size\n");
+          mexErrMsgTxt("cutest_hess: Input array has erroneous size\n");
         v = (doublereal *)mxGetData(prhs[2]);
       } else {
         if (nrhs != 2)
-          mexErrMsgTxt("hess: Specify primal variables only\n");
+          mexErrMsgTxt("cutest_hess: Specify primal variables only\n");
         if (! mxIsDouble(prhs[1]))
-          mexErrMsgTxt("hess: Input array must have type double\n");
+          mexErrMsgTxt("cutest_hess: Input array must have type double\n");
         if (mxGetNumberOfElements(prhs[1]) != CUTEst_nvar)
-          mexErrMsgTxt("hess: Input array has erroneous size\n");
+          mexErrMsgTxt("cutest_hess: Input array has erroneous size\n");
         x = (doublereal *)mxGetData(prhs[1]);
       }
 
-      if (nlhs != 1) mexErrMsgTxt("hess: Need single output argument\n");
+      if (nlhs != 1) mexErrMsgTxt("cutest_hess: Need single output argument\n");
 
       plhs[0] = mxCreateDoubleMatrix(CUTEst_nvar, CUTEst_nvar, mxREAL);
       H = (doublereal *)mxGetData(plhs[0]);
@@ -1254,17 +1305,17 @@ extern "C" {
 
     /* Return the dense Hessian of the objective or of a constraint. The
      * function index is ignored if the problem is unconstrained.
-     * Usage:  Hi = ihess(x, i).
+     * Usage:  Hi = cutest_ihess(x, i).
      */
     if (strcmp(toolName, "ihess") == 0) {
 
       if (nrhs != 3)
-        mexErrMsgTxt("ihess: Specify x and index\n");
+        mexErrMsgTxt("cutest_ihess: Specify x and index\n");
       if (! mxIsDouble(prhs[1]))
-        mexErrMsgTxt("ihess: Input array must have type double\n");
+        mexErrMsgTxt("cutest_ihess: Input array must have type double\n");
 
       if (! isInteger(prhs[2]) && ! mxIsDouble(prhs[2]))
-        mexErrMsgTxt("ihess: Index must be integer\n");
+        mexErrMsgTxt("cutest_ihess: Index must be integer\n");
 
       if (isInteger(prhs[2])) {
         icon_ptr = (integer *)mxGetData(prhs[2]);
@@ -1273,9 +1324,9 @@ extern "C" {
         icon = (integer)*mxGetPr(prhs[2]);
 
       if (CUTEst_ncon > 0 && (icon < 0 || icon > CUTEst_ncon))
-        mexErrMsgTxt("ihess: Index out of range\n");
+        mexErrMsgTxt("cutest_ihess: Index out of range\n");
 
-      if (nlhs != 1) mexErrMsgTxt("ihess: Need single output argument\n");
+      if (nlhs != 1) mexErrMsgTxt("cutest_ihess: Need single output argument\n");
 
       x = (doublereal *)mxGetData(prhs[1]);
       plhs[0] = mxCreateDoubleMatrix(CUTEst_nvar, CUTEst_nvar, mxREAL);
@@ -1300,17 +1351,17 @@ extern "C" {
     /* Return the matrix-vector product between the Hessian of the
      * Lagrangian (or of the objective if problem is unconstrained) and a
      * given vector p
-     * Usage:  r = hprod(x, v, p)   (Re)computes the Hessian at (x,v)
-     *         r = hprod(x, p)      Same, for unconstrained problems
-     *         r = hprod(p)         assumes H(x,v) was computed previously
+     * Usage:  r = cutest_hprod(x, v, p)   (Re)computes the Hessian at (x,v)
+     *         r = cutest_hprod(x, p)    Same, for unconstrained problems
+     *         r = cutest_hprod(p)       assumes H(x,v) was computed previously
      */
     if (strcmp(toolName, "hprod") == 0) {
 
       if (nrhs > 4)
-        mexErrMsgTxt("hprod: Too many arguments\n");
+        mexErrMsgTxt("cutest_hprod: Too many arguments\n");
       for (i = 1; i < nrhs; i++)
         if (! mxIsDouble(prhs[i]))
-          mexErrMsgTxt("hprod: Input array must have type double\n");
+          mexErrMsgTxt("cutest_hprod: Input array must have type double\n");
       if (nrhs == 2)   /* Only p is given as argument */
         p = (doublereal *)mxGetData(prhs[1]);
       else if (nrhs == 3) { /* Arguments are (x,p) and ncon = 0 */
@@ -1325,7 +1376,7 @@ extern "C" {
         v = (doublereal *)mxGetData(prhs[2]);
         p = (doublereal *)mxGetData(prhs[3]);
       }
-      if (nlhs != 1) mexErrMsgTxt("hprod: Need single output argument\n");
+      if (nlhs != 1) mexErrMsgTxt("cutest_hprod: Need single output argument\n");
 
       plhs[0] = mxCreateDoubleMatrix(CUTEst_nvar, 1, mxREAL);
       r = (doublereal *)mxGetData(plhs[0]);
@@ -1356,39 +1407,39 @@ extern "C" {
 
     /* Return the Hessian of the Lagrangian, the Jacobian of the constraints
      * and the gradient of either the objective function or the Lagrangian
-     * Usage:  [g,H] = gradhess(x)   if the problem is unconstrained, or
-     *       [g,J,H] = gradHess(x, v, gradf, jtrans)  if it is constrained
+     * Usage:  [g,H] = cutest_gradhess(x)   if the problem is unconstrained, or
+     *       [g,J,H] = cutest_gradHess(x, v, gradf, jtrans) if it is constrained
      */
     if (strcmp(toolName, "gradhess") == 0) {
 
       if (nrhs > 5)
-        mexErrMsgTxt("gradhess: Expected at most 4 arguments\n");
+        mexErrMsgTxt("cutest_gradhess: Expected at most 4 arguments\n");
 
       if (!mxIsDouble(prhs[1]))
-        mexErrMsgTxt("gradhess: Input array x must be double\n");
+        mexErrMsgTxt("cutest_gradhess: Input array x must be double\n");
 
       /* If problem is unconstrained, ignore arguments v, gradf, jtrans */
       x = (doublereal *)mxGetData(prhs[1]);
 
       if (CUTEst_ncon > 0) {
         if (nrhs != 5)
-          mexErrMsgTxt("gradhess: Specify x, v, gradf, jtrans\n");
+          mexErrMsgTxt("cutest_gradhess: Specify x, v, gradf, jtrans\n");
         if (!mxIsDouble(prhs[2]))
-          mexErrMsgTxt("gradhess: Input array v must be double\n");
+          mexErrMsgTxt("cutest_gradhess: Input array v must be double\n");
         v = (doublereal *)mxGetData(prhs[2]);
 
         if (!mxIsLogical(prhs[3]))
-          mexErrMsgTxt("gradhess: Input gradf must be logical\n");
+          mexErrMsgTxt("cutest_gradhess: Input gradf must be logical\n");
         gradfptr = mxGetLogicals(prhs[3]);
         gradf = (logical)gradfptr[0];
 
         if (!mxIsLogical(prhs[4]))
-          mexErrMsgTxt("gradhess: Input jtrans must be logical\n");
+          mexErrMsgTxt("cutest_gradhess: Input jtrans must be logical\n");
         jtransptr = mxGetLogicals(prhs[4]);
         jtrans = (logical)jtransptr[0];
 
       if (nlhs < 1 || nlhs > 3)
-          mexErrMsgTxt("gradhess: Need 2 or 3 output arguments\n");
+          mexErrMsgTxt("cutest_gradhess: Need 2 or 3 output arguments\n");
 
         plhs[0] = mxCreateDoubleMatrix(CUTEst_nvar, 1, mxREAL);
         g = (doublereal *)mxGetData(plhs[0]);
@@ -1403,7 +1454,7 @@ extern "C" {
         H = (doublereal *)mxGetData(plhs[2]);
 
 #ifdef MXDEBUG
-        mexPrintf("gradhess: using gradf=%-d, jtrans=%-d\n",
+        mexPrintf("cutest_gradhess: using gradf=%-d, jtrans=%-d\n",
                    gradf, jtrans);
 #endif
 
@@ -1438,26 +1489,28 @@ extern "C" {
     /* Return the sparse Hessian of the objective function if the problem is
      * unconstrained or of the Lagrangian if the problem is constrained.
      * If the problem is constrained and the user wants the Hessian of the
-     * objective, they should call (sp)ihess().
-     * Usage:  H = sphess(x) if the problem has no general constraints, or
-     *         H = sphess(x, v) otherwise.
+     * objective, they should call cutest_(sp)ihess().
+     * Usage:  H = cutest_sphess(x) if the problem has no general constraints, or
+     *         H = cutest_sphess(x, v) otherwise.
      */
     if (strcmp(toolName, "sphess") == 0) {
 
       if (CUTEst_ncon > 0) {
         if (nrhs != 3)
-          mexErrMsgTxt("hess: Specify primal and dual variables\n");
+          mexErrMsgTxt("cutest_hess: Specify primal and dual variables\n");
         if (! mxIsDouble(prhs[1]) || ! mxIsDouble(prhs[2]))
-          mexErrMsgTxt("hess: Input arrays must have type double\n");
+          mexErrMsgTxt("cutest_hess: Input arrays must have type double\n");
         x = (doublereal *)mxGetData(prhs[1]);
         v = (doublereal *)mxGetData(prhs[2]);
       } else {
         /* If dual variables are specified, ignore them. */
         if (! mxIsDouble(prhs[1]))
-          mexErrMsgTxt("hess: Input array must have type double\n");
+          mexErrMsgTxt("cutest_hess: Input array must have type double\n");
         x = (doublereal *)mxGetData(prhs[1]);
       }
-      if (nlhs != 1) mexErrMsgTxt("sphess: Need single output argument\n");
+      if (nlhs != 1) mexErrMsgTxt("cutest_sphess: Need single output argument\n");
+
+      if (CUTEst_dertype < 2) mexErrMsgTxt("cutest_sphess: cutest_setup must be called with derivative type set to 2\n");
 
       /* Make enough room for the full Hessian (both triangles) */
       H = (doublereal *)mxCalloc(2*CUTEst_nnzh, sizeof(doublereal));
@@ -1522,17 +1575,17 @@ mexErrMsgTxt("stop\n");
 
     /* Return the sparse Hessian of the objective or of a constraint. The
      * function index is ignored if the problem is unconstrained.
-     * Usage:  Hi = isphess(x, i).
+     * Usage:  Hi = cutest_isphess(x, i).
      */
     if (strcmp(toolName, "isphess") == 0) {
 
       if (nrhs != 3)
-        mexErrMsgTxt("isphess: Specify x and index\n");
+        mexErrMsgTxt("cutest_isphess: Specify x and index\n");
       if (! mxIsDouble(prhs[1]))
-        mexErrMsgTxt("isphess: Input array must have type double\n");
+        mexErrMsgTxt("cutest_isphess: Input array must have type double\n");
 
       if (! isInteger(prhs[2]) && ! mxIsDouble(prhs[2]))
-        mexErrMsgTxt("isphess: Index must be integer\n");
+        mexErrMsgTxt("cutest_isphess: Index must be integer\n");
 
       if (isInteger(prhs[2])) {
         icon_ptr = (integer *)mxGetData(prhs[2]);
@@ -1540,10 +1593,12 @@ mexErrMsgTxt("stop\n");
       } else
         icon = (integer)*mxGetPr(prhs[2]);
 
-      if (nlhs != 1) mexErrMsgTxt("isphess: Need single output argument\n");
+      if (nlhs != 1) mexErrMsgTxt("cutest_isphess: Need single output argument\n");
 
       if (CUTEst_ncon > 0 && (icon < 0 || icon > CUTEst_ncon))
-        mexErrMsgTxt("isphess: Index out of range\n");
+        mexErrMsgTxt("cutest_isphess: Index out of range\n");
+
+      if (CUTEst_dertype < 2) mexErrMsgTxt("cutest_isphess: setup must be called with derivative type set to 2\n");
 
       x = (doublereal *)mxGetData(prhs[1]);
 
@@ -1595,19 +1650,21 @@ mexErrMsgTxt("stop\n");
     /* Return the sparse Hessian of the Lagrangian, the sparse Jacobian of
      * the constraints and the gradient of either the objective function or
      * the Lagrangian
-     * Usage:  [g,H] = gradsphess(x)   if the problem is unconstrained, or
-     *       [g,J,H] = gradsphess(x, v, gradf)  if it is constrained
+     * Usage: [g,H] = cutest_gradsphess(x)   if the problem is unconstrained, or
+     *      [g,J,H] = cutest_gradsphess(x, v, gradf)  if it is constrained
      */
     if (strcmp(toolName, "gradsphess") == 0) {
 
       if (nrhs > 4)
-        mexErrMsgTxt("gradsphess: Expected at most 3 arguments\n");
+        mexErrMsgTxt("cutest_gradsphess: Expected at most 3 arguments\n");
 
       if (!mxIsDouble(prhs[1]))
-        mexErrMsgTxt("gradsphess: Input array x must be double\n");
+        mexErrMsgTxt("cutest_gradsphess: Input array x must be double\n");
 
       if (nlhs < 1 || nlhs > 3)
-          mexErrMsgTxt("gradhess: Need 2 or 3 output arguments\n");
+          mexErrMsgTxt("cutest_gradhess: Need 2 or 3 output arguments\n");
+
+      if (CUTEst_dertype < 1) mexErrMsgTxt("cutest_gradsphess: cutest_setup must be called with derivative type set to 1 or 2\n");
 
       /* If problem is unconstrained, ignore arguments v, gradf, jtrans */
       x = (doublereal *)mxGetData(prhs[1]);
@@ -1616,18 +1673,18 @@ mexErrMsgTxt("stop\n");
 
         /* Constrained problems */
         if (nrhs != 4)
-          mexErrMsgTxt("gradsphess: Specify x, v, gradf\n");
+          mexErrMsgTxt("cutest_gradsphess: Specify x, v, gradf\n");
         if (!mxIsDouble(prhs[2]))
-          mexErrMsgTxt("gradsphess: Input array v must be double\n");
+          mexErrMsgTxt("cutest_gradsphess: Input array v must be double\n");
         v = (doublereal *)mxGetData(prhs[2]);
 
         if (!mxIsLogical(prhs[3]))
-          mexErrMsgTxt("gradsphess: Input gradf must be logical\n");
+          mexErrMsgTxt("cutest_gradsphess: Input gradf must be logical\n");
         gradfptr = mxGetLogicals(prhs[3]);
         gradf = (logical)gradfptr[0];
 
 #ifdef MXDEBUG
-        mexPrintf("gradsphess: using gradf=%-d\n", gradf);
+        mexPrintf("cutest_gradsphess: using gradf=%-d\n", gradf);
 #endif
 
         /* Make enough room for full Hessian (both triangles) */

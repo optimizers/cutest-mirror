@@ -8,7 +8,6 @@ fprintf('Reading problem dimensions...\n');
 
 fprintf('Initializing problem...\n');
 prob = cutest_setup();
-
 assert(nvar == prob.n);
 assert(ncon == prob.m);
 
@@ -103,3 +102,4 @@ end
 fprintf('Terminating run...\n');
 cutest_terminate( )
 fprintf('Tests completed\n' );
+clear all

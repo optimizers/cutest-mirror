@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.0 - 28/12/2012 AT 13:15 GMT.
+! THIS VERSION: CUTEST 1.1 - 14/06/2013 AT 14:00 GMT.
 
 !-*-*-*-*-*-*-*-  C U T E S T    U D H    S U B R O U T I N E  -*-*-*-*-*-*-*-
 
@@ -204,11 +204,12 @@
              work%FUVALS, data%lnguvl, work%FUVALS, data%lnhuvl,               &
              work%GVALS( : , 2 ), work%GVALS( :  , 3 ), data%GSCALE,           &
              data%ESCALE, data%GXEQX, data%ITYPEE, data%INTREP, RANGE,         &
-             0, data%out, data%out, work%io_buffer, .TRUE., .FALSE.,           &
+             0, data%out, data%out, .TRUE., .FALSE.,                           &
              n, status, alloc_status, bad_alloc,                               &
              work%array_status, work%lh_row, work%lh_col, work%lh_val,         &
-             work%H_row, work%H_col, work%H_val,                               &
-             work%LINK_col, work%POS_in_H, work%llink, work%lpos,              &
+             work%H_row, work%H_col, work%H_val, work%ROW_start,               &
+             work%POS_in_H, work%USED, work%FILLED,                            &
+             work%lrowst, work%lpos, work%lused, work%lfilled,                 &
              work%W_ws, work%W_el, work%W_in, work%H_el, work%H_in,            &
              nnzh = nnzh )
 

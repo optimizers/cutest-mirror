@@ -203,8 +203,8 @@ To get CUTEst working, here is what you need to do:
     along with files
 
        $CUTEST/packages/defaults/"mypack"
-       $CUTEST/src/"mypack"/"mypack"_main.f/f90/c
-       $CUTEST/src/"mypack"/"mypack"_test.f/f90/c
+       $CUTEST/src/"mypack"/"mypack"_main.[f|f90|c]
+       $CUTEST/src/"mypack"/"mypack"_test.[f|f90|c]
        $CUTEST/src/"mypack"/"MYPACK".SPC
        $CUTEST/src/"mypack"/makemaster
 
@@ -259,4 +259,4 @@ Philippe Toint
 
 For GALAHAD productions
 30 January 2013
-This version: 21 March 2013
+This version: 12 June 2013
