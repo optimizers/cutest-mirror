@@ -1139,7 +1139,7 @@
 !   L o c a l   V a r i a b l e s
 !-----------------------------------------------
 
-      INTEGER :: i, ii, j, k, kk, ig, l, ijhess, irow, jcol, jcolst
+      INTEGER :: i, ii, j, k, kk, ig, l, ijhess, irow, jcol, jcolst, ihnext
       INTEGER :: iel, iell, ielh, nvarel, ig1, listvs, listve, n_filled, nin
       REAL ( KIND = wp ) :: wki, hesnew, gdash, g2dash, scalee
       CHARACTER ( LEN = 2 ), DIMENSION( 36, 36 ) :: MATRIX
@@ -1365,6 +1365,7 @@
           listve = ISTAEV( iel + 1 ) - 1
           nvarel = listve - listvs + 1
           ielh = ISTADH( iel )
+          ihnext = ielh
           scalee = ESCALE( iell )
           DO l = listvs, listve
             j = IELVAR( l )
@@ -1432,7 +1433,7 @@
                   IF ( INTREP( iel ) ) THEN
                     hesnew = scalee * H_el( k - listvs + 1 )
                   ELSE
-                    hesnew = scalee * HUVALS( ielh ) * gdash
+                    hesnew = scalee * HUVALS( ihnext ) * gdash
                   END IF
                   IF ( iprint >= 100 ) WRITE( 6, "( ' Row ', I6, ' Column ',   &
                  &   I6, ' used from element ', I6, ' value = ', ES24.16 )" )  &
@@ -1468,6 +1469,7 @@
                     ROW_start( i ) = ROW_start( i ) + 1
                   END IF
                 END IF
+                ihnext = ihnext + 1
               END DO
             END IF
           END DO
