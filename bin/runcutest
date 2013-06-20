@@ -203,15 +203,19 @@ Parse_Arguments() {
 
 Decode_Problem() {
     # Problem name is passed as argument #1
+    # Temporary working dir is passed as argument #2
+    cd $2
     ${RM} ${EXEC}/run_${PACKAGE}
     ${RM} ELFUN.f GROUP.f RANGE.f EXTER.f
     ${RM} ELFUN.o GROUP.o RANGE.o EXTER.o
     if [[ ${SIFDECODE+set} == 'set' ]]; then
         echo "sifdecoder -A ${ARCH} ${sd_opts[@]} $1"
         ${SIFDECODE}/bin/sifdecoder -A ${ARCH} ${sd_opts[@]} $1
+        cd -
         [[ $? != 0 ]] && exit $?
     else
         error "${thisprog}: environment variable SIFDECODE not set."
+        cd -
         exit 7
     fi
 }
@@ -268,7 +272,6 @@ Clean_Up() {
 # Perform requested operations
 
 thisprog=`basename $0`
-WorkingDir=${PWD}
 
 # Initialize default settings
 Initialize_Settings
@@ -307,8 +310,6 @@ if (( show_config )); then
     printf "  Profile flags: ${FPROFILEFLAGS}\n"
     printf '\n'
     printf "  Libraries:     ${SPECIALLIBS}\n"
-#    printf '\n'
-#    printf "  Mex compile:   ${MEXCOMPILE}\n"
     printf '========================\n'
     printf '\n'
 fi
@@ -320,8 +321,11 @@ Try $0 --help for more information"
     exit 1
 fi
 
+(( problem_set )) && WorkingDir=`mktemp -d -t cutest` || WorkingDir=${PWD}
+echo "Working in $WorkingDir"
+
 # Decode problem if required
-(( problem_set )) && Decode_Problem ${PROBLEM}
+(( problem_set )) && Decode_Problem ${PROBLEM} $WorkingDir
 
 # Source package definitions
 
@@ -359,32 +363,36 @@ fi
 Run_Pre
 
 # Ensure CUTEst library is present
-LIBDIR=${CUTEST}/objects/${ARCH}/${PRECISION}/
+LIBDIR=${CUTEST}/objects/${ARCH}/${PRECISION}
 if [[ ! -e ${LIBDIR}/libcutest.a  ]]; then
-    cd ${LIBDIR}
-    ${MAKE} -s -f ${CUTEST}/makefiles/${ARCH} cutest_silent
-    cd ${WorkingDir}
+    [[ -w $LIBDIR ]] && let writable=1 || let writable=0
+    if (( writable )); then
+        cd ${LIBDIR}
+        ${MAKE} -s -f ${CUTEST}/makefiles/${ARCH} cutest_silent
+        cd ${WorkingDir}
+    else
+        error "${LIBDIR}/libcutest.a does not exist and
+You do not have write permissions to $LIBDIR"
+        exit 8
+    fi
 fi
 
 # Make sure package is up to date
-cd ${CUTEST}/src/${PKG}
-${MAKE} -s -f ${CUTEST}/makefiles/${ARCH} tools ${PKG}
-#[[ ${PKG} != "matlab" ]] && ${MAKE} -s -f ${CUTEST}/makefiles/${ARCH} tools ${PKG}
+[[ -w ${CUTEST}/objects ]] && let writable=1 || let writable=0
+if (( writable )); then
+    cd ${CUTEST}/src/${PKG}
+    ${MAKE} -f ${CUTEST}/makefiles/${ARCH} tools ${PKG}
+else
+    warning "You do not have write permissions to ${CUTEST}/objects
+Attempting to continue..."
+fi
 
-#cd ${CUTEST}/${PRECISION}/bin
-#[[ ${PKG} != "matlab" ]] && ${MAKE} -s ${DRIVER}
 cd ${WorkingDir}
-
-# If needed, find the correct BLAS
-#(( $blas_set == 0 )) && BLAS=${CUTEST}/${ARCH}/${PRECISION}/bin/linpac.o
-#(( $blas_set == 0 )) && BLAS=-lblas
-
 # If needed, use the package spec file
 if [[ ${SPECS} != "" ]]; then
   if [[ ! -e ${SPECS} ]]; then
      if [[ -e ${CUTEST}/src/${PACKDIR}/${SPECS} ]]; then
        ${LN} -fs ${CUTEST}/src/${PACKDIR}/${SPECS} ${SPECS}
-#       cat ${SPECS}
      else
         warning "Cannot find spec file ${SPECS}---skipping"
      fi
@@ -422,15 +430,8 @@ fi
 # indididual directories or in ${CUTEST}/${PRECISION}/bin
 PACKOBJS=( ${PACKOBJS} )
 nobjs=${#PACKOBJS[@]}
-#cd ${CUTEST}/${PRECISION}/bin
 for (( i = 0; i < nobjs ; i++ ))
 do
-#   ${MAKE} -s ${PACKOBJS[$i]}
-    #if [[ -e ${PACKOBJS[$i]} ]] ; then
-    #  PACKOBJS[$i]=${PACKOBJS[$i]}
-    #else
-    #  PACKOBJS[$i]=${CUTEST}/objects/${ARCH}/${PRECISION}/${PACKOBJS[$i]}
-    #fi
     [[ ! -e ${PACKOBJS[$i]} ]] && PACKOBJS[$i]=${CUTEST}/objects/${ARCH}/${PRECISION}/${PACKOBJS[$i]}
 done
 cd ${WorkingDir}
