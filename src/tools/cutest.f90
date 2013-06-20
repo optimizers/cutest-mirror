@@ -1139,7 +1139,7 @@
 !   L o c a l   V a r i a b l e s
 !-----------------------------------------------
 
-      INTEGER :: i, ii, j, k, kk, ig, l, ijhess, irow, jcol, jcolst, ihnext
+      INTEGER :: i, ii, j, jj, k, kk, ig, l, ijhess, irow, jcol, jcolst, ihnext
       INTEGER :: iel, iell, ielh, nvarel, ig1, listvs, listve, n_filled, nin
       REAL ( KIND = wp ) :: wki, hesnew, gdash, g2dash, scalee
       CHARACTER ( LEN = 2 ), DIMENSION( 36, 36 ) :: MATRIX
@@ -1424,8 +1424,12 @@
 
                 IF ( use_band .AND. i /= 0 ) maxsbw = MAX( maxsbw, ABS( j - i ))
                 IF ( ABS( i - j ) <= nsemib .AND. i /= 0 ) THEN
-                  IF ( i > j ) THEN
-                    ii = i ; i = j ; j = ii
+                  IF ( i <= j ) THEN
+                    ii = i
+                    jj = j
+                  ELSE
+                    ii = j
+                    jj = i
                   END IF
 
 !  obtain the appropriate storage location in H for the new entry
@@ -1437,7 +1441,7 @@
                   END IF
                   IF ( iprint >= 100 ) WRITE( 6, "( ' Row ', I6, ' Column ',   &
                  &   I6, ' used from element ', I6, ' value = ', ES24.16 )" )  &
-                    i, j, iel, hesnew
+                    ii, jj, iel, hesnew
 
 !  Case 1: band matrix storage scheme
 
@@ -1445,14 +1449,14 @@
 
 !  The entry belongs on the diagonal
 
-                    IF ( i == j ) THEN
-                      DIAG( i ) = DIAG( i ) + hesnew
-                      IF ( k /= l ) DIAG( i ) = DIAG( i ) + hesnew
+                    IF ( ii == jj ) THEN
+                      DIAG( ii ) = DIAG( ii ) + hesnew
+                      IF ( k /= l ) DIAG( ii ) = DIAG( ii ) + hesnew
 
 !  the entry belongs off the diagonal
 
                     ELSE
-                      OFFDIA( j - i, i ) = OFFDIA( j - i, i ) + hesnew
+                      OFFDIA( jj - ii, ii ) = OFFDIA( jj - ii, ii ) + hesnew
                     END IF
 
 !  Case 2: co-ordinate storage scheme
@@ -1462,11 +1466,11 @@
 !  there is an entry in position (i,j) to be stored in 
 !  H_row/col(COL(ROW_start(i)))
 
-                    kk = POS_in_H( ROW_start( i ) )
-                    H_row( kk ) = i
-                    H_col( kk ) = j
+                    kk = POS_in_H( ROW_start( ii ) )
+                    H_row( kk ) = ii
+                    H_col( kk ) = jj
                     H_val( kk ) = H_val( kk ) + hesnew
-                    ROW_start( i ) = ROW_start( i ) + 1
+                    ROW_start( ii ) = ROW_start( ii ) + 1
                   END IF
                 END IF
                 ihnext = ihnext + 1
@@ -1600,7 +1604,7 @@
 !   L o c a l   V a r i a b l e s
 !-----------------------------------------------
 
-      INTEGER :: i, ii, j, k, kk, ig, l, iel
+      INTEGER :: i, ii, j, jj, k, kk, ig, l, iel
       INTEGER :: iell, listvs, listve, n_filled
       CHARACTER ( LEN = 2 ), DIMENSION( 36, 36 ) :: MATRIX
 !     CHARACTER ( LEN = 80 ) :: array
@@ -1720,17 +1724,21 @@
 !  only the upper triangle of the matrix is stored
 
                 IF ( i /= 0 ) THEN
-                  IF ( i > j ) THEN
-                    ii = i ; i = j ; j = ii
+                  IF ( i <= j ) THEN
+                    ii = i
+                    jj = j
+                  ELSE
+                    ii = j
+                    jj = i
                   END IF
 
 !  there is an entry in position (i,j) to be stored in 
 !  H_row/col(COL(ROW_start(i)))
 
-                  kk = POS_in_H( ROW_start( i ) )
-                  H_row( kk ) = i
-                  H_col( kk ) = j
-                  ROW_start( i ) = ROW_start( i ) + 1
+                  kk = POS_in_H( ROW_start( ii ) )
+                  H_row( kk ) = ii
+                  H_col( kk ) = jj
+                  ROW_start( ii ) = ROW_start( ii ) + 1
                 END IF
               END DO
             END IF
@@ -1941,7 +1949,7 @@
 !   L o c a l   V a r i a b l e s
 !-----------------------------------------------
 
-      INTEGER :: i, ii, iel, iell, ig, j, k, l, listvs, listve
+      INTEGER :: i, ii, iel, iell, ig, j, jj, k, l, listvs, listve
 
 !  allocate workspace
 
@@ -2006,13 +2014,17 @@
 !  only the upper triangle of the matrix is stored
 
                 IF ( i /= 0 ) THEN
-                  IF ( i > j ) THEN
-                    ii = i ; i = j ; j = ii
+                  IF ( i <= j ) THEN
+                    ii = i
+                    jj = j
+                  ELSE
+                    ii = j
+                    jj = i
                   END IF
 
-!  there is an entry in position (i,j)
+!  there is an entry in position (ii,jj)
 
-                  ROW_start( i + 1 ) = ROW_start( i + 1 ) + 1
+                  ROW_start( ii + 1 ) = ROW_start( ii + 1 ) + 1
                 END IF
               END DO
             END IF
@@ -2043,7 +2055,6 @@
       CALL CUTEST_allocate_array( POS_in_H, lpos, alloc_status )
       IF ( alloc_status /= 0 ) THEN
         bad_alloc = 'ROW_start' ; GO TO 980 ; END IF
-write(6,*) ' space required ', lpos
 
 !  consider the rank-one second order term for the i-th group
 
@@ -2094,14 +2105,18 @@ write(6,*) ' space required ', lpos
 !  only the upper triangle of the matrix is stored
 
                 IF ( i /= 0 ) THEN
-                  IF ( i > j ) THEN
-                    ii = i ; i = j ; j = ii
+                  IF ( i <= j ) THEN
+                    ii = i
+                    jj = j
+                  ELSE
+                    ii = j
+                    jj = i
                   END IF
 
 !  there is an entry in position (i,j)
 
-                  POS_in_H( ROW_start( i ) ) = j
-                  ROW_start( i ) = ROW_start( i ) + 1
+                  POS_in_H( ROW_start( ii ) ) = jj
+                  ROW_start( ii ) = ROW_start( ii ) + 1
                 END IF
               END DO
             END IF
