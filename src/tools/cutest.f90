@@ -144,7 +144,6 @@
         LOGICAL :: firstg
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: ICALCF
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISTAJC
-        INTEGER, ALLOCATABLE, DIMENSION( : ) :: LINK_col
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: ROW_start
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: POS_in_H
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: USED
@@ -3609,12 +3608,6 @@
        DEALLOCATE( work%ROW_start, STAT = alloc_status )
        IF ( alloc_status /= 0 ) THEN
          bad_alloc = 'work%ROW_start' ; GO TO 600 ; END IF
-     END IF
-
-     IF ( ALLOCATED( work%LINK_col ) ) THEN
-       DEALLOCATE( work%LINK_col, STAT = alloc_status )
-       IF ( alloc_status /= 0 ) THEN
-         bad_alloc = 'work%LINK_col' ; GO TO 600 ; END IF
      END IF
 
      IF ( ALLOCATED( work%POS_in_H ) ) THEN
