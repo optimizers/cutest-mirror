@@ -56,6 +56,10 @@ Initialize_Settings() {
     # RECOMPILE = 1 -> force recompilation
     let RECOMPILE=0
 
+    # stash = 0 (by default, place intermediate files in current dir)
+    # stash = 1 -> stash them in temporary dir
+    let stash=0
+
     # DEBUG = 0 (normal execution),
     # DEBUG = 1 (keep the load module and do *not* execute it)
     let DEBUG=0
@@ -108,6 +112,7 @@ Display_Usage() {
     printf '  -h  or --help         \tdisplay this help message\n'
     printf '  -k  or --keep         \tkeep executable after run is over\n'
     printf '  -r  or --rebuild      \tforce recompilation of problem subroutines\n'
+    printf '  -s  or --stash        \tstash problem files quietly\n'
     printf '  -o  or --output       \tset verbosity level\n'
     printf '  -t  or --limit        \tset a time limit on the run\n'
     printf '  -c  or --cfortran     \tcompile mixed C/Fortran source code\n'
@@ -148,6 +153,8 @@ Parse_Arguments() {
             -k|--keep)     let KEEP=1
                            ;;
             -r|--rebuild)  let RECOMPILE=1
+                           ;;
+            -s|--stash)    let stash=1
                            ;;
             -o|--output)   OUTPUT=$2
                            shift
@@ -321,7 +328,9 @@ Try $0 --help for more information"
     exit 1
 fi
 
-(( problem_set )) && WorkingDir=`mktemp -d -t cutest` || WorkingDir=${PWD}
+# If -D is not specified, problem is in current dir. Do not stash.
+(( problem_set == 0 )) && let stash=0
+(( stash )) && WorkingDir=`mktemp -d -t cutest` || WorkingDir=${PWD}
 echo "Working in $WorkingDir"
 
 # Decode problem if required
