@@ -330,7 +330,7 @@ fi
 
 # If -D is not specified, problem is in current dir. Do not stash.
 (( problem_set == 0 )) && let stash=0
-(( stash )) && WorkingDir=`mktemp -d -t cutest` || WorkingDir=${PWD}
+(( stash )) && WorkingDir=`mktemp -d -t cutestXXXXXXXX` || WorkingDir=${PWD}
 echo "Working in $WorkingDir"
 
 # Decode problem if required
