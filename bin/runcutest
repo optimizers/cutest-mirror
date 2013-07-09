@@ -112,7 +112,7 @@ Display_Usage() {
     printf '  -h  or --help         \tdisplay this help message\n'
     printf '  -k  or --keep         \tkeep executable after run is over\n'
     printf '  -r  or --rebuild      \tforce recompilation of problem subroutines\n'
-    printf '  -st or --stash        \tstash problem files quietly\n'
+    printf '  -S  or --stash        \tstash problem files quietly\n'
     printf '  -o  or --output       \tset verbosity level\n'
     printf '  -t  or --limit        \tset a time limit on the run\n'
     printf '  -c  or --cfortran     \tcompile mixed C/Fortran source code\n'
@@ -154,7 +154,7 @@ Parse_Arguments() {
                            ;;
             -r|--rebuild)  let RECOMPILE=1
                            ;;
-            -st|--stash)   let stash=1
+            -S|--stash)    let stash=1
                            ;;
             -o|--output)   OUTPUT=$2
                            shift

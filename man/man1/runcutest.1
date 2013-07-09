@@ -4,7 +4,7 @@
 .SH NAME
 runcutest \- CUTEst interface to solvers.
 .SH SYNOPSIS
-\fBruncutest\fP --package \fIpack\fP [\-\-architecture \fIarch\fP]  [\-\-single] [\-\-help] [\-\-keep] [\-\-rebuild] [\-\-output \fI0|1\fP] [\-\-limit \fIsecs\fP] [\-\-cfortran] [\-\-debug] [\-\-uncons] [\-L\fIpath/to/lib\fP] [\-\-blas \fIkeyword\fP] [\-\-lapack \fIkeyword\fP] [\-\-decode \fIproblem[.SIF]\fP]
+\fBruncutest\fP --package \fIpack\fP [\-\-architecture \fIarch\fP]  [\-\-single] [\-\-help] [\-\-keep] [\-\-rebuild] [\-\-stash] [\-\-output \fI0|1\fP] [\-\-limit \fIsecs\fP] [\-\-cfortran] [\-\-debug] [\-\-uncons] [\-L\fIpath/to/lib\fP] [\-\-blas \fIkeyword\fP] [\-\-lapack \fIkeyword\fP] [\-\-decode \fIproblem[.SIF]\fP]
 .SH DESCRIPTION
 \fBruncutest\fP is the CUTEst interface to solvers. It replaces its
 predecessor CUTEr's combination of \fBrunpackage\fP, \fIpkg\fP and
@@ -49,9 +49,14 @@ Print a short help message with the available command-line options.
 Keep the generated executable after use. May be useful when solving a
 particular problem with the same solver with different
 parameters. Deleting the executable after use is the default.
+This option is incompatible with \-S.
 .TP
 .B \-r, \-\-rebuild
 Force recompilation of the test problem. Default is to reuse object files.
+.TP
+.B \-S, \-\-stash
+Stash problem files (code and data) away in a temporary directory so as not
+to pollute the working directory. This option is incompatible with \-k.
 .TP
 .B \-o, \-\-output \fI0|1\fP
 Regulates the output level. Verbose mode is \fB-o\fP 1, silent mode is
