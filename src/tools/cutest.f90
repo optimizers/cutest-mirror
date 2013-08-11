@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.1 - 14/06/2013 AT 13:30 GMT.
+! THIS VERSION: CUTEST 1.1 - 08/08/2013 AT 09:30 GMT.
 
 !-*-*-*-*-*-*-*-*-*-*-*-*-*- C U T E S T   M O D U l E -*-*-*-*-*-*-*-*-*-*-*-*-
 
@@ -1469,6 +1469,8 @@
                     H_row( kk ) = ii
                     H_col( kk ) = jj
                     H_val( kk ) = H_val( kk ) + hesnew
+                    IF ( k /= l .AND. ii == jj )                               &
+                      H_val( kk ) = H_val( kk ) + hesnew
                     ROW_start( ii ) = ROW_start( ii ) + 1
                   END IF
                 END IF

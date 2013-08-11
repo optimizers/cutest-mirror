@@ -40,8 +40,11 @@ Initialize_Settings() {
     # libblas1.a will take precedence over those in libblas2.a. If compiled
     # blas are unavailable, BLAS should be set to ""
     BLAS=""
+    MYBLAS=""
     let blas_set=0
     LAPACK=""
+    MYLAPACK=""
+    let lapack_set=0
 
     # directory for the main executable file
     EXEC=${PWD}
@@ -165,12 +168,13 @@ Parse_Arguments() {
             -c|--cfortran) FFLAGS="${FFLAGS[@]} ${CCFFLAGS[@]}"
                            # Used to mix C and Fortran code
                            ;;
-            -b|--blas)     [[ "$2" != 'none' ]] && BLAS="$2"
+            -b|--blas)     [[ "$2" != 'none' ]] && MYBLAS="$2"
                            # Note: This allows to set BLAS to nothing
                            let blas_set=1
                            shift
                            ;;
-            -K|--lapack)   [[ "$2" != 'none' ]] && LAPACK="$2"
+            -K|--lapack)   [[ "$2" != 'none' ]] && MYLAPACK="$2"
+                           let lapack_set=1
                            shift
                            ;;
             -g|--debug)    let NEW=1
@@ -307,6 +311,9 @@ if [[ ! -e ${CUTEST}/bin/sys/${ARCH} ]]; then
     exit 3
 fi
 . ${CUTEST}/bin/sys/${ARCH}
+
+(( $blas_set == 1 )) && BLAS=$MYBLAS
+(( $lapack_set == 1 )) && LAPACK=$MYLAPACK
 
 if (( show_config )); then
     printf '========================\n'
