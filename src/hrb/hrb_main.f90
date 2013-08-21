@@ -75,7 +75,7 @@
 
 !  allocate more space 
 
-      matmax = nj + nh
+      matmax = nj + nh + m
       ALLOCATE( ROW( matmax ), COL( matmax ), VAL( MATMAX ), STAT = status )
       IF ( status /= 0 ) GO TO 990
 

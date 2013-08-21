@@ -89,6 +89,7 @@ PROGRAM GEN90_main
 
   X = 0.0_wp ; x( 1 ) = 1.0_wp
   dummy = 0.0D+0
+  Write(6,*) ' CUTEST_cfn: x0 = ', X
   If ( constrained ) Then
     ALLOCATE( C( m ) )
     CALL CUTEST_cfn( status, n, m, X, dummy, C )

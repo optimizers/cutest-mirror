@@ -11,79 +11,96 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
 
 #include "cutest.h"
 
-    doublereal genc( doublereal dummy ) {
+doublereal genc( doublereal dummy )
+{
 
-	printf( "\n\tThis is the generic C solver" );
-	printf( "\n\thooked to CUTEst." );
-	printf( "\n\tThe magic number is 41.9999995555555\n" );
-	return 41.9999995555555;
+    printf( "\n\tThis is the generic C solver" );
+    printf( "\n\thooked to CUTEst." );
+    printf( "\n\tThe magic number is 41.9999995555555\n" );
+    return 41.9999995555555;
 
+}
+
+void genspc( integer funit, char *fname )
+{
+
+    integer ierr;
+
+    /* This is a dummy routine to read a spec file.
+       Possibly, this routine contains precision-dependent directives */
+
+    /* Open relevant file */
+    FORTRAN_open( &funit, fname, &ierr );
+    if ( ierr )
+    {
+        printf( "Error opening spec file %s.\nAborting.\n", fname );
+        exit(1);
     }
 
-    void genspc( integer funit, char *fname ) {
+    /* ... Do something ... */
 
-	integer ierr;
+    FORTRAN_close( &funit, &ierr );
+    return;
 
-	/* This is a dummy routine to read a spec file.
-	   Possibly, this routine contains precision-dependent directives */
+}
 
-	/* Open relevant file */
-	FORTRAN_open( &funit, fname, &ierr );
-	if( ierr ) {
-	    printf( "Error opening spec file %s.\nAborting.\n", fname );
-	    exit(1);
-	}
+void getinfo( integer n, integer m, doublereal *bl, doublereal *bu,
+              doublereal *cl, doublereal *cu, logical *equatn,
+              logical *linear, VarTypes *vartypes )
+{
 
-	/* ... Do something ... */
+    int i;
 
-	FORTRAN_close( &funit, &ierr );
-	return;
+    vartypes->nlin = 0; vartypes->neq = 0; vartypes->nbnds = 0;
+    vartypes->nrange = 0;
+    vartypes->nlower = 0; vartypes->nupper = 0; vartypes->nineq = 0;
+    vartypes->nineq_lin = 0; vartypes->nineq_nlin = 0;
+    vartypes->neq_lin = 0; vartypes->neq_nlin = 0;
 
-    }
-
-    void getinfo( integer n, integer m, doublereal *bl, doublereal *bu,
-		  doublereal *cl, doublereal *cu, logical *equatn, 
-                  logical *linear, VarTypes *vartypes ) {
-
-	int i;
-
-	vartypes->nlin = 0; vartypes->neq = 0; vartypes->nbnds = 0;
-	vartypes->nrange = 0;
-	vartypes->nlower = 0; vartypes->nupper = 0; vartypes->nineq = 0;
-	vartypes->nineq_lin = 0; vartypes->nineq_nlin = 0;
-	vartypes->neq_lin = 0; vartypes->neq_nlin = 0;
-
-	for( i = 0; i < n; i++ )
-	    if( bl[i] > -CUTE_INF || bu[i] < CUTE_INF ) vartypes->nbnds++;
-	for( i = 0; i < m; i++ ) {
-		if( linear[i] ) vartypes->nlin++;
-		if( equatn[i] ) {
-			vartypes->neq++;
-			if( linear[i] )
-				vartypes->neq_lin++;
-			else
-				vartypes->neq_nlin++;
-		} else {
-			if( cl[i] > -CUTE_INF ) {
-				if( cu[i] < CUTE_INF )
-					vartypes->nrange++;
-				else {
-					vartypes->nlower++; vartypes->nineq++;
+    for ( i = 0; i < n; i++ )
+        if ( bl[i] > -CUTE_INF || bu[i] < CUTE_INF ) vartypes->nbnds++;
+    for ( i = 0; i < m; i++ )
+    {
+        if ( linear[i] ) vartypes->nlin++;
+        if ( equatn[i] )
+        {
+            vartypes->neq++;
+            if ( linear[i] )
+                vartypes->neq_lin++;
+            else
+                vartypes->neq_nlin++;
+        }
+        else
+        {
+            vartypes->nineq++;
+            if ( cl[i] > -CUTE_INF )
+            {
+                if ( cu[i] < CUTE_INF )
+                    vartypes->nrange++;
+                else
+                {
+                    vartypes->nlower++;
                 }
-			} else {
-				if( cu[i] < CUTE_INF ) {
-					vartypes->nupper++; vartypes->nineq++;
+            }
+            else
+            {
+                if ( cu[i] < CUTE_INF )
+                {
+                    vartypes->nupper++;
                 }
-			}
-			if( !equatn[i] && linear[i] ) {
-				vartypes->nineq_lin++;
-			} else {
-				vartypes->nineq_nlin++;
-			}
-		}
-	}
-	return;
+            }
+            if ( linear[i] )
+            {
+                vartypes->nineq_lin++;
+            }
+            else
+            {
+                vartypes->nineq_nlin++;
+            }
+        }
     }
+    return;
+}
 
 #ifdef __cplusplus
 }    /* Closing brace for  extern "C"  block */

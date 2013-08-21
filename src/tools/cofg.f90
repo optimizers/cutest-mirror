@@ -1,4 +1,46 @@
-! THIS VERSION: CUTEST 1.0 - 28/12/2012 AT 17:20 GMT.
+! THIS VERSION: CUTEST 1.1 - 22/08/2013 AT 11:50 GMT.
+
+!-*-*-*-*-*-  C U T E S T  C I N T _  C O F G    S U B R O U T I N E  -*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal authors: Ingrid Bongartz and Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 21st August 2013
+
+      SUBROUTINE CUTEST_Cint_cofg( status, n, X, f, G, grad )
+      USE CUTEST
+      USE, INTRINSIC :: ISO_C_BINDING, ONLY : C_Bool
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n
+      INTEGER, INTENT( OUT ) :: status
+      REAL ( KIND = wp ), INTENT( OUT ) :: f
+      LOGICAL ( KIND = C_Bool ), INTENT( IN ) :: grad
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: G
+
+!  ---------------------------------------------------------------
+!  compute the value of the objective function and its gradient
+!  for a function initially written in Standard Input Format (SIF)
+
+!  G is an array which gives the value of the gradient of the
+!    objective function evaluated at X. G(i) gives the partial 
+!    derivative of the objective function wrt variable X(i)
+!  ---------------------------------------------------------------
+
+      LOGICAL :: grad_fortran
+
+      grad_fortran = grad
+      CALL CUTEST_cofg( status, n, X, f, G, grad_fortran )
+
+      RETURN
+
+!  end of subroutine CUTEST_Cint_cofg
+
+      END SUBROUTINE CUTEST_Cint_cofg
 
 !-*-*-*-*-*-*-*-  C U T E S T    C O F G    S U B R O U T I N E  -*-*-*-*-*-*-
 

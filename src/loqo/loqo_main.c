@@ -24,6 +24,8 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
 #include "loqo.h"
 #include "cutest.h"
 
+#define max(a,b) ((a)>(b)?(a):(b))
+
 typedef struct keyword keyword;
 struct keyword {
 	char    *name;

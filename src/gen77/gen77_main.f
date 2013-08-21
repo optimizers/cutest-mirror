@@ -53,8 +53,8 @@ C
 C  Set up SIF data from the problem file
 C
       IF ( constrained ) THEN
-        CALL CUTEST_csetup( status, input, iout, io_buffer, n, m, X, BL, 
-     *        BU, V, CL, CU, EQUATN, LINEAR, 1, 0, 0 )
+        CALL CUTEST_csetup( status, input, iout, io_buffer, n, m, X, 
+     *        BL, BU, V, CL, CU, EQUATN, LINEAR, 1, 0, 0 )
       ELSE
         CALL CUTEST_usetup( status, input, iout, io_buffer, n, X, BL, 
      *        BU )

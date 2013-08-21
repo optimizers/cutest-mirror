@@ -1,4 +1,48 @@
-! THIS VERSION: CUTEST 1.0 - 28/02/2013 AT 13:00 GMT.
+! THIS VERSION: CUTEST 1.1 - 22/08/2013 AT 11:55 GMT.
+
+!-*-*-*-*-  C U T E S T  C I N T _  C O F S G    S U B R O U T I N E  -*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal authors: Ingrid Bongartz and Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst,  21st August 2013
+
+      SUBROUTINE CUTEST_Cint_cofsg( status, n, X, f, nnzg, lg, G_val, G_var,   &
+                                    grad )
+      USE CUTEST
+      USE, INTRINSIC :: ISO_C_BINDING, ONLY : C_Bool
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, lg
+      INTEGER, INTENT( OUT ) :: status, nnzg
+      REAL ( KIND = wp ), INTENT( OUT ) :: f
+      LOGICAL ( KIND = C_Bool ), INTENT( IN ) :: grad
+      INTEGER, INTENT( OUT ), DIMENSION( lg ) :: G_var
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lg ) :: G_val
+
+!  -------------------------------------------------------------------------
+!  compute the value of the objective function and its sparse gradient for a
+!  function initially written in Standard Input Format (SIF)
+
+!  G_val is an array whose i-th component gives the value of the partial
+!    derivative of the objective function with respect to variable 
+!    X(G_var(i)) for i = 1, ..., nnzg. All other partial derivatves are zero
+!  -------------------------------------------------------------------------
+
+      LOGICAL :: grad_fortran
+
+      grad_fortran = grad
+      CALL CUTEST_cofsg( status, n, X, f, nnzg, lg, G_val, G_var, grad_fortran )
+
+      RETURN
+
+!  end of subroutine CUTEST_Cint_cofsg
+
+      END SUBROUTINE CUTEST_Cint_cofsg
 
 !-*-*-*-*-*-*-*-  C U T E S T    C O F S G    S U B R O U T I N E  -*-*-*-*-*-*-
 

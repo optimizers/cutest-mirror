@@ -1,4 +1,50 @@
-! THIS VERSION: CUTEST 1.0 - 29/12/2012 AT 16:05 GMT.
+! THIS VERSION: CUTEST 1.1 - 22/08/2013 AT 13:30 GMT
+
+!-*-*-*-*-  C U T E S T   C I N T _ C J P R O D    S U B R O U T I N E  -*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 21st August 2013
+
+      SUBROUTINE CUTEST_Cint_cjprod( status, n, m, gotj, jtrans, X,            &
+                                     VECTOR, lvector, RESULT, lresult )
+      USE CUTEST
+      USE, INTRINSIC :: ISO_C_BINDING, ONLY : C_Bool
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, m, lvector, lresult
+      INTEGER, INTENT( OUT ) :: status
+      LOGICAL ( KIND = C_Bool ), INTENT( IN ) :: gotj, jtrans
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( lvector ) :: VECTOR
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lresult ) :: RESULT
+
+!   -------------------------------------------------------------------
+!  compute the matrix-vector product between the Jacobian matrix of the
+!  constraints (jtrans = .FALSE.), or its transpose (jtrans = .TRUE.) 
+!  for the problem, and a given vector VECTOR. The result is placed in 
+!  RESULT. If gotj is .TRUE. the first derivatives are assumed to have 
+!  already been computed. If the user is unsure, set gotj = .FALSE. the 
+!  first time a product is required with the Jacobian evaluated at X. 
+!  X is not used if gotj = .TRUE.
+!   -------------------------------------------------------------------
+
+      LOGICAL :: gotj_fortran, jtrans_fortran
+
+      gotj_fortran = gotj
+      jtrans_fortran = jtrans
+      CALL CUTEST_cjprod( status, n, m, gotj_fortran, jtrans_fortran, X,       &
+                          VECTOR, lvector, RESULT, lresult )
+
+      RETURN
+
+!  end of subroutine CUTEST_Cint_cjprod
+
+      END SUBROUTINE CUTEST_Cint_cjprod
 
 !-*-*-*-*-*-*-  C U T E S T    C J P R O D    S U B R O U T I N E  -*-*-*-*-*-
 
@@ -8,7 +54,7 @@
 !  History -
 !   fortran 2003 version released in CUTEst, 29th December 2012
 
-      SUBROUTINE CUTEST_cjprod( status, n, m, gotj, jtrans, X,     &
+      SUBROUTINE CUTEST_cjprod( status, n, m, gotj, jtrans, X,                 &
                                 VECTOR, lvector, RESULT, lresult )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
