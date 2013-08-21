@@ -1,4 +1,67 @@
-! THIS VERSION: CUTEST 1.0 - 29/12/2012 AT 14:25 GMT.
+! THIS VERSION: CUTEST 1.1 - 22/08/2013 AT 13:20 GMT
+
+!-*-*-*-*-  C U T E S T   C I N T _ C S G R S H    S U B R O U T I N E  -*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 21st August 2013
+
+      SUBROUTINE CUTEST_Cint_csgrsh( status, n, m, X, Y, grlagf,               &
+                                     nnzj, lj, J_val, J_var, J_fun,            &
+                                     nnzh, lh, H_val, H_row, H_col )
+      USE CUTEST
+      USE, INTRINSIC :: ISO_C_BINDING, ONLY : C_Bool
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, m, lj, lh
+      INTEGER, INTENT( OUT ) :: nnzh, nnzj, status
+      LOGICAL ( KIND = C_Bool ), INTENT( IN ) :: grlagf
+      INTEGER, INTENT( OUT ), DIMENSION( lj ) :: J_var, J_fun
+      INTEGER, INTENT( OUT ), DIMENSION( lh ) :: H_row, H_col
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( m ) :: Y
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lh ) :: H_val
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lj ) :: J_val
+
+!  ----------------------------------------------------------------
+!  compute the Hessian matrix of the Lagrangian function of
+!  a problem initially written in Standard Input Format (SIF).
+!  Also compute the Hessian matrix of the Lagrangian function of
+!  the problem
+
+!  J_val is an array which gives the values of the nonzeros of the
+!	 gradients of the objective, or Lagrangian, and general
+!	 constraint functions evaluated  at X and Y. The i-th entry
+!	 of J_val gives the value of the derivative with respect to
+!	 variable J_var(i) of function J_fun(i). J_fun(i) = 0
+!        indicates the objective function whenever grlagf is .FALSE.
+!        or the Lagrangian function when grlagf is .TRUE., while
+!        J_fun(i) = j > 0 indicates the j-th general constraint
+!        function
+
+! H      is an array which gives the values of entries of the
+!        upper triangular part of the Hessian matrix of the
+!        Lagrangian function, stored in coordinate form, i.e.,
+!        the entry H(i) is the derivative with respect to variables
+!        with indices H_row(i) and H_col(i) for i = 1, ...., nnzh
+!  ----------------------------------------------------------------
+
+      LOGICAL :: grlagf_fortran
+
+      grlagf_fortran = grlagf
+      CALL CUTEST_csgrsh( status, n, m, X, Y, grlagf_fortran,                  &
+                                nnzj, lj, J_val, J_var, J_fun,                 &
+                                nnzh, lh, H_val, H_row, H_col )
+
+      RETURN
+
+!  end of subroutine CUTEST_Cint_csgrsh
+
+      END SUBROUTINE CUTEST_Cint_csgrsh
 
 !-*-*-*-*-*-*-  C U T E S T    C S G R S H    S U B R O U T I N E  -*-*-*-*-*-*-
 

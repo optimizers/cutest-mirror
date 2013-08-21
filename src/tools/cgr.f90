@@ -1,4 +1,60 @@
-! THIS VERSION: CUTEST 1.0 - 28/12/2012 AT 17:15 GMT.
+! THIS VERSION: CUTEST 1.1 - 22/08/2013 AT 12:45 GMT.
+
+!-*-*-*-*-*-  C U T E S T   C I N T _  C G R    S U B R O U T I N E  -*-*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 21st August 2013
+
+      SUBROUTINE CUTEST_Cint_cgr( status, n, m, X, Y, grlagf, G, jtrans,       &
+                                  lj1, lj2, J_val )
+      USE CUTEST
+      USE, INTRINSIC :: ISO_C_BINDING, ONLY : C_Bool
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, m, lj1, lj2
+      INTEGER, INTENT( OUT ) :: status
+      LOGICAL ( KIND = C_Bool ), INTENT( IN ) :: grlagf, jtrans
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( m ) :: Y
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: G
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lj1, lj2 ) :: J_val
+
+!  ----------------------------------------------------------------
+!  compute both the gradients of the objective, or Lagrangian, and
+!  general constraint functions of a problem initially written in
+!  Standard Input Format (SIF).
+
+!  G	 is an array which gives the value of the gradient of the
+!	 objective function evaluated at X (grlagf = .FALSE.) or of
+!        the Lagrangian function evaluated at X and Y (grlagf = .TRUE.)
+
+!  J_val	 is a two-dimensional array of dimension ( lj1, lj2 )
+!	 which gives the value of the Jacobian matrix of the
+!	 constraint functions, or its transpose, evaluated at X.
+!	 If jtrans is .TRUE., the i,j-th component of the array
+!        will contain the i-th derivative of the j-th constraint
+!        function. Otherwise, if jtrans is .FALSE., the i,j-th
+!        component of the array will contain the j-th derivative
+!        of the i-th constraint function.
+!  ----------------------------------------------------------------
+
+      LOGICAL :: grlagf_fortran, jtrans_fortran
+
+      grlagf_fortran = grlagf
+      jtrans_fortran = jtrans
+      CALL CUTEST_cgr( status, n, m, X, Y, grlagf_fortran, G, jtrans_fortran,  &
+                       lj1, lj2, J_val )
+
+      RETURN
+
+!  end of subroutine CUTEST_Cint_cgr
+
+      END SUBROUTINE CUTEST_Cint_cgr
 
 !-*-*-*-*-*-*-*-  C U T E S T    C G R    S U B R O U T I N E  -*-*-*-*-*-*-*-
 

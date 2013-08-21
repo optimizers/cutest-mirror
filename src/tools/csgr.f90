@@ -1,4 +1,56 @@
-! THIS VERSION: CUTEST 1.0 - 29/12/2012 AT 11:30 GMT.
+! THIS VERSION: CUTEST 1.1 - 22/08/2013 AT 12:50 GMT.
+
+!-*-*-*-*-*-  C U T E S T   C I N T _ C S G R   S U B R O U T I N E  -*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 21st August 2013
+
+      SUBROUTINE CUTEST_Cint_csgr( status, n, m, X, Y, grlagf,                 &
+                                   nnzj, lj, J_val, J_var, J_fun )
+      USE CUTEST
+      USE, INTRINSIC :: ISO_C_BINDING, ONLY : C_Bool
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, m, lj
+      INTEGER, INTENT( OUT ) :: nnzj, status
+      LOGICAL ( KIND = C_Bool ), INTENT( IN ) :: grlagf
+      INTEGER, INTENT( OUT ), DIMENSION( lj ) :: J_var, J_fun
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( m ) :: Y
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lj ) :: J_val
+
+!  ----------------------------------------------------------------
+!  compute the gradients of the objective function and general
+!  constraints of a function initially written in Standard
+!  Input Format (SIF). The gradients are given in a sparse format
+
+!  J_val is an array which gives the values of the nonzeros of the
+!	 gradients of the objective, or Lagrangian, and general
+!	 constraint functions evaluated  at X and Y. The i-th entry
+!	 of J_val gives the value of the derivative with respect to
+!	 variable J_var(i) of function J_fun(i). J_fun(i) = 0
+!        indicates the objective function whenever grlagf is .FALSE.
+!        or the Lagrangian function when grlagf is .TRUE., while
+!        J_fun(i) = j > 0 indicates the j-th general constraint
+!        function
+!  ----------------------------------------------------------------
+
+      LOGICAL :: grlagf_fortran
+
+      grlagf_fortran = grlagf
+      CALL CUTEST_csgr( status, n, m, X, Y, grlagf_fortran,                    &
+                        nnzj, lj, J_val, J_var, J_fun )
+
+      RETURN
+
+!  end of subroutine CUTEST_Cint_csgr
+
+      END SUBROUTINE CUTEST_Cint_csgr
 
 !-*-*-*-*-*-*-*-  C U T E S T    C S G R   S U B R O U T I N E  -*-*-*-*-*-*-
 

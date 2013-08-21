@@ -1,4 +1,53 @@
-! THIS VERSION: CUTEST 1.0 - 28/12/2012 AT 16:30 GMT.
+! THIS VERSION: CUTEST 1.1 - 22/08/2013 AT 11:30 GMT.
+
+!-*-*-*-*-  C U T E S T  C I N T _  C S E T U P    S U B R O U T I N E  -*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Dominique Orban
+
+!  History -
+!   fortran 2003 version released in CUTEst, 21st August 2013
+
+      SUBROUTINE CUTEST_Cint_csetup( status, input, out, io_buffer,            &
+                                     n, m, X, X_l, X_u, Y, C_l, C_u,           &
+                                     EQUATN, LINEAR, e_order, l_order, v_order )
+      USE CUTEST
+      USE, INTRINSIC :: ISO_C_BINDING, ONLY : C_Bool
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: input, out, io_buffer
+      INTEGER, INTENT( INOUT ) :: n, m
+      INTEGER, INTENT( OUT ) :: status
+      INTEGER, INTENT( IN ) :: e_order, l_order, v_order
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: X, X_l, X_u
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( m ) :: Y, C_l, C_u
+      LOGICAL (KIND = C_Bool), INTENT( OUT ), DIMENSION( m ) :: EQUATN, LINEAR
+
+!  --------------------------------------------------------------------------
+!  set up the input data for the constrained optimization tools (C interface)
+!  --------------------------------------------------------------------------
+
+!  local variables
+
+      LOGICAL, DIMENSION( m ) :: EQUATN_FORTRAN, LINEAR_FORTRAN
+
+      CALL CUTEST_csetup( status, input, out,                                  &
+                          io_buffer, n, m, X, X_l, X_u, Y, C_l, C_u,           &
+                          EQUATN_FORTRAN, LINEAR_FORTRAN,                      &
+                          e_order, l_order, v_order )
+
+!   copy Fortran logical arrays into C-bound logical arrays
+
+      EQUATN = EQUATN_FORTRAN
+      LINEAR = LINEAR_FORTRAN
+
+      RETURN
+
+!  End of subroutine CUTEST_Cint_csetup
+
+      END SUBROUTINE CUTEST_Cint_csetup
 
 !-*-*-*-*-*-*-  C U T E S T    C S E T U P    S U B R O U T I N E  -*-*-*-*-*-
 

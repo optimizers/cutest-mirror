@@ -1,4 +1,44 @@
-! THIS VERSION: CUTEST 1.0 - 28/12/2012 AT 14:35 GMT.
+! THIS VERSION: CUTEST 1.1 - 22/08/2013 AT 11:50 GMT.
+
+!-*-*-*-*-*-  C U T E S T   C I N T _ U H P R O D   S U B R O U T I N E  -*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 21st August 2013
+
+      SUBROUTINE CUTEST_Cint_uhprod( status, n, goth, X, VECTOR, RESULT )
+      USE CUTEST
+      USE, INTRINSIC :: ISO_C_BINDING, ONLY : C_Bool
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n
+      INTEGER, INTENT( OUT ) :: status
+      LOGICAL ( KIND = C_Bool ), INTENT( IN ) :: goth
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X, VECTOR
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: RESULT
+
+!  ------------------------------------------------------------------
+!  compute the matrix-vector product between the Hessian matrix of
+!  a group partially separable function and a given vector VECTOR.
+!  The result is placed in RESULT. If goth is .TRUE. the second
+!  derivatives are assumed to have already been computed. If the user 
+!  is unsure, set goth = .FALSE. the first time a product is required
+!  with the Hessian evaluated at X. X is not used if  goth = .TRUE.
+!  ------------------------------------------------------------------
+
+      LOGICAL :: goth_fortran
+
+      goth_fortran = goth
+      CALL CUTEST_uhprod( status, n, goth_fortran, X, VECTOR, RESULT )
+      RETURN
+
+!  end of subroutine CUTEST_Cint_uhprod
+
+      END SUBROUTINE CUTEST_Cint_uhprod
 
 !-*-*-*-*-*-*-*-  C U T E S T    U H P R O D   S U B R O U T I N E  -*-*-*-*-*-
 

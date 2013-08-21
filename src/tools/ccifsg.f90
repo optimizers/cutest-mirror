@@ -1,4 +1,51 @@
-! THIS VERSION: CUTEST 1.0 - 29/12/2012 AT 13:15 GMT.
+! THIS VERSION: CUTEST 1.1 - 22/08/2013 AT 13:00 GMT.
+
+!-*-*-*-*-  C U T E S T   C I N T _ C C I F S G    S U B R O U T I N E  -*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 21st August 2013
+
+      SUBROUTINE CUTEST_Cint_ccifsg( status, n, icon, X, ci,                   &
+                                     nnzgci, lgci, GCI_val, GCI_var, grad )
+      USE CUTEST
+      USE, INTRINSIC :: ISO_C_BINDING, ONLY : C_Bool
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, icon, lgci
+      INTEGER, INTENT( OUT ) :: status, nnzgci
+      LOGICAL ( KIND = C_Bool ), INTENT( IN ) :: grad
+      INTEGER, INTENT( OUT ), DIMENSION( lgci ) :: GCI_var
+      REAL ( KIND = wp ), INTENT( OUT ) :: ci
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lgci ) :: GCI_val
+
+!  ---------------------------------------------------------------------
+!  evaluate constraint function icon and possibly its gradient,
+!  for constraints initially written in Standard Input Format (SIF).
+!  The constraint gradient is stored as a sparse vector in array GCI_val.
+!  The j-th entry of GCI_val gives the value of the partial derivative
+!  of constraint icon with respect to variable GCI_var(j).
+!  The number of nonzeros in vector GCI_val is given by nnzgci.
+!  (Subroutine CCIFG performs the same calculations for a dense
+!   constraint gradient vector.)
+!  ---------------------------------------------------------------------
+
+      LOGICAL :: grad_fortran
+
+      grad_fortran = grad
+      CALL CUTEST_ccifsg( status, n, icon, X, ci,                              &
+                          nnzgci, lgci, GCI_val, GCI_var, grad_fortran )
+
+      RETURN
+
+!  end of subroutine CUTEST_Cint_ccifsg
+
+      END SUBROUTINE CUTEST_Cint_ccifsg
 
 !-*-*-*-*-*-*-  C U T E S T    C C I F S G    S U B R O U T I N E  -*-*-*-*-*-
 

@@ -1,4 +1,46 @@
-! THIS VERSION: CUTEST 1.0 - 29/12/2012 AT 15:10 GMT.
+! THIS VERSION: CUTEST 1.1 - 22/08/2013 AT 13:25 GMT
+
+!-*-*-*-*-  C U T E S T   C I N T _ C H P R O D    S U B R O U T I N E  -*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 21st August 2013
+
+      SUBROUTINE CUTEST_Cint_chprod( status, n, m, goth, X, Y, VECTOR, RESULT )
+      USE CUTEST
+      USE, INTRINSIC :: ISO_C_BINDING, ONLY : C_Bool
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, m
+      INTEGER, INTENT( OUT ) :: status
+      LOGICAL ( KIND = C_Bool ), INTENT( IN ) :: goth
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X, VECTOR
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( m ) :: Y
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: RESULT
+
+!  -----------------------------------------------------------------------
+!  compute the matrix-vector product between the Hessian matrix of 
+!  the Lagrangian function for the problem and  a given vector VECTOR.
+!  The result is placed in RESULT. If goth is .TRUE. the second
+!  derivatives are assumed to have already been computed. If the user is 
+!  unsure, set goth = .FALSE. the first time a product is required with 
+!  the Hessian evaluated at X and Y. X and Y are not used if goth = .TRUE.
+!  -----------------------------------------------------------------------
+
+      LOGICAL :: goth_fortran
+
+      goth_fortran = goth
+      CALL CUTEST_chprod( status, n, m, goth_fortran, X, Y, VECTOR, RESULT )
+
+      RETURN
+
+!  end of subroutine CUTEST_Cint_chprod
+
+      END SUBROUTINE CUTEST_Cint_chprod
 
 !-*-*-*-*-*-*-  C U T E S T    C H P R O D    S U B R O U T I N E  -*-*-*-*-*-
 

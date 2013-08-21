@@ -10,10 +10,12 @@
  *
  * D. Orban. CUTEr version, July 10 2002.
  * Nick Gould, CUTEst evolution, January 4 2013.
+ *             Boolean logicals provided, August 21 2013
  * ======================================================================
  */
 
 #include <stdlib.h>
+#include <stdbool.h>
 
 #ifndef CUTEST_DOT_H_INCLUDED
 #define CUTEST_DOT_H_INCLUDED
@@ -45,10 +47,11 @@
 typedef int      integer;
 typedef float    real;
 typedef double   doublereal;
-typedef long int logical;
+typedef _Bool    logical;
+/* typedef bool    logical; */
 #define FALSE_ (0)     /* Fortran FALSE */
 #define TRUE_  (1)     /* Fortran  TRUE */
-#define max(a,b) ((a)>(b)?(a):(b))
+/* #define max(a,b) ((a)>(b)?(a):(b)) */
 
 #define ZERO     0e0
 #define ONE      1e0
@@ -75,7 +78,7 @@ typedef struct VarTypes {
  */
 
 #define CUTEST_usetup   FUNDERSCORE(cutest_usetup)
-#define CUTEST_csetup   FUNDERSCORE(cutest_csetup)
+#define CUTEST_csetup   FUNDERSCORE(cutest_cint_csetup)
 
 #define CUTEST_udimen   FUNDERSCORE(cutest_udimen)
 #define CUTEST_udimsh   FUNDERSCORE(cutest_udimsh)
@@ -99,37 +102,37 @@ typedef struct VarTypes {
 
 #define CUTEST_ufn      FUNDERSCORE(cutest_ufn)
 #define CUTEST_ugr      FUNDERSCORE(cutest_ugr)
-#define CUTEST_uofg     FUNDERSCORE(cutest_uofg)
+#define CUTEST_uofg     FUNDERSCORE(cutest_cint_uofg)
 #define CUTEST_ubandh   FUNDERSCORE(cutest_ubandh)
 #define CUTEST_udh      FUNDERSCORE(cutest_udh)
 #define CUTEST_ush      FUNDERSCORE(cutest_ush)
-#define CUTEST_ueh      FUNDERSCORE(cutest_ueh)
+#define CUTEST_ueh      FUNDERSCORE(cutest_cint_ueh)
 #define CUTEST_ugrdh    FUNDERSCORE(cutest_ugrdh)
 #define CUTEST_ugrsh    FUNDERSCORE(cutest_ugrsh)
-#define CUTEST_ugreh    FUNDERSCORE(cutest_ugreh)
-#define CUTEST_uhprod   FUNDERSCORE(cutest_uhprod)
+#define CUTEST_ugreh    FUNDERSCORE(cutest_cint_ugreh)
+#define CUTEST_uhprod   FUNDERSCORE(cutest_cint_uhprod)
 
 #define CUTEST_cfn      FUNDERSCORE(cutest_cfn)
-#define CUTEST_cofg     FUNDERSCORE(cutest_cofg)
-#define CUTEST_cofsg    FUNDERSCORE(cutest_cofsg)
-#define CUTEST_ccfg     FUNDERSCORE(cutest_ccfg)
-#define CUTEST_cgr      FUNDERSCORE(cutest_cgr)
-#define CUTEST_csgr     FUNDERSCORE(cutest_csgr)
-#define CUTEST_ccfsg    FUNDERSCORE(cutest_ccfsg)
-#define CUTEST_ccifg    FUNDERSCORE(cutest_ccifg)
-#define CUTEST_ccifsg   FUNDERSCORE(cutest_ccifsg)
-#define CUTEST_cgrdh    FUNDERSCORE(cutest_cgrdh)
+#define CUTEST_cofg     FUNDERSCORE(cutest_cint_cofg)
+#define CUTEST_cofsg    FUNDERSCORE(cutest_cint_cofsg)
+#define CUTEST_ccfg     FUNDERSCORE(cutest_cint_ccfg)
+#define CUTEST_cgr      FUNDERSCORE(cutest_cint_cgr)
+#define CUTEST_csgr     FUNDERSCORE(cutest_cint_csgr)
+#define CUTEST_ccfsg    FUNDERSCORE(cutest_cint_ccfsg)
+#define CUTEST_ccifg    FUNDERSCORE(cutest_cint_ccifg)
+#define CUTEST_ccifsg   FUNDERSCORE(cutest_cint_ccifsg)
+#define CUTEST_cgrdh    FUNDERSCORE(cutest_cint_cgrdh)
 #define CUTEST_cdh      FUNDERSCORE(cutest_cdh)
 #define CUTEST_csh      FUNDERSCORE(cutest_csh)
 #define CUTEST_cshc     FUNDERSCORE(cutest_cshc)
-#define CUTEST_ceh      FUNDERSCORE(cutest_ceh)
+#define CUTEST_ceh      FUNDERSCORE(cutest_cint_ceh)
 #define CUTEST_cidh     FUNDERSCORE(cutest_cidh)
 #define CUTEST_cish     FUNDERSCORE(cutest_cish)
-#define CUTEST_csgrsh   FUNDERSCORE(cutest_csgrsh)
-#define CUTEST_csgreh   FUNDERSCORE(cutest_csgreh)
-#define CUTEST_chprod   FUNDERSCORE(cutest_chprod)
-#define CUTEST_chcprod  FUNDERSCORE(cutest_chcprod)
-#define CUTEST_cjprod   FUNDERSCORE(cutest_cjprod)
+#define CUTEST_csgrsh   FUNDERSCORE(cutest_cint_csgrsh)
+#define CUTEST_csgreh   FUNDERSCORE(cutest_cint_csgreh)
+#define CUTEST_chprod   FUNDERSCORE(cutest_cint_chprod)
+#define CUTEST_chcprod  FUNDERSCORE(cutest_cint_chcprod)
+#define CUTEST_cjprod   FUNDERSCORE(cutest_cint_cjprod)
 
 #define CUTEST_uterminate FUNDERSCORE(cutest_uterminate)
 #define CUTEST_cterminate FUNDERSCORE(cutest_cterminate)

@@ -1,4 +1,56 @@
-! THIS VERSION: CUTEST 1.0 - 29/12/2012 AT 11:40 GMT.
+! THIS VERSION: CUTEST 1.1 - 22/08/2013 AT 11:30 GMT.
+
+!-*-*-*-*-*-  C U T E S T   C I N T _  C C F G    S U B R O U T I N E  -*-*-*-*-
+
+!  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
+!  Principal author: Nick Gould
+
+!  History -
+!   fortran 2003 version released in CUTEst, 29th December 2012
+
+      SUBROUTINE CUTEST_Cint_ccfg( status, n, m, X, C, jtrans,                 &
+                                   lcjac1, lcjac2, CJAC, grad )
+      USE CUTEST
+      USE, INTRINSIC :: ISO_C_BINDING, ONLY : C_Bool
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+
+!  dummy arguments
+
+      INTEGER, INTENT( IN ) :: n, m, lcjac1, lcjac2
+      INTEGER, INTENT( OUT ) :: status
+      REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( m ) :: C
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lcjac1, lcjac2 ) :: CJAC
+      LOGICAL ( KIND = C_Bool ), INTENT( IN ) :: jtrans, grad
+
+! ------------------------------------------------------------------------
+!  compute the values of the constraint functions and their gradients
+!  for constraints initially written in Standard Input Format (SIF).  
+!  The Jacobian must be stored in a dense format.
+!  (Subroutine CSCFG performs the same calculations for a sparse Jacobian)
+
+!  CJAC  is a two-dimensional array of dimension ( lcjac1, lcjac2 )
+!        which gives the value of the Jacobian matrix of the
+!        constraint functions, or its transpose, evaluated at X.
+!        If JTRANS is .TRUE., the i,j-th component of the array
+!        will contain the i-th derivative of the j-th constraint
+!        function. Otherwise, if JTRANS is .FALSE., the i,j-th
+!        component of the array will contain the j-th derivative
+!        of the i-th constraint function.
+! ------------------------------------------------------------------------
+
+      LOGICAL :: jtrans_fortran, grad_fortran
+
+      jtrans_fortran = jtrans
+      grad_fortran = grad
+      CALL CUTEST_ccfg( status, n, m, X, C, jtrans_fortran,                    &
+                       lcjac1, lcjac2, CJAC, grad_fortran )
+
+      RETURN
+
+!  end of subroutine CUTEST_Cint_ccfg
+
+      END SUBROUTINE CUTEST_Cint_ccfg
 
 !-*-*-*-*-*-*-*-  C U T E S T    C C F G    S U B R O U T I N E  -*-*-*-*-*-*-
 
