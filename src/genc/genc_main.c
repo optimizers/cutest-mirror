@@ -277,6 +277,10 @@ int MAINENTRY( void ){
     FREE( equatn );
     FREE( linear );
 
+    if ( constrained )
+      CUTEST_cterminate( &status );
+    else
+      CUTEST_uterminate( &status );
 
     return 0;
 
