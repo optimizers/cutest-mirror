@@ -54,7 +54,7 @@
 
       colmax = n + m + 1
       ALLOCATE( IP( colmax + 1 ), IW( colmax + 1 ), X( n ), BL( n ), BU( n ),  &
-                CL( m ), CU( m ), Y( m ), C( n ), B( m ), SLACK( m ),          &
+                CL( m ), CU( m ), Y( m ), B( m ), SLACK( m ),                  &
                 EQUATN( m ), LINEAR( m ), VNAMES( n ), GNAMES( m ),            &
                 STAT = status )
       IF ( status /= 0 ) GO TO 990
@@ -130,10 +130,10 @@
 
 !  Determine the names of the problem, variables and constraints
 
-      CALL CUTEST_cnames( status, n, m, pname, VNAMES, GNAMES )
+      CALL CUTEST_probname( status, pname )
       IF ( status /= 0 ) GO TO 910
       DO plast = 8, 1, - 1
-        IF ( PNAME( plast : plast ) /= ' ' ) EXIT
+        IF ( pname( plast : plast ) /= ' ' ) EXIT
       END DO
 
 !  Name output file
@@ -141,16 +141,16 @@
       prbout = '            '
       IF ( matype == 'H' ) THEN
         IF ( maform == 'A' ) THEN
-          prbout = PNAME( 1 : plast ) // '.hes'
+          prbout = pname( 1 : plast ) // '.hes'
         ELSE
-          prbout = PNAME( 1 : plast ) // '.ele'
+          prbout = pname( 1 : plast ) // '.ele'
         END IF
       ELSE IF ( matype == 'A' ) THEN
-        prbout = PNAME( 1 : plast ) // '.aug'
+        prbout = pname( 1 : plast ) // '.aug'
       ELSE IF ( matype == 'J' ) THEN
-        prbout = PNAME( 1 : plast ) // '.jac'
+        prbout = pname( 1 : plast ) // '.jac'
       ELSE
-        prbout = PNAME( 1 : plast ) // '.jat'
+        prbout = pname( 1 : plast ) // '.jat'
       END IF
 
 !  Open output file
@@ -163,16 +163,16 @@
       IF ( rb ) THEN
         IF ( matype == 'H' ) THEN
            IF ( maform == 'A' ) THEN
-              prbrhs = PNAME( 1 : plast ) // '.hes.rhsr'
+              prbrhs = pname( 1 : plast ) // '.hes.rhsr'
            ELSE
-              prbrhs = PNAME( 1 : plast ) // '.ele.rhsr'
+              prbrhs = pname( 1 : plast ) // '.ele.rhsr'
            END IF
         ELSE IF ( matype == 'A' ) THEN
-           prbrhs = PNAME( 1 : plast ) // '.aug.rhsr'
+           prbrhs = pname( 1 : plast ) // '.aug.rhsr'
         ELSE IF ( matype == 'J' ) THEN
-           prbrhs = PNAME( 1 : plast ) // '.jac.rhsr'
+           prbrhs = pname( 1 : plast ) // '.jac.rhsr'
         ELSE
-           prbrhs = PNAME( 1 : plast ) // '.jat.rhsr'
+           prbrhs = pname( 1 : plast ) // '.jat.rhsr'
         END IF
 
 !  Open output file for RHS
@@ -204,6 +204,16 @@
       CALL CUTEST_csgr( status, n, m, X, Y, .FALSE., nj, matmax, VAL, COL, ROW )
       IF ( status /= 0 ) GO TO 910
       SLACK( 1 : m ) = ONE
+
+      ntotal = n
+      DO i = 1, m
+        IF ( .NOT. EQUATN( i ) ) ntotal = ntotal + 1
+      END DO
+
+      ALLOCATE( C( ntotal ), STAT = status )
+      IF ( status /= 0 ) GO TO 990
+
+      C = zero
 
 !  Remove zero entries
 
@@ -306,8 +316,8 @@
             IF ( .NOT. EQUATN( i ) ) THEN
               ntotal = ntotal + 1
               nnz = nnz + 1
-              ROW( nnz ) = NTOTAL
-              COL( nnz ) = NTOTAL 
+              ROW( nnz ) = ntotal
+              COL( nnz ) = ntotal 
               IF ( CL( i ) > - biginf .AND. CU( i ) < biginf ) THEN
                  VAL( nnz ) = penalty + penalty
               ELSE
@@ -342,18 +352,18 @@
               END IF
             END IF
           END DO
-          nnz = IP( NE + 1 ) - 1
+          nnz = IP( ne + 1 ) - 1
         END IF
       END IF
 
-      n = NTOTAL
-      WRITE( 6, 2000 ) PNAME, N, M
+      n = ntotal
+      WRITE( 6, 2000 ) pname, n, m
 
-      LINE1( 1 : 10 ) = PNAME
+      LINE1( 1 : 10 ) = pname
       DO i = 11, 80, 10
          LINE1( i : i + 9 ) = '          '
       END DO
-      LINE1( 73 : 80 ) = PNAME( 1 : 8 )
+      LINE1( 73 : 80 ) = pname( 1 : 8 )
 
 !  Format header cards
 
