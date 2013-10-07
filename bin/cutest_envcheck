@@ -37,7 +37,5 @@ fi
 if [[ ${MASTSIF+set} != 'set' ]]; then
     echo ' MASTSIF is not set.'
     echo ' It should point to your main SIF repository.'
-    echo ' Set it to the appropriate value and re-run.'
     echo ''
-    exit 9
 fi
