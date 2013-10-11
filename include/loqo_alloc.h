@@ -8,7 +8,9 @@
 #include <sys/types.h>
 #include <string.h>
 #ifndef GNU
+#if !defined(__APPLE__)
 #include <malloc.h>
+#endif
 #endif
 
 #define MY_MALLOC_THRESH 1
