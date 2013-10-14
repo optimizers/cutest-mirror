@@ -317,6 +317,18 @@
        REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lcjac ) :: CJAC
        END SUBROUTINE CUTEST_ccfsg
        
+       SUBROUTINE CUTEST_clfg( status, n, m, X, Y, f, G, grad )
+       USE CUTEST
+       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+       INTEGER, INTENT( IN ) :: n, m
+       INTEGER, INTENT( OUT ) :: status
+       REAL ( KIND = wp ), INTENT( OUT ) :: f
+       LOGICAL, INTENT( IN ) :: grad
+       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( m ) :: Y
+       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: G
+       END SUBROUTINE CUTEST_clfg
+
        SUBROUTINE CUTEST_ccifg( cutest_status, n, icon, X, ci, GCI, grad )
        INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
        INTEGER, INTENT( IN ) :: n, icon

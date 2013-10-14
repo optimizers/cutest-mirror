@@ -73,6 +73,7 @@ UCUTESTS = $(LCS)(usetup.o) $(LCS)(udimen.o) $(LCS)(udimse.o) $(LCS)(udimsh.o) \
 CCUTESTS = $(LCS)(csetup.o) $(LCS)(cdimen.o) $(LCS)(cdimse.o) $(LCS)(cdimsh.o) \
            $(LCS)(cdimsj.o) $(LCS)(cnames.o) $(LCS)(cvartype.o) $(LCS)(cfn.o) \
            $(LCS)(cgr.o) $(LCS)(cofg.o) $(LCS)(cofsg.o) $(LCS)(ccfg.o) \
+           $(LCS)(clfg.o) \
            $(LCS)(ccfsg.o) $(LCS)(ccifg.o) $(LCS)(ccifsg.o) $(LCS)(cdh.o) \
            $(LCS)(ceh.o) $(LCS)(cgrdh.o) $(LCS)(cidh.o) $(LCS)(csh.o) \
            $(LCS)(cshc.o) $(LCS)(cshp.o) $(LCS)(cish.o) $(LCS)(cjprod.o) \
@@ -94,6 +95,7 @@ UCUTESTD = $(LCD)(usetup.o) $(LCD)(udimen.o) $(LCD)(udimse.o) $(LCD)(udimsh.o) \
 CCUTESTD = $(LCD)(csetup.o) $(LCD)(cdimen.o) $(LCD)(cdimse.o) $(LCD)(cdimsh.o) \
            $(LCD)(cdimsj.o) $(LCD)(cnames.o) $(LCD)(cvartype.o) $(LCD)(cfn.o) \
            $(LCD)(cgr.o) $(LCD)(cofg.o) $(LCD)(cofsg.o) $(LCD)(ccfg.o) \
+           $(LCD)(clfg.o) \
            $(LCD)(ccfsg.o) $(LCD)(ccifg.o) $(LCD)(ccifsg.o) $(LCD)(cdh.o) \
            $(LCD)(ceh.o) $(LCD)(cgrdh.o) $(LCD)(cidh.o) $(LCD)(csh.o) \
            $(LCD)(cshc.o) $(LCD)(cshp.o) $(LCD)(cish.o) $(LCD)(cjprod.o) \
@@ -194,6 +196,7 @@ $(LC)(cutest.o): ../tools/cutest.f90
 	$(RMARFILE) cofsg.o
 	$(RMARFILE) ccfg.o
 	$(RMARFILE) ccfsg.o
+	$(RMARFILE) clfg.o
 	$(RMARFILE) ccifg.o
 	$(RMARFILE) ccifsg.o
 	$(RMARFILE) cdh.o
@@ -416,6 +419,18 @@ $(LC)(ccfsg.o): ../tools/ccfsg.f90
                 || ( printf ' %-26s' "=> Disabling optimization " ; \
                    $(FORTRAN) -o ccfsg.o $(FFLAGSN) ccfsg.f90 )
 	cd $(OBJ); $(ARR) ccfsg.o; $(RM) ccfsg.f90 ccfsg.o
+#	$(MVMODS)
+	@printf '[ OK ]\n'
+
+clfg.o: $(LC)(clfg.o)
+
+$(LC)(clfg.o): ../tools/clfg.f90
+	@printf ' %-9s %-15s\t\t' "Compiling" "clfg" 
+	$(SED) -f $(SEDS) ../tools/clfg.f90 > $(OBJ)/clfg.f90
+	cd $(OBJ); $(FORTRAN) -o clfg.o $(FFLAGS) clfg.f90 \
+                || ( printf ' %-26s' "=> Disabling optimization " ; \
+                   $(FORTRAN) -o clfg.o $(FFLAGSN) clfg.f90 )
+	cd $(OBJ); $(ARR) clfg.o; $(RM) clfg.f90 clfg.o
 #	$(MVMODS)
 	@printf '[ OK ]\n'
 

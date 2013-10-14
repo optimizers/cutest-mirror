@@ -385,19 +385,25 @@
           DO l = 1, neh    
             i = H_row( l ) ; j = H_col( l )
             IF ( i < 1 .OR. i > n .OR. j < 1 .OR. j > n ) CYCLE
-            H_ne = H_ne + 1 ; H_val( H_ne ) = H_val( l )
-            IF ( i >= j ) THEN
-              H_row( H_ne ) = j ; H_col( H_ne ) = i
-            ELSE
-              H_row( H_ne ) = i ; H_col( H_ne ) = j
-            END IF
+            IF ( H_val( l ) /= zero ) THEN
+              H_ne = H_ne + 1 ; H_val( H_ne ) = H_val( l )
+              IF ( i >= j ) THEN
+                H_row( H_ne ) = j ; H_col( H_ne ) = i
+              ELSE
+                H_row( H_ne ) = i ; H_col( H_ne ) = j
+              END IF
+            END IF           
 
 !  add digonal perturbations if any
 
             IF ( i == j ) THEN
               IF ( pert_hess .AND. IW( i ) == 0 ) THEN
                 IW( i ) = 1
-                H_val( H_ne ) = H_val( H_ne ) + H_pert
+                IF ( H_val( l ) /= zero ) THEN
+                  H_val( H_ne ) = H_val( H_ne ) + H_pert
+                ELSE
+                  H_ne = H_ne + 1 ; H_val( H_ne ) = H_pert
+                END IF
               END IF
             END IF
           END DO
@@ -433,11 +439,13 @@
           DO l = 1, neh    
             i = H_row( l ) ; j = H_tmp( l )
             IF ( i < 1 .OR. i > n .OR. j < 1 .OR. j > n ) CYCLE
-            lh = lh + 1 ; H_val( lh ) = H_val( l )
-            IF ( i >= j ) THEN
-              H_row( lh ) = j ; H_tmp( lh ) = i
-            ELSE
-              H_row( lh ) = i ; H_tmp( lh ) = j
+            IF ( H_val( l ) /= zero ) THEN
+              lh = lh + 1 ; H_val( lh ) = H_val( l )
+              IF ( i >= j ) THEN
+                H_row( lh ) = j ; H_tmp( lh ) = i
+              ELSE
+                H_row( lh ) = i ; H_tmp( lh ) = j
+              END IF
             END IF
 
 !  add digonal perturbations if any
@@ -445,7 +453,11 @@
             IF ( i == j ) THEN
               IF ( pert_hess .AND. IW( i ) == 0 ) THEN
                 IW( i ) = 1
-                H_val( lh ) = H_val( lh ) + H_pert
+                IF ( H_val( l ) /= zero ) THEN
+                  H_val( lh ) = H_val( lh ) + H_pert
+                ELSE
+                  lh = lh + 1 ; H_val( lh ) = H_pert
+                END IF
               END IF
             END IF
           END DO
@@ -493,11 +505,13 @@
           DO l = 1, neh    
             i = H_tmp( l ) ; j = H_col( l )
             IF ( i < 1 .OR. i > n .OR. j < 1 .OR. j > n ) CYCLE
-            lh = lh + 1 ; H_val( lh ) = H_val( l )
-            IF ( i >= j ) THEN
-              H_tmp( lh ) = j ; H_col( lh ) = i
-            ELSE
-              H_tmp( lh ) = i ; H_col( lh ) = j
+            IF ( H_val( l ) /= zero ) THEN
+              lh = lh + 1 ; H_val( lh ) = H_val( l )
+              IF ( i >= j ) THEN
+                H_tmp( lh ) = j ; H_col( lh ) = i
+              ELSE
+                H_tmp( lh ) = i ; H_col( lh ) = j
+              END IF
             END IF
 
 !  add digonal perturbations if any
@@ -505,7 +519,11 @@
             IF ( i == j ) THEN
               IF ( pert_hess .AND. IW( i ) == 0 ) THEN
                 IW( i ) = 1
-                H_val( lh ) = H_val( lh ) + H_pert
+                IF ( H_val( l ) /= zero ) THEN
+                  H_val( lh ) = H_val( lh ) + H_pert
+                ELSE
+                  lh = lh + 1 ; H_val( lh ) = H_pert
+                END IF
               END IF
             END IF
           END DO
@@ -519,7 +537,7 @@
             END DO
           END IF
 
-!  Transform A to row storage format
+!  Transform H to row storage format
 
           ALLOCATE( H_ptr( n + 1 ), STAT = alloc_status )
           IF ( alloc_status /= 0 ) GO TO 990

@@ -69,7 +69,7 @@ C  Local variables
       REAL * 8         IVARTY_real( NMAX )
       CHARACTER * 2    msg_status
       CHARACTER * 7    TOOL, TSETUP, TNAMES, TFN, TGR, TOFG, TSGR,
-     *                 TCFG, TDH, TGRDH, TSH, TSGRSH, TPROD,
+     *                 TCFG, TLFG, TDH, TGRDH, TSH, TSGRSH, TPROD,
      *                 TCFSG, TCIFG, TDIMEN, TDIMSH, TDIMSJ, TVARTY,
      *                 TCIFSG, TIDH, TISH, TSHC, TCPROD, TREPRT
       CHARACTER * 150  msg
@@ -112,6 +112,7 @@ C  Set up tool names.
       TSGR   = NULLSTR( 'CUTEST_csgr' )
       TCFG   = NULLSTR( 'CUTEST_ccfg' )
       TCFSG  = NULLSTR( 'CUTEST_ccfsg' )
+      TLFG   = NULLSTR( 'CUTEST_clfg' )
       TDH    = NULLSTR( 'CUTEST_cdh' )
       TGRDH  = NULLSTR( 'CUTEST_cgrdh' )
       TSH    = NULLSTR( 'CUTEST_csh' )
@@ -744,6 +745,52 @@ C  Copy the sparse Jacobian.
             nn = lc2 + 1
             jc = MXGETJC( iptr )
             CALL MXCOPYINTEGER4TOPTR( JCOLA, jc, nn )
+         END IF
+
+      ELSE IF ( EQUAL( TOOL, TLFG ) ) THEN
+
+C  Check number of input and output arguments.
+
+         IF ( nrhs .NE. 3 ) THEN
+            msg = 'CUTEST_clfg requires x and y as input.'
+            CALL MEXERRMSGTXT( msg )
+         END IF
+         IF ( nlhs .NE. 1 .AND. nlhs .NE. 2 ) THEN
+            msg = 'CUTEST_clfg returns one or two output arguments.'
+            CALL MEXERRMSGTXT( msg )
+         END IF
+
+C  Copy second and third input arguments into X and V, respectively.
+
+         iptr = PRHS( 2 )
+         CALL GETVEC( iptr, X, nvar, n )
+         IF( ncon .GT. 0 ) THEN
+           iptr = PRHS( 3 )
+           CALL GETVEC( iptr, V, ncon, m )
+         ENDIF
+
+C  Decide if the gradient is required.
+
+         grad = .FALSE.
+         IF ( nlhs .EQ. 2 ) grad = .TRUE.
+
+C  Get the value of the objective function, and possibly its gradient.
+
+         CALL CUTEST_clfg( status, n, X, V, f, G, grad )
+         IF ( status .NE. 0 ) GO TO 910
+
+C  Copy F.
+
+         PLHS( 1 ) = MXCREATEFULL( 1, 1, 0 )
+         pr = MXGETPR( PLHS( 1 ) )
+         CALL MXCOPYREAL8TOPTR( f, pr, 1 )
+
+C  Copy G, if it is required.
+
+         IF ( grad ) THEN
+            PLHS( 2 ) = MXCREATEFULL( n, 1, 0 )
+            pr = MXGETPR( PLHS( 2 ) )
+            CALL MXCOPYREAL8TOPTR( G, pr, n )
          END IF
 
       ELSE IF ( EQUAL( TOOL, TDH ) ) THEN

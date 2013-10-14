@@ -192,14 +192,14 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
       IF ( alloc_stat /= 0 ) GO TO 990
       grad = .TRUE.
       WRITE( out, "( ' CALL CUTEST_cofsg with grad = .TRUE.' )" )
-      CALL CUTEST_cofsg( status, n, X, f,                                      &
+      CALL CUTEST_cofsg_threaded( status, n, X, f,                             &
                          G_ne, l_g, G_val, G_var, grad, thread )
       IF ( status /= 0 ) GO to 900
       CALL WRITE_f( out, f )
       CALL WRITE_SG( out, G_ne, l_g, G_val, G_var )
       grad = .FALSE.
       WRITE( out, "( ' CALL CUTEST_cofsg with grad = .FALSE.' )" )
-      CALL CUTEST_cofsg( status, n, X, f,                                      &
+      CALL CUTEST_cofsg_threaded( status, n, X, f,                             &
                          G_ne, l_g, G_val, G_var, grad, thread )
       IF ( status /= 0 ) GO to 900
       CALL WRITE_f( out, f )
@@ -278,6 +278,20 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
                          J_ne, l_j, J_val, J_var, J_fun, grad, thread )
       IF ( status /= 0 ) GO to 900
       CALL WRITE_C( out, m, C )
+
+!  compute the Lagrangian function and gradient values
+
+      grad = .TRUE.
+      WRITE( out, "( ' CALL CUTEST_clfg with grad = .TRUE.' )" )
+      CALL CUTEST_clfg_threaded( status, n, m, X, Y, f, G, grad, thread )
+      IF ( status /= 0 ) GO to 900
+      CALL WRITE_f( out, f )
+      CALL WRITE_G( out, n, G )
+      grad = .FALSE.
+      WRITE( out, "( ' CALL CUTEST_clfg with grad = .FALSE.' )" )
+      CALL CUTEST_clfg_threaded( status, n, m, X, Y, f, G, grad, thread )
+      IF ( status /= 0 ) GO to 900
+      CALL WRITE_f( out, f )
 
 !  compute an individual constraint and its dense gradient
 
