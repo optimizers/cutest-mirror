@@ -345,6 +345,8 @@ or equivalently
 
 new tools:
 
+ CUTEST_clfg( status, n, m, X, Y, f, G, grad )
+
  CUTEST_cofsg( status, n, X, f, nnzg, lg, G_val, G_var, grad )
 
  CUTEST_cterminate( status )

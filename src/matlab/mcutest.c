@@ -31,6 +31,9 @@
  *                                        Evaluate a single constraint value
  *                                         and its gradient as a sparse vector
  *
+ * lag        clfg                        Evaluate Lagrangian function value
+ *                                         and its gradient if requested
+ *
  * lagjac     cgr                         Evaluate Jacobian and gradient of
  *                                         either objective or Lagrangian
  *
@@ -755,6 +758,47 @@ extern "C" {
         }
 
 
+
+      mxFree((void *)toolName);
+      return;
+    }
+
+    /* =============== Dense first derivative tools ===================== */
+
+    /* Return Lagrangian function value and gradient if requested.
+     * Usage:  f = cutest_lag(x,y)  or  [f,g] = cutest_lag(x,y)
+     */
+    if (strcmp(toolName, "lag") == 0) {
+
+      if (nrhs < 2 || nrhs > 3)
+        mexErrMsgTxt("cutest_lag: Please specify x and v\n");
+      if (nlhs < 1) mexErrMsgTxt("cutest_lag: Please specify an output argument\n");
+      if (nlhs > 2) mexErrMsgTxt("cutest_lag: Too many output arguments\n");
+      if (! mxIsDouble(prhs[1]))
+        mexErrMsgTxt("cutest_lag: 1st input array must be of type double\n");
+      if (! mxIsDouble(prhs[2]))
+        mexErrMsgTxt("cutest_lag: 2nd input array must be of type double\n");
+
+      x = (doublereal *)mxGetData(prhs[1]);
+      v = (doublereal *)mxGetData(prhs[2]);
+      plhs[0] = mxCreateDoubleMatrix(1, 1, mxREAL);
+      f  = (doublereal *)mxGetData(plhs[0]);
+      if (nlhs == 2) {
+        plhs[1] = mxCreateDoubleMatrix(CUTEst_nvar, 1, mxREAL);
+        g  = (doublereal *)mxGetData(plhs[1]);
+      }
+
+      if (nlhs == 1)
+        CUTEST_clfg( &status, &CUTEst_nvar, &CUTEst_ncon, x, v, 
+                     f, NULL, &somethingFalse);
+      else
+        CUTEST_clfg( &status, &CUTEst_nvar, &CUTEst_ncon,x, v, 
+                     f, g, &somethingTrue);
+
+      if (status != 0) {
+          sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
+          mexErrMsgTxt(msgBuf);
+        }
 
       mxFree((void *)toolName);
       return;
