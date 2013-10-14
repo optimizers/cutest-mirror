@@ -33,6 +33,9 @@ if prob.m > 0
     fprintf('Evaluating objective and constraints...\n');
     [f,c] = cutest_objcons(prob.x);
 
+    fprintf('Evaluating Lagrangian value and gradient...\n');
+    [f,g] = cutest_lag(prob.x,prob.v);
+
     fprintf('Evaluating dense Hessian of Lagrangian...\n');
     H = cutest_hess(prob.x,prob.v);
 

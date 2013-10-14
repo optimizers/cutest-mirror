@@ -5,7 +5,7 @@ CUTEST_clfg_threaded \- CUTEst tool to evaluate Lagrangian function value a
 nd possibly gradient.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_clfg_threaded( status, n, X, Y, f, G, grad, thread )
+CALL CUTEST_clfg_threaded( status, n, m, X, Y, f, G, grad, thread )
 .SH DESCRIPTION
 The CUTEST_clfg_threaded subroutine evaluates the value of the Lagrangian 
 function 
@@ -69,6 +69,9 @@ allocation/deallocation error, 2 for an array bound error,
 .TP
 .B n \fP[in] - integer
 the number of variables for the problem,
+.TP 5
+.B m \fP[in] - integer
+the total number of general constraints,
 .TP
 .B X \fP[in] - real/double precision
 an array which gives the current estimate of the solution of the
