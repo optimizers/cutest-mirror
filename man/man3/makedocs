@@ -4,7 +4,7 @@
 #               cutest_cdimen cutest_cdimse cutest_cdimsh cutest_cdimsj \
 #               cutest_ceh cutest_cfn cutest_cgr cutest_cgrdh cutest_chcprod \
 #               cutest_chprod cutest_cidh cutest_cish cutest_cjprod \
-#               cutest_cnames cutest_cofg cutest_cofsg \
+#               cutest_cnames cutest_cofg cutest_cofsg cutest_clfg \
 #               cutest_connames cutest_creport cutest_cshp \
 #               cutest_csetup cutest_cstats cutest_csetup cutest_csgr \
 #               cutest_csgreh cutest_csgrsh cutest_csh cutest_cshc \
@@ -21,7 +21,7 @@
 #               cutest_cgrdh_threaded cutest_chcprod_threaded \
 #               cutest_chprod_threaded cutest_cidh_threaded \
 #               cutest_cish_threaded cutest_cjprod_threaded \
-#               cutest_cofg_threaded \
+#               cutest_cofg_threaded cutest_clfg_threaded \
 #               cutest_cofsg_threaded cutest_creport_threaded \
 #               cutest_csetup_threaded cutest_csgr_threaded \
 #               cutest_csgreh_threaded cutest_csgrsh_threaded \
@@ -36,10 +36,9 @@
 
 #foreach pack ( cutest_cdimen cutest_udimen )
 #foreach pack ( cutest cutest_usetup_threaded cutest_csetup_threaded )
-
-foreach pack ( cutest cutest_ush cutest_ushp cutest_csh cutest_cshp )
-
+#foreach pack ( cutest cutest_ush cutest_ushp cutest_csh cutest_cshp )
 #foreach pack ( cutest )
+foreach pack ( cutest_clfg cutest_clfg_threaded )
 #foreach pack ( cutest_ccfg )
 #foreach pack ( cutest_ccfsg )
 #foreach pack ( cutest_ccifg )

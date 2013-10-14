@@ -25,6 +25,9 @@
 %                                     Evaluate a single constraint value
 %                                     and its gradient as a sparse vector
 %
+% cutest_lag      clfg                Evaluate Lagrangian function value
+%                                     and its gradient if requested
+%
 % cutest_lagjac   cgr                 Evaluate Jacobian and gradient of
 %                                     either objective or Lagrangian
 %

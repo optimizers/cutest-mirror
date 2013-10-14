@@ -96,6 +96,9 @@ scons        ccfsg / ccifsg              Evaluate constraint bodies and
                                          Evaluate a single constraint value
                                           and its gradient as a sparse vector
 
+lag          clfg                        Evaluate Lagrangian function value
+                                         and its gradient if requested
+
 lagjac       cgr                         Evaluate Jacobian and gradient of
                                           either objective or Lagrangian
 

@@ -584,6 +584,21 @@
         IF ( only_print_small )                                                &
           CALL WRITE_C( out, m, C )
 
+!  compute the Lagrangian function and gradient values
+
+        grad = .TRUE.
+        WRITE( out, "( ' CALL CUTEST_clfg with grad = .TRUE.' )" )
+        CALL CUTEST_clfg( status, n, m, X, Y, f, G, grad )
+        IF ( status /= 0 ) GO to 900
+        CALL WRITE_f( out, f )
+        IF ( only_print_small )                                                &
+          CALL WRITE_G( out, n, G )
+        grad = .FALSE.
+        WRITE( out, "( ' CALL CUTEST_clfg with grad = .FALSE.' )" )
+        CALL CUTEST_clfg( status, n, m, X, Y, f, G, grad )
+        IF ( status /= 0 ) GO to 900
+        CALL WRITE_f( out, f )
+
 !  compute an individual constraint and its dense gradient
 
         icon = 1
