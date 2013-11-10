@@ -1,10 +1,10 @@
                       *******************************
 		      *                             *
-                      * Using IPOPT 2.0 with CUTEst *
+                      * Using IPOPT 3.0 with CUTEst *
 		      *                             *
                       *******************************
 
-WHAT IS IPOPT 2.0?
+WHAT IS IPOPT 3.0?
 ------------------
 
 IPOPT is an implementation of a primal-dual interior point algorithm
@@ -26,7 +26,7 @@ See
 
   https://projects.coin-or.org/Ipopt
 
-USING IPOPT 2.0 WITH CUTEst
+USING IPOPT 3.0 WITH CUTEst
 --------------------------
 
 Using the makefile found in the 'CUTE_interface' subdirectory, the IPOPT
@@ -37,22 +37,22 @@ installation procedure creates the files
 
 The first contains relevant gateways between CUTEst and IPOPT while the
 second contains all library information corresponding to user settings
-within IPOPT, assuming you installed IPOPT 2.0 in the directory $IPOPT.
+within IPOPT, assuming you installed IPOPT 3.0 in the directory $IPOPT.
 
 IPOPT 2.0 is not available in single precision.
 
-USING THE IPOPT 2.0 INTERFACE TOOL
+USING THE IPOPT 3.0 INTERFACE TOOL
 ----------------------------------
 
 Suppose you wish to solve the problem written in SIF format contained
 in the file probname.SIF.
 
-The IPOPT 2.0 interface tools require two input files:
+The IPOPT 3.0 interface tools require two input files:
 
 	probname.SIF   specifies the problem in SIF format
 	ipopt.liblist  contains library information for the linker.
 
-Please refer to the IPOPT 2.0 documentation for more details.
+Please refer to the IPOPT 3.0 documentation for more details.
 
 To run with CUTEst, use the runcutest command with the -p ipopt option.
 See the man page for runcutest for more details of other options.
