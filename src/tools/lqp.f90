@@ -41,7 +41,7 @@
 
       SUBROUTINE CUTEST_LQP_create( status, input, io_buffer, out, n, m, f,    &
                                     G, X, X_l, X_u, Z, Y, C_l, C_u,            &
-                                    p_name, X_names, C_names,                  &
+                                    p_name, X_names, C_names, X_type,          &
                                     A_ne, A_row, A_col, A_ptr, A_val, A_dense, &
                                     H_ne, H_row, H_col, H_ptr, H_val, H_dense, &
                                     H_pert )
@@ -82,10 +82,13 @@
 !  otherwise an error will be flagged with status = -1 (A_) or 
 !  H will be ignored, i.e., and LP will be formed (H_)
 
+!  if h_pert is present, this value will be added to the diagonal of the Hessian
+!  if x_type is present determine the type of x (0=continuous,>0=integer)
+
       INTEGER, OPTIONAL :: A_ne, H_ne
       REAL ( KIND = wp ), OPTIONAL :: H_pert
       INTEGER, ALLOCATABLE, OPTIONAL,                                          &
-        DIMENSION( : ) :: A_row, A_col, A_ptr, H_row, H_col, H_ptr
+        DIMENSION( : ) :: X_type, A_row, A_col, A_ptr, H_row, H_col, H_ptr
       REAL ( KIND = wp ), ALLOCATABLE, OPTIONAL,                               &
         DIMENSION( : ) :: A_val, H_val
       REAL ( KIND = wp ), ALLOCATABLE, OPTIONAL,                               &
@@ -167,6 +170,15 @@
 
       CALL CUTEST_cnames( status, n, m, p_name, X_names, C_names )
       IF ( status /= 0 ) RETURN
+
+!  if required, determine the variable types
+
+      IF ( PRESENT( X_type ) ) THEN
+        ALLOCATE( X_type( n ), STAT = alloc_status )
+        IF ( alloc_status /= 0 ) GO TO 990
+        CALL CUTEST_cvartype( status, n, X_type )
+        IF ( status /= 0 ) RETURN
+      END IF
 
 !  ensure that the initial point satisfies its bounds
 

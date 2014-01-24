@@ -666,7 +666,7 @@ if [[ $? == 1 ]]; then
 
     echo -e '\n The package subset may be installed in (S)ingle or (D)ouble precision'
     read -p ' Which precision do you require for the installed subset (D/s) ? ' -r -n 1 PREC;
-    [[ $PREC == [Dd] ]] && PREC='double' || PREC='single'
+    [[ $PREC == [Ss] ]] && PREC='single' || PREC='double'
 
     cd $CUTEST/src/
 
