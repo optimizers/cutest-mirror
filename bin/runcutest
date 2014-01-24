@@ -338,7 +338,9 @@ fi
 # If -D is not specified, problem is in current dir. Do not stash.
 (( problem_set == 0 )) && let stash=0
 (( stash )) && WorkingDir=`mktemp -d -t cutestXXXXXXXX` || WorkingDir=${PWD}
-echo "Working in $WorkingDir"
+if (( show_config )); then
+  echo "Working in $WorkingDir"
+fi
 
 # Decode problem if required
 (( problem_set )) && Decode_Problem ${PROBLEM} $WorkingDir
@@ -397,7 +399,7 @@ fi
 [[ -w ${CUTEST}/objects ]] && let writable=1 || let writable=0
 if (( writable )); then
     cd ${CUTEST}/src/${PKG}
-    ${MAKE} -f ${CUTEST}/makefiles/${ARCH} tools ${PKG}
+    ${MAKE} -s -f ${CUTEST}/makefiles/${ARCH} tools ${PKG}
 else
     warning "You do not have write permissions to ${CUTEST}/objects
 Attempting to continue..."
