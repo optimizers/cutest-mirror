@@ -12,11 +12,18 @@
 
      USE CUTEST_LQP_double
 
+     IMPLICIT NONE 
+
 !--------------------
 !   P r e c i s i o n
 !--------------------
 
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+      INTEGER, PARAMETER :: sp = KIND( 1.0E+0 )
+      INTEGER, PARAMETER :: dp = KIND( 1.0D+0 )
+
+      REAL( KIND = sp ), PARAMETER :: teneps_s = 10.0_sp * EPSILON( 1.0_sp )
+      REAL( KIND = dp ), PARAMETER :: teneps_d = 10.0_dp * EPSILON( 1.0_dp )
 
 !----------------------
 !   P a r a m e t e r s
@@ -26,10 +33,12 @@
       INTEGER, PARAMETER :: input_spec = 46
       INTEGER, PARAMETER :: standard_out = 6
       INTEGER, PARAMETER :: qplib_out = 61
+      INTEGER, PARAMETER :: qplib_out_dummy = 62
       INTEGER, PARAMETER :: buffer = 77 
       REAL ( KIND = wp ), PARAMETER :: zero = 0.0_wp
       REAL ( KIND = wp ), PARAMETER :: one = 1.0_wp
       REAL ( KIND = wp ), PARAMETER :: infinity = ( 10.0_wp ) ** 19
+      REAL ( KIND = wp ), PARAMETER :: infinity_used = ( 10.0_wp ) ** 20
 
       INTEGER, PARAMETER :: qp = 1
       INTEGER, PARAMETER :: qpqc = 2
@@ -50,12 +59,12 @@
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: X_type
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: A_row, A_col
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: H_row, H_col
-      REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: X, X_l, X_u, Z, G
+      REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: X, X_l, X_u, Z, G, X0
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: Y, C_l, C_u
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: A_val, H_val
       CHARACTER ( len = 10 ), ALLOCATABLE, DIMENSION( : ) :: X_names, C_names
 
-      INTEGER :: i, int_var, l
+      INTEGER :: i, int_var, l, lh, nehi, nnzh_i
       INTEGER :: problem_type = 1
       LOGICAL :: filexx
       LOGICAL :: append_dim = .FALSE.
@@ -64,12 +73,11 @@
       CHARACTER ( len = 24 ) :: char_val
       CHARACTER ( len = 28 ) :: out_p_name
       CHARACTER ( len = 34 ) :: out_p_name_qplib
+      CHARACTER ( len = 75 ) :: qplib_hi
       REAL ( KIND = wp ) :: mode_v
 !     REAL ( KIND = wp ), DIMENSION( 100 ) :: V
 
       out = standard_out
-
-!  open the Spec file for the method
 
       OPEN( input_spec, FILE = 'QPLIB.SPC', FORM = 'FORMATTED', STATUS = 'OLD')
       REWIND( input_spec )
@@ -103,7 +111,8 @@
                                 A_col = A_col, A_val = A_val,                  &
                                 H_ne = H_ne, H_row = H_row,                    &
                                 H_col = H_col, H_val = H_val,                  &
-                                H_pert = h_pert )
+                                H_pert = h_pert,                               &
+                                dont_terminate_cutest = .TRUE. )
       ELSE
         CALL CUTEST_lqp_create( status, input, buffer, out, n, m, f, G,        &
                                 X, X_l, X_u, Z, Y, C_l, C_u, p_name,           &
@@ -117,18 +126,6 @@
       END IF
       CLOSE( input )
       IF ( status /= 0 ) GO TO 900
-!      CALL WRITE_p_name( out, p_name )
-!      WRITE( out, "( ' * n = ', I0, ', m = ', I0,                             &
-!     &  ', A_ne = ', I0, ', H_ne = ', I0 )" ) n, m, A_ne, H_ne
-!     CALL WRITE_H_sparse( out, H_ne, H_ne, H_val, H_row, H_col )
-!     CALL WRITE_G( out, n, G )
-!     CALL WRITE_f( out, f )
-!     CALL WRITE_A_sparse( out, A_ne, A_ne, A_val, A_row, A_col )
-!     CALL WRITE_X( out, n, X, X_l, X_u, Z )
-!     CALL WRITE_Y( out, m, Y, C_l, C_u )
-!     CALL WRITE_X_type( out, n, X_type )
-!     CALL WRITE_X_names( out, n, X_names )
-!     CALL WRITE_C_names( out, m, C_names )
 
 !  obtain output problem name
 
@@ -288,9 +285,52 @@
 !  Hessian values for constraints
 
       IF ( problem_type == qpqc .OR. problem_type == lpqc ) THEN
-        char_l = TRIM_INT( 0 )
+
+        ALLOCATE( X0( n ), STAT = status )
+        IF ( status /= 0 ) GO TO 900
+        X0 = zero 
+        nnzh_i = 0 ; lh = SIZE( H_val )
+
+!  open a dummy file to store the Hessian values temporarily
+
+        OPEN( qplib_out_dummy,  IOSTAT = status )
+        IF ( status /= 0 ) GO TO 900
+
+!  write the Hessian values for the ith constraint to the dummy file
+
+        DO i = 1, m
+          CALL CUTEST_cish( status, n, X0, i, nehi, lh, H_val, H_row, H_col )
+          IF ( status /= 0 ) GO TO 900
+          char_l = TRIM_INT( i )
+          DO l = 1, nehi
+            IF ( H_val( l ) /= zero ) THEN
+             nnzh_i = nnzh_i + 1
+             char_i = TRIM_INT( H_row( l ) ) ; char_j = TRIM_INT( H_col( l ) )
+             char_val = TRIM_VALUE( H_val( l ) )
+             WRITE( qplib_out_dummy, "( A16, 1X, A16, 1X, A16, 1X, A24 ) )" )  &
+               char_l, char_i, char_j, char_val
+            END IF
+          END DO
+        END DO
+        DEALLOCATE( X0, stat = status )
+        CALL CUTEST_cterminate( status )
+
+!  record the total number of constraintg Hessian values
+
+        char_l = TRIM_INT( nnzh_i )
         WRITE( out, "( /, A16, 8X, ' # nonzeros in upper triangle',            &
        &  ' of the H_i')") char_l
+
+!  append the constraint Hessian values to the qplib file
+
+        IF ( nnzh_i > 0 ) THEN
+          REWIND( qplib_out_dummy )
+          DO l = 1, nnzh_i
+            READ( qplib_out_dummy, "( A75 )" ) qplib_hi
+            WRITE( qplib_out, "( A75 )" ) qplib_hi
+          END DO
+        END IF
+        CLOSE( qplib_out_dummy )
       END IF
 
 !  constraint Jacobian values
@@ -318,40 +358,60 @@
 !  constraint lower bounds
     
       IF ( problem_type /= bqp ) THEN
-        mode_v = MODE( m, C_l )
-        l = COUNT( C_l( : m ) /= mode_v )
-        char_l = TRIM_INT( l ) ; char_val = TRIM_VALUE( mode_v )
-        WRITE( out, "( /, A24, ' default value for entries in c_l' )" ) char_val
-        IF ( l == 0 ) THEN
-          WRITE( out, "( A16, 8X, ' # non default entries in c_l' )" ) char_l
+        IF ( m > 0 ) THEN
+          mode_v = MODE( m, C_l )
+          l = COUNT( C_l( : m ) /= mode_v )
+          char_l = TRIM_INT( l ) ; char_val = TRIM_VALUE( mode_v )
+          WRITE( out, "( /, A24, ' default value for entries in c_l' )" )      &
+            char_val
+          IF ( l == 0 ) THEN
+            WRITE( out, "( A16, 8X, ' # non default entries in c_l' )" ) char_l
+          ELSE
+            WRITE( out, "( A16, 8X, ' # non default entries in c_l:',          &
+           &  ' index,value' )" ) char_l
+            DO i = 1, m
+              IF ( C_l( i ) /= mode_v ) THEN
+                char_i = TRIM_INT( i ) ; char_val = TRIM_VALUE( C_l( i ) )
+                WRITE( out, "( A16, 1X, A24 ) )" ) char_i, char_val
+              END IF
+            END DO
+          END IF
         ELSE
-          WRITE( out, "( A16, 8X, ' # non default entries in c_l:',            &
-         &  ' index,value' )" ) char_l
-          DO i = 1, m
-            IF ( C_l( i ) /= mode_v ) THEN
-              char_i = TRIM_INT( i ) ; char_val = TRIM_VALUE( C_l( i ) )
-              WRITE( out, "( A16, 1X, A24 ) )" ) char_i, char_val
-            END IF
-          END DO
+          mode_v = - infinity_used
+          l = 0
+          char_l = TRIM_INT( l ) ; char_val = TRIM_VALUE( mode_v )
+          WRITE( out, "( /, A24, ' default value for entries in c_l' )" )      &
+            char_val
+          WRITE( out, "( A16, 8X, ' # non default entries in c_l' )" ) char_l
         END IF
 
 !  constraint upper bounds
     
-        mode_v = MODE( m, C_u )
-        l = COUNT( C_u( : m ) /= mode_v )
-        char_l = TRIM_INT( l ) ; char_val = TRIM_VALUE( mode_v )
-        WRITE( out, "( /, A24, ' default value for entries in c_u' )" ) char_val
-        IF ( l == 0 ) THEN
-          WRITE( out, "( A16, 8X, ' # non default entries in c_u' )" ) char_l
+        IF ( m > 0 ) THEN
+          mode_v = MODE( m, C_u )
+          l = COUNT( C_u( : m ) /= mode_v )
+          char_l = TRIM_INT( l ) ; char_val = TRIM_VALUE( mode_v )
+          WRITE( out, "( /, A24, ' default value for entries in c_u' )" )      &
+            char_val
+          IF ( l == 0 ) THEN
+            WRITE( out, "( A16, 8X, ' # non default entries in c_u' )" ) char_l
+          ELSE
+            WRITE( out, "( A16, 8X, ' # non default entries in c_u:',          &
+          &   ' index,value' )" ) char_l
+            DO i = 1, m
+              IF ( C_u( i ) /= mode_v ) THEN
+                char_i = TRIM_INT( i ) ; char_val = TRIM_VALUE( C_u( i ) )
+                WRITE( out, "( A16, 1X, A24 ) )" ) char_i, char_val
+              END IF
+            END DO
+          END IF
         ELSE
-          WRITE( out, "( A16, 8X, ' # non default entries in c_u:',            &
-        &   ' index,value' )" ) char_l
-          DO i = 1, m
-            IF ( C_u( i ) /= mode_v ) THEN
-              char_i = TRIM_INT( i ) ; char_val = TRIM_VALUE( C_u( i ) )
-              WRITE( out, "( A16, 1X, A24 ) )" ) char_i, char_val
-            END IF
-          END DO
+          mode_v = infinity_used
+          l = 0
+          char_l = TRIM_INT( l ) ; char_val = TRIM_VALUE( mode_v )
+          WRITE( out, "( /, A24, ' default value for entries in c_u' )" )      &
+            char_val
+          WRITE( out, "( A16, 8X, ' # non default entries in c_u' )" ) char_l
         END IF
       END IF
 
@@ -456,22 +516,31 @@
 !  initial Lagrange multipliers
 
       IF ( problem_type /= bqp ) THEN
-        mode_v = MODE( m, Y )
-        l = COUNT( Y( : m ) /= mode_v )
-        char_l = TRIM_INT( l ) ; char_val = TRIM_VALUE( mode_v )
-        WRITE( out, "( /, A24, ' default value for entries in initial y' )" )  &
-          char_val
-        IF ( l == 0 ) THEN
-          WRITE( out, "( A16, 8X, ' # non default entries in y' )" ) char_l
+        IF ( m > 0 ) THEN
+          mode_v = MODE( m, Y )
+          l = COUNT( Y( : m ) /= mode_v )
+          char_l = TRIM_INT( l ) ; char_val = TRIM_VALUE( mode_v )
+          WRITE( out, "( /, A24, ' default value for entries in initial y' )" )&
+            char_val
+          IF ( l == 0 ) THEN
+            WRITE( out, "( A16, 8X, ' # non default entries in y' )" ) char_l
+          ELSE
+            WRITE( out, "( A16, 8X, ' # non default entries in y:',            &
+           &  ' index,value' )" ) char_l
+            DO i = 1, m
+              IF ( Y( i ) /= mode_v ) THEN
+                char_i = TRIM_INT( i ) ; char_val = TRIM_VALUE( Y( i ) )
+                WRITE( out, "( A16, 1X, A24 ) )" ) char_i, char_val
+              END IF
+            END DO
+          END IF
         ELSE
-          WRITE( out, "( A16, 8X, ' # non default entries in y:',              &
-         &  ' index,value' )" ) char_l
-          DO i = 1, m
-            IF ( Y( i ) /= mode_v ) THEN
-              char_i = TRIM_INT( i ) ; char_val = TRIM_VALUE( Y( i ) )
-              WRITE( out, "( A16, 1X, A24 ) )" ) char_i, char_val
-            END IF
-          END DO
+          mode_v = zero
+          l = 0
+          char_l = TRIM_INT( l ) ; char_val = TRIM_VALUE( mode_v )
+          WRITE( out, "( /, A24, ' default value for entries in initial y' )" )&
+            char_val
+          WRITE( out, "( A16, 8X, ' # non default entries in y' )" ) char_l
         END IF
       END IF
 
@@ -508,13 +577,19 @@
 !  constraint names
 
       IF ( problem_type /= bqp ) THEN
-        char_l = TRIM_INT( n )
-        WRITE( out, "( /, A16, 8X, ' # non default names for constraints:',    &
-       &   ' index,name' )" ) char_l
-        DO i = 1, m
-          char_i = TRIM_INT( i )
-          WRITE( out, "( A16, 1X, A10 ) )" ) char_i, C_names( i )
-        END DO
+        IF ( m > 0 ) THEN
+          char_l = TRIM_INT( m )
+          WRITE( out, "( /, A16, 8X, ' # non default names for constraints:',  &
+         &   ' index,name' )" ) char_l
+          DO i = 1, m
+            char_i = TRIM_INT( i )
+            WRITE( out, "( A16, 1X, A10 ) )" ) char_i, C_names( i )
+          END DO
+        ELSE
+          char_l = 0
+          WRITE( out, "( /, A16, 8X, ' # non default names for constraints:',  &
+         &   ' index,name' )" ) char_l
+        END IF
       END IF
 
       DEALLOCATE( A_row, A_col, H_row, H_col, X, X_l, X_u, Z, G, Y, C_l, C_u,  &
@@ -533,6 +608,8 @@
 
     CONTAINS
 
+!  ------------------------ M O D E  F U N C T I O N -------------------------- 
+
       FUNCTION MODE( n, V )
       IMPLICIT NONE
       REAL ( KIND = wp ) :: MODE
@@ -545,40 +622,47 @@
 
       REAL ( KIND = wp ), DIMENSION( n ) :: V_sorted
 
+      IF ( n > 0 ) THEN
+
 !  sort a copy of v into increasing order
 
-      V_sorted = V
-      CALL SORT_heapsort_build( n, V_sorted, inform ) !  build the heap
-      DO i = 1, n
-        m = n - i + 1 
-        CALL SORT_heapsort_smallest( m, V_sorted, inform ) !  reorder v
-      END DO  
+        V_sorted = V
+        CALL SORT_heapsort_build( n, V_sorted, inform ) !  build the heap
+        DO i = 1, n
+          m = n - i + 1 
+          CALL SORT_heapsort_smallest( m, V_sorted, inform ) !  reorder v
+        END DO  
 
 !  run through the sorted values, finding adjacent entries that are identical
 
-      mode_start = 1 ; max_len = 1
-      same = 1 ; len = 1
-      DO i = 2, n
-        IF ( V_sorted( i ) /= V_sorted( same ) ) THEN
-          IF ( len > max_len ) THEN
-            mode_start = same
-            max_len = len
+        mode_start = 1 ; max_len = 1
+        same = 1 ; len = 1
+        DO i = 2, n
+          IF ( V_sorted( i ) /= V_sorted( same ) ) THEN
+            IF ( len > max_len ) THEN
+              mode_start = same
+              max_len = len
+            END IF
+            same = i ; len = 1
+          ELSE
+            len = len + 1
           END IF
-          same = i ; len = 1
-        ELSE
-          len = len + 1
+        END DO
+        IF ( len > max_len ) THEN
+          mode_start = same
+          max_len = len
         END IF
-      END DO
-      IF ( len > max_len ) THEN
-        mode_start = same
-        max_len = len
+!       write(6,*) max_len
+!       write(6,*) V_sorted( : n )
+        MODE = V_sorted( mode_start )
+      ELSE
+        MODE = zero
       END IF
-!     write(6,*) max_len
-!     write(6,*) V_sorted( : n )
-      MODE = V_sorted( mode_start )
       RETURN
 
       END FUNCTION MODE
+
+!  --------------- H E A P S O R T   S U B R O U T I N E S -------------------
 
 !  heapsort routines extracted from GALAHAD
 
@@ -747,29 +831,252 @@
 
       END SUBROUTINE SORT_heapsort_smallest
 
+!  ---------------------- T R I M _ I N T    F U N C T I O N ------------------
+
+      FUNCTION TRIM_INT( i )
+      CHARACTER ( LEN = 16 ) :: TRIM_INT
+      INTEGER :: i
+
+!  write integer as a left shifted length 16 character
+
+      TRIM_INT = REPEAT( ' ', 16 )
+      WRITE( TRIM_INT, "( I0 )" ) i
+      RETURN
+
+!  end of function TRIM_INT
+
+      END FUNCTION TRIM_INT
+
+!  --------------------- T R I M _ V A L U E   F U N C T I O N ----------------
+
       FUNCTION TRIM_VALUE( value )
       CHARACTER ( LEN = 24 ) :: TRIM_VALUE
       REAL ( KIND = wp ) :: value
 
-!  remove more than one trailing 0 from floating point strings
+!  write a real value into 24 characters trimming as much as possible 
+!  without losing precision
 
-      INTEGER :: i, j, k, zs
+      INTEGER :: i, i_start, i_point, i_end, j, k, l, zs
+      REAL ( KIND = wp ) :: minus_value
       LOGICAL :: zeros
+      CHARACTER ( LEN = 22 ) :: field22
+      CHARACTER ( LEN = 23 ) :: field
+      CHARACTER ( LEN = 24 ) :: field24
 
-      TRIM_VALUE = REPEAT( ' ', 24 )
-      IF ( value > - 10.0_wp .AND. value < 10.0_wp ) THEN
-        WRITE( TRIM_VALUE, "( F19.16 )" ) value
+!  cram value into 23 characters
+
+!write(6,*) value
+      IF ( value == 0.0_dp ) THEN
+        field = "0.0         "
+      ELSE IF ( SIGN( 1.0_dp, value ) > 0.0_dp ) THEN
+        IF ( value >= ( 10.0_dp ) ** 100 ) THEN
+          WRITE( field24, "( ES24.15E3 )" ) value
+          field = field24( 1 : 20 ) // field24( 22 : 24 )
+        ELSE IF ( value >= ( 10.0_dp ) ** 16 ) THEN
+          WRITE( field24, "( ES24.15 )" ) value
+          field = field24( 1 : 21 ) // field24( 23 : 24 )
+        ELSE IF ( value >= ( 10.0_dp ) ** 15 ) THEN
+          WRITE( field, "( F23.0 )" ) value
+        ELSE IF ( value >= ( 10.0_dp ) ** 14 ) THEN
+          WRITE( field, "( F23.1 )" ) value
+        ELSE IF ( value >= ( 10.0_dp ) ** 13 ) THEN
+          WRITE( field, "( F23.2 )" ) value
+        ELSE IF ( value >= ( 10.0_dp ) ** 12 ) THEN
+          WRITE( field, "( F23.3 )" ) value
+        ELSE IF ( value >= ( 10.0_dp ) ** 11 ) THEN
+          WRITE( field, "( F23.4 )" ) value
+        ELSE IF ( value >= ( 10.0_dp ) ** 10 ) THEN
+          WRITE( field, "( F23.5 )" ) value
+        ELSE IF ( value >= ( 10.0_dp ) ** 9 ) THEN
+          WRITE( field, "( F23.6 )" ) value
+        ELSE IF ( value >= ( 10.0_dp ) ** 8 ) THEN
+          WRITE( field, "( F23.7 )" ) value
+        ELSE IF ( value >= ( 10.0_dp ) ** 7 ) THEN
+          WRITE( field, "( F23.8 )" ) value
+        ELSE IF ( value >= ( 10.0_dp ) ** 6 ) THEN
+          WRITE( field, "( F23.9 )" ) value
+        ELSE IF ( value >= ( 10.0_dp ) ** 5 ) THEN
+          WRITE( field, "( F23.10 )" ) value
+        ELSE IF ( value >= ( 10.0_dp ) ** 4 ) THEN
+          WRITE( field, "( F23.11 )" ) value
+        ELSE IF ( value >= ( 10.0_dp ) ** 3 ) THEN
+          WRITE( field, "( F23.12 )" ) value
+        ELSE IF ( value >= ( 10.0_dp ) ** 2 ) THEN
+          WRITE( field, "( F23.13 )" ) value
+        ELSE IF ( value >= ( 10.0_dp ) ** 1 ) THEN
+          WRITE( field, "( F23.14 )" ) value
+        ELSE IF ( value >= ( 10.0_dp ) ** 0 ) THEN
+          WRITE( field, "( F23.15 )" ) value
+        ELSE IF ( value >= ( 10.0_dp ) ** ( - 1 ) ) THEN
+          WRITE( field24, "( F24.16 )" ) value
+          field = field24( 2 : 24 )
+        ELSE IF ( value >= ( 10.0_dp ) ** ( - 2 ) ) THEN
+          WRITE( field24, "( F24.17 )" ) value
+          field = field24( 2 : 24 )
+        ELSE IF ( value >= ( 10.0_dp ) ** ( - 3 ) ) THEN
+          WRITE( field24, "( F24.18 )" ) value
+          field = field24( 2 : 24 )
+        ELSE IF ( value >= ( 10.0_dp ) ** ( - 4 ) ) THEN
+          WRITE( field24, "( F24.16 )" ) value
+          field = field24( 2 : 24 )
+        ELSE IF ( value >= ( 10.0_dp ) ** ( - 9 ) ) THEN
+          WRITE( field24, "( ES24.15 )" ) value
+          field = field24( 1 : 22 ) // field24( 24 : 24 )
+        ELSE IF ( value >= ( 10.0_dp ) ** ( - 99 ) ) THEN
+          WRITE( field, "( ES23.15 )" ) value
+!       ELSE IF ( value >= ( 10.0_dp ) ** ( - 999 ) ) THEN
+!         WRITE( field, "( ES23.15E3 )" ) value
+        ELSE
+          WRITE( field, "( ES23.15E4 )" ) value
+        END IF
       ELSE
-        WRITE( TRIM_VALUE, "( ES23.16 )" ) value
+        minus_value = - value
+        IF ( ABS( minus_value - 1.0_dp ) <= teneps_d ) minus_value = 1.0_dp
+        IF ( minus_value >= ( 10.0_dp ) ** 100 ) THEN
+          WRITE( field, "( ES23.15E3 )" ) minus_value
+          field22 = field( 1 : 19 ) // field( 21 : 23 )
+        ELSE IF ( minus_value >= ( 10.0_dp ) ** 16 ) THEN
+          WRITE( field, "( ES23.15 )" ) minus_value
+          field22 = field( 1 : 20 ) // field( 22 : 23 )
+        ELSE IF ( minus_value >= ( 10.0_dp ) ** 15 ) THEN
+          WRITE( field22, "( F22.0 )" ) minus_value
+        ELSE IF ( minus_value >= ( 10.0_dp ) ** 14 ) THEN
+          WRITE( field22, "( F22.1 )" ) minus_value
+        ELSE IF ( minus_value >= ( 10.0_dp ) ** 13 ) THEN
+          WRITE( field22, "( F22.2 )" ) minus_value
+        ELSE IF ( minus_value >= ( 10.0_dp ) ** 12 ) THEN
+          WRITE( field22, "( F22.3 )" ) minus_value
+        ELSE IF ( minus_value >= ( 10.0_dp ) ** 11 ) THEN
+          WRITE( field22, "( F22.4 )" ) minus_value
+        ELSE IF ( minus_value >= ( 10.0_dp ) ** 10 ) THEN
+          WRITE( field22, "( F22.5 )" ) minus_value
+        ELSE IF ( minus_value >= ( 10.0_dp ) ** 9 ) THEN
+          WRITE( field22, "( F22.6 )" ) minus_value
+        ELSE IF ( minus_value >= ( 10.0_dp ) ** 8 ) THEN
+          WRITE( field22, "( F22.7 )" ) minus_value
+        ELSE IF ( minus_value >= ( 10.0_dp ) ** 7 ) THEN
+          WRITE( field22, "( F22.8 )" ) minus_value
+        ELSE IF ( minus_value >= ( 10.0_dp ) ** 6 ) THEN
+          WRITE( field22, "( F22.9 )" ) minus_value
+        ELSE IF ( minus_value >= ( 10.0_dp ) ** 5 ) THEN
+          WRITE( field22, "( F22.10 )" ) minus_value
+        ELSE IF ( minus_value >= ( 10.0_dp ) ** 4 ) THEN
+          WRITE( field22, "( F22.11 )" ) minus_value
+        ELSE IF ( minus_value >= ( 10.0_dp ) ** 3 ) THEN
+          WRITE( field22, "( F22.12 )" ) minus_value
+        ELSE IF ( minus_value >= ( 10.0_dp ) ** 2 ) THEN
+          WRITE( field22, "( F22.13 )" ) minus_value
+        ELSE IF ( minus_value >= ( 10.0_dp ) ** 1 ) THEN
+          WRITE( field22, "( F22.14 )" ) minus_value
+        ELSE IF ( minus_value >= ( 10.0_dp ) ** 0 ) THEN
+          WRITE( field22, "( F22.15 )" ) minus_value
+        ELSE IF ( minus_value >= ( 10.0_dp ) ** ( - 1 ) ) THEN
+          WRITE( field, "( F23.16 )" ) minus_value
+          field22 = field( 2 : 23 )
+        ELSE IF ( minus_value >= ( 10.0_dp ) ** ( - 2 ) ) THEN
+          WRITE( field, "( F23.17 )" ) minus_value
+          field22 = field( 2 : 23 )
+        ELSE IF ( minus_value >= ( 10.0_dp ) ** ( - 3 ) ) THEN
+          WRITE( field, "( F23.18 )" ) minus_value
+          field22 = field( 2 : 23 )
+        ELSE IF ( minus_value >= ( 10.0_dp ) ** ( - 4 ) ) THEN
+          WRITE( field, "( F23.15 )" ) minus_value
+          field22 = field( 2 : 23 )
+        ELSE IF ( minus_value >= ( 10.0_dp ) ** ( - 9 ) ) THEN
+          WRITE( field, "( ES23.15 )" ) minus_value
+          field22 = field( 1 : 21 ) // field( 23 : 23 )
+        ELSE IF ( minus_value > ( 10.0_dp ) ** ( - 99 ) ) THEN
+          WRITE( field22, "( ES22.15 )" ) minus_value
+!       ELSE IF ( minus_value > ( 10.0_dp ) ** ( - 999 ) ) THEN
+!         WRITE( field22, "( ES22.15E3 )" ) minus_value
+        ELSE
+          WRITE( field22, "( ES22.15E4 )" ) minus_value
+        END IF
+        field = "-" //  ADJUSTL( field22 )
       END IF
+
+!  shift the value left
+
+      field24 = ADJUSTL( field ) // ' '
+
+!  find the positions of the first digit in the mantissa
+
+      IF ( field24( 1 : 1 ) == '-' ) THEN
+        i_start = 2
+      ELSE
+        i_start = 1
+      END IF
+
+!  find the positions of the decimal point and last digit in the mantissa
+
+      DO i = 1, 23
+        IF ( field24( i : i ) == '.' ) i_point = i
+        IF ( field24( i + 1 : i + 1 ) == ' ' .OR.                             &
+             field24( i + 1 : i + 1 ) == 'e' .OR.                             &
+             field24( i + 1 : i + 1 ) == 'E' .OR.                             &
+             field24( i + 1 : i + 1 ) == 'd' .OR.                             &
+             field24( i + 1 : i + 1 ) == 'D' ) THEN
+          i_end = i
+          EXIT
+        END IF
+      END DO
+
+!     IF ( i_end - i_point >= 15 ) THEN
+      IF ( i_end - i_start >= 15 ) THEN
+
+!  round down any *01 to *00
+
+        IF ( field24( i_end - 1 : i_end ) == '01' )                       &
+          field24( i_end - 1 : i_end ) = '00'
+
+!  round any *9r to **0r where ** = *+1
+
+        IF ( field24( i_end - 1 : i_end ) == '99' ) THEN
+          DO i = i_end, i_point + 1, - 1
+            IF ( field24( i : i ) == '9' ) THEN
+              field24( i : i ) = '0'
+            ELSE
+              READ( field24( i : i ), "( I1 )" ) l
+              WRITE( field24( i : i ), "( I1 )" ) l + 1
+              EXIT
+            END IF
+            IF ( i == i_point + 1 ) THEN
+              DO j = i_point - 1, i_start, - 1
+                IF ( field24( j : j ) == '9' ) THEN
+                  field24( j : j ) = '0'
+                ELSE
+                  READ( field24( j : j ), "( I1 )" ) l
+                  WRITE( field24( j : j ), "( I1 )" ) l + 1
+                  EXIT
+                END IF
+                IF ( j == i_start ) THEN
+                  DO l = i_end - 1, i_start, - 1
+                    field24( l + 1 : l + 1 ) = field24( l : l ) 
+                  END DO
+                  field24( i_start : i_start ) = '1'
+                END IF
+              END DO
+            END IF
+          END DO
+        END IF
+      END IF
+
+!     field24 = REPEAT( ' ', 24 )
+!     IF ( value > - 10.0_wp .AND. value < 10.0_wp ) THEN
+!       WRITE( field24, "( F19.16 )" ) value
+!     ELSE
+!       WRITE( field24, "( ES23.16 )" ) value
+!     END IF
+
+      TRIM_VALUE = field24
 
 !  remove any leading space
 
-      IF ( TRIM_VALUE( 1 : 1 ) == ' ' ) THEN
-        DO i = 2, 24
-          TRIM_VALUE( i - 1 : i - 1 ) = TRIM_VALUE( i : i )
-        END DO
-      END IF 
+!     IF ( TRIM_VALUE( 1 : 1 ) == ' ' ) THEN
+!       DO i = 2, 24
+!         TRIM_VALUE( i - 1 : i - 1 ) = TRIM_VALUE( i : i )
+!       END DO
+!     END IF 
 
       zeros = .FALSE.
       DO i = 1, 24
@@ -903,365 +1210,6 @@
 !  end of function TRIM_VALUE
 
       END FUNCTION TRIM_VALUE
-
-      FUNCTION TRIM_INT( i )
-      CHARACTER ( LEN = 16 ) :: TRIM_INT
-      INTEGER :: i
-
-!  write integer as a left shifted length 16 character
-
-      TRIM_INT = REPEAT( ' ', 16 )
-      WRITE( TRIM_INT, "( I0 )" ) i
-      RETURN
-
-!  end of function TRIM_INT
-
-      END FUNCTION TRIM_INT
-
-!  data printing subroutines
-
-      SUBROUTINE WRITE_X( out, n, X, X_l, X_u, Z )
-      INTEGER :: n, out
-      REAL ( KIND = wp ), DIMENSION( n ) :: X, X_l, X_u, Z
-      WRITE( out, "( ' *       i      X_l          X          X_u          Z')")
-      DO i = 1, n
-        WRITE( out, "( ' * ', I7, 4ES12.4 )" )                                 &
-          i, X_l( i ), X( i ), X_u( i ), Z( i )
-      END DO
-      END SUBROUTINE WRITE_X
-
-      SUBROUTINE WRITE_Y( out, m, Y, C_l, C_u )
-      INTEGER :: m, out
-      REAL ( KIND = wp ), DIMENSION( m ) :: Y, C_l, C_u
-      WRITE( out, "( ' *       i      C_l         C_u          Y   ' )" )
-      DO i = 1, m
-        WRITE( out, "( ' * ', I7, 3ES12.4 )" ) i, C_l( i ), C_u( i ), Y( i )
-      END DO
-      END SUBROUTINE WRITE_Y
-
-      SUBROUTINE WRITE_X_type( out, n, X_type )
-      INTEGER :: n, out
-      INTEGER, DIMENSION( n ) :: X_type
-      INTEGER :: i
-      WRITE( out, "( ' *       i  X_type' )" )
-      DO i = 1, n
-        WRITE( out, "( ' * ', I7, 2X, I0 )" ) i, X_type( i )
-      END DO
-      END SUBROUTINE WRITE_X_type
-
-      SUBROUTINE WRITE_p_name( out, p_name )
-      INTEGER :: out
-      CHARACTER ( len = 10 ) ::  p_name
-      WRITE( out, "( ' * p_name = ', A )" ) p_name
-      END SUBROUTINE WRITE_p_name
-
-      SUBROUTINE WRITE_X_names( out, n, X_names )
-      INTEGER :: n, out
-      CHARACTER ( len = 10 ), DIMENSION( n ) :: X_names
-      INTEGER :: i
-      WRITE( out, "( ' *       i  X_name' )" )
-      DO i = 1, n
-        WRITE( out, "( ' * ', I7, 2X, A10 )" ) i, X_names( i )
-      END DO
-      END SUBROUTINE WRITE_X_names
-
-      SUBROUTINE WRITE_C_names( out, m, C_names )
-      INTEGER :: m, out
-      CHARACTER ( len = 10 ), DIMENSION( m ) :: C_names
-      INTEGER :: i
-      WRITE( out, "( ' *       i  C_name' )" )
-      DO i = 1, m
-        WRITE( out, "( ' * ', I7, 2X, A10 )" ) i, C_names( i )
-      END DO
-      END SUBROUTINE WRITE_C_names
-
-      SUBROUTINE WRITE_f( out, f )
-      INTEGER :: out
-      REAL ( KIND = wp ) :: f
-      WRITE( out, "( ' * f = ', ES12.4 )" ) f
-      END SUBROUTINE WRITE_f
-
-      SUBROUTINE WRITE_C( out, m, C )
-      INTEGER :: m, out
-      REAL ( KIND = wp ), DIMENSION( m ) :: C
-      INTEGER :: i
-      WRITE( out, "( ' *       i       C' )" )
-      DO i = 1, m
-        WRITE( out, "( ' * ', I7, ES12.4 )" ) i, C( i )
-      END DO
-      END SUBROUTINE WRITE_C
-
-      SUBROUTINE WRITE_G( out, n, G )
-      INTEGER :: n, out
-      REAL ( KIND = wp ), DIMENSION( n ) :: G
-      INTEGER :: i
-      WRITE( out, "( ' *       i       G' )" )
-      DO i = 1, n
-        WRITE( out, "( ' * ', I7, ES12.4 )" ) i, G( i )
-      END DO
-      END SUBROUTINE WRITE_G
-
-      SUBROUTINE WRITE_H_dense( out, n, l_h2_1, H2_val )
-      INTEGER :: n, l_h2_1, out
-      REAL ( KIND = wp ), DIMENSION( l_h2_1, n ) :: H2_val
-      INTEGER :: i, j
-      WRITE( out, "( ' * H(dense)' )" )
-      DO j = 1, n, 4
-        IF ( j + 3 <= n ) THEN
-          WRITE( out, "( ' *       i   j', I8, 3I12 )" ) j, j + 1, j + 2, j + 3
-        ELSE IF ( j + 2 <= n ) THEN
-          WRITE( out, "( ' *       i   j', I8, 2I12 )" ) j, j + 1, j + 2
-        ELSE IF ( j + 1 <= n ) THEN
-          WRITE( out, "( ' *       i   j', I8, I12 )" ) j, j + 1
-        ELSE
-          WRITE( out, "( ' *       i   j', I8 )" ) j
-        END IF
-        DO i = 1, n
-          IF ( j + 3 <= n ) THEN
-            WRITE( out, "( ' * ', I7,  4X, 4ES12.4 )" )                        &
-              i, H2_val( i, j ), H2_val( i, j + 1 ),                           &
-              H2_val( i, j + 2 ), H2_val( i, j + 3 )
-          ELSE IF ( j + 2 <= n ) THEN
-            WRITE( out, "( ' * ',  I7, 4X, 3ES12.4 )" )                        &
-              i, H2_val( i, j ), H2_val( i, j + 1 ), H2_val( i, j + 2 )
-          ELSE IF ( j + 1 <= n ) THEN
-            WRITE( out, "( ' * ',  I7, 4X, 2ES12.4 )" )                        &
-              i, H2_val( i, j ), H2_val( i, j + 1 )
-          ELSE
-            WRITE( out, "( ' * ',  I7, 4X, ES12.4 )" ) i, H2_val( i, j )
-          END IF
-        END DO
-      END DO
-      END SUBROUTINE WRITE_H_dense
-
-      SUBROUTINE WRITE_A_dense( out, n, m, l_j2_1, l_j2_2, J2_val )
-      INTEGER :: n, m, l_J2_1, out
-      REAL ( KIND = wp ), DIMENSION( l_j2_1, l_j2_2 ) :: J2_val
-      INTEGER :: i, j
-      WRITE( out, "( ' * A(dense)' )" )
-      DO j = 1, n, 4
-        IF ( j + 3 <= n ) THEN
-          WRITE( out, "( ' *       i   j', I8, 3I12 )" ) j, j + 1, j + 2, j + 3
-        ELSE IF ( j + 2 <= n ) THEN
-          WRITE( out, "( ' *       i   j', I8, 2I12 )" ) j, j + 1, j + 2
-        ELSE IF ( j + 1 <= n ) THEN
-          WRITE( out, "( ' *       i   j', I8, I12 )" ) j, j + 1
-        ELSE
-          WRITE( out, "( ' *       i   j', I8 )" ) j
-        END IF
-        DO i = 1, m
-          IF ( j + 3 <= n ) THEN
-            WRITE( out, "( ' * ', I7,  4X, 4ES12.4 )" )                        &
-              i, J2_val( i, j ), J2_val( i, j + 1 ),                           &
-              J2_val( i, j + 2 ), J2_val( i, j + 3 )
-          ELSE IF ( j + 2 <= n ) THEN
-            WRITE( out, "( ' * ',  I7, 4X, 3ES12.4 )" )                        &
-              i, J2_val( i, j ), J2_val( i, j + 1 ), J2_val( i, j + 2 )
-          ELSE IF ( j + 1 <= n ) THEN
-            WRITE( out, "( ' * ',  I7, 4X, 2ES12.4 )" )                        &
-              i, J2_val( i, j ), J2_val( i, j + 1 )
-          ELSE
-            WRITE( out, "( ' * ',  I7, 4X, ES12.4 )" ) i, J2_val( i, j )
-          END IF
-        END DO
-      END DO
-      END SUBROUTINE WRITE_A_dense
-
-      SUBROUTINE WRITE_H_sparse( out, H_ne, l_h, H_val, H_row, H_col )
-      INTEGER :: l_h, H_ne, out
-      INTEGER, DIMENSION( l_h ) :: H_row, H_col
-      REAL ( KIND = wp ), DIMENSION( l_h ) :: H_val
-      INTEGER :: i
-      IF ( H_ne == 0 ) RETURN
-      WRITE( out, "( ' * H(sparse)' )" )
-      WRITE( out, "( ' * ', 2( '    row    col     val    ' ) )" )
-      DO i = 1, H_ne, 2
-        IF ( i + 1 <= H_ne ) THEN
-          WRITE( out, "( ' * ',  2( 2I7, ES12.4 ) )" )                         &
-            H_row( i ), H_col( i ), H_val( i ),                                &
-            H_row( i + 1 ), H_col( i + 1 ), H_val( i + 1 )
-        ELSE
-          WRITE( out, "( ' * ',  2( 2I7, ES12.4 ) )" )                         &
-            H_row( i ), H_col( i ), H_val( i )
-        END IF
-      END DO
-      END SUBROUTINE WRITE_H_sparse
-
-      SUBROUTINE WRITE_A_sparse( out, A_ne, l_a, A_val, A_row, A_col )
-      INTEGER :: l_a, A_ne, out
-      INTEGER, DIMENSION( l_a ) :: A_row, A_col
-      REAL ( KIND = wp ), DIMENSION( l_a ) :: A_val
-      INTEGER :: i
-      IF ( A_ne == 0 ) RETURN
-      WRITE( out, "( ' * A(sparse)' )" )
-      WRITE( out, "( ' * ', 2( '    row    col     val    ' ) )" )
-      DO i = 1, A_ne, 2
-        IF ( i + 1 <= A_ne ) THEN
-          WRITE( out, "( ' * ',  2( 2I7, ES12.4 ) )" )                         &
-            A_row( i ), A_col( i ), A_val( i ),                                &
-            A_row( i + 1 ), A_col( i + 1 ), A_val( i + 1 )
-        ELSE
-          WRITE( out, "( ' * ',  2( 2I7, ES12.4 ) )" )                         &
-            A_row( i ), A_col( i ), A_val( i )
-        END IF
-      END DO
-      END SUBROUTINE WRITE_A_sparse
-
-      SUBROUTINE WRITE_H_byrows( out, n, H_val, H_col, H_ptr )
-      INTEGER :: n, out
-      INTEGER, DIMENSION( n + 1 ) :: H_ptr
-      INTEGER, DIMENSION( H_ptr( n + 1 ) - 1 ) :: H_col
-      REAL ( KIND = wp ), DIMENSION( H_ptr( n + 1 ) - 1 ) :: H_val
-      INTEGER :: i, l_up, maxc
-      WRITE( out, "( ' * H(by rows)' )" )
-      maxc = MAXVAL( H_ptr( 2 : n + 1 ) - H_ptr( 1 : n ) )
-      IF ( maxc >= 3 ) THEN
-        WRITE( out, "( ' *     row ', 3( '   col     val     ' ) )" )
-      ELSE IF ( maxc >= 2 ) THEN
-        WRITE( out, "( ' *     row ', 2( '   col     val     ' ) )" )
-      ELSE IF ( maxc >= 1 ) THEN
-        WRITE( out, "( ' *     row ',  ( '   col     val     ' ) )" )
-      ELSE
-        WRITE( out, "( ' *     row ' )" )
-      END IF
-      DO i = 1, n
-        l_up =  H_ptr( i + 1 ) - 1
-        IF ( H_ptr( i ) > l_up ) THEN
-          WRITE( out, "( ' * ',  I7, ' no entries ' )" ) i
-        ELSE
-          DO l = H_ptr( i ), l_up, 3
-            IF ( l + 2 <= l_up ) THEN
-              WRITE( out, "( ' * ',  I7, 3( I7, ES12.4 ) )" ) i,               &
-                H_col( l ), H_val( l ), H_col( l + 1 ), H_val( l + 1 ),        &
-                H_col( l + 2 ), H_val( l + 2 )
-            ELSE IF ( l + 1 <= l_up ) THEN
-              WRITE( out, "( ' * ',  I7, 2( I7, ES12.4 ) )" ) i,               &
-                H_col( l ), H_val( l ), H_col( l + 1 ), H_val( l + 1 )
-            ELSE
-              WRITE( out, "( ' * ',  I7, ( I7, ES12.4 ) )" ) i,                &
-                H_col( l ), H_val( l )
-            END IF
-          END DO
-        END IF
-      END DO
-      END SUBROUTINE WRITE_H_byrows
-
-      SUBROUTINE WRITE_A_byrows( out, m, A_val, A_col, A_ptr )
-      INTEGER :: m, out
-      INTEGER, DIMENSION( m + 1 ) :: A_ptr
-      INTEGER, DIMENSION( A_ptr( m + 1 ) - 1 ) :: A_col
-      REAL ( KIND = wp ), DIMENSION( A_ptr( m + 1 ) - 1 ) :: A_val
-      INTEGER :: i, l_up, maxc
-      WRITE( out, "( ' * A(by rows)' )" )
-      maxc = MAXVAL( A_ptr( 2 : m + 1 ) - A_ptr( 1 : m ) )
-      IF ( maxc >= 3 ) THEN
-        WRITE( out, "( ' *     row ', 3( '   col     val     ' ) )" )
-      ELSE IF ( maxc >= 2 ) THEN
-        WRITE( out, "( ' *     row ', 2( '   col     val     ' ) )" )
-      ELSE IF ( maxc >= 1 ) THEN
-        WRITE( out, "( ' *     row ',  ( '   col     val     ' ) )" )
-      ELSE
-        WRITE( out, "( ' *     row ' )" )
-      END IF
-      DO i = 1, m
-        l_up =  A_ptr( i + 1 ) - 1
-        IF ( A_ptr( i ) > l_up ) THEN
-          WRITE( out, "( ' * ',  I7, ' no entries ' )" ) i
-        ELSE
-          DO l = A_ptr( i ), l_up, 3
-            IF ( l + 2 <= l_up ) THEN
-              WRITE( out, "( ' * ',  I7, 3( I7, ES12.4 ) )" ) i,               &
-                A_col( l ), A_val( l ), A_col( l + 1 ), A_val( l + 1 ),        &
-                A_col( l + 2 ), A_val( l + 2 )
-            ELSE IF ( l + 1 <= l_up ) THEN
-              WRITE( out, "( ' * ',  I7, 2( I7, ES12.4 ) )" ) i,               &
-                A_col( l ), A_val( l ), A_col( l + 1 ), A_val( l + 1 )
-            ELSE
-              WRITE( out, "( ' * ',  I7, ( I7, ES12.4 ) )" ) i,                &
-                A_col( l ), A_val( l )
-            END IF
-          END DO
-        END IF
-      END DO
-      END SUBROUTINE WRITE_A_byrows
-
-      SUBROUTINE WRITE_H_bycols( out, n, H_val, H_row, H_ptr )
-      INTEGER :: n, out
-      INTEGER, DIMENSION( n + 1 ) :: H_ptr
-      INTEGER, DIMENSION( H_ptr( n + 1 ) - 1 ) :: H_row
-      REAL ( KIND = wp ), DIMENSION( H_ptr( n + 1 ) - 1 ) :: H_val
-      INTEGER :: i, l_up, maxr
-      WRITE( out, "( ' * H(by cols)' )" )
-      maxr = MAXVAL( H_ptr( 2 : n + 1 ) - H_ptr( 1 : n ) )
-      IF ( maxr >= 3 ) THEN
-        WRITE( out, "( ' *     col ', 3( '   row     val     ' ) )" )
-      ELSE IF ( maxr >= 2 ) THEN
-        WRITE( out, "( ' *     col ', 2( '   row     val     ' ) )" )
-      ELSE IF ( maxr >= 1 ) THEN
-        WRITE( out, "( ' *     col ',  ( '   row     val     ' ) )" )
-      ELSE
-        WRITE( out, "( ' *     col ' )" )
-      END IF
-      DO i = 1, n
-        l_up =  H_ptr( i + 1 ) - 1
-        IF ( H_ptr( i ) > l_up ) THEN
-          WRITE( out, "( ' * ',  I7, ' no entries ' )" ) i
-        ELSE
-          DO l = H_ptr( i ), l_up, 3
-            IF ( l + 2 <= l_up ) THEN
-              WRITE( out, "( ' * ',  I7, 3( I7, ES12.4 ) )" ) i,               &
-                H_row( l ), H_val( l ), H_row( l + 1 ), H_val( l + 1 ),        &
-                H_row( l + 2 ), H_val( l + 2 )
-            ELSE IF ( l + 1 <= l_up ) THEN
-              WRITE( out, "( ' * ',  I7, 2( I7, ES12.4 ) )" ) i,               &
-                H_row( l ), H_val( l ), H_row( l + 1 ), H_val( l + 1 )
-            ELSE
-              WRITE( out, "( ' * ',  I7, ( I7, ES12.4 ) )" ) i,                &
-                H_row( l ), H_val( l )
-            END IF
-          END DO
-        END IF
-      END DO
-      END SUBROUTINE WRITE_H_bycols
-
-      SUBROUTINE WRITE_A_bycols( out, n, A_val, A_row, A_ptr )
-      INTEGER :: n, out
-      INTEGER, DIMENSION( n + 1 ) :: A_ptr
-      INTEGER, DIMENSION( A_ptr( n + 1 ) - 1 ) :: A_row
-      REAL ( KIND = wp ), DIMENSION( A_ptr( n + 1 ) - 1 ) :: A_val
-      INTEGER :: i, l_up, maxr
-      WRITE( out, "( ' * A(by cols)' )" )
-      maxr = MAXVAL( A_ptr( 2 : n + 1 ) - A_ptr( 1 : n ) )
-      IF ( maxr >= 3 ) THEN
-        WRITE( out, "( ' *     col ', 3( '   row     val     ' ) )" )
-      ELSE IF ( maxr >= 2 ) THEN
-        WRITE( out, "( ' *     col ', 2( '   row     val     ' ) )" )
-      ELSE IF ( maxr >= 1 ) THEN
-        WRITE( out, "( ' *     col ',  ( '   row     val     ' ) )" )
-      ELSE
-        WRITE( out, "( ' *     col ' )" )
-      END IF
-      DO i = 1, n
-        l_up =  A_ptr( i + 1 ) - 1
-        IF ( A_ptr( i ) > l_up ) THEN
-          WRITE( out, "( ' * ',  I7, ' no entries ' )" ) i
-        ELSE
-          DO l = A_ptr( i ), l_up, 3
-            IF ( l + 2 <= l_up ) THEN
-              WRITE( out, "( ' * ',  I7, 3( I7, ES12.4 ) )" ) i,               &
-                A_row( l ), A_val( l ), A_row( l + 1 ), A_val( l + 1 ),        &
-                A_row( l + 2 ), A_val( l + 2 )
-            ELSE IF ( l + 1 <= l_up ) THEN
-              WRITE( out, "( ' * ',  I7, 2( I7, ES12.4 ) )" ) i,               &
-                A_row( l ), A_val( l ), A_row( l + 1 ), A_val( l + 1 )
-            ELSE
-              WRITE( out, "( ' * ',  I7, ( I7, ES12.4 ) )" ) i,                &
-                A_row( l ), A_val( l )
-            END IF
-          END DO
-        END IF
-      END DO
-      END SUBROUTINE WRITE_A_bycols
 
     END PROGRAM CUTEST_qplib_main
 

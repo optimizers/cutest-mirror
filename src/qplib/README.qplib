@@ -61,7 +61,7 @@ be regarded as comments and ignored.
 "number of non-default entries in g"
 "index" "value" for each non-default term in g (if any), one pair per line
 "value of f"
-"number of nonzeros in lower triangles of H_q"                             [1,3]
+"number of nonzeros in lower triangles of H_c"                             [1,3]
 "constraint" "row" "column" "value" for each entry of H_c (if any), 
    one quadruple on each line
 "number of nonzeros in A"                                                    [1]

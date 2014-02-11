@@ -44,7 +44,7 @@
                                     p_name, X_names, C_names, X_type,          &
                                     A_ne, A_row, A_col, A_ptr, A_val, A_dense, &
                                     H_ne, H_row, H_col, H_ptr, H_val, H_dense, &
-                                    H_pert )
+                                    H_pert, dont_terminate_cutest )
 
 !  ------------------------------------------------
 !  build the data for the linear program
@@ -86,6 +86,7 @@
 !  if x_type is present determine the type of x (0=continuous,>0=integer)
 
       INTEGER, OPTIONAL :: A_ne, H_ne
+      LOGICAL, OPTIONAL :: dont_terminate_cutest
       REAL ( KIND = wp ), OPTIONAL :: H_pert
       INTEGER, ALLOCATABLE, OPTIONAL,                                          &
         DIMENSION( : ) :: X_type, A_row, A_col, A_ptr, H_row, H_col, H_ptr
@@ -567,7 +568,11 @@
 
       DEALLOCATE( X0, STAT = alloc_status )
       IF ( alloc_status /= 0 ) GO TO 990
-      CALL CUTEST_cterminate( status )
+      IF ( PRESENT( dont_terminate_cutest ) ) THEN
+        IF ( .NOT. dont_terminate_cutest ) CALL CUTEST_cterminate( status )
+      ELSE
+        CALL CUTEST_cterminate( status )
+      END IF
       RETURN
         
   990 CONTINUE
