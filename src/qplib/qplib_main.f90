@@ -253,7 +253,7 @@
           DO l = 1, H_ne
             char_i = TRIM_INT( H_row( l ) ) ; char_j = TRIM_INT( H_col( l ) )
             char_val = TRIM_VALUE( H_val( l ) )
-            WRITE( out, "( A16, 1X, A16, 1X, A24 ) )" ) char_i, char_j, char_val
+            WRITE( out, "( A16, 1X, A16, 1X, A24 )" ) char_i, char_j, char_val
           END DO
         END IF
       END IF
@@ -272,7 +272,7 @@
         DO i = 1, n
           IF ( G( i ) /= mode_v ) THEN
             char_i = TRIM_INT( i ) ; char_val = TRIM_VALUE( G( i ) )
-            WRITE( out, "( A16, 1X, A24 ) )" ) char_i, char_val
+            WRITE( out, "( A16, 1X, A24 )" ) char_i, char_val
           END IF
         END DO
       END IF
@@ -280,7 +280,7 @@
 !  function value
 
       char_val = TRIM_VALUE( f )
-      WRITE( out, "( /, A24, ' value of f' ) )" ) char_val
+      WRITE( out, "( /, A24, ' value of f' )" ) char_val
 
 !  Hessian values for constraints
 
@@ -307,7 +307,7 @@
              nnzh_i = nnzh_i + 1
              char_i = TRIM_INT( H_row( l ) ) ; char_j = TRIM_INT( H_col( l ) )
              char_val = TRIM_VALUE( H_val( l ) )
-             WRITE( qplib_out_dummy, "( A16, 1X, A16, 1X, A16, 1X, A24 ) )" )  &
+             WRITE( qplib_out_dummy, "( A16, 1X, A16, 1X, A16, 1X, A24 )" )  &
                char_l, char_i, char_j, char_val
             END IF
           END DO
@@ -345,7 +345,7 @@
           DO l = 1, A_ne
             char_i = TRIM_INT( A_row( l ) ) ; char_j = TRIM_INT( A_col( l ) )
             char_val = TRIM_VALUE( A_val( l ) )
-            WRITE( out, "( A16, 1X, A16, 1X, A24 ) )" ) char_i, char_j, char_val
+            WRITE( out, "( A16, 1X, A16, 1X, A24 )" ) char_i, char_j, char_val
           END DO
         END IF
       END IF
@@ -353,7 +353,7 @@
 !  infinity
 
       char_val = TRIM_VALUE( infinity )
-      WRITE( out, "( /, A24, ' value of infinite bounds' ) )" ) char_val
+      WRITE( out, "( /, A24, ' value of infinite bounds' )" ) char_val
 
 !  constraint lower bounds
     
@@ -372,7 +372,7 @@
             DO i = 1, m
               IF ( C_l( i ) /= mode_v ) THEN
                 char_i = TRIM_INT( i ) ; char_val = TRIM_VALUE( C_l( i ) )
-                WRITE( out, "( A16, 1X, A24 ) )" ) char_i, char_val
+                WRITE( out, "( A16, 1X, A24 )" ) char_i, char_val
               END IF
             END DO
           END IF
@@ -401,7 +401,7 @@
             DO i = 1, m
               IF ( C_u( i ) /= mode_v ) THEN
                 char_i = TRIM_INT( i ) ; char_val = TRIM_VALUE( C_u( i ) )
-                WRITE( out, "( A16, 1X, A24 ) )" ) char_i, char_val
+                WRITE( out, "( A16, 1X, A24 )" ) char_i, char_val
               END IF
             END DO
           END IF
@@ -429,7 +429,7 @@
         DO i = 1, n
           IF ( X_l( i ) /= mode_v ) THEN
             char_i = TRIM_INT( i ) ; char_val = TRIM_VALUE( X_l( i ) )
-            WRITE( out, "( A16, 1X, A24 ) )" ) char_i, char_val
+            WRITE( out, "( A16, 1X, A24 )" ) char_i, char_val
           END IF
         END DO
       END IF
@@ -448,7 +448,7 @@
         DO i = 1, n
           IF ( X_u( i ) /= mode_v ) THEN
             char_i = TRIM_INT( i ) ; char_val = TRIM_VALUE( X_u( i ) )
-            WRITE( out, "( A16, 1X, A24 ) )" ) char_i, char_val
+            WRITE( out, "( A16, 1X, A24 )" ) char_i, char_val
           END IF
         END DO
       END IF
@@ -469,7 +469,7 @@
             DO i = 1, n
               IF (  X_type( i ) /= 0 ) THEN
                 char_i = TRIM_INT( i ) ; char_j = TRIM_INT( X_type( i ) )
-                WRITE( out, "( A16, 1X, A16 ) )" ) char_i, char_j
+                WRITE( out, "( A16, 1X, A16 )" ) char_i, char_j
               END IF
             END DO
           END IF
@@ -486,7 +486,7 @@
             DO i = 1, n
               IF (  X_type( i ) == 0 ) THEN
                 char_i = TRIM_INT( i ) ; char_j = TRIM_INT( X_type( i ) )
-                WRITE( out, "( A16, 1X, A16 ) )" ) char_i, char_j
+                WRITE( out, "( A16, 1X, A16 )" ) char_i, char_j
               END IF
             END DO
           END IF
@@ -508,7 +508,7 @@
         DO i = 1, n
           IF ( X( i ) /= mode_v ) THEN
             char_i = TRIM_INT( i ) ; char_val = TRIM_VALUE( X( i ) )
-            WRITE( out, "( A16, 1X, A24 ) )" ) char_i, char_val
+            WRITE( out, "( A16, 1X, A24 )" ) char_i, char_val
           END IF
         END DO
       END IF
@@ -530,7 +530,7 @@
             DO i = 1, m
               IF ( Y( i ) /= mode_v ) THEN
                 char_i = TRIM_INT( i ) ; char_val = TRIM_VALUE( Y( i ) )
-                WRITE( out, "( A16, 1X, A24 ) )" ) char_i, char_val
+                WRITE( out, "( A16, 1X, A24 )" ) char_i, char_val
               END IF
             END DO
           END IF
@@ -559,7 +559,7 @@
         DO i = 1, n
           IF ( Z( i ) /= mode_v ) THEN
             char_i = TRIM_INT( i ) ; char_val = TRIM_VALUE( Z( i ) )
-            WRITE( out, "( A16, 1X, A24 ) )" ) char_i, char_val
+            WRITE( out, "( A16, 1X, A24 )" ) char_i, char_val
           END IF
         END DO
       END IF
@@ -571,7 +571,7 @@
      &   ' index,name' )" ) char_l
       DO i = 1, n
         char_i = TRIM_INT( i )
-        WRITE( out, "( A16, 1X, A10 ) )" ) char_i, X_names( i )
+        WRITE( out, "( A16, 1X, A10 )" ) char_i, X_names( i )
       END DO
 
 !  constraint names
@@ -583,10 +583,10 @@
          &   ' index,name' )" ) char_l
           DO i = 1, m
             char_i = TRIM_INT( i )
-            WRITE( out, "( A16, 1X, A10 ) )" ) char_i, C_names( i )
+            WRITE( out, "( A16, 1X, A10 )" ) char_i, C_names( i )
           END DO
         ELSE
-          char_l = 0
+          char_l = TRIM_INT( 0 )
           WRITE( out, "( /, A16, 8X, ' # non default names for constraints:',  &
          &   ' index,name' )" ) char_l
         END IF

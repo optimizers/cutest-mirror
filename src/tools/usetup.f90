@@ -182,7 +182,7 @@
       LOGICAL :: debug
       INTEGER, PARAMETER :: lmin = 10000
       REAL ( KIND = wp ), DIMENSION( 2 ) :: OBFBND
-      CHARACTER ( LEN = 8 ) :: pname
+      CHARACTER ( LEN = 10 ) :: pname
       CHARACTER ( LEN = 10 ) :: chtemp
       CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
       EXTERNAL :: RANGE
@@ -231,7 +231,7 @@
 
 !  input the problem type
 
-      READ( input, "( I2, A8 )" ) ialgor, pname
+      READ( input, "( I2, A10 )" ) ialgor, pname
 
 !  set useful integer values
 
@@ -433,7 +433,7 @@
 !  the identity of the objective function group
 
       IF ( debug ) WRITE( out, 1100 ) pname, n, data%ng, data%nel
-      data%pname = pname // '  '
+      data%pname = pname
 
 !  input the starting addresses of the elements in each group, of the parameters
 !  used for each group and of the nonzeros of the linear element in each group
@@ -659,7 +659,7 @@
  1030 FORMAT( ( 72L1 ) )
  1040 FORMAT( ( 8A10 ) )
  1080 FORMAT( 1P, 2D16.8 )
- 1100 FORMAT( A8, 3I8 )
+ 1100 FORMAT( A10, 3I8 )
  1110 FORMAT( 1X, A6, /, ( 1X, 10I8 ) )
  1120 FORMAT( 1X, A6, /, ( 1X, 1P, 4D16.8 ) )
  1130 FORMAT( 1X, A6, /, ( 1X, 72L1 ) )
