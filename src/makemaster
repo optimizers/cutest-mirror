@@ -71,8 +71,8 @@ all_single: tools_single
                    praxis  PRECIS=single PWD=$(PWD)/praxis )
 	( cd ql  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    ql  PRECIS=single PWD=$(PWD)/ql )
-	( cd qplib ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
-                   qplib  PRECIS=single PWD=$(PWD)/qplib )
+#	( cd qplib ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+#                   qplib  PRECIS=single PWD=$(PWD)/qplib )
 	( cd snopt  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    snopt  PRECIS=single PWD=$(PWD)/snopt )
 	( cd spg  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
