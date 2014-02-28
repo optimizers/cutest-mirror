@@ -94,6 +94,8 @@ $(package)_double: $(OBJ)/$(package)_dummy.o $(OBJ)/$(package)_main.o
 
 run_test: tools test_cutest_constrained $(package) $(OBJ)/$(package)_test.o
 	echo " Test of constrained $(package)"
+	echo "$(FORTRAN) $(RUNFFLAGS) $(SPECIAL) -o run_test \
+            $(package)_main.o $(package)_test.o $(C_TEST) -L$(OBJ) $(LIBS)"
 	cd $(OBJ) ; $(FORTRAN) $(RUNFFLAGS) $(SPECIAL) -o run_test \
             $(package)_main.o $(package)_test.o $(C_TEST) -L$(OBJ) $(LIBS)
 	ln -fs $(CUTEST)/src/test/c_OUTSDIF.d ../$(package)/OUTSDIF.d
