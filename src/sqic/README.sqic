@@ -24,18 +24,16 @@ from the University of California, San Diego.
 CREATING THE OBJECT FILES FOR SQIC
 ------------------------------------
 
-[To be written
 Having obtained the file SQIC.zip, create the directories, say, SQIC, 
 and set an environment variable $SQIC to point to this. Now issue the command
 
-  cd $SQIC ; gfortran -c -O SQIC.FOR
+  cd $SQIC ;  ./configure ; make install
 
-substituting your favourite fortran compiler, and additional 
 optimizations, for gfortran if desired. This will produce the 
-object file SQIC.o in $SQIC. These may be moved if desired to 
+object librariues in $SQIC/lib. These may be moved if desired to 
  $CUTEST/objects/(architecture)/(precision)/ 
 for the architecture and precsion you intend to use;
-binary files here will be chosen in preference to anything in $SQIC.
+binary files here will be chosen in preference to anything in $SQIC/lib.
 
 USING THE SQIC INTERFACE TOOL
 ----------------------------
