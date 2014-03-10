@@ -66,7 +66,12 @@ c     external abort,ieee_handler
 c     integer  ieee_handler, abort
 
 c     ... default options set here
-      data iprint, max_iter, nout, rho, idummy /1, 1000, 6, 1.D1, 0/
+c     data iprint, max_iter, nout, rho, idummy /1, 1000, 6, 1.D1, 0/
+      iprint = 1
+      max_iter = 1000
+      nout = 6
+      rho = 1.0D1
+      idummy = 0
 
 c     ... trap IEEE exceptions
 c     i=ieee_handler('set','invalid',abort)
@@ -97,7 +102,7 @@ c  allocate space
 
 c     ... read spec.par parameter file (or use defaults)
       call readpar(iprint,kmax,maxf,max_iter,mlp,len_lws,len_ws,
-     .             idummy,nout,rho,idummy)
+     *             idummy,nout,rho,idummy)
 
 c     ... initialization
       call initialize_NLP(n,m,blo,bup,x,lam,equatn,
