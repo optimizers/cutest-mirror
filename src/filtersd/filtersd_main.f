@@ -69,8 +69,8 @@ C  allocate space
 
 C   read FILTERSD.SPC parameter file (or use defaults)
 
-      CALL READPAR( iprint, kmax, maxf, max_iter, mlp, len_iws, len_ws,
-     &              nout, rho, htol, rgtol, maxgr, maxsc, ainfty )
+      CALL READPAR_SD( iprint, kmax, maxf, max_iter, mlp, len_iws, 
+     &       len_ws, nout, rho, htol, rgtol, maxgr, maxsc, ainfty )
 
       IF ( kmax < 0 ) kmax = n
       mxmc = maxsc
@@ -323,8 +323,8 @@ C   4 format(A/(5E15.7))
 
 C  extracted and modified from filterSQP
 
-      SUBROUTINE READPAR( iprint, kmax, maxf, maxiter, mlp, mxiws, mxws,
-     &                    nout, rho, htol, rgtol, maxgr, maxsc, ainfty )
+      SUBROUTINE READPAR_SD( iprint, kmax, maxf, maxiter, mlp, mxiws, 
+     &             mxws, nout, rho, htol, rgtol, maxgr, maxsc, ainfty )
 
       IMPLICIT NONE
 

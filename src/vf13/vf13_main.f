@@ -240,7 +240,7 @@ C
       INTEGER :: n, mgeq, meq, mcon, lc
       DOUBLE PRECISION ::  f
       DOUBLE PRECISION ::  X( n ), BL( n ), BU( n )
-      DOUBLE PRECISION ::  C( LC ), CL( LC ), CU( LC )
+      DOUBLE PRECISION ::  C( lc ), CL( lc ), CU( lc )
 C
 C  Evaluate the objective function and constraints.
 C
@@ -251,7 +251,7 @@ C
       INTEGER, PARAMETER :: out = 6
       DOUBLE PRECISION, PARAMETER :: biginf = 9.0D+19
 
-      CALL CUTEST_cfn( status, N, MCON, X, F, LC, C )
+      CALL CUTEST_cfn( status, n, mcon, X, f, C )
       IF ( status /= 0 ) GO TO 910
 C
 C  If there are fixed variables, shift all the inequality constraint values.
@@ -310,11 +310,11 @@ C  End of VF13FN.
 
       END
 
-      SUBROUTINE VF13GR( n, mgeq, meq, mcon, X, LV, V, G, 
-     *                   LCN, mmax, CN, BL, BU, CL, CU, FIRSTG )
+      SUBROUTINE VF13GR( n, mgeq, meq, mcon, X, lv, V, G, 
+     *                   lcn, mmax, CN, BL, BU, CL, CU, firstg )
       INTEGER :: n, mgeq, meq, mcon, lv, lcn, mmax
       LOGICAL :: firstg
-      DOUBLE PRECISION   X( n ), G( n ), V( LV ), CN( LCN, mmax )
+      DOUBLE PRECISION   X( n ), G( n ), V( lv ), CN( lcn, mmax )
       DOUBLE PRECISION   BL( n ), BU( n)
       DOUBLE PRECISION   CL( mmax ), CU( mmax )
 C
@@ -331,7 +331,7 @@ C
 C  Evaluate the gradient of the objective and constraint functions
 C  at the initial point in a dense format.
 
-      CALL CUTEST_cgr( status, N, MCON, X, V, .FALSE., G,
+      CALL CUTEST_cgr( status, N, mcon, X, V, .FALSE., G,
      *                 .TRUE., lcn, mmax, CN )
       IF ( status /= 0 ) GO TO 910
 

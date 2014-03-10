@@ -425,6 +425,7 @@
       character*8      :: cu(lencu)
 
       logical          :: needG
+      integer          :: status
 
       if (mode .eq. 0) then
          needG = .false.
@@ -481,6 +482,7 @@
       double precision :: G(neG)
 
       integer          :: j, k, l, nnzJ
+      integer          :: status
       logical          :: needG
 
       needG  = mode .gt. 0
