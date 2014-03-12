@@ -1,4 +1,4 @@
-C     ( Last modified on 15 Jan 2013 at 14:20:00 )
+C     ( Last modified on 12 Mar 2014 at 07:20:00 )
 
 C Copyright (C) 2002, 2004, 2005 Carnegie Mellon University,
 C                                Dominique Orban and others.
@@ -87,7 +87,8 @@ C  obtain the number of nonzeros in Jacobian and Hessian
 C  allocate furter space 
 
       nz = MAX( nele_jac, nele_hess, 2 * n )
-      ALLOCATE( DAT( n + nz ), IDAT( 2 * nz ), STAT = status )
+C correction by Elizabeth Wong: 12/3/14
+      ALLOCATE( DAT( 2 * n + nz ), IDAT( 2 * nz ), STAT = status )
       IF ( status /= 0 ) GO TO 990
 
 C  get problem name
