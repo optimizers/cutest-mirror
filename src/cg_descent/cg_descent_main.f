@@ -1,4 +1,4 @@
-C     ( Last modified on 2 Jan 2013 at 15:10:00 )
+C     ( Last modified on 2 Apr 2014 at 10:10:00 )
 
       PROGRAM CG_DESCENT_main
 
@@ -37,7 +37,7 @@ C  Dominique Orban, July 2007
 
 C  Open the Spec file for the method.
 
-      SPCDAT = 'CG_DESCENT.SPC'
+      SPCDAT = 'CG_DESCENT_FORTRAN.SPC'
       OPEN ( inspec, FILE = SPCDAT, FORM = 'FORMATTED',
      *      STATUS = 'OLD' )
       REWIND( inspec )

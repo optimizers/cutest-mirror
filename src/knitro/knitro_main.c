@@ -251,8 +251,11 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
 
     /* Determine problem size */
     CUTEST_cdimen( &status,&funit, &CUTEst_nvar, &CUTEst_ncon);
-
-    if( status ) {
+    /*
+          printf (" ** the problem has %i constraints\n", 
+                      &CUTEst_ncon ) ;
+    */
+    if ( status ) {
        printf("** CUTEst error, status = %d, aborting\n", status);
        exit(status);
     }

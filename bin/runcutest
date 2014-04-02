@@ -431,6 +431,7 @@ do
         ${RM} ${i}.f90
     fi
 done
+ls *.o
 
 EXTER=""
 [[ -e EXTER.f && ! -s EXTER.f ]] && ${RM} EXTER.f

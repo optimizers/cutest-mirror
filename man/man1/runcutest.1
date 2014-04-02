@@ -4,7 +4,7 @@
 .SH NAME
 runcutest \- CUTEst interface to solvers.
 .SH SYNOPSIS
-\fBruncutest\fP --package \fIpack\fP [\-\-architecture \fIarch\fP]  [\-\-single] [\-\-help] [\-\-keep] [\-\-rebuild] [\-\-stash] [\-\-output \fI0|1\fP] [\-\-limit \fIsecs\fP] [\-\-cfortran] [\-\-debug] [\-\-uncons] [\-L\fIpath/to/lib\fP] [\-\-blas \fIkeyword\fP] [\-\-lapack \fIkeyword\fP] [\-\-decode \fIproblem[.SIF]\fP]
+\fBruncutest\fP --package \fIpack\fP [\-\-architecture \fIarch\fP]  [\-\-single] [\-\-help] [\-\-keep] [\-\-rebuild] [\-\-stash] [\-\-output \fI0|1\fP] [\-\-limit \fIsecs\fP] [\-\-cfortran] [\-\-debug] [\-\-uncons] [\-L\fIpath/to/lib\fP] [\-\-blas \fIkeyword\fP] [\-\-lapack \fIkeyword\fP] [\-\-command] [\-\-config] [\-\-decode \fIproblem[.SIF]\fP]
 .SH DESCRIPTION
 \fBruncutest\fP is the CUTEst interface to solvers. It replaces its
 predecessor CUTEr's combination of \fBrunpackage\fP, \fIpkg\fP and
@@ -99,6 +99,12 @@ is available on the host system. The second option is useful for
 packages which already include the necessary LAPACK subprograms. Use of
 \fInone\fP may be useful if \fIpackage\fP already includes the LAPACK
 subroutines on which it relies.
+.TP
+.B \-\-command
+Displays the compilation commands used.
+.TP
+.B \-\-config
+Displays the current configuration settings.
 .TP
 .B \-D, \-\-decode \fIproblem[.SIF]\fP
 Applies the SIF decoder to the problem \fIproblem.SIF\fP to produce the
@@ -305,6 +311,16 @@ search\fP,
 Report, Department of Computer Science, University of Bayreuth (2010).
 
 http://www.klaus-schittkowski.de/nlpqlp.htm
+
+.TP
+.B \fInomad\fP
+A derivative-free code for constrained and unconstrained
+optimization implementing the mesh-adaptive direct-search framework 
+written by
+Sebastien Le Digabel, Charles Audet and others from Ecole Polytechnique 
+de Montreal.
+
+http://www.gerad.ca/nomad
 
 .TP
 .B \fInpsol\fP
