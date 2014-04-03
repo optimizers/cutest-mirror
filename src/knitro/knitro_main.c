@@ -250,7 +250,7 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
     }
 
     /* Determine problem size */
-    CUTEST_cdimen( &status,&funit, &CUTEst_nvar, &CUTEst_ncon);
+    CUTEST_cdimen( &status, &funit, &CUTEst_nvar, &CUTEst_ncon);
     /*
           printf (" ** the problem has %i constraints\n", 
                       &CUTEst_ncon ) ;

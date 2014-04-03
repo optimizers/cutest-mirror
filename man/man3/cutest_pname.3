@@ -1,12 +1,15 @@
-'\" e  @(#)cutest_pbname v1.0 12/2012;
-.TH cutest_probname 3M "4 Dec 2012" "CUTEst user documentation" "CUTEst user documentation"
+'\" e  @(#)cutest_pname v1.1 04/2014;
+.TH cutest_udimen 3M "3 Apr 2014" "CUTEst user documentation" "CUTEst user documentation"
 .SH NAME
-CUTEST_probname \- CUTEst tool to obtain the name of the problem.
+CUTEST_pname \- CUTEst tool to obtain the name of the problem directly
+from OUTSDIF.d.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_probname( status, pname )
+CALL CUTEST_pname( status, input, pname )
 .SH DESCRIPTION
-The CUTEST_probname subroutine obtains the name of the problem.
+The CUTEST_pname subroutine obtains the name of the problem directly
+from the datafile OUTSDIF.d that was created by the script \fIsifdecoder\fP 
+when decoding a SIF file.
 
 The problem under consideration
 is to minimize or maximize an objective function
@@ -53,12 +56,15 @@ all constraint functions are partially separable.
 
 .LP 
 .SH ARGUMENTS
-The arguments of CUTEST_probname are as follows
+The arguments of CUTEST_pname are as follows
 .TP 5
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
 allocation/deallocation error, 2 for an array bound error,
 3 for an evaluation error,
+.TP
+.B input \fP[in] - integer
+the unit number for the decoded data; the unit from which OUTSDIF.d is read,
 .TP
 .B pname \fP[out] - character
 a 10-character string containing the name of the problem.
@@ -80,5 +86,4 @@ Environment, revisited\fP,
 I. Bongartz, A.R. Conn, N.I.M. Gould and Ph.L. Toint, 
 ACM TOMS, \fB21\fP:1, pp.123-160, 1995.
 
-cutest_pname(3M), cutest_unames(3M), cutest_cnames(3M), cutest_connames(3M), 
-cutest_varnames(3M).
+cutest_probname(3M), sifdecoder(1).

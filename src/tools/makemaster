@@ -1,7 +1,7 @@
 #  Main body of the installation makefile for basic CUTEST tools packages
 
 #  N. Gould, D. Orban and Ph. L. Toint.
-#  This version: 18 XI 2012
+#  This version: 3 IV 2014
 
 SHELL = /bin/$(BINSHELL)
 
@@ -59,9 +59,9 @@ CSEDS = $(CUTEST)/seds/cutersize.sed
 
 #  compilation agenda
 
-BASICS = $(LCS)(cutest.o) $(LCS)(probname.o) $(LCS)(varnames.o) \
-         $(LCS)(newthread.o) $(LCS)(problem.o) $(LCS)(fortran_ops.o) \
-         $(LCS)(interface.o) $(LCS)(ccutest.o) 
+BASICS = $(LCS)(cutest.o) $(LCS)(pname.o) $(LCS)(probname.o) \
+         $(LCS)(varnames.o) $(LCS)(newthread.o) $(LCS)(problem.o) \
+         $(LCS)(fortran_ops.o) $(LCS)(interface.o) $(LCS)(ccutest.o) 
 
 UCUTESTS = $(LCS)(usetup.o) $(LCS)(udimen.o) $(LCS)(udimse.o) $(LCS)(udimsh.o) \
            $(LCS)(unames.o) $(LCS)(uvartype.o) $(LCS)(ufn.o) $(LCS)(ugr.o) \
@@ -81,9 +81,9 @@ CCUTESTS = $(LCS)(csetup.o) $(LCS)(cdimen.o) $(LCS)(cdimse.o) $(LCS)(cdimsh.o) \
            $(LCS)(chprod.o) $(LCS)(chcprod.o) $(LCS)(creport.o) \
            $(LCS)(connames.o) $(LCS)(cterminate.o) $(LCS)(lqp.o) 
 
-BASICD = $(LCD)(cutest.o) $(LCD)(probname.o) $(LCD)(varnames.o) \
-         $(LCD)(newthread.o) $(LCD)(problem.o) $(LCD)(fortran_ops.o) \
-         $(LCD)(interface.o) $(LCD)(ccutest.o) 
+BASICD = $(LCD)(cutest.o) $(LCD)(pname.o) $(LCD)(probname.o) \
+         $(LCD)(varnames.o) $(LCD)(newthread.o) $(LCD)(problem.o) \
+         $(LCD)(fortran_ops.o) $(LCD)(interface.o) $(LCD)(ccutest.o) 
 
 UCUTESTD = $(LCD)(usetup.o) $(LCD)(udimen.o) $(LCD)(udimse.o) $(LCD)(udimsh.o) \
            $(LCD)(unames.o) $(LCD)(uvartype.o) $(LCD)(ufn.o) $(LCD)(ugr.o) \
@@ -235,6 +235,7 @@ $(LC)(cutest.o): ../tools/cutest.f90
 	$(RMARFILE) ubandh.o
 	$(RMARFILE) ureport.o
 	$(RMARFILE) uterminate.o
+	$(RMARFILE) pname.o
 	$(RMARFILE) probname.o
 	$(RMARFILE) varnames.o
 	$(RMARFILE) connames.o
@@ -899,6 +900,18 @@ $(LC)(uterminate.o): ../tools/uterminate.f90
                 || ( printf ' %-26s' "=> Disabling optimization " ; \
                    $(FORTRAN) -o uterminate.o $(FFLAGSN) uterminate.f90 )
 	cd $(OBJ); $(ARR) uterminate.o; $(RM) uterminate.f90 uterminate.o
+#	$(MVMODS)
+	@printf '[ OK ]\n'
+
+pname.o: $(LC)(pname.o)
+
+$(LC)(pname.o): ../tools/pname.f90
+	@printf ' %-9s %-15s\t\t' "Compiling" "pname" 
+	$(SED) -f $(SEDS) ../tools/pname.f90 > $(OBJ)/pname.f90
+	cd $(OBJ); $(FORTRAN) -o pname.o $(FFLAGS) pname.f90 \
+                || ( printf ' %-26s' "=> Disabling optimization " ; \
+                   $(FORTRAN) -o pname.o $(FFLAGSN) pname.f90 )
+	cd $(OBJ); $(ARR) pname.o; $(RM) pname.f90 pname.o
 #	$(MVMODS)
 	@printf '[ OK ]\n'
 
