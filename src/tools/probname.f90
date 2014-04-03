@@ -1,6 +1,5 @@
 ! THIS VERSION: CUTEST 1.0 - 23/12/2012 AT 15:40 GMT.
 
-
 !-*-*-*-*-*-  C U T E S T    P R O B N A M E     S U B R O U T I N E  -*-*-*-*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions

@@ -1,6 +1,6 @@
 ! THIS VERSION: CUTEST 1.0 - 19/11/2012 AT 13:30 GMT.
 
-!-*-*-*-*-*-*-  C U T E S T    C D I M E N    S U B R O U T I N E  -*-*-*-*-*-
+!-*-*-*-*-*-*-  C U T E S T    U D I M E N    S U B R O U T I N E  -*-*-*-*-*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
 !  Principal author: Nick Gould

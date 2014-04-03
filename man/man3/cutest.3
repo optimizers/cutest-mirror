@@ -252,6 +252,10 @@ remove internal data structures when they are no longer needed.
 Both unconstrained problems and constrained problems:
 
 .TP
+.B cutest_pname \fP(both threaded and unthreaded)
+determine the name of the problem before initialization 
+calls to cutest_u/csetup[_threaded] 
+.TP
 .B cutest_probname \fP(both threaded and unthreaded)
 determine the name of the problem.
 .TP
@@ -259,8 +263,8 @@ determine the name of the problem.
 determine the names of the variables.
 .SH APPLICATION USAGE
 A call to cutest_u/csetup[_threaded] must precede calls to any other 
-evaluation tool with the exception of cutest_u/cdimen. 
-Once cutest_u/cterminate[_threaded]
+evaluation tool with the exception of cutest_pname and cutest_u/cdimen. 
+Once cutest_u/cterminate[_threaded].
 has been called, no further calls should be made without first recalling
 cutest_u/csetup[_threaded].
 .SH AUTHORS

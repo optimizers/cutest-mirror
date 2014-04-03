@@ -10,7 +10,7 @@
 #               cutest_csgreh cutest_csgrsh cutest_csh cutest_cshc \
 #               cutest_cvartype cutest_probname cutest_ubandh cutest_udh \
 #               cutest_udimen cutest_udimse cutest_udimsh \
-#               cutest_ueh cutest_ushp \
+#               cutest_ueh cutest_ushp cutest_pname \
 #               cutest_ufn cutest_ugr cutest_ugrdh cutest_ugreh cutest_ugrsh \
 #               cutest_uhprod cutest_unames cutest_uofg cutest_ureport \
 #               cutest_usetup cutest_ush cutest_uvartype cutest_varnames \
@@ -37,8 +37,9 @@
 #foreach pack ( cutest_cdimen cutest_udimen )
 #foreach pack ( cutest cutest_usetup_threaded cutest_csetup_threaded )
 #foreach pack ( cutest cutest_ush cutest_ushp cutest_csh cutest_cshp )
-#foreach pack ( cutest )
-foreach pack ( cutest_clfg cutest_clfg_threaded )
+foreach pack ( cutest )
+#foreach pack ( cutest_pname )
+#foreach pack ( cutest_clfg cutest_clfg_threaded )
 #foreach pack ( cutest_ccfg )
 #foreach pack ( cutest_ccfsg )
 #foreach pack ( cutest_ccifg )

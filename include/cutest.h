@@ -97,6 +97,7 @@ typedef struct VarTypes {
 #define CUTEST_creport  FUNDERSCORE(cutest_creport)
 
 #define CUTEST_connames FUNDERSCORE(cutest_connames)
+#define CUTEST_pname    FUNDERSCORE(cutest_pname)
 #define CUTEST_probname FUNDERSCORE(cutest_probname)
 #define CUTEST_varnames FUNDERSCORE(cutest_varnames)
 
@@ -182,6 +183,7 @@ void CUTEST_cnames( integer *status, integer *n, integer *m, char *pname,
 void CUTEST_creport( integer *status, doublereal *calls, doublereal *time );
 
 void CUTEST_connames( integer *status, integer *m, char *gname );
+void CUTEST_pname( integer *status, integer *funit, char *pname );
 void CUTEST_probname( integer *status, char *pname );
 void CUTEST_varnames( integer *status, integer *n, char *vname );
 
