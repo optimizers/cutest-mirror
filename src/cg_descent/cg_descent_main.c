@@ -19,8 +19,8 @@
 extern "C" {   /* To prevent C++ compilers from mangling symbols */
 #endif
 
-/* 
-#include "../../include/cuter.h" 
+/*
+#include "../../include/cuter.h"
 #include "../../include/cg_user.h"
 */
 #include "cutest.h"
@@ -98,38 +98,6 @@ double cg_valgrad
             exit(1) ;
         }
 
-        /* Get problem name */
-        /*i = FSTRING_LEN+1;*/
-        /*MALLOC( pname, i, char );*/
-        MALLOC( pname,  FSTRING_LEN+1, char );
-        /* this doesn't work
-        CUTEST_probname( &status, pname ) ; 
-        */
-
-        MALLOC(vnames, CUTEst_nvar*FSTRING_LEN, char);
-        /* nor does this
-        CUTEST_unames( &status, &CUTEst_nvar, pname, vnames);
-        if( status ) {
-           printf("** CUTEst error, status = %d, aborting\n", status);
-           exit(status);
-        }
-        */
-        FREE(vnames) ;
-
-
-        /* Make sure to null-terminate problem name */
-        pname[FSTRING_LEN] = '\0';
-        i = FSTRING_LEN - 1;
-        while(i-- > 0 && pname[i] == ' ') {
-          pname[i] = '\0';
-        }
-
-        /*printf (" ** the problem is %s\n", pname ) ;*/
-        if (status) {
-            printf("** CUTEst error, status = %d, aborting\n", status);
-            exit(status);
-        }
-
         /* Determine problem size */
         CUTEST_cdimen( &status, &funit, &CUTEst_nvar, &CUTEst_ncon) ;
         if (status) {
@@ -141,7 +109,7 @@ double cg_valgrad
 
         /* stop if the problem has constraints */
         if( constrained ) {
-           printf (" ** the problem %s has %i constraints\n", 
+           printf (" ** the problem %s has %i constraints\n",
                       pname,  &CUTEst_ncon ) ;
            printf ("    cg_descent is for unconstrained optimization\n") ;
             abort ( ) ;
@@ -155,8 +123,16 @@ double cg_valgrad
         MALLOC( x,  CUTEst_nvar, doublereal ) ;
         MALLOC( bl, CUTEst_nvar, doublereal ) ;
         MALLOC( bu, CUTEst_nvar, doublereal ) ;
-        CUTEST_usetup( &status, &funit, &iout, &io_buffer, &CUTEst_nvar, 
+        CUTEST_usetup( &status, &funit, &iout, &io_buffer, &CUTEst_nvar,
                        x, bl, bu ) ;
+        if (status) {
+            printf("** CUTEst error, status = %d, aborting\n", status);
+            exit(status);
+        }
+
+        /* Get problem name */
+        MALLOC( pname,  FSTRING_LEN+1, char );
+        CUTEST_probname( &status, pname ) ;
         if (status) {
             printf("** CUTEst error, status = %d, aborting\n", status);
             exit(status);
@@ -165,14 +141,25 @@ double cg_valgrad
         /* Make sure to null-terminate problem name */
         pname[FSTRING_LEN] = '\0';
         i = FSTRING_LEN - 1;
-        while( i-- > 0 && pname[i] == ' ') {
-            pname[i] = '\0';
+        while(i-- > 0 && pname[i] == ' ') {
+          pname[i] = '\0';
         }
+
+        printf (" ** the problem is %s\n", pname ) ;
+
+        /* MALLOC(vnames, CUTEst_nvar*FSTRING_LEN, char);
+           CUTEST_unames( &status, &CUTEst_nvar, pname, vnames);
+           if( status ) {
+              printf("** CUTEst error, status = %d, aborting\n", status);
+              exit(status);
+           }
+           FREE(vnames) ;
+        */
 
         /* Set any parameter values here */
         cg_default (&cg_parm) ;
 
-        /* Read input parameters from CG_DESCENT.SPC. See cg_user.h 
+        /* Read input parameters from CG_DESCENT.SPC. See cg_user.h
            for defaults */
 
         spec = fopen ("CG_DESCENT.SPC", "r") ;
@@ -224,21 +211,21 @@ double cg_valgrad
         fscanf( spec, "%lf\n", &cg_parm.feps ) ;
         fscanf( spec, "%lf\n", &cg_parm.nan_rho ) ;
         fscanf( spec, "%lf\n", &cg_parm.nan_decay ) ;
-        fscanf( spec, "%lf\n", &cg_parm.delta ) ; 
-        fscanf( spec, "%lf\n", &cg_parm.sigma ) ; 
-        fscanf( spec, "%lf\n", &cg_parm.gamma ) ; 
-        fscanf( spec, "%lf\n", &cg_parm.rho ) ; 
-        fscanf( spec, "%lf\n", &cg_parm.psi0 ) ; 
-        fscanf( spec, "%lf\n", &cg_parm.psi_lo ) ; 
+        fscanf( spec, "%lf\n", &cg_parm.delta ) ;
+        fscanf( spec, "%lf\n", &cg_parm.sigma ) ;
+        fscanf( spec, "%lf\n", &cg_parm.gamma ) ;
+        fscanf( spec, "%lf\n", &cg_parm.rho ) ;
+        fscanf( spec, "%lf\n", &cg_parm.psi0 ) ;
+        fscanf( spec, "%lf\n", &cg_parm.psi_lo ) ;
         fscanf( spec, "%lf\n", &cg_parm.psi_hi ) ;
-        fscanf( spec, "%lf\n", &cg_parm.psi1 ) ; 
-        fscanf( spec, "%lf\n", &cg_parm.psi2 ) ; 
-        fscanf( spec, "%i\n", &cg_parm.AdaptiveBeta ) ; 
-        fscanf( spec, "%lf\n", &cg_parm.BetaLower ) ; 
-        fscanf( spec, "%lf\n", &cg_parm.theta ) ; 
-        fscanf( spec, "%lf\n", &cg_parm.qeps ) ; 
-        fscanf( spec, "%lf\n", &cg_parm.qrule ) ; 
-        fscanf( spec, "%i\n", &cg_parm.qrestart ) ; 
+        fscanf( spec, "%lf\n", &cg_parm.psi1 ) ;
+        fscanf( spec, "%lf\n", &cg_parm.psi2 ) ;
+        fscanf( spec, "%i\n", &cg_parm.AdaptiveBeta ) ;
+        fscanf( spec, "%lf\n", &cg_parm.BetaLower ) ;
+        fscanf( spec, "%lf\n", &cg_parm.theta ) ;
+        fscanf( spec, "%lf\n", &cg_parm.qeps ) ;
+        fscanf( spec, "%lf\n", &cg_parm.qrule ) ;
+        fscanf( spec, "%i\n", &cg_parm.qrestart ) ;
         fclose( spec ) ;
 
 /*      cg_parm.debug = TRUE ;*/
@@ -250,7 +237,7 @@ double cg_valgrad
 /*      gettimeofday (&tv, NULL) ;
         sec = tv.tv_sec ;
         usec = tv.tv_usec ; */
-        status_cg_descent  = cg_descent (x, CUTEst_nvar, &Stats, &cg_parm, 
+        status_cg_descent  = cg_descent (x, CUTEst_nvar, &Stats, &cg_parm,
                              grad_tol, cg_value, cg_grad, cg_valgrad, NULL ) ;
 /*      gettimeofday (&tv, NULL) ;
         walltime = tv.tv_sec - sec + (double) (tv.tv_usec - usec) /1.e6 ;*/
@@ -312,7 +299,7 @@ double cg_value
 )
 {
     double f ;
-    integer status; 
+    integer status;
 
     CUTEST_ufn( &status, &CUTEst_nvar, x, &f) ;
     if (status) {
@@ -330,7 +317,7 @@ void cg_grad
     INT      n
 )
 {
-    integer status; 
+    integer status;
     CUTEST_ugr( &status, &CUTEst_nvar, x, g) ;
     if (status) {
         printf("** CUTEst error, status = %d, aborting\n", status);
@@ -347,7 +334,7 @@ double cg_valgrad
 {
     logical grad ;
     double f ;
-    integer status; 
+    integer status;
     grad = 1 ;
     CUTEST_uofg( &status, &CUTEst_nvar, x, &f, g, &grad ) ;
     if (status) {
