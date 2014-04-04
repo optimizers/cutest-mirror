@@ -168,7 +168,7 @@ double cg_valgrad
           pname[i] = '\0';
         }
 
-        printf ("Problem: %s (n = %i)\n", pname, CUTEst_nvar ) ;
+        /*printf ("Problem: %s (n = %i)\n", pname, CUTEst_nvar ) ; */
 
         /* MALLOC(vnames, CUTEst_nvar*FSTRING_LEN, char);
            CUTEST_unames( &status, &CUTEst_nvar, pname, vnames);
@@ -718,26 +718,28 @@ double cg_valgrad
         }
 
         /* print statistics if so desired */
+        /*
         printf ("%10s %6i %7li %7li %7li %5i %16.7f %16.7f %9.3f\n",
             pname, CUTEst_nvar, Stats.iter, Stats.nfunc, Stats.ngrad,
             status_cg_descent, Stats.gnorm, Stats.f, cpu [1]) ;
+        */
 /*          status, Stats.gnorm, Stats.f, walltime) ;*/
-/*
-        printf("\n\n *********************** CUTEst statistics ************************\n\n") ;
+        printf(" *********************** CUTEst statistics ************************\n") ;
         printf(" Code used               : cg_descent\n") ;
         printf(" Problem                 : %-s\n", pname) ;
         printf(" # variables             = %-10d\n", CUTEst_nvar) ;
         printf(" # bound constraints     = %-10d\n", vtypes.nbnds) ;
+        printf(" # iterations            = %li\n", Stats.iter) ;
         printf(" # objective functions   = %-15.7g\n", calls[0]) ;
         printf(" # objective gradients   = %-15.7g\n", calls[1]) ;
         printf(" # objective Hessians    = %-15.7g\n", calls[2]) ;
         printf(" # Hessian-vector prdct  = %-15.7g\n", calls[3]) ;
         printf(" Exit code               = %-10d\n", ExitCode) ;
-        printf(" Final f                 = %-15.7g\n",dummy) ;
+        printf(" Final f                 = %-15.7g\n",Stats.f) ;
+        printf(" Final ||g||             = %-15.7g\n",Stats.gnorm) ;
         printf(" Set up time             = %-10.2f seconds\n", cpu[0]) ;
         printf(" Solve time              = %-10.2f seconds\n", cpu[1]) ;
-        printf(" ******************************************************************\n\n") ;
-*/
+        printf(" ******************************************************************\n") ;
 
         ierr = 0;
         FORTRAN_close( &funit, &ierr ) ;
