@@ -1,5 +1,5 @@
 1.e-6     grad_tol (relative stopping tolerance--see doc for StopFac)
-1         PrintFinal 0 (no print) 1 (print error messages, final error)
+0         PrintFinal 0 (no print) 1 (print error messages, final error)
 0         PrintLevel 0 (no print) 1 (intermediate results)
 0         PrintParms 0 (no print) 1 (display parameter values)
 0         LBFGS 0 (use LBFGS when memory>=n) 1 (always use LBFGS)
