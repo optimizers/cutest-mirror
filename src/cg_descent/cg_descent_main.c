@@ -1,5 +1,5 @@
 /* ====================================================
- * CUTEst interface for cg_descent     April. 2, 2014
+ * CUTEst interface for cg_descent     April. 5, 2014
  *
  * W. Hager
  *
@@ -15,14 +15,17 @@
 
 #define CG_DESCENTMA
 
+#define MAXLINE 256
+
 #ifdef __cplusplus
 extern "C" {   /* To prevent C++ compilers from mangling symbols */
 #endif
 
 /*
-#include "../../include/cuter.h"
+#include "../../include/cutest.h"
 #include "../../include/cg_user.h"
 */
+
 #include "cutest.h"
 #include "cg_user.h"
 
@@ -86,6 +89,7 @@ double cg_valgrad
         int         i, status_cg_descent ;
         char        fgets_status ;
         char        line[1024];
+        char        s [MAXLINE+1] ;
 
         FILE *spec ;
         cg_stats Stats ;
@@ -168,7 +172,7 @@ double cg_valgrad
           pname[i] = '\0';
         }
 
-        /*printf ("Problem: %s (n = %i)\n", pname, CUTEst_nvar ) ; */
+        /*printf ("Problem: %s (n = %i)\n", pname, CUTEst_nvar ) ;*/
 
         /* MALLOC(vnames, CUTEst_nvar*FSTRING_LEN, char);
            CUTEST_unames( &status, &CUTEst_nvar, pname, vnames);
@@ -179,523 +183,267 @@ double cg_valgrad
            FREE(vnames) ;
         */
 
-        /* Set any parameter values here */
+        /* Set any parameter values here
+           First read in the default parameter values */
         cg_default (&cg_parm) ;
 
-        /* Read input parameters from CG_DESCENT.SPC. See cg_user.h
-           for defaults */
+        /* Parameter values are overwritten using any values stored in the
+           CG_DESCENT.SPC file. The format of the file is parameter name at
+           the start of the line followed by one or more spaces and then
+           the parameter value.  A new value for grad_tol, the solution
+           tolerance, can also be specified in the SPC file.  Note that
+           the parameter names are case sensitive.  See cg_user.h for
+           defaults and for the parameter names and descriptions. */
 
         spec = fopen ("CG_DESCENT.SPC", "r") ;
 
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-          if( sscanf( line, "%lf\n", &grad_tol ) == 1) {
-            /*  printf( " grad_tol = %g\n", grad_tol); */
-          } else {
-            printf( " failed to read grad_tol\n");
-          }
-        } else {
-          printf( " skipping read grad_tol, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-          if( sscanf( line, "%i\n", &cg_parm.PrintFinal ) == 1) {
-            /*  printf( " PrintFinal = %i\n", cg_parm.PrintFinal ) ; */
-          } else {
-            printf( " failed to read PrintFinal\n");
-          }
-        } else {
-          printf( " skipping read PrintFinal, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%i\n", &cg_parm.PrintLevel ) == 1) {
-             /*  printf( " PrintLevel = %i\n", cg_parm.PrintLevel ) ; */
-           } else {
-             printf( " failed to read PrintLevel\n");
-           }
-        } else {
-         printf( " skipping read PrintLevel, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%i\n", &cg_parm.PrintParms ) == 1) {
-             /*  printf( " PrintParms = %i\n", cg_parm.PrintParms ) ; */
-           } else {
-             printf( " failed to read PrintParms\n");
-           }
-        } else {
-         printf( " skipping read PrintParms, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%i\n", &cg_parm.LBFGS ) == 1) {
-             /*  printf( " LBFGS = %i\n", cg_parm.LBFGS ) ; */
-           } else {
-             printf( " failed to read LBFGS\n");
-           }
-        } else {
-         printf( " skipping read LBFGS, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%i\n", &cg_parm.memory ) == 1) {
-             /*  printf( " memory = %i\n", cg_parm.memory ) ; */
-           } else {
-             printf( " failed to read memory\n");
-           }
-        } else {
-         printf( " skipping read memory, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%i\n", &cg_parm.SubCheck ) == 1) {
-             /*  printf( " SubCheck = %i\n", cg_parm.SubCheck ) ; */
-           } else {
-             printf( " failed to read SubCheck\n");
-           }
-        } else {
-         printf( " skipping read SubCheck, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%i\n", &cg_parm.SubSkip ) == 1) {
-             /*  printf( " SubSkip = %i\n", cg_parm.SubSkip ) ; */
-           } else {
-             printf( " failed to read SubSkip\n");
-           }
-        } else {
-         printf( " skipping read SubSkip, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.eta0 ) == 1) {
-             /*  printf( " eta0 = %g\n", cg_parm.eta0 ) ; */
-           } else {
-             printf( " failed to read eta0\n");
-           }
-        } else {
-         printf( " skipping read eta0, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.eta1 ) == 1) {
-             /*  printf( " eta1 = %g\n", cg_parm.eta1 ) ; */
-           } else {
-             printf( " failed to read eta1\n");
-           }
-        } else {
-         printf( " skipping read eta1, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.eta2 ) == 1) {
-             /*  printf( " eta2 = %g\n", cg_parm.eta2 ) ; */
-           } else {
-             printf( " failed to read eta2\n");
-           }
-        } else {
-         printf( " skipping read eta2, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%i\n", &cg_parm.AWolfe ) == 1) {
-             /*  printf( " AWolfe = %i\n", cg_parm.AWolfe ) ; */
-           } else {
-             printf( " failed to read AWolfe\n");
-           }
-        } else {
-         printf( " skipping read AWolfe, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.AWolfeFac ) == 1) {
-             /*  printf( " AWolfeFac = %g\n", cg_parm.AWolfeFac ) ; */
-           } else {
-             printf( " failed to read AWolfeFac\n");
-           }
-        } else {
-         printf( " skipping read AWolfeFac, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.Qdecay ) == 1) {
-             /*  printf( " Qdecay = %g\n", cg_parm.Qdecay ) ; */
-           } else {
-             printf( " failed to read Qdecay\n");
-           }
-        } else {
-         printf( " skipping read Qdecay, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%i\n", &cg_parm.nslow ) == 1) {
-             /*  printf( " nslow = %i\n", cg_parm.nslow ) ; */
-           } else {
-             printf( " failed to read nslow\n");
-           }
-        } else {
-         printf( " skipping read nslow, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%i\n", &cg_parm.StopRule ) == 1) {
-             /*  printf( " StopRule = %i\n", cg_parm.StopRule ) ; */
-           } else {
-             printf( " failed to read StopRule\n");
-           }
-        } else {
-         printf( " skipping read StopRule, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.StopFac ) == 1) {
-             /*  printf( " StopFac = %g\n", cg_parm.StopFac ) ; */
-           } else {
-             printf( " failed to read StopFac\n");
-           }
-        } else {
-         printf( " skipping read StopFac, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%i\n", &cg_parm.PertRule ) == 1) {
-             /*  printf( " PertRule = %i\n", cg_parm.PertRule ) ; */
-           } else {
-             printf( " failed to read PertRule\n");
-           }
-        } else {
-         printf( " skipping read PertRule, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.eps ) == 1) {
-             /*  printf( " eps = %g\n", cg_parm.eps ) ; */
-           } else {
-             printf( " failed to read eps\n");
-           }
-        } else {
-         printf( " skipping read eps, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.egrow ) == 1) {
-             /*  printf( " egrow = %g\n", cg_parm.egrow ) ; */
-           } else {
-             printf( " failed to read egrow\n");
-           }
-        } else {
-         printf( " skipping read egrow, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%i\n", &cg_parm.QuadStep ) == 1) {
-             /*  printf( " QuadStep = %i\n", cg_parm.QuadStep ) ; */
-           } else {
-             printf( " failed to read QuadStep\n");
-           }
-        } else {
-         printf( " skipping read QuadStep, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.QuadCutOff ) == 1) {
-             /*  printf( " QuadCutOff = %g\n", cg_parm.QuadCutOff ) ; */
-           } else {
-             printf( " failed to read QuadCutOff\n");
-           }
-        } else {
-         printf( " skipping read QuadCutOff, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.QuadSafe ) == 1) {
-             /*  printf( " QuadSafe = %g\n", cg_parm.QuadSafe ) ; */
-           } else {
-             printf( " failed to read QuadSafe\n");
-           }
-        } else {
-         printf( " skipping read QuadSafe, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%i\n", &cg_parm.UseCubic ) == 1) {
-             /*  printf( " UseCubic = %i\n", cg_parm.UseCubic ) ; */
-           } else {
-             printf( " failed to read UseCubic\n");
-           }
-        } else {
-         printf( " skipping read UseCubic, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.CubicCutOff ) == 1) {
-             /*  printf( " CubicCutOff = %g\n", cg_parm.CubicCutOff ) ; */
-           } else {
-             printf( " failed to read CubicCutOff\n");
-           }
-        } else {
-         printf( " skipping read CubicCutOff, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.SmallCost ) == 1) {
-             /*  printf( " SmallCost = %g\n", cg_parm.SmallCost ) ; */
-           } else {
-             printf( " failed to read SmallCost\n");
-           }
-        } else {
-         printf( " skipping read SmallCost, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%i\n", &cg_parm.debug ) == 1) {
-             /*  printf( " debug = %i\n", cg_parm.debug ) ; */
-           } else {
-             printf( " failed to read debug\n");
-           }
-        } else {
-         printf( " skipping read debug, status = %c\n", fgets_status );
-        }
-       if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.debugtol ) == 1) {
-             /*  printf( " debugtol = %g\n", cg_parm.debugtol ) ; */
-           } else {
-             printf( " failed to read debugtol\n");
-           }
-        } else {
-         printf( " skipping read debugtol, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.step ) == 1) {
-             /*  printf( " step = %g\n", cg_parm.step ) ; */
-           } else {
-             printf( " failed to read step\n");
-           }
-        } else {
-         printf( " skipping read step, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%li\n", &cg_parm.maxit ) == 1) {
-             /*  printf( " maxit = %i\n", cg_parm.maxit ) ; */
-           } else {
-             printf( " failed to read maxit\n");
-           }
-        } else {
-         printf( " skipping read maxit, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%i\n", &cg_parm.ntries ) == 1) {
-             /*  printf( " ntries = %i\n", cg_parm.ntries ) ; */
-           } else {
-             printf( " failed to read ntries\n");
-           }
-        } else {
-         printf( " skipping read ntries, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.ExpandSafe ) == 1) {
-             /*  printf( " ExpandSafe = %g\n", cg_parm.ExpandSafe ) ; */
-           } else {
-             printf( " failed to read ExpandSafe\n");
-           }
-        } else {
-         printf( " skipping read ExpandSafe, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.SecantAmp ) == 1) {
-             /*  printf( " SecantAmp = %g\n", cg_parm.SecantAmp ) ; */
-           } else {
-             printf( " failed to read SecantAmp\n");
-           }
-        } else {
-         printf( " skipping read SecantAmp, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.RhoGrow ) == 1) {
-             /*  printf( " RhoGrow = %g\n", cg_parm.RhoGrow ) ; */
-           } else {
-             printf( " failed to read RhoGrow\n");
-           }
-        } else {
-         printf( " skipping read RhoGrow, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%i\n", &cg_parm.neps ) == 1) {
-             /*  printf( " neps = %i\n", cg_parm.neps ) ; */
-           } else {
-             printf( " failed to read neps\n");
-           }
-        } else {
-         printf( " skipping read neps, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%i\n", &cg_parm.nshrink ) == 1) {
-             /*  printf( " nshrink = %i\n", cg_parm.nshrink ) ; */
-           } else {
-             printf( " failed to read nshrink\n");
-           }
-        } else {
-         printf( " skipping read nshrink, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%i\n", &cg_parm.nline ) == 1) {
-             /*  printf( " nline = %i\n", cg_parm.nline ) ; */
-           } else {
-             printf( " failed to read nline\n");
-           }
-        } else {
-         printf( " skipping read nline, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.restart_fac ) == 1) {
-             /*  printf( " restart_fac = %g\n", cg_parm.restart_fac ) ; */
-           } else {
-             printf( " failed to read restart_fac\n");
-           }
-        } else {
-         printf( " skipping read restart_fac, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.feps ) == 1) {
-             /*  printf( " feps = %g\n", cg_parm.feps ) ; */
-           } else {
-             printf( " failed to read feps\n");
-           }
-        } else {
-         printf( " skipping read feps, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.nan_rho ) == 1) {
-             /*  printf( " nan_rho = %g\n", cg_parm.nan_rho ) ; */
-           } else {
-             printf( " failed to read nan_rho\n");
-           }
-        } else {
-         printf( " skipping read nan_rho, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.nan_decay ) == 1) {
-             /*  printf( " nan_decay = %g\n", cg_parm.nan_decay ) ; */
-           } else {
-             printf( " failed to read nan_decay\n");
-           }
-        } else {
-         printf( " skipping read nan_decay, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.delta ) == 1) {
-             /*  printf( " delta = %g\n", cg_parm.delta ) ; */
-           } else {
-             printf( " failed to read delta\n");
-           }
-        } else {
-         printf( " skipping read delta, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.sigma ) == 1) {
-             /*  printf( " sigma = %g\n", cg_parm.sigma ) ; */
-           } else {
-             printf( " failed to read sigma\n");
-           }
-        } else {
-         printf( " skipping read sigma, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.gamma ) == 1) {
-             /*  printf( " gamma = %g\n", cg_parm.gamma ) ; */
-           } else {
-             printf( " failed to read gamma\n");
-           }
-        } else {
-         printf( " skipping read gamma, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.rho ) == 1) {
-             /*  printf( " rho = %g\n", cg_parm.rho ) ; */
-           } else {
-             printf( " failed to read rho\n");
-           }
-        } else {
-         printf( " skipping read rho, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.psi0 ) == 1) {
-             /*  printf( " psi0 = %g\n", cg_parm.psi0 ) ; */
-           } else {
-             printf( " failed to read psi0\n");
-           }
-        } else {
-         printf( " skipping read psi0, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.psi_lo ) == 1) {
-             /*  printf( " psi_lo = %g\n", cg_parm.psi_lo ) ; */
-           } else {
-             printf( " failed to read psi_lo\n");
-           }
-        } else {
-         printf( " skipping read psi_lo, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.psi_hi ) == 1) {
-             /*  printf( " psi_hi = %g\n", cg_parm.psi_hi ) ; */
-           } else {
-             printf( " failed to read psi_hi\n");
-           }
-        } else {
-         printf( " skipping read psi_hi, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.psi1 ) == 1) {
-             /*  printf( " psi1 = %g\n", cg_parm.psi1 ) ; */
-           } else {
-             printf( " failed to read psi1\n");
-           }
-        } else {
-         printf( " skipping read psi1, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.psi2 ) == 1) {
-             /*  printf( " psi2 = %g\n", cg_parm.psi2 ) ; */
-           } else {
-             printf( " failed to read psi2\n");
-           }
-        } else {
-         printf( " skipping read psi2, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%i\n", &cg_parm.AdaptiveBeta ) == 1) {
-             /*  printf( " AdaptiveBeta = %i\n", cg_parm.AdaptiveBeta ) ; */
-           } else {
-             printf( " failed to read AdaptiveBeta\n");
-           }
-        } else {
-         printf( " skipping read AdaptiveBeta, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.BetaLower ) == 1) {
-             /*  printf( " BetaLower = %g\n", cg_parm.BetaLower ) ; */
-           } else {
-             printf( " failed to read BetaLower\n");
-           }
-        } else {
-         printf( " skipping read BetaLower, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.theta ) == 1) {
-             /*  printf( " theta = %g\n", cg_parm.theta ) ; */
-           } else {
-             printf( " failed to read theta\n");
-           }
-        } else {
-         printf( " skipping read theta, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.qeps ) == 1) {
-             /*  printf( " qeps = %g\n", cg_parm.qeps ) ; */
-           } else {
-             printf( " failed to read qeps\n");
-           }
-        } else {
-         printf( " skipping read qeps, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%lf\n", &cg_parm.qrule ) == 1) {
-             /*  printf( " qrule = %g\n", cg_parm.qrule ) ; */
-           } else {
-             printf( " failed to read qrule\n");
-           }
-        } else {
-         printf( " skipping read qrule, status = %c\n", fgets_status );
-        }
-        if ( fgets(line, sizeof line, spec) != NULL ) {
-           if( sscanf( line, "%i\n", &cg_parm.qrestart ) == 1) {
-             /*  printf( " qrestart = %i\n", cg_parm.qrestart ) ; */
-           } else {
-             printf( " failed to read qrestart\n");
-           }
-        } else {
-         printf( " skipping read qrestart, status = %c\n", fgets_status );
+        while (fgets (s, MAXLINE, spec) != (char *) NULL)
+        {
+            int sl ;
+            /* determine the parameter and its value */
+            sl = strlen("grad_tol") ;
+            if (strncmp (s, "grad_tol", sl) == 0)
+            {
+                sscanf (s+sl, "%lg", &grad_tol) ;
+                continue ;
+            }
+            sl = strlen("PrintFinal") ;
+            if (strncmp (s, "PrintFinal", sl) == 0)
+            {
+                sscanf (s+sl, "%d", &cg_parm.PrintFinal) ;
+                continue ;
+            }
+            sl = strlen("PrintLevel") ;
+            if (strncmp (s, "PrintLevel", sl) == 0)
+            {
+                sscanf (s+sl, "%d", &cg_parm.PrintLevel) ;
+                continue ;
+            }
+            sl = strlen("PrintParms") ;
+            if (strncmp (s, "PrintParms", sl) == 0)
+            {
+                sscanf (s+sl, "%d", &cg_parm.PrintParms) ;
+                continue ;
+            }
+            sl = strlen("LBFGS") ;
+            if (strncmp (s, "LBFGS", sl) == 0)
+            {
+                sscanf (s+sl, "%d", &cg_parm.LBFGS) ;
+                continue ;
+            }
+            sl = strlen("memory") ;
+            if (strncmp (s, "memory", sl) == 0)
+            {
+                sscanf (s+sl, "%d", &cg_parm.memory) ;
+                continue ;
+            }
+            sl = strlen("SubCheck") ;
+            if (strncmp (s, "SubCheck", sl) == 0)
+            {
+                sscanf (s+sl, "%d", &cg_parm.SubCheck) ;
+                continue ;
+            }
+            sl = strlen("SubSkip") ;
+            if (strncmp (s, "SubSkip", sl) == 0)
+            {
+                sscanf (s+sl, "%d", &cg_parm.SubSkip) ;
+                continue ;
+            }
+            sl = strlen("eta0") ;
+            if (strncmp (s, "eta0", sl) == 0)
+            {
+                sscanf (s+sl, "%lg", &cg_parm.eta0) ;
+                continue ;
+            }
+            sl = strlen("eta1") ;
+            if (strncmp (s, "eta1", sl) == 0)
+            {
+                sscanf (s+sl, "%lg", &cg_parm.eta1) ;
+                continue ;
+            }
+            sl = strlen("eta2") ;
+            if (strncmp (s, "eta2", sl) == 0)
+            {
+                sscanf (s+sl, "%lg", &cg_parm.eta2) ;
+                continue ;
+            }
+            sl = strlen("AWolfe") ;
+            if (strncmp (s, "AWolfe", sl) == 0)
+            {
+                sscanf (s+sl, "%d", &cg_parm.AWolfe) ;
+                continue ;
+            }
+            sl = strlen("AWolfeFac") ;
+            if (strncmp (s, "AWolfeFac", sl) == 0)
+            {
+                sscanf (s+sl, "%lg", &cg_parm.AWolfeFac) ;
+                continue ;
+            }
+            sl = strlen("Qdecay") ;
+            if (strncmp (s, "Qdecay", sl) == 0)
+            {
+                sscanf (s+sl, "%lg", &cg_parm.Qdecay) ;
+                continue ;
+            }
+            sl = strlen("StopRule") ;
+            if (strncmp (s, "StopRule", sl) == 0)
+            {
+                sscanf (s+sl, "%d", &cg_parm.StopRule) ;
+                continue ;
+            }
+            sl = strlen("StopFac") ;
+            if (strncmp (s, "StopFac", sl) == 0)
+            {
+                sscanf (s+sl, "%lg", &cg_parm.StopFac) ;
+                continue ;
+            }
+            sl = strlen("PertRule") ;
+            if (strncmp (s, "PertRule", sl) == 0)
+            {
+                sscanf (s+sl, "%d", &cg_parm.PertRule) ;
+                continue ;
+            }
+            sl = strlen("eps") ;
+            if (strncmp (s, "eps", sl) == 0)
+            {
+                sscanf (s+sl, "%lg", &cg_parm.eps) ;
+                continue ;
+            }
+            sl = strlen("egrow") ;
+            if (strncmp (s, "egrow", sl) == 0)
+            {
+                sscanf (s+sl, "%lg", &cg_parm.egrow) ;
+                continue ;
+            }
+            sl = strlen("QuadStep") ;
+            if (strncmp (s, "QuadStep", sl) == 0)
+            {
+                sscanf (s+sl, "%d", &cg_parm.QuadStep) ;
+                continue ;
+            }
+            sl = strlen("QuadCutOff") ;
+            if (strncmp (s, "QuadCutOff", sl) == 0)
+            {
+                sscanf (s+sl, "%lg", &cg_parm.QuadCutOff) ;
+                continue ;
+            }
+            sl = strlen("QuadSafe") ;
+            if (strncmp (s, "QuadSafe", sl) == 0)
+            {
+                sscanf (s+sl, "%lg", &cg_parm.QuadSafe) ;
+                continue ;
+            }
+            sl = strlen("UseCubic") ;
+            if (strncmp (s, "UseCubic", sl) == 0)
+            {
+                sscanf (s+sl, "%d", &cg_parm.UseCubic) ;
+                continue ;
+            }
+            sl = strlen("CubicCutOff") ;
+            if (strncmp (s, "CubicCutOff", sl) == 0)
+            {
+                sscanf (s+sl, "%lg", &cg_parm.CubicCutOff) ;
+                continue ;
+            }
+            sl = strlen("SmallCost") ;
+            if (strncmp (s, "SmallCost", sl) == 0)
+            {
+                sscanf (s+sl, "%lg", &cg_parm.SmallCost) ;
+                continue ;
+            }
+            sl = strlen("debug") ;
+            if (strncmp (s, "debug", sl) == 0)
+            {
+                sscanf (s+sl, "%d", &cg_parm.debug) ;
+                continue ;
+            }
+            sl = strlen("debugtol") ;
+            if (strncmp (s, "debugtol", sl) == 0)
+            {
+                sscanf (s+sl, "%lg", &cg_parm.debugtol) ;
+                continue ;
+            }
+            sl = strlen("step") ;
+            if (strncmp (s, "step", sl) == 0)
+            {
+                sscanf (s+sl, "%lg", &cg_parm.step) ;
+                continue ;
+            }
+            sl = strlen("maxit") ;
+            if (strncmp (s, "maxit", sl) == 0)
+            {
+                sscanf (s+sl, "%d", &cg_parm.maxit) ;
+                continue ;
+            }
+            sl = strlen("ntries") ;
+            if (strncmp (s, "ntries", sl) == 0)
+            {
+                sscanf (s+sl, "%d", &cg_parm.ntries) ;
+                continue ;
+            }
+            sl = strlen("ExpandSafe") ;
+            if (strncmp (s, "ExpandSafe", sl) == 0)
+            {
+                sscanf (s+sl, "%lg", &cg_parm.ExpandSafe) ;
+                continue ;
+            }
+            sl = strlen("SecantAmp") ;
+            if (strncmp (s, "SecantAmp", sl) == 0)
+            {
+                sscanf (s+sl, "%lg", &cg_parm.SecantAmp) ;
+                continue ;
+            }
+            sl = strlen("RhoGrow") ;
+            if (strncmp (s, "RhoGrow", sl) == 0)
+            {
+                sscanf (s+sl, "%lg", &cg_parm.RhoGrow) ;
+                continue ;
+            }
+            sl = strlen("neps") ;
+            if (strncmp (s, "neps", sl) == 0)
+            {
+                sscanf (s+sl, "%d", &cg_parm.neps) ;
+                continue ;
+            }
+            sl = strlen("nshrink") ;
+            if (strncmp (s, "nshrink", sl) == 0)
+            {
+                sscanf (s+sl, "%d", &cg_parm.nshrink) ;
+                continue ;
+            }
+            sl = strlen("nline") ;
+            if (strncmp (s, "nline", sl) == 0)
+            {
+                sscanf (s+sl, "%d", &cg_parm.nline) ;
+                continue ;
+            }
+            sl = strlen("restart_fac") ;
+            if (strncmp (s, "restart_fac", sl) == 0)
+            {
+                sscanf (s+sl, "%lg", &cg_parm.restart_fac) ;
+                continue ;
+            }
+            sl = strlen("feps") ;
+            if (strncmp (s, "feps", sl) == 0)
+            {
+                sscanf (s+sl, "%lg", &cg_parm.feps) ;
+                continue ;
+            }
+            sl = strlen("nan_rho") ;
+            if (strncmp (s, "nan_rho", sl) == 0)
+            {
+                sscanf (s+sl, "%lg", &cg_parm.nan_rho) ;
+                continue ;
+            }
+            sl = strlen("nan_decay") ;
+            if (strncmp (s, "nan_decay", sl) == 0)
+            {
+                sscanf (s+sl, "%lg", &cg_parm.nan_decay) ;
+                continue ;
+            }
         }
 
-        fclose( spec ) ;
-
-/*      cg_parm.debug = TRUE ;*/
-/*      cg_parm.PrintLevel = 3 ;*/
+        fclose (spec) ;
 
         /* Call the optimizer */
 
@@ -703,8 +451,8 @@ double cg_valgrad
 /*      gettimeofday (&tv, NULL) ;
         sec = tv.tv_sec ;
         usec = tv.tv_usec ; */
-        status_cg_descent  = cg_descent (x, CUTEst_nvar, &Stats, &cg_parm,
-                             grad_tol, cg_value, cg_grad, cg_valgrad, NULL ) ;
+        status_cg_descent = cg_descent (x, CUTEst_nvar, &Stats, &cg_parm,
+                            grad_tol, cg_value, cg_grad, cg_valgrad, NULL) ;
 /*      gettimeofday (&tv, NULL) ;
         walltime = tv.tv_sec - sec + (double) (tv.tv_usec - usec) /1.e6 ;*/
 
@@ -724,11 +472,12 @@ double cg_valgrad
             status_cg_descent, Stats.gnorm, Stats.f, cpu [1]) ;
         */
 /*          status, Stats.gnorm, Stats.f, walltime) ;*/
+
         printf(" *********************** CUTEst statistics ************************\n") ;
         printf(" Code used               : cg_descent\n") ;
         printf(" Problem                 : %-s\n", pname) ;
         printf(" # variables             = %-10d\n", CUTEst_nvar) ;
-        printf(" # bound constraints     = %-10d\n", vtypes.nbnds) ;
+        /*        printf(" # bound constraints     = %-10d\n", vtypes.nbnds) ;*/
         printf(" # iterations            = %li\n", Stats.iter) ;
         printf(" # objective functions   = %-15.7g\n", calls[0]) ;
         printf(" # objective gradients   = %-15.7g\n", calls[1]) ;
@@ -770,7 +519,7 @@ double cg_value
     integer status;
 
     CUTEST_ufn( &status, &CUTEst_nvar, x, &f) ;
-    if (status) {
+    if ((status == 1) || (status == 2)) {
         printf("** CUTEst error, status = %d, aborting\n", status);
         exit(status);
     }
@@ -787,7 +536,7 @@ void cg_grad
 {
     integer status;
     CUTEST_ugr( &status, &CUTEst_nvar, x, g) ;
-    if (status) {
+    if ((status == 1) || (status == 2)) {
         printf("** CUTEst error, status = %d, aborting\n", status);
         exit(status);
     }
@@ -805,7 +554,7 @@ double cg_valgrad
     integer status;
     grad = 1 ;
     CUTEST_uofg( &status, &CUTEst_nvar, x, &f, g, &grad ) ;
-    if (status) {
+    if ((status == 1) || (status == 2)) {
         printf("** CUTEst error, status = %d, aborting\n", status);
         exit(status);
     }
