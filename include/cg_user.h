@@ -191,6 +191,8 @@ typedef struct cg_stats_struct /* statistics returned to user */
     double               f ; /*function value at solution */
     double           gnorm ; /* max abs component of gradient */
     INT               iter ; /* number of iterations */
+    INT            IterSub ; /* number of subspace iterations */
+    INT             NumSub ; /* total number subspaces */
     INT              nfunc ; /* number of function evaluations */
     INT              ngrad ; /* number of gradient evaluations */
 } cg_stats ;
