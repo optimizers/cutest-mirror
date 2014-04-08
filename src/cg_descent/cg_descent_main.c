@@ -197,253 +197,256 @@ double cg_valgrad
 
         spec = fopen ("CG_DESCENT.SPC", "r") ;
 
-        while (fgets (s, MAXLINE, spec) != (char *) NULL)
+        if ( spec != NULL )
         {
-            int sl ;
-            /* determine the parameter and its value */
-            sl = strlen("grad_tol") ;
-            if (strncmp (s, "grad_tol", sl) == 0)
-            {
-                sscanf (s+sl, "%lg", &grad_tol) ;
-                continue ;
-            }
-            sl = strlen("PrintFinal") ;
-            if (strncmp (s, "PrintFinal", sl) == 0)
-            {
-                sscanf (s+sl, "%d", &cg_parm.PrintFinal) ;
-                continue ;
-            }
-            sl = strlen("PrintLevel") ;
-            if (strncmp (s, "PrintLevel", sl) == 0)
-            {
-                sscanf (s+sl, "%d", &cg_parm.PrintLevel) ;
-                continue ;
-            }
-            sl = strlen("PrintParms") ;
-            if (strncmp (s, "PrintParms", sl) == 0)
-            {
-                sscanf (s+sl, "%d", &cg_parm.PrintParms) ;
-                continue ;
-            }
-            sl = strlen("LBFGS") ;
-            if (strncmp (s, "LBFGS", sl) == 0)
-            {
-                sscanf (s+sl, "%d", &cg_parm.LBFGS) ;
-                continue ;
-            }
-            sl = strlen("memory") ;
-            if (strncmp (s, "memory", sl) == 0)
-            {
-                sscanf (s+sl, "%d", &cg_parm.memory) ;
-                continue ;
-            }
-            sl = strlen("SubCheck") ;
-            if (strncmp (s, "SubCheck", sl) == 0)
-            {
-                sscanf (s+sl, "%d", &cg_parm.SubCheck) ;
-                continue ;
-            }
-            sl = strlen("SubSkip") ;
-            if (strncmp (s, "SubSkip", sl) == 0)
-            {
-                sscanf (s+sl, "%d", &cg_parm.SubSkip) ;
-                continue ;
-            }
-            sl = strlen("eta0") ;
-            if (strncmp (s, "eta0", sl) == 0)
-            {
-                sscanf (s+sl, "%lg", &cg_parm.eta0) ;
-                continue ;
-            }
-            sl = strlen("eta1") ;
-            if (strncmp (s, "eta1", sl) == 0)
-            {
-                sscanf (s+sl, "%lg", &cg_parm.eta1) ;
-                continue ;
-            }
-            sl = strlen("eta2") ;
-            if (strncmp (s, "eta2", sl) == 0)
-            {
-                sscanf (s+sl, "%lg", &cg_parm.eta2) ;
-                continue ;
-            }
-            sl = strlen("AWolfe") ;
-            if (strncmp (s, "AWolfe", sl) == 0)
-            {
-                sscanf (s+sl, "%d", &cg_parm.AWolfe) ;
-                continue ;
-            }
-            sl = strlen("AWolfeFac") ;
-            if (strncmp (s, "AWolfeFac", sl) == 0)
-            {
-                sscanf (s+sl, "%lg", &cg_parm.AWolfeFac) ;
-                continue ;
-            }
-            sl = strlen("Qdecay") ;
-            if (strncmp (s, "Qdecay", sl) == 0)
-            {
-                sscanf (s+sl, "%lg", &cg_parm.Qdecay) ;
-                continue ;
-            }
-            sl = strlen("StopRule") ;
-            if (strncmp (s, "StopRule", sl) == 0)
-            {
-                sscanf (s+sl, "%d", &cg_parm.StopRule) ;
-                continue ;
-            }
-            sl = strlen("StopFac") ;
-            if (strncmp (s, "StopFac", sl) == 0)
-            {
-                sscanf (s+sl, "%lg", &cg_parm.StopFac) ;
-                continue ;
-            }
-            sl = strlen("PertRule") ;
-            if (strncmp (s, "PertRule", sl) == 0)
-            {
-                sscanf (s+sl, "%d", &cg_parm.PertRule) ;
-                continue ;
-            }
-            sl = strlen("eps") ;
-            if (strncmp (s, "eps", sl) == 0)
-            {
-                sscanf (s+sl, "%lg", &cg_parm.eps) ;
-                continue ;
-            }
-            sl = strlen("egrow") ;
-            if (strncmp (s, "egrow", sl) == 0)
-            {
-                sscanf (s+sl, "%lg", &cg_parm.egrow) ;
-                continue ;
-            }
-            sl = strlen("QuadStep") ;
-            if (strncmp (s, "QuadStep", sl) == 0)
-            {
-                sscanf (s+sl, "%d", &cg_parm.QuadStep) ;
-                continue ;
-            }
-            sl = strlen("QuadCutOff") ;
-            if (strncmp (s, "QuadCutOff", sl) == 0)
-            {
-                sscanf (s+sl, "%lg", &cg_parm.QuadCutOff) ;
-                continue ;
-            }
-            sl = strlen("QuadSafe") ;
-            if (strncmp (s, "QuadSafe", sl) == 0)
-            {
-                sscanf (s+sl, "%lg", &cg_parm.QuadSafe) ;
-                continue ;
-            }
-            sl = strlen("UseCubic") ;
-            if (strncmp (s, "UseCubic", sl) == 0)
-            {
-                sscanf (s+sl, "%d", &cg_parm.UseCubic) ;
-                continue ;
-            }
-            sl = strlen("CubicCutOff") ;
-            if (strncmp (s, "CubicCutOff", sl) == 0)
-            {
-                sscanf (s+sl, "%lg", &cg_parm.CubicCutOff) ;
-                continue ;
-            }
-            sl = strlen("SmallCost") ;
-            if (strncmp (s, "SmallCost", sl) == 0)
-            {
-                sscanf (s+sl, "%lg", &cg_parm.SmallCost) ;
-                continue ;
-            }
-            sl = strlen("debug") ;
-            if (strncmp (s, "debug", sl) == 0)
-            {
-                sscanf (s+sl, "%d", &cg_parm.debug) ;
-                continue ;
-            }
-            sl = strlen("debugtol") ;
-            if (strncmp (s, "debugtol", sl) == 0)
-            {
-                sscanf (s+sl, "%lg", &cg_parm.debugtol) ;
-                continue ;
-            }
-            sl = strlen("step") ;
-            if (strncmp (s, "step", sl) == 0)
-            {
-                sscanf (s+sl, "%lg", &cg_parm.step) ;
-                continue ;
-            }
-            sl = strlen("maxit") ;
-            if (strncmp (s, "maxit", sl) == 0)
-            {
-                sscanf (s+sl, "%d", &cg_parm.maxit) ;
-                continue ;
-            }
-            sl = strlen("ntries") ;
-            if (strncmp (s, "ntries", sl) == 0)
-            {
-                sscanf (s+sl, "%d", &cg_parm.ntries) ;
-                continue ;
-            }
-            sl = strlen("ExpandSafe") ;
-            if (strncmp (s, "ExpandSafe", sl) == 0)
-            {
-                sscanf (s+sl, "%lg", &cg_parm.ExpandSafe) ;
-                continue ;
-            }
-            sl = strlen("SecantAmp") ;
-            if (strncmp (s, "SecantAmp", sl) == 0)
-            {
-                sscanf (s+sl, "%lg", &cg_parm.SecantAmp) ;
-                continue ;
-            }
-            sl = strlen("RhoGrow") ;
-            if (strncmp (s, "RhoGrow", sl) == 0)
-            {
-                sscanf (s+sl, "%lg", &cg_parm.RhoGrow) ;
-                continue ;
-            }
-            sl = strlen("neps") ;
-            if (strncmp (s, "neps", sl) == 0)
-            {
-                sscanf (s+sl, "%d", &cg_parm.neps) ;
-                continue ;
-            }
-            sl = strlen("nshrink") ;
-            if (strncmp (s, "nshrink", sl) == 0)
-            {
-                sscanf (s+sl, "%d", &cg_parm.nshrink) ;
-                continue ;
-            }
-            sl = strlen("nline") ;
-            if (strncmp (s, "nline", sl) == 0)
-            {
-                sscanf (s+sl, "%d", &cg_parm.nline) ;
-                continue ;
-            }
-            sl = strlen("restart_fac") ;
-            if (strncmp (s, "restart_fac", sl) == 0)
-            {
-                sscanf (s+sl, "%lg", &cg_parm.restart_fac) ;
-                continue ;
-            }
-            sl = strlen("feps") ;
-            if (strncmp (s, "feps", sl) == 0)
-            {
-                sscanf (s+sl, "%lg", &cg_parm.feps) ;
-                continue ;
-            }
-            sl = strlen("nan_rho") ;
-            if (strncmp (s, "nan_rho", sl) == 0)
-            {
-                sscanf (s+sl, "%lg", &cg_parm.nan_rho) ;
-                continue ;
-            }
-            sl = strlen("nan_decay") ;
-            if (strncmp (s, "nan_decay", sl) == 0)
-            {
-                sscanf (s+sl, "%lg", &cg_parm.nan_decay) ;
-                continue ;
-            }
+           while (fgets (s, MAXLINE, spec) != (char *) NULL)
+           {
+               int sl ;
+               /* determine the parameter and its value */
+               sl = strlen("grad_tol") ;
+               if (strncmp (s, "grad_tol", sl) == 0)
+               {
+                   sscanf (s+sl, "%lg", &grad_tol) ;
+                   continue ;
+               }
+               sl = strlen("PrintFinal") ;
+               if (strncmp (s, "PrintFinal", sl) == 0)
+               {
+                   sscanf (s+sl, "%d", &cg_parm.PrintFinal) ;
+                   continue ;
+               }
+               sl = strlen("PrintLevel") ;
+               if (strncmp (s, "PrintLevel", sl) == 0)
+               {
+                   sscanf (s+sl, "%d", &cg_parm.PrintLevel) ;
+                   continue ;
+               }
+               sl = strlen("PrintParms") ;
+               if (strncmp (s, "PrintParms", sl) == 0)
+               {
+                   sscanf (s+sl, "%d", &cg_parm.PrintParms) ;
+                   continue ;
+               }
+               sl = strlen("LBFGS") ;
+               if (strncmp (s, "LBFGS", sl) == 0)
+               {
+                   sscanf (s+sl, "%d", &cg_parm.LBFGS) ;
+                   continue ;
+               }
+               sl = strlen("memory") ;
+               if (strncmp (s, "memory", sl) == 0)
+               {
+                   sscanf (s+sl, "%d", &cg_parm.memory) ;
+                   continue ;
+               }
+               sl = strlen("SubCheck") ;
+               if (strncmp (s, "SubCheck", sl) == 0)
+               {
+                   sscanf (s+sl, "%d", &cg_parm.SubCheck) ;
+                   continue ;
+               }
+               sl = strlen("SubSkip") ;
+               if (strncmp (s, "SubSkip", sl) == 0)
+               {
+                   sscanf (s+sl, "%d", &cg_parm.SubSkip) ;
+                   continue ;
+               }
+               sl = strlen("eta0") ;
+               if (strncmp (s, "eta0", sl) == 0)
+               {
+                   sscanf (s+sl, "%lg", &cg_parm.eta0) ;
+                   continue ;
+               }
+               sl = strlen("eta1") ;
+               if (strncmp (s, "eta1", sl) == 0)
+               {
+                   sscanf (s+sl, "%lg", &cg_parm.eta1) ;
+                   continue ;
+               }
+               sl = strlen("eta2") ;
+               if (strncmp (s, "eta2", sl) == 0)
+               {
+                   sscanf (s+sl, "%lg", &cg_parm.eta2) ;
+                   continue ;
+               }
+               sl = strlen("AWolfe") ;
+               if (strncmp (s, "AWolfe", sl) == 0)
+               {
+                   sscanf (s+sl, "%d", &cg_parm.AWolfe) ;
+                   continue ;
+               }
+               sl = strlen("AWolfeFac") ;
+               if (strncmp (s, "AWolfeFac", sl) == 0)
+               {
+                   sscanf (s+sl, "%lg", &cg_parm.AWolfeFac) ;
+                   continue ;
+               }
+               sl = strlen("Qdecay") ;
+               if (strncmp (s, "Qdecay", sl) == 0)
+               {
+                   sscanf (s+sl, "%lg", &cg_parm.Qdecay) ;
+                   continue ;
+               }
+               sl = strlen("StopRule") ;
+               if (strncmp (s, "StopRule", sl) == 0)
+               {
+                   sscanf (s+sl, "%d", &cg_parm.StopRule) ;
+                   continue ;
+               }
+               sl = strlen("StopFac") ;
+               if (strncmp (s, "StopFac", sl) == 0)
+               {
+                   sscanf (s+sl, "%lg", &cg_parm.StopFac) ;
+                   continue ;
+               }
+               sl = strlen("PertRule") ;
+               if (strncmp (s, "PertRule", sl) == 0)
+               {
+                   sscanf (s+sl, "%d", &cg_parm.PertRule) ;
+                   continue ;
+               }
+               sl = strlen("eps") ;
+               if (strncmp (s, "eps", sl) == 0)
+               {
+                   sscanf (s+sl, "%lg", &cg_parm.eps) ;
+                   continue ;
+               }
+               sl = strlen("egrow") ;
+               if (strncmp (s, "egrow", sl) == 0)
+               {
+                   sscanf (s+sl, "%lg", &cg_parm.egrow) ;
+                   continue ;
+               }
+               sl = strlen("QuadStep") ;
+               if (strncmp (s, "QuadStep", sl) == 0)
+               {
+                   sscanf (s+sl, "%d", &cg_parm.QuadStep) ;
+                   continue ;
+               }
+               sl = strlen("QuadCutOff") ;
+               if (strncmp (s, "QuadCutOff", sl) == 0)
+               {
+                   sscanf (s+sl, "%lg", &cg_parm.QuadCutOff) ;
+                   continue ;
+               }
+               sl = strlen("QuadSafe") ;
+               if (strncmp (s, "QuadSafe", sl) == 0)
+               {
+                   sscanf (s+sl, "%lg", &cg_parm.QuadSafe) ;
+                   continue ;
+               }
+               sl = strlen("UseCubic") ;
+               if (strncmp (s, "UseCubic", sl) == 0)
+               {
+                   sscanf (s+sl, "%d", &cg_parm.UseCubic) ;
+                   continue ;
+               }
+               sl = strlen("CubicCutOff") ;
+               if (strncmp (s, "CubicCutOff", sl) == 0)
+               {
+                   sscanf (s+sl, "%lg", &cg_parm.CubicCutOff) ;
+                   continue ;
+               }
+               sl = strlen("SmallCost") ;
+               if (strncmp (s, "SmallCost", sl) == 0)
+               {
+                   sscanf (s+sl, "%lg", &cg_parm.SmallCost) ;
+                   continue ;
+               }
+               sl = strlen("debug") ;
+               if (strncmp (s, "debug", sl) == 0)
+               {
+                   sscanf (s+sl, "%d", &cg_parm.debug) ;
+                   continue ;
+               }
+               sl = strlen("debugtol") ;
+               if (strncmp (s, "debugtol", sl) == 0)
+               {
+                   sscanf (s+sl, "%lg", &cg_parm.debugtol) ;
+                   continue ;
+               }
+               sl = strlen("step") ;
+               if (strncmp (s, "step", sl) == 0)
+               {
+                   sscanf (s+sl, "%lg", &cg_parm.step) ;
+                   continue ;
+               }
+               sl = strlen("maxit") ;
+               if (strncmp (s, "maxit", sl) == 0)
+               {
+                   sscanf (s+sl, "%d", &cg_parm.maxit) ;
+                   continue ;
+               }
+               sl = strlen("ntries") ;
+               if (strncmp (s, "ntries", sl) == 0)
+               {
+                   sscanf (s+sl, "%d", &cg_parm.ntries) ;
+                   continue ;
+               }
+               sl = strlen("ExpandSafe") ;
+               if (strncmp (s, "ExpandSafe", sl) == 0)
+               {
+                   sscanf (s+sl, "%lg", &cg_parm.ExpandSafe) ;
+                   continue ;
+               }
+               sl = strlen("SecantAmp") ;
+               if (strncmp (s, "SecantAmp", sl) == 0)
+               {
+                   sscanf (s+sl, "%lg", &cg_parm.SecantAmp) ;
+                   continue ;
+               }
+               sl = strlen("RhoGrow") ;
+               if (strncmp (s, "RhoGrow", sl) == 0)
+               {
+                   sscanf (s+sl, "%lg", &cg_parm.RhoGrow) ;
+                   continue ;
+               }
+               sl = strlen("neps") ;
+               if (strncmp (s, "neps", sl) == 0)
+               {
+                   sscanf (s+sl, "%d", &cg_parm.neps) ;
+                   continue ;
+               }
+               sl = strlen("nshrink") ;
+               if (strncmp (s, "nshrink", sl) == 0)
+               {
+                   sscanf (s+sl, "%d", &cg_parm.nshrink) ;
+                   continue ;
+               }
+               sl = strlen("nline") ;
+               if (strncmp (s, "nline", sl) == 0)
+               {
+                   sscanf (s+sl, "%d", &cg_parm.nline) ;
+                   continue ;
+               }
+               sl = strlen("restart_fac") ;
+               if (strncmp (s, "restart_fac", sl) == 0)
+               {
+                   sscanf (s+sl, "%lg", &cg_parm.restart_fac) ;
+                   continue ;
+               }
+               sl = strlen("feps") ;
+               if (strncmp (s, "feps", sl) == 0)
+               {
+                   sscanf (s+sl, "%lg", &cg_parm.feps) ;
+                   continue ;
+               }
+               sl = strlen("nan_rho") ;
+               if (strncmp (s, "nan_rho", sl) == 0)
+               {
+                   sscanf (s+sl, "%lg", &cg_parm.nan_rho) ;
+                   continue ;
+               }
+               sl = strlen("nan_decay") ;
+               if (strncmp (s, "nan_decay", sl) == 0)
+               {
+                   sscanf (s+sl, "%lg", &cg_parm.nan_decay) ;
+                   continue ;
+               }
+           }
+           fclose (spec) ;
         }
 
-        fclose (spec) ;
 
         /* Call the optimizer */
 

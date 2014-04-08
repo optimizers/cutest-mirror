@@ -19,7 +19,7 @@ Make sure you have correctly set the following environment variables:
 
 Let's try and decode a problem and load it up in Matlab:
 
-    $ cuter2matlab LUBRIFC     # This is the shell prompt
+    $ cutest2matlab LUBRIFC    # This is the shell prompt
     $ matlab &
     >> prob = cutest_setup()   % This is the Matlab prompt
 
