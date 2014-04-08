@@ -190,7 +190,7 @@ extern "C" {
 
     integer      zero = 0;
     integer     *irow, *jcol, *irow2, *jcol2;
-    integer      nnzgci, nnzjplusn, offdiag_nnzh, nnzhi, nnzh2;
+    integer      nnzgci, nnzjplusn, offdiag_nnzh, nnzhi, nnzh2, lj;
 
     char *toolName = NULL;
     char  fName[] = "OUTSDIF.d";
@@ -1136,16 +1136,17 @@ extern "C" {
        */
       /* This must be improved ! */
       nnzjplusn = CUTEst_nnzj + CUTEst_nvar;
+      lj = nnzjplusn ;
       J = (doublereal *)mxCalloc(nnzjplusn, sizeof(doublereal));
       irow = (integer *)mxCalloc(nnzjplusn, sizeof(integer));
       jcol = (integer *)mxCalloc(nnzjplusn, sizeof(integer));
 
       if (nrhs == 2)
         CUTEST_csgr( &status, &CUTEst_nvar, &CUTEst_ncon, x, NULL,
-          &somethingFalse, &nnzjplusn, &nnzjplusn, J, jcol, irow);
+          &somethingFalse, &nnzjplusn, &lj, J, jcol, irow);
       else
         CUTEST_csgr( &status, &CUTEst_nvar, &CUTEst_ncon, x, v,
-          &somethingTrue, &nnzjplusn, &nnzjplusn, J, jcol, irow);
+          &somethingTrue, &nnzjplusn, &lj, J, jcol, irow);
       if (status != 0) {
           sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
           mexErrMsgTxt(msgBuf);
@@ -1739,13 +1740,14 @@ mexErrMsgTxt("stop\n");
         /* Make room for Jacobian and sparse vector */
         /* This must be improved ! */
         nnzjplusn = CUTEst_nnzj + CUTEst_nvar;
+        lj = nnzjplusn ;
         irow2 = (integer *)mxCalloc(nnzjplusn, sizeof(integer));
         jcol2 = (integer *)mxCalloc(nnzjplusn, sizeof(integer));
         J = (doublereal *)mxCalloc(nnzjplusn, sizeof(doublereal));
 
         /* Pretend only one triangle of H was allocated */
         CUTEST_csgrsh( &status, &CUTEst_nvar, &CUTEst_ncon, x, v, &gradf,
-                &nnzjplusn, &nnzjplusn, J, jcol2, irow2, &CUTEst_nnzh,
+                &nnzjplusn, &lj, J, jcol2, irow2, &CUTEst_nnzh,
                 &CUTEst_nnzh, H, irow, jcol);
         if (status != 0) {
             sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
