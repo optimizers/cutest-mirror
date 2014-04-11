@@ -73,11 +73,15 @@ the unit number for any error messages,
 .B io_buffer \fP[in] - integer
 the unit number for any internal input/output,
 .TP
-.B n \fP[out] - integer
-the number of variables for the problem,
+.B n \fP[inout] - integer
+on input, the declared dimesions of X, X_l and X_u 
+(see argument n in CUTEST_cdimen).
+On output, the number of variables for the problem,
 .TP
-.B m \fP[out] - integer
-the total number of general constraints,
+.B m \fP[inout] - integer
+on input, the declared dimesions of Y, C_l, C_u, EQUATN and LINEAR 
+(see argument m in CUTEST_cdimen).
+On output, the total number of general constraints,
 .TP
 .B X \fP[out] - real/double precision
 an array that gives the initial estimate of the solution of the
@@ -159,4 +163,4 @@ Environment, revisited\fP,
 I. Bongartz, A.R. Conn, N.I.M. Gould and Ph.L. Toint, 
 ACM TOMS, \fB21\fP:1, pp.123-160, 1995.
 
-cutest_usetup(3M), sifdecoder(1).
+cutest_usetup(3M), cutest_cdimen(3M), sifdecoder(1).

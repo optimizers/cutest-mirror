@@ -55,7 +55,9 @@ an array of different unit numbers, one entry for each thread,
 for any internal input/output,
 .TP
 .B n \fP[out] - integer
-the number of variables for the problem,
+on input, the declared dimesions of X, X_l and X_u 
+(see argument n in CUTEST_udimen).
+On output, the number of variables for the problem,
 .TP
 .B X \fP[out] - real/double precision
 an array that gives the initial estimate of the solution of the problem,
@@ -87,4 +89,4 @@ Environment, revisited\fP,
 I. Bongartz, A.R. Conn, N.I.M. Gould and Ph.L. Toint, 
 ACM TOMS, \fB21\fP:1, pp.123-160, 1995.
 
-cutest_csetup_threaded(3M).
+cutest_csetup_threaded(3M), cutest_udimen(3M), sifdecoder(1).
