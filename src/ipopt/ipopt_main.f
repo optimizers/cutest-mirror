@@ -30,8 +30,8 @@ C     CUTEst evolution, Nick Gould, January 2013
       CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : ) :: VNAMES
       CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : ) :: GNAMES
       INTEGER :: IPSOLVE
-      INTEGER :: iproblem, IPCREATE
-C64BIT INTEGER*8 :: iproblem, IPCREATE
+CNOT64 INTEGER :: iproblem, IPCREATE
+CIS64  INTEGER*8 :: iproblem, IPCREATE
       EXTERNAL :: EV_F, EV_G, EV_GRAD_F, EV_JAC_G, EV_HESS
 
 C     The following arrays are work space for the evaluation subroutines

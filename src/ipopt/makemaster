@@ -118,12 +118,14 @@ $(OBJ)/$(package)_test.o: ../$(package)/$(package)_test.f
 $(OBJ)/$(package)_main.o: ../$(package)/$(package)_main.f
 	@printf ' %-9s %-15s\t\t' "Compiling" "$(package)_main" 
 	$(SED) -f $(SEDS) ../$(package)/$(package)_main.f > \
+          $(OBJ)/$(package)_main1.f
+	$(SED) "s/^C$(NOT64)/      /" $(OBJ)/$(package)_main1.f > \
           $(OBJ)/$(package)_main.f
 	cd $(OBJ); $(FORTRAN) -o $(package)_main.o $(FFLAGS77) \
              $(package)_main.f \
               || ( printf ' %-26s' "=> Disabling optimization " ; \
                $(FORTRAN) -o $(package)_main.o $(FFLAGS77N) $(package)_main.f )
-	$(RM) $(OBJ)/$(package)_main.f
+	$(RM) $(OBJ)/$(package)_main.f $(OBJ)/$(package)_main1.f
 	@printf '[ OK ]\n'
 
 #  book keeping
