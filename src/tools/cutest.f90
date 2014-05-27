@@ -766,7 +766,7 @@
       lggfx = lggfx - 1
       ldx = lggfx + n
       lgrjac = ldx + n
-      lfuval = lgrjac + nvargp
+      lfuval = lgrjac + nvargp + 1
 
 !  print all of the starting addresses for the workspace array partitions
 
