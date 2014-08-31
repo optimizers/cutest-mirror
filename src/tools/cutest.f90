@@ -184,7 +184,7 @@
                     IELING, ISTADG, IELVAR, ISTAEV, INTVAR, ISTADH, ICNA,      &
                     ISTADA, GXEQX, alllin, altriv, lfxi, lgxi,                 &
                     lhxi, lggfx, ldx, lgrjac, lnguvl, lnhuvl, ntotin, maxsel,  &
-                    maxsin, RANGE, iprint, out, buffer, l_link_e_u_v,          &
+                    maxsin, iprint, out, buffer, l_link_e_u_v,                 &
                     FUVALS, lfuval, LINK_elem_uses_var, ISWKSP, ISTAJC,        &
                     ISTAGV, ISVGRP, ISLGRP, IGCOLJ, ISYMMH, W_ws, W_el, W_in,  &
                     H_el, H_in, status, alloc_status, bad_alloc, array_status )
@@ -240,20 +240,6 @@
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: W_in
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: H_el
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: H_in
-
-!-----------------------------------------------
-!   I n t e r f a c e   B l o c k s
-!-----------------------------------------------
-
-      INTERFACE
-        SUBROUTINE RANGE( ielemn, transp, W1, W2, nelvar, ninvar, ieltyp,      &
-                          lw1, lw2 )
-        INTEGER, INTENT( IN ) :: ielemn, nelvar, ninvar, ieltyp, lw1, lw2
-        LOGICAL, INTENT( IN ) :: transp
-        REAL ( KIND = KIND( 1.0D+0 ) ), INTENT( IN ), DIMENSION ( lw1 ) :: W1
-        REAL ( KIND = KIND( 1.0D+0 ) ), INTENT( OUT ), DIMENSION ( lw2 ) :: W2
-        END SUBROUTINE RANGE
-      END INTERFACE
 
 !-----------------------------------------------
 !   L o c a l   V a r i a b l e s
@@ -2777,7 +2763,7 @@
              pi = gi * W_in( jcol )
              IF ( pi /= 0.0_wp ) THEN
                H_in( : nin ) = H_in( : nin ) +                                 &
-                 pi * HUVALS( ISYMMH( jcol, : nin )+ ielhst )
+                 pi * HUVALS( ISYMMH( jcol, : nin ) + ielhst )
              END IF
            END DO
 
@@ -2823,6 +2809,469 @@
 !  end of subroutine CUTEST_hessian_times_vector
 
      END SUBROUTINE CUTEST_hessian_times_vector
+
+!-  C U T E S T _ h e s s i a n _ t i m e s _ s p _ v e c t o r  SUBROUTINE -
+
+     SUBROUTINE CUTEST_hessian_times_sp_vector(                                &
+                      n , ng, nel   , ntotel, nvrels, nvargp,  nfree , nvar1,  &
+                      nvar2 , nnonnz, nbprod, alllin, IVAR  , ISTAEV, ISTADH,  &
+                      INTVAR, IELING, IELVAR, ISWKSP, INONNZ, P , Q , GVALS2,  &
+                      GVALS3, GRJAC , GSCALE, ESCALE, HUVALS, lhuval, GXEQX ,  &
+                      INTREP, IGCOLJ, ISLGRP, ISVGRP, ISTAGV, IVALJR,          &
+                      ITYPEE, ISYMMH, ISTAJC, IUSED, LIST_elements,            &
+                      LINK_elem_uses_var, NZ_comp_w, AP, W_el, W_in, H_in,     &
+                      RANGE, skipg, KNDOFG )
+
+!  ----------------------------------------------------------------------
+!  evaluate Q, the product of the hessian of a groups partially separable
+!  function with the sparse vector P. The nonzero components of P have 
+!  indices IVAR( i ), i = nvar1, ..., nvar2. The nonzero components of 
+!  the product Q have indices INNONZ( i ), i = 1, ..., nnonnz. The 
+!  components of ISWKSP must be less than nbprod on entry; on exit they 
+!  will be no larger than nbprod
+!  ----------------------------------------------------------------------
+
+!  History -
+!   fortran 77 version originally released in CUTE, September 23rd, 1991
+!   fortran 90 version originally released pre GALAHAD Version 1.0. Febrauary
+!     1st 1995 as HSPRD_hessian_times_vector as part of the HSPRD module
+!   update released with GALAHAD Version 2.0. February 16th 2005 with
+!     dense products removed
+!   fortran 2003 version released in CUTEst, 295th August 2014
+
+!-----------------------------------------------
+!   D u m m y   A r g u m e n t s
+!-----------------------------------------------
+
+     INTEGER, INTENT( IN    ) :: n , ng, nel   , ntotel, nvrels, nfree
+     INTEGER, INTENT( IN    ) :: nvar1 , nvar2 , nbprod
+     INTEGER, INTENT( IN    ) :: nvargp, lhuval
+     INTEGER, INTENT( INOUT ) :: nnonnz
+     LOGICAL, INTENT( IN    ) :: alllin, skipg
+     INTEGER, INTENT( IN    ), DIMENSION( n ) :: IVAR
+     INTEGER, INTENT( IN    ), DIMENSION( nel + 1 ) :: ISTAEV, ISTADH
+     INTEGER, INTENT( IN    ), DIMENSION( nel + 1 ) :: INTVAR
+     INTEGER, INTENT( IN    ), DIMENSION( ntotel  ) :: IELING
+     INTEGER, INTENT( IN    ), DIMENSION( nvrels  ) :: IELVAR
+     INTEGER, INTENT( IN    ), DIMENSION( nel     ) :: ITYPEE
+     INTEGER, INTENT( INOUT ), DIMENSION( ntotel ) :: ISWKSP
+     INTEGER, INTENT( INOUT ), DIMENSION( n ) :: INONNZ
+     REAL ( KIND = wp ), INTENT( IN  ), DIMENSION( n ) :: P
+     REAL ( KIND = wp ), INTENT( IN  ), DIMENSION( ng ) :: GVALS2
+     REAL ( KIND = wp ), INTENT( IN  ), DIMENSION( ng ) :: GVALS3
+     REAL ( KIND = wp ), INTENT( IN  ), DIMENSION( ng ) :: GSCALE
+     REAL ( KIND = wp ), INTENT( IN  ), DIMENSION( nvargp ) :: GRJAC
+     REAL ( KIND = wp ), INTENT( IN  ), DIMENSION( ntotel ) :: ESCALE
+     REAL ( KIND = wp ), INTENT( IN  ), DIMENSION( lhuval ) :: HUVALS
+     REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: Q
+     LOGICAL, INTENT( IN ), DIMENSION( ng ) :: GXEQX
+     LOGICAL, INTENT( IN ), DIMENSION( nel ) :: INTREP
+     INTEGER, INTENT( IN ), DIMENSION( : ) :: IGCOLJ
+     INTEGER, INTENT( IN ), DIMENSION( : ) :: ISLGRP
+     INTEGER, INTENT( IN ), DIMENSION( : ) :: ISVGRP
+     INTEGER, INTENT( IN ), DIMENSION( : ) :: ISTAGV
+     INTEGER, INTENT( IN ), DIMENSION( : ) :: IVALJR
+     INTEGER, INTENT( IN ), DIMENSION( : ) :: ISTAJC
+     INTEGER, INTENT( INOUT ), DIMENSION( : ) :: IUSED 
+     INTEGER, INTENT( IN ), DIMENSION( : ) :: LIST_elements
+     INTEGER, INTENT( IN ), DIMENSION( : , : ) :: ISYMMH
+
+     INTEGER, INTENT( IN ), DIMENSION( : ) :: LINK_elem_uses_var
+     INTEGER, INTENT( OUT ), DIMENSION( : ) :: NZ_comp_w
+     REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( : ) :: AP
+     REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( : ) :: W_el
+     REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( : ) :: W_in
+     REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( : ) :: H_in
+
+     INTEGER, INTENT( IN ), OPTIONAL, DIMENSION( ng ) :: KNDOFG
+
+!-----------------------------------------------
+!   I n t e r f a c e   B l o c k s
+!-----------------------------------------------
+
+     INTERFACE
+       SUBROUTINE RANGE( ielemn, transp, W1, W2, nelvar, ninvar, ieltyp,       &
+                         lw1, lw2 )
+       INTEGER, INTENT( IN ) :: ielemn, nelvar, ninvar, ieltyp, lw1, lw2
+       LOGICAL, INTENT( IN ) :: transp
+       REAL ( KIND = KIND( 1.0D+0 ) ), INTENT( IN  ), DIMENSION ( lw1 ) :: W1
+       REAL ( KIND = KIND( 1.0D+0 ) ), INTENT( OUT ), DIMENSION ( lw2 ) :: W2
+       END SUBROUTINE RANGE
+     END INTERFACE
+
+!-----------------------------------------------
+!   L o c a l   V a r i a b l e s
+!-----------------------------------------------
+
+     INTEGER :: i, iel, ig, ii, ipt, j, irow  , jcol  , ijhess , lthvar
+     INTEGER :: iell  , nin, k, l , ll, nvarel, ielhst, nnz_comp_w
+     REAL ( KIND = wp ) :: pi, gi, smallest
+
+     smallest = TINY( 1.0_wp )
+
+!  ======================= rank-one terms ==========================
+
+!  If the IG-th group is non-trivial, form the product of P with the
+!  sum of rank-one first order terms, A(trans) * GVALS3 * A. A is
+!  stored by both rows and columns. 
+
+     nnz_comp_w = 0
+     Q( IVAR( : nfree ) ) = 0.0_wp
+
+!  Form the matrix-vector product W = A * P, using the column-wise
+!  storage of A. Keep track of the nonzero components of W in NZ_comp_w.
+!  Only store components corresponding to non trivial groups
+
+     DO j = nvar1, nvar2
+       i = IVAR( j )
+       pi = P( i )
+!DIR$ IVDEP
+       DO k = ISTAJC( i ), ISTAJC( i + 1 ) - 1
+         ig = IGCOLJ( k )
+         IF ( IUSED( ig ) == 0 ) THEN
+           AP( ig ) = pi * GRJAC( k )
+           IUSED( ig ) = 1
+           nnz_comp_w = nnz_comp_w + 1
+           NZ_comp_w( nnz_comp_w ) = ig
+         ELSE
+           AP( ig ) = AP( ig ) + pi * GRJAC( k )
+         END IF
+       END DO
+     END DO
+
+!  Reset IUSED to zero
+
+     IUSED( NZ_comp_w( : nnz_comp_w ) ) = 0
+
+!  Form the matrix-vector product Q = A( TRANS ) * W, using the row-wise
+!  storage of A
+
+     nnonnz = 0
+     IF ( skipg ) THEN
+       DO j = 1, nnz_comp_w
+         ig = NZ_comp_w( j )
+         IF ( KNDOFG( ig ) == 0 ) CYCLE
+         IF ( .NOT. GXEQX( ig ) ) THEN
+
+!  If group ig is non trivial, there are contributions from its rank-one term
+
+           pi = GSCALE( ig ) * GVALS3( ig ) * AP( ig )
+!DIR$ IVDEP
+           DO k = ISTAGV( ig ), ISTAGV( ig + 1 ) - 1
+             l = ISVGRP( k )
+
+!  If Q has a nonzero in position L, store its index in INONNZ
+
+             IF ( IUSED( l ) == 0 ) THEN
+               Q( l ) = pi * GRJAC( IVALJR( k ) )
+               IUSED( l ) = 1
+               nnonnz = nnonnz + 1
+               INONNZ( nnonnz ) = l
+             ELSE
+               Q( l ) = Q( l ) + pi * GRJAC( IVALJR( k ) )
+             END IF
+           END DO
+         END IF
+       END DO
+     ELSE
+       DO j = 1, nnz_comp_w
+         ig = NZ_comp_w( j )
+         IF ( .NOT. GXEQX( ig ) ) THEN
+
+!  If group ig is non trivial, there are contributions from its rank-one term
+
+           pi = GSCALE( ig ) * GVALS3( ig ) * AP( ig )
+!DIR$ IVDEP
+           DO k = ISTAGV( ig ), ISTAGV( ig + 1 ) - 1
+             l = ISVGRP( k )
+
+!  If Q has a nonzero in position L, store its index in INONNZ
+
+             IF ( IUSED( l ) == 0 ) THEN
+               Q( l ) = pi * GRJAC( IVALJR( k ) )
+               IUSED( l ) = 1
+               nnonnz = nnonnz + 1
+               INONNZ( nnonnz ) = l
+             ELSE
+               Q( l ) = Q( l ) + pi * GRJAC( IVALJR( k ) )
+             END IF
+           END DO
+         END IF
+       END DO
+     END IF
+
+     IF ( .NOT. alllin ) THEN
+
+!  ======================= second-order terms =======================
+
+!  Now consider the product of P with the second order terms (that is, the
+!  2nd derivatives of the elements). 
+
+       IF ( skipg ) THEN 
+         DO j = nvar1, nvar2
+
+!  Consider each nonzero component of P separately
+
+           i = IVAR( j )
+           ipt = LINK_elem_uses_var( i )
+           IF ( ipt >= 0 ) THEN
+
+!  The index of the I-th component lies in the IEL-th nonlinear element
+
+             iell = LIST_elements( i )
+  300        CONTINUE
+
+!  Check to ensure that the IEL-th element has not already been used
+
+             IF ( ISWKSP( iell ) < nbprod ) THEN
+               ISWKSP( iell ) = nbprod
+               ig = ISLGRP( iell )
+               IF ( KNDOFG( ig ) /= 0 ) THEN
+                 iel = IELING( iell )
+                 nvarel = ISTAEV( iel + 1 ) - ISTAEV( iel )
+                 IF ( GXEQX( ig ) ) THEN
+                   gi = GSCALE( ig ) * ESCALE( iell )
+                 ELSE
+                   gi = GSCALE( ig ) * ESCALE( iell ) * GVALS2( ig )
+                 END IF
+                 IF ( INTREP( iel ) ) THEN
+
+!  The IEL-th element Hessian has an internal representation. Copy the
+!  elemental variables into W
+
+                   ll = ISTAEV( iel )
+                   W_el( : nvarel ) = P( IELVAR( ll : ll + nvarel - 1 ) )
+
+!  Find the internal variables
+
+                   nin = INTVAR( iel + 1 ) - INTVAR( iel )
+                   CALL RANGE ( iel, .FALSE., W_el, W_in, nvarel, nin,         &
+                                ITYPEE( iel ), nvarel, nin )
+
+!  Multiply the internal variables by the element Hessian and put the
+!  product in W_in. Consider the first column of the element Hessian
+
+                   ielhst = ISTADH( iel )
+                   pi = gi * W_in( 1 )
+                   H_in( : nin ) = pi * HUVALS( ISYMMH( 1, : nin ) + ielhst )
+
+!  Now consider the remaining columns of the element Hessian
+
+                   DO jcol = 2, nin
+                     pi = gi * W_in( jcol )
+                     IF ( pi /= 0.0_wp ) THEN
+                       H_in( : nin ) = H_in( : nin ) + pi *                    &
+                         HUVALS( ISYMMH( jcol, : nin ) + ielhst )
+                     END IF
+                   END DO
+
+!  Scatter the product back onto the elemental variables, W
+
+                   CALL RANGE ( iel, .TRUE., H_in, W_el, nvarel, nin,          &
+                                ITYPEE( iel ), nin, nvarel )
+
+!  Add the scattered product to Q
+
+                   ll = ISTAEV( iel )
+!DIR$ IVDEP
+                   DO ii = 1, nvarel
+                     l = IELVAR( ll )
+
+!  If Q has a nonzero in position L, store its index in INONNZ
+
+                     IF ( ABS( W_el( ii ) ) > smallest ) THEN
+                       IF ( IUSED( l ) == 0 ) THEN
+                         Q( l ) = W_el( ii )
+                         IUSED( l ) = 1
+                         nnonnz = nnonnz + 1
+                         INONNZ( nnonnz ) = l
+                       ELSE
+                         Q( l ) = Q( l ) + W_el( ii )
+                       END IF
+                     END IF
+                     ll = ll + 1
+                   END DO
+                 ELSE
+
+!  The IEL-th element Hessian has no internal representation
+
+                   lthvar = ISTAEV( iel ) - 1
+                   ielhst = ISTADH( iel )
+                   DO jcol = 1, nvarel
+                     pi = gi * P( IELVAR( lthvar + jcol ) )
+                     IF ( pi /= 0.0_wp ) THEN
+!DIR$ IVDEP      
+                       DO irow = 1, nvarel
+                         ijhess = ISYMMH( jcol, irow ) + ielhst
+
+!  If Q has a nonzero in position L, store its index in INONNZ
+
+                         IF ( ABS( HUVALS( ijhess ) ) > smallest ) THEN
+                           l = IELVAR( lthvar + irow )
+                           IF ( IUSED( l ) == 0 ) THEN
+                             Q( l ) = pi * HUVALS( ijhess )
+                             IUSED( l ) = 1
+                             nnonnz = nnonnz + 1
+                             INONNZ( nnonnz ) = l
+                           ELSE
+                              Q( l ) = Q( l ) + pi * HUVALS( ijhess )
+                           END IF
+                         END IF
+                       END DO
+                     END IF
+                   END DO
+                 END IF
+               END IF
+             END IF
+
+!  Check to see if there are any further elements whose variables
+!  include the I-th variable
+
+             IF ( ipt > 0 ) THEN
+               iell = LIST_elements( ipt )
+               ipt = LINK_elem_uses_var( ipt )
+               GO TO 300
+             END IF
+           END IF
+         END DO
+       ELSE
+         DO j = nvar1, nvar2
+
+!  Consider each nonzero component of P separately
+
+           i = IVAR( j )
+           ipt = LINK_elem_uses_var( i )
+           IF ( ipt >= 0 ) THEN
+
+!  The index of the I-th component lies in the IEL-th nonlinear element
+
+             iell = LIST_elements( i )
+  310        CONTINUE
+
+!  Check to ensure that the IEL-th element has not already been used
+
+             IF ( ISWKSP( iell ) < nbprod ) THEN
+               ISWKSP( iell ) = nbprod
+               iel = IELING( iell )
+               nvarel = ISTAEV( iel + 1 ) - ISTAEV( iel )
+               ig = ISLGRP( iell )
+               IF ( GXEQX( ig ) ) THEN
+                 gi = GSCALE( ig ) * ESCALE( iell )
+               ELSE
+                 gi = GSCALE( ig ) * ESCALE( iell ) * GVALS2( ig )
+               END IF
+               IF ( INTREP( iel ) ) THEN
+
+!  The IEL-th element Hessian has an internal representation. Copy the
+!  elemental variables into W
+
+                 ll = ISTAEV( iel )
+                 W_el( : nvarel ) = P( IELVAR( ll : ll + nvarel - 1 ) )
+
+!  Find the internal variables
+
+                 nin = INTVAR( iel + 1 ) - INTVAR( iel )
+                 CALL RANGE ( iel, .FALSE., W_el, W_in, nvarel, nin,           &
+                              ITYPEE( iel ), nvarel, nin )
+
+!  Multiply the internal variables by the element Hessian and put the
+!  product in W_in. Consider the first column of the element Hessian
+
+                 ielhst = ISTADH( iel )
+                 pi = gi * W_in( 1 )
+                 H_in( : nin ) = pi * HUVALS( ISYMMH( 1, : nin ) + ielhst )
+
+!  Now consider the remaining columns of the element Hessian
+
+                 DO jcol = 2, nin
+                   pi = gi * W_in( jcol )
+                   IF ( pi /= 0.0_wp ) THEN
+                     H_in( : nin ) = H_in( : nin ) + pi *                      &
+                       HUVALS( ISYMMH( jcol, : nin ) + ielhst )
+                   END IF
+                 END DO
+
+!  Scatter the product back onto the elemental variables, W
+
+                 CALL RANGE ( iel, .TRUE., H_in, W_el, nvarel, nin,            &
+                              ITYPEE( iel ), nin, nvarel )
+
+!  Add the scattered product to Q
+
+                 ll = ISTAEV( iel )
+!DIR$ IVDEP
+                 DO ii = 1, nvarel
+                   l = IELVAR( ll )
+
+!  If Q has a nonzero in position L, store its index in INONNZ
+
+                   IF ( ABS( W_el( ii ) ) > smallest ) THEN
+                     IF ( IUSED( l ) == 0 ) THEN
+                       Q( l ) = W_el( ii )
+                       IUSED( l ) = 1
+                       nnonnz = nnonnz + 1
+                       INONNZ( nnonnz ) = l
+                     ELSE
+                       Q( l ) = Q( l ) + W_el( ii )
+                     END IF
+                   END IF
+                   ll = ll + 1
+                 END DO
+               ELSE
+
+!  The IEL-th element Hessian has no internal representation
+
+                 lthvar = ISTAEV( iel ) - 1
+                 ielhst = ISTADH( iel )
+                 DO jcol = 1, nvarel
+                   pi = gi * P( IELVAR( lthvar + jcol ) )
+                   IF ( pi /= 0.0_wp ) THEN
+!DIR$ IVDEP    
+                     DO irow = 1, nvarel
+                       ijhess = ISYMMH( jcol, irow ) + ielhst
+
+!  If Q has a nonzero in position L, store its index in INONNZ
+
+                       IF ( ABS( HUVALS( ijhess ) ) > smallest ) THEN
+                         l = IELVAR( lthvar + irow )
+                         IF ( IUSED( l ) == 0 ) THEN
+                           Q( l ) = pi * HUVALS( ijhess )
+                           IUSED( l ) = 1
+                           nnonnz = nnonnz + 1
+                           INONNZ( nnonnz ) = l
+                         ELSE
+                            Q( l ) = Q( l ) + pi * HUVALS( ijhess )
+                         END IF
+                       END IF
+                     END DO
+                   END IF
+                 END DO
+               END IF
+             END IF
+
+!  Check to see if there are any further elements whose variables
+!  include the I-th variable
+
+             IF ( ipt > 0 ) THEN
+               iell = LIST_elements( ipt )
+               ipt = LINK_elem_uses_var( ipt )
+               GO TO 310
+             END IF
+           END IF
+         END DO
+       END IF
+     END IF
+
+!  ==================== the product is complete =======================
+
+!  Reset IUSED to zero
+
+     IUSED( INONNZ( : nnonnz ) ) = 0
+     RETURN
+
+!  end of subroutine CUTEST_hessian_times_sp_vector
+
+     END SUBROUTINE CUTEST_hessian_times_sp_vector
 
 ! C U T E S T _ a l l o c a t e _ a r r a y _ i n t e g e r  S U B R O U T I N E
 
