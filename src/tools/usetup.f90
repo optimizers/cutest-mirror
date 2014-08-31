@@ -185,7 +185,6 @@
       CHARACTER ( LEN = 10 ) :: pname
       CHARACTER ( LEN = 10 ) :: chtemp
       CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
-      EXTERNAL :: RANGE
 
       CALL CPU_TIME( data%sutime )
       data%out = out
@@ -624,7 +623,7 @@
              data%INTVAR, data%ISTADH, data%ICNA, data%ISTADA,                 &
              data%GXEQX, data%alllin, data%altriv, data%lfxi, data%lgxi,       &
              data%lhxi, data%lggfx, data%ldx, data%lgrjac, data%lnguvl,        &
-             data%lnhuvl, data%ntotin, data%maxsel, data%maxsin, RANGE, 0,     &
+             data%lnhuvl, data%ntotin, data%maxsel, data%maxsin, 0,            &
              out, work%io_buffer, data%l_link_e_u_v, work%FUVALS, data%lfuval, &
              data%LINK_elem_uses_var, work%ISWKSP, work%ISTAJC, data%ISTAGV,   &
              data%ISVGRP, data%ISLGRP, data%IGCOLJ, data%ISYMMH, work%W_ws,    &
