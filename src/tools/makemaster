@@ -67,8 +67,8 @@ UCUTESTS = $(LCS)(usetup.o) $(LCS)(udimen.o) $(LCS)(udimse.o) $(LCS)(udimsh.o) \
            $(LCS)(unames.o) $(LCS)(uvartype.o) $(LCS)(ufn.o) $(LCS)(ugr.o) \
            $(LCS)(uofg.o) $(LCS)(udh.o) $(LCS)(ugrdh.o) $(LCS)(ush.o) \
            $(LCS)(ushp.o) $(LCS)(ueh.o) $(LCS)(ugreh.o) $(LCS)(ugrsh.o) \
-           $(LCS)(uhprod.o) $(LCS)(ubandh.o) $(LCS)(ureport.o) \
-           $(LCS)(uterminate.o) 
+           $(LCS)(uhprod.o) $(LCS)(ushprod.o) $(LCS)(ubandh.o) \
+           $(LCS)(ureport.o) $(LCS)(uterminate.o) 
 
 CCUTESTS = $(LCS)(csetup.o) $(LCS)(cdimen.o) $(LCS)(cdimse.o) $(LCS)(cdimsh.o) \
            $(LCS)(cdimsj.o) $(LCS)(cnames.o) $(LCS)(cvartype.o) $(LCS)(cfn.o) \
@@ -78,7 +78,8 @@ CCUTESTS = $(LCS)(csetup.o) $(LCS)(cdimen.o) $(LCS)(cdimse.o) $(LCS)(cdimsh.o) \
            $(LCS)(ceh.o) $(LCS)(cgrdh.o) $(LCS)(cidh.o) $(LCS)(csh.o) \
            $(LCS)(cshc.o) $(LCS)(cshp.o) $(LCS)(cish.o) $(LCS)(cjprod.o) \
            $(LCS)(cstats.o) $(LCS)(csgr.o) $(LCS)(csgreh.o) $(LCS)(csgrsh.o) \
-           $(LCS)(chprod.o) $(LCS)(chcprod.o) $(LCS)(creport.o) \
+           $(LCS)(chprod.o) $(LCS)(chcprod.o) \
+           $(LCS)(cshprod.o) $(LCS)(cshcprod.o) $(LCS)(creport.o) \
            $(LCS)(connames.o) $(LCS)(cterminate.o) $(LCS)(lqp.o) 
 
 BASICD = $(LCD)(cutest.o) $(LCD)(pname.o) $(LCD)(probname.o) \
@@ -89,8 +90,8 @@ UCUTESTD = $(LCD)(usetup.o) $(LCD)(udimen.o) $(LCD)(udimse.o) $(LCD)(udimsh.o) \
            $(LCD)(unames.o) $(LCD)(uvartype.o) $(LCD)(ufn.o) $(LCD)(ugr.o) \
            $(LCD)(uofg.o) $(LCD)(udh.o) $(LCD)(ugrdh.o) $(LCD)(ush.o) \
            $(LCD)(ushp.o) $(LCD)(ueh.o) $(LCD)(ugreh.o) $(LCD)(ugrsh.o) \
-           $(LCD)(uhprod.o) $(LCD)(ubandh.o) $(LCD)(ureport.o) \
-           $(LCD)(uterminate.o) 
+           $(LCD)(uhprod.o) $(LCD)(ushprod.o) $(LCD)(ubandh.o) \
+           $(LCD)(ureport.o) $(LCD)(uterminate.o) 
           
 CCUTESTD = $(LCD)(csetup.o) $(LCD)(cdimen.o) $(LCD)(cdimse.o) $(LCD)(cdimsh.o) \
            $(LCD)(cdimsj.o) $(LCD)(cnames.o) $(LCD)(cvartype.o) $(LCD)(cfn.o) \
@@ -100,7 +101,8 @@ CCUTESTD = $(LCD)(csetup.o) $(LCD)(cdimen.o) $(LCD)(cdimse.o) $(LCD)(cdimsh.o) \
            $(LCD)(ceh.o) $(LCD)(cgrdh.o) $(LCD)(cidh.o) $(LCD)(csh.o) \
            $(LCD)(cshc.o) $(LCD)(cshp.o) $(LCD)(cish.o) $(LCD)(cjprod.o) \
            $(LCD)(cstats.o) $(LCD)(csgr.o) $(LCD)(csgreh.o) $(LCD)(csgrsh.o) \
-           $(LCD)(chprod.o) $(LCD)(chcprod.o) $(LCD)(creport.o) \
+           $(LCD)(chprod.o) $(LCD)(chcprod.o) \
+           $(LCD)(cshprod.o) $(LCD)(cshcprod.o) $(LCD)(creport.o) \
            $(LCD)(connames.o) $(LCD)(cterminate.o) $(LCD)(lqp.o) 
 
 CUTESTS = $(BASICS) $(UCUTESTS) $(CCUTESTS)
@@ -161,6 +163,7 @@ lapack: $(LLC)(lapack.o)
 
 # run spec-sheet example tests
 
+test_cutest: test_cutest_unconstrained test_cutest_constrained
 test_cutest_unconstrained: cutest
 	echo " Exhaustive test of unconstrained tools"
 	( cd ../test ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
@@ -213,6 +216,8 @@ $(LC)(cutest.o): ../tools/cutest.f90
 	$(RMARFILE) csgrsh.o
 	$(RMARFILE) chprod.o
 	$(RMARFILE) chcprod.o
+	$(RMARFILE) cshprod.o
+	$(RMARFILE) cshcprod.o
 	$(RMARFILE) creport.o
 	$(RMARFILE) cterminate.o
 	$(RMARFILE) usetup.o
@@ -232,6 +237,7 @@ $(LC)(cutest.o): ../tools/cutest.f90
 	$(RMARFILE) ugreh.o
 	$(RMARFILE) ugrsh.o
 	$(RMARFILE) uhprod.o
+	$(RMARFILE) ushprod.o
 	$(RMARFILE) ubandh.o
 	$(RMARFILE) ureport.o
 	$(RMARFILE) uterminate.o
@@ -627,6 +633,30 @@ $(LC)(chcprod.o): ../tools/chcprod.f90
 #	$(MVMODS)
 	@printf '[ OK ]\n'
 
+cshprod.o: $(LC)(cshprod.o)
+
+$(LC)(cshprod.o): ../tools/cshprod.f90
+	@printf ' %-9s %-15s\t\t' "Compiling" "cshprod" 
+	$(SED) -f $(SEDS) ../tools/cshprod.f90 > $(OBJ)/cshprod.f90
+	cd $(OBJ); $(FORTRAN) -o cshprod.o $(FFLAGS) cshprod.f90 \
+                || ( printf ' %-26s' "=> Disabling optimization " ; \
+                   $(FORTRAN) -o cshprod.o $(FFLAGSN) cshprod.f90 )
+	cd $(OBJ); $(ARR) cshprod.o; $(RM) cshprod.f90 cshprod.o
+#	$(MVMODS)
+	@printf '[ OK ]\n'
+
+cshcprod.o: $(LC)(cshcprod.o)
+
+$(LC)(cshcprod.o): ../tools/cshcprod.f90
+	@printf ' %-9s %-15s\t\t' "Compiling" "cshcprod" 
+	$(SED) -f $(SEDS) ../tools/cshcprod.f90 > $(OBJ)/cshcprod.f90
+	cd $(OBJ); $(FORTRAN) -o cshcprod.o $(FFLAGS) cshcprod.f90 \
+                || ( printf ' %-26s' "=> Disabling optimization " ; \
+                   $(FORTRAN) -o cshcprod.o $(FFLAGSN) cshcprod.f90 )
+	cd $(OBJ); $(ARR) cshcprod.o; $(RM) cshcprod.f90 cshcprod.o
+#	$(MVMODS)
+	@printf '[ OK ]\n'
+
 creport.o: $(LC)(creport.o)
 
 $(LC)(creport.o): ../tools/creport.f90
@@ -864,6 +894,18 @@ $(LC)(uhprod.o): ../tools/uhprod.f90
                 || ( printf ' %-26s' "=> Disabling optimization " ; \
                    $(FORTRAN) -o uhprod.o $(FFLAGSN) uhprod.f90 )
 	cd $(OBJ); $(ARR) uhprod.o; $(RM) uhprod.f90 uhprod.o
+#	$(MVMODS)
+	@printf '[ OK ]\n'
+
+ushprod.o: $(LC)(ushprod.o)
+
+$(LC)(ushprod.o): ../tools/ushprod.f90
+	@printf ' %-9s %-15s\t\t' "Compiling" "ushprod" 
+	$(SED) -f $(SEDS) ../tools/ushprod.f90 > $(OBJ)/ushprod.f90
+	cd $(OBJ); $(FORTRAN) -o ushprod.o $(FFLAGS) ushprod.f90 \
+                || ( printf ' %-26s' "=> Disabling optimization " ; \
+                   $(FORTRAN) -o ushprod.o $(FFLAGSN) ushprod.f90 )
+	cd $(OBJ); $(ARR) ushprod.o; $(RM) ushprod.f90 ushprod.o
 #	$(MVMODS)
 	@printf '[ OK ]\n'
 

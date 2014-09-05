@@ -22,7 +22,8 @@
                 CUTEST_assemble_hessian, CUTEST_size_sparse_hessian,           &
                 CUTEST_assemble_hessian_pattern,                               &
                 CUTEST_assemble_element_hessian, CUTEST_size_element_hessian,  &
-                CUTEST_hessian_times_vector, CUTEST_extend_array,              &
+                CUTEST_hessian_times_vector, CUTEST_hessian_times_sp_vector,   &
+                CUTEST_extend_array,                                           &
                 CUTEST_allocate_array, CUTEST_initialize_thread,               &
                 CUTEST_terminate_data, CUTEST_terminate_work
 
@@ -112,7 +113,9 @@
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISVGRP
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISLGRP
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: IGCOLJ
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: IVALJR
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: LINK_elem_uses_var
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: LIST_elements
         INTEGER, ALLOCATABLE, DIMENSION( : , : ) :: ISYMMH
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: A
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: B
@@ -134,7 +137,7 @@
 
       TYPE, PUBLIC :: CUTEST_work_type
         INTEGER :: nc2of, nc2og, nc2oh, nc2cf, nc2cg, nc2ch, nhvpr, pnc
-        INTEGER :: llink, lrowst, lpos, lused, lfilled
+        INTEGER :: llink, lrowst, lpos, lused, lfilled, nbprod
         INTEGER :: lh_row = lmin
         INTEGER :: lh_col = lmin
         INTEGER :: lh_val = lmin
@@ -150,7 +153,9 @@
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: FILLED
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: H_row
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: H_col
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: IUSED
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISWKSP
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: NZ_components_w
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: FUVALS
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: FT
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: GSCALE_used
@@ -182,11 +187,12 @@
       SUBROUTINE CUTEST_initialize_workspace(                                  &
                     n, ng, nel, ntotel, nvrels, nnza, nvargp,                  &
                     IELING, ISTADG, IELVAR, ISTAEV, INTVAR, ISTADH, ICNA,      &
-                    ISTADA, GXEQX, alllin, altriv, lfxi, lgxi,                 &
-                    lhxi, lggfx, ldx, lgrjac, lnguvl, lnhuvl, ntotin, maxsel,  &
-                    maxsin, iprint, out, buffer, l_link_e_u_v,                 &
-                    FUVALS, lfuval, LINK_elem_uses_var, ISWKSP, ISTAJC,        &
-                    ISTAGV, ISVGRP, ISLGRP, IGCOLJ, ISYMMH, W_ws, W_el, W_in,  &
+                    ISTADA, GXEQX, alllin, altriv, lfxi, lgxi, lhxi, lggfx,    &
+                    ldx, lgrjac, lnguvl, lnhuvl, ntotin, maxsel, maxsin,       &
+                    iprint, out, buffer, l_link_e_u_v, nbprod, FUVALS, lfuval, &
+                    LINK_elem_uses_var, ISWKSP, IUSED, ISTAJC, ISTAGV, ISVGRP, &
+                    ISLGRP, IGCOLJ, IVALJR, ISYMMH, LIST_elements,             &
+                    NZ_components_w, W_ws, W_el, W_in,                         &
                     H_el, H_in, status, alloc_status, bad_alloc, array_status )
 
 !  Compute the starting addresses for the partitions of the workspace array
@@ -222,17 +228,21 @@
 !   D u m m y   A r g u m e n t s  f o r   w o r k s p a c e 
 !-------------------------------------------------------------
 
-      INTEGER, INTENT( INOUT ) :: l_link_e_u_v, lfuval
+      INTEGER, INTENT( INOUT ) :: l_link_e_u_v, lfuval, nbprod
 
-      INTEGER, ALLOCATABLE, DIMENSION( : ) :: LINK_elem_uses_var
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: FUVALS
   
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISWKSP
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: IUSED
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISTAJC
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISTAGV
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISVGRP
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISLGRP
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: IGCOLJ
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: IVALJR
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: LIST_elements
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: LINK_elem_uses_var
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: NZ_components_w
       INTEGER, ALLOCATABLE, DIMENSION( : , : ) :: ISYMMH
   
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: W_ws
@@ -375,6 +385,20 @@
           bad_alloc = 'ISWKSP' ; GO TO 600 ; END IF
       END IF
 
+!  IUSED( j ), j = 1, ..., MAX( n, ng ) Will be used as workspace by
+!  the matrix-vector product subroutine hessian_times_sp_vector
+
+      reallocate = .TRUE.
+      IF ( ALLOCATED( IUSED ) ) THEN
+        IF ( SIZE( IUSED ) < MAX( n, ng ) ) THEN ; DEALLOCATE( IUSED )
+        ELSE ; reallocate = .FALSE. ; END IF
+      END IF
+      IF ( reallocate ) THEN 
+        ALLOCATE( IUSED( MAX( n, ng ) ), STAT = alloc_status )
+        IF ( alloc_status /= 0 ) THEN 
+          bad_alloc = 'IUSED' ; GO TO 600 ; END IF
+      END IF
+
 !  ISLGRP( j ), j = 1, ..., ntotel, will contain the number of the group
 !  which uses nonlinear element j
 
@@ -421,6 +445,20 @@
           bad_alloc = 'ISTAGV' ; GO TO 600 ; END IF
       END IF
 
+!  Allocate LIST_elements
+
+      reallocate = .TRUE.
+      IF ( ALLOCATED( LIST_elements ) ) THEN
+        IF ( SIZE( LIST_elements ) < l_link_e_u_v ) THEN 
+          DEALLOCATE( LIST_elements )
+        ELSE ; reallocate = .FALSE. ; END IF
+      END IF
+      IF ( reallocate ) THEN 
+        ALLOCATE( LIST_elements( l_link_e_u_v ), STAT = alloc_status )
+        IF ( alloc_status /= 0 ) THEN 
+          bad_alloc = 'LIST_e' ; GO TO 600 ; END IF
+      END IF
+
 !  determine which elements use each variable. Initialization
 
       IF ( .NOT. alllin ) THEN
@@ -430,6 +468,7 @@
 !  list is empty
 
         LINK_elem_uses_var( : n ) = - 1
+        LIST_elements( : n ) = - 1   ! needed for epcf90 debugging compiler
         iielts = n
 
 !  loop over the groups, considering each nonlinear element in turn
@@ -455,6 +494,7 @@
                 iielts = iielts + 1
                 LINK_elem_uses_var( ientry ) = iielts
                 LINK_elem_uses_var( iielts ) = 0
+                LIST_elements( iielts ) = i
               END IF
             ELSE
 
@@ -464,6 +504,7 @@
 !  been reached
 
               LINK_elem_uses_var( ientry ) = 0
+              LIST_elements( ientry ) = i
             END IF
           END DO
         END DO
@@ -471,9 +512,9 @@
 
 !  deallocate arrays that have no further use
 
-      DEALLOCATE( LINK_elem_uses_var, STAT = alloc_status )
-      IF ( alloc_status /= 0 ) THEN
-        bad_alloc = 'LINK_elem_uses_var' ; GO TO 600 ; END IF
+!      DEALLOCATE( LINK_elem_uses_var, STAT = alloc_status )
+!      IF ( alloc_status /= 0 ) THEN
+!        bad_alloc = 'LINK_elem_uses_var' ; GO TO 600 ; END IF
 
 !  set up symmetric addresses for the upper triangular storage
 !  schemes for the element hessians
@@ -650,7 +691,9 @@
 
 !  deallocate arrays that have no further use
 
-!     ISWKSP( : n ) = 0
+      nbprod = 0
+      ISWKSP( : lnwksp ) = 0
+      
 !     DEALLOCATE( ISWKSP, STAT = alloc_status )
 !     IF ( alloc_status /= 0 ) THEN
 !       bad_alloc = 'ISWKSP' ; GO TO 600 ; END IF
@@ -669,6 +712,21 @@
         IF ( alloc_status /= 0 ) THEN 
           bad_alloc = 'IGCOLJ' ; GO TO 600 ; END IF
       END IF
+
+!  IVALJR( j ), j = 1, ..., nvargp, will contain the positions in GRJAC of the
+!  nonzeros of the Jacobian of the groups corresponding to the variables as 
+!  ordered in ISVGRP( j )
+
+       reallocate = .TRUE.
+       IF ( ALLOCATED( IVALJR ) ) THEN
+         IF ( SIZE( IVALJR ) < nvargp ) THEN ; DEALLOCATE( IVALJR )
+         ELSE ; reallocate = .FALSE. ; END IF
+       END IF
+       IF ( reallocate ) THEN 
+         ALLOCATE( IVALJR( nvargp ), STAT = alloc_status )
+         IF ( alloc_status /= 0 ) THEN ; bad_alloc = 'IVALJR' ; GO TO 600
+         END IF
+       END IF
 
 !  set the starting addresses for the lists of nontrivial groups which use
 !  each variable in turn
@@ -696,6 +754,7 @@
 !  corresponding to each variable in the IG-TH group. Increment the starting
 !  address for the pointer to the next group using variable ISVGRP( i )
 
+            IVALJR( i ) = j
             ISTAJC( l ) = j + 1
           END DO
         END IF
@@ -708,10 +767,19 @@
       END DO
       ISTAJC( 1 ) = 1
 
+!  Initialize workspace values for subroutine hessian_times_sp_vector
+
+       IUSED( : MAX( n, ng ) ) = 0
+
 !  initialize general workspace arrays
 
       maxsin = MAX( 1, maxsin )
       maxsel = MAX( 1, maxsel )
+
+      IF ( ALLOCATED( NZ_components_w ) ) DEALLOCATE( NZ_components_w )
+      ALLOCATE( NZ_components_w( ng ), STAT = alloc_status )
+      IF ( alloc_status /= 0 ) THEN ; bad_alloc = 'NZ_com' ; GO TO 600
+      END IF
 
       IF ( ALLOCATED( W_ws ) ) DEALLOCATE( W_ws )
       ALLOCATE( W_ws( MAX( n, ng ) ), STAT = alloc_status )
@@ -2142,7 +2210,7 @@
                         lnguvl, lnhuvl, ISTADH, ICNA, ISTADA, INTVAR, IELVAR,  &
                         IELING, ISTADG, ISTAEV, ISTAGV, ISVGRP, ITYPEE,        &
                         A, GUVALS, HUVALS, GVALS2, GVALS3, GSCALE, ESCALE,     &
-                        GXEQX, INTREP, IW_asmbl, GRAD_el, W_el, W_in, H_el,    &
+                        GXEQX, INTREP, ISWKSP, GRAD_el, W_el, W_in, H_el,      &
                         H_in, RANGE, ne, lhe_ptr, lhe_row, lhe_val,            &
                         HE_row, HE_row_ptr, HE_val, HE_val_ptr, BYROWS,        &
                         iprint, out, error, buffer, alloc_status, bad_alloc,   &
@@ -2190,7 +2258,7 @@
       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( ntotel ) :: ESCALE
       LOGICAL, INTENT( IN ), DIMENSION( ng  ) :: GXEQX
       LOGICAL, INTENT( IN ), DIMENSION( nel ) :: INTREP
-      INTEGER, INTENT( OUT ), DIMENSION( : ) :: IW_asmbl
+      INTEGER, INTENT( OUT ), DIMENSION( : ) :: ISWKSP
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( : ) :: GRAD_el
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( : ) :: W_el
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( : ) :: W_in
@@ -2391,7 +2459,7 @@
 
         nvarg = HE_row_ptr( ne + 1 ) - HE_row_ptr( ne )
         DO i = HE_row_ptr( ne ), HE_row_ptr( ne + 1 ) - 1
-          IW_asmbl( HE_row( i ) ) = i + 1 - HE_row_ptr( ne )
+          ISWKSP( HE_row( i ) ) = i + 1 - HE_row_ptr( ne )
         END DO
 
 !  see if the group has any nonlinear elements
@@ -2405,7 +2473,7 @@
           ihnext = ielh
           scalee = ESCALE( iell )
           DO l = listvs, listve
-            j = IW_asmbl( IELVAR( l ) )
+            j = ISWKSP( IELVAR( l ) )
 
 !  the iel-th element has an internal representation. Compute the j-th column 
 !  of the element Hessian matrix
@@ -2453,7 +2521,7 @@
 
             END IF
             DO k = listvs, l
-              i = IW_asmbl( IELVAR( k ) )
+              i = ISWKSP( IELVAR( k ) )
 
 !  only the upper triangle of the matrix is stored
 
@@ -2485,6 +2553,7 @@
           END DO
         END DO
       END DO
+      ISWKSP = 0
 
 ! ----------------------------------------
 !  for debugging, print the nonzero values
@@ -2813,14 +2882,14 @@
 !-  C U T E S T _ h e s s i a n _ t i m e s _ s p _ v e c t o r  SUBROUTINE -
 
      SUBROUTINE CUTEST_hessian_times_sp_vector(                                &
-                      n , ng, nel   , ntotel, nvrels, nvargp,  nfree , nvar1,  &
-                      nvar2 , nnonnz, nbprod, alllin, IVAR  , ISTAEV, ISTADH,  &
-                      INTVAR, IELING, IELVAR, ISWKSP, INONNZ, P , Q , GVALS2,  &
-                      GVALS3, GRJAC , GSCALE, ESCALE, HUVALS, lhuval, GXEQX ,  &
+                      n, ng, nel, ntotel, nvrels, nvargp, nvar1, nvar2,        &
+                      nnonnz, nbprod, alllin, IVAR, ISTAEV, ISTADH,            &
+                      INTVAR, IELING, IELVAR, ISWKSP, INONNZ, P, Q, GVALS2,    &
+                      GVALS3, GRJAC, GSCALE, ESCALE, HUVALS, lhuval, GXEQX,    &
                       INTREP, IGCOLJ, ISLGRP, ISVGRP, ISTAGV, IVALJR,          &
                       ITYPEE, ISYMMH, ISTAJC, IUSED, LIST_elements,            &
-                      LINK_elem_uses_var, NZ_comp_w, AP, W_el, W_in, H_in,     &
-                      RANGE, skipg, KNDOFG )
+                      LINK_elem_uses_var, NZ_components_w,                     &
+                      AP, W_el, W_in, H_in, RANGE )
 
 !  ----------------------------------------------------------------------
 !  evaluate Q, the product of the hessian of a groups partially separable
@@ -2843,11 +2912,10 @@
 !   D u m m y   A r g u m e n t s
 !-----------------------------------------------
 
-     INTEGER, INTENT( IN    ) :: n , ng, nel   , ntotel, nvrels, nfree
-     INTEGER, INTENT( IN    ) :: nvar1 , nvar2 , nbprod
-     INTEGER, INTENT( IN    ) :: nvargp, lhuval
+     INTEGER, INTENT( IN    ) :: n, ng, nel, ntotel, nvrels, nvar1, nvar2
+     INTEGER, INTENT( IN    ) :: nbprod, nvargp, lhuval
      INTEGER, INTENT( INOUT ) :: nnonnz
-     LOGICAL, INTENT( IN    ) :: alllin, skipg
+     LOGICAL, INTENT( IN    ) :: alllin
      INTEGER, INTENT( IN    ), DIMENSION( n ) :: IVAR
      INTEGER, INTENT( IN    ), DIMENSION( nel + 1 ) :: ISTAEV, ISTADH
      INTEGER, INTENT( IN    ), DIMENSION( nel + 1 ) :: INTVAR
@@ -2877,13 +2945,11 @@
      INTEGER, INTENT( IN ), DIMENSION( : , : ) :: ISYMMH
 
      INTEGER, INTENT( IN ), DIMENSION( : ) :: LINK_elem_uses_var
-     INTEGER, INTENT( OUT ), DIMENSION( : ) :: NZ_comp_w
+     INTEGER, INTENT( OUT ), DIMENSION( : ) :: NZ_components_w
      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( : ) :: AP
      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( : ) :: W_el
      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( : ) :: W_in
      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( : ) :: H_in
-
-     INTEGER, INTENT( IN ), OPTIONAL, DIMENSION( ng ) :: KNDOFG
 
 !-----------------------------------------------
 !   I n t e r f a c e   B l o c k s
@@ -2904,7 +2970,7 @@
 !-----------------------------------------------
 
      INTEGER :: i, iel, ig, ii, ipt, j, irow  , jcol  , ijhess , lthvar
-     INTEGER :: iell  , nin, k, l , ll, nvarel, ielhst, nnz_comp_w
+     INTEGER :: iell  , nin, k, l , ll, nvarel, ielhst, nnz_components_w
      REAL ( KIND = wp ) :: pi, gi, smallest
 
      smallest = TINY( 1.0_wp )
@@ -2915,11 +2981,10 @@
 !  sum of rank-one first order terms, A(trans) * GVALS3 * A. A is
 !  stored by both rows and columns. 
 
-     nnz_comp_w = 0
-     Q( IVAR( : nfree ) ) = 0.0_wp
+     nnz_components_w = 0
 
 !  Form the matrix-vector product W = A * P, using the column-wise
-!  storage of A. Keep track of the nonzero components of W in NZ_comp_w.
+!  storage of A. Keep track of the nonzero components of W in NZ_components_w.
 !  Only store components corresponding to non trivial groups
 
      DO j = nvar1, nvar2
@@ -2931,8 +2996,8 @@
          IF ( IUSED( ig ) == 0 ) THEN
            AP( ig ) = pi * GRJAC( k )
            IUSED( ig ) = 1
-           nnz_comp_w = nnz_comp_w + 1
-           NZ_comp_w( nnz_comp_w ) = ig
+           nNz_components_w = nnz_components_w + 1
+           NZ_components_w( nnz_components_w ) = ig
          ELSE
            AP( ig ) = AP( ig ) + pi * GRJAC( k )
          END IF
@@ -2941,64 +3006,37 @@
 
 !  Reset IUSED to zero
 
-     IUSED( NZ_comp_w( : nnz_comp_w ) ) = 0
+     IUSED( NZ_components_w( : nnz_components_w ) ) = 0
 
 !  Form the matrix-vector product Q = A( TRANS ) * W, using the row-wise
 !  storage of A
 
      nnonnz = 0
-     IF ( skipg ) THEN
-       DO j = 1, nnz_comp_w
-         ig = NZ_comp_w( j )
-         IF ( KNDOFG( ig ) == 0 ) CYCLE
-         IF ( .NOT. GXEQX( ig ) ) THEN
+
+     DO j = 1, nnz_components_w
+       ig = NZ_components_w( j )
+       IF ( .NOT. GXEQX( ig ) ) THEN
 
 !  If group ig is non trivial, there are contributions from its rank-one term
 
-           pi = GSCALE( ig ) * GVALS3( ig ) * AP( ig )
+         pi = GSCALE( ig ) * GVALS3( ig ) * AP( ig )
 !DIR$ IVDEP
-           DO k = ISTAGV( ig ), ISTAGV( ig + 1 ) - 1
-             l = ISVGRP( k )
+         DO k = ISTAGV( ig ), ISTAGV( ig + 1 ) - 1
+           l = ISVGRP( k )
 
 !  If Q has a nonzero in position L, store its index in INONNZ
 
-             IF ( IUSED( l ) == 0 ) THEN
-               Q( l ) = pi * GRJAC( IVALJR( k ) )
-               IUSED( l ) = 1
-               nnonnz = nnonnz + 1
-               INONNZ( nnonnz ) = l
-             ELSE
-               Q( l ) = Q( l ) + pi * GRJAC( IVALJR( k ) )
-             END IF
-           END DO
-         END IF
-       END DO
-     ELSE
-       DO j = 1, nnz_comp_w
-         ig = NZ_comp_w( j )
-         IF ( .NOT. GXEQX( ig ) ) THEN
-
-!  If group ig is non trivial, there are contributions from its rank-one term
-
-           pi = GSCALE( ig ) * GVALS3( ig ) * AP( ig )
-!DIR$ IVDEP
-           DO k = ISTAGV( ig ), ISTAGV( ig + 1 ) - 1
-             l = ISVGRP( k )
-
-!  If Q has a nonzero in position L, store its index in INONNZ
-
-             IF ( IUSED( l ) == 0 ) THEN
-               Q( l ) = pi * GRJAC( IVALJR( k ) )
-               IUSED( l ) = 1
-               nnonnz = nnonnz + 1
-               INONNZ( nnonnz ) = l
-             ELSE
-               Q( l ) = Q( l ) + pi * GRJAC( IVALJR( k ) )
-             END IF
-           END DO
-         END IF
-       END DO
-     END IF
+           IF ( IUSED( l ) == 0 ) THEN
+             Q( l ) = pi * GRJAC( IVALJR( k ) )
+             IUSED( l ) = 1
+             nnonnz = nnonnz + 1
+             INONNZ( nnonnz ) = l
+           ELSE
+             Q( l ) = Q( l ) + pi * GRJAC( IVALJR( k ) )
+           END IF
+         END DO
+       END IF
+     END DO
 
      IF ( .NOT. alllin ) THEN
 
@@ -3007,259 +3045,130 @@
 !  Now consider the product of P with the second order terms (that is, the
 !  2nd derivatives of the elements). 
 
-       IF ( skipg ) THEN 
-         DO j = nvar1, nvar2
+       DO j = nvar1, nvar2
 
 !  Consider each nonzero component of P separately
 
-           i = IVAR( j )
-           ipt = LINK_elem_uses_var( i )
-           IF ( ipt >= 0 ) THEN
+         i = IVAR( j )
+         ipt = LINK_elem_uses_var( i )
+         IF ( ipt >= 0 ) THEN
 
 !  The index of the I-th component lies in the IEL-th nonlinear element
 
-             iell = LIST_elements( i )
-  300        CONTINUE
+           iell = LIST_elements( i )
+  310      CONTINUE
 
 !  Check to ensure that the IEL-th element has not already been used
 
-             IF ( ISWKSP( iell ) < nbprod ) THEN
-               ISWKSP( iell ) = nbprod
-               ig = ISLGRP( iell )
-               IF ( KNDOFG( ig ) /= 0 ) THEN
-                 iel = IELING( iell )
-                 nvarel = ISTAEV( iel + 1 ) - ISTAEV( iel )
-                 IF ( GXEQX( ig ) ) THEN
-                   gi = GSCALE( ig ) * ESCALE( iell )
-                 ELSE
-                   gi = GSCALE( ig ) * ESCALE( iell ) * GVALS2( ig )
-                 END IF
-                 IF ( INTREP( iel ) ) THEN
+           IF ( ISWKSP( iell ) < nbprod ) THEN
+             ISWKSP( iell ) = nbprod
+             iel = IELING( iell )
+             nvarel = ISTAEV( iel + 1 ) - ISTAEV( iel )
+             ig = ISLGRP( iell )
+             IF ( GXEQX( ig ) ) THEN
+               gi = GSCALE( ig ) * ESCALE( iell )
+             ELSE
+               gi = GSCALE( ig ) * ESCALE( iell ) * GVALS2( ig )
+             END IF
+             IF ( INTREP( iel ) ) THEN
 
 !  The IEL-th element Hessian has an internal representation. Copy the
 !  elemental variables into W
 
-                   ll = ISTAEV( iel )
-                   W_el( : nvarel ) = P( IELVAR( ll : ll + nvarel - 1 ) )
+               ll = ISTAEV( iel )
+               W_el( : nvarel ) = P( IELVAR( ll : ll + nvarel - 1 ) )
 
 !  Find the internal variables
 
-                   nin = INTVAR( iel + 1 ) - INTVAR( iel )
-                   CALL RANGE ( iel, .FALSE., W_el, W_in, nvarel, nin,         &
-                                ITYPEE( iel ), nvarel, nin )
+               nin = INTVAR( iel + 1 ) - INTVAR( iel )
+               CALL RANGE ( iel, .FALSE., W_el, W_in, nvarel, nin,             &
+                            ITYPEE( iel ), nvarel, nin )
 
 !  Multiply the internal variables by the element Hessian and put the
 !  product in W_in. Consider the first column of the element Hessian
 
-                   ielhst = ISTADH( iel )
-                   pi = gi * W_in( 1 )
-                   H_in( : nin ) = pi * HUVALS( ISYMMH( 1, : nin ) + ielhst )
+               ielhst = ISTADH( iel )
+               pi = gi * W_in( 1 )
+               H_in( : nin ) = pi * HUVALS( ISYMMH( 1, : nin ) + ielhst )
 
 !  Now consider the remaining columns of the element Hessian
 
-                   DO jcol = 2, nin
-                     pi = gi * W_in( jcol )
-                     IF ( pi /= 0.0_wp ) THEN
-                       H_in( : nin ) = H_in( : nin ) + pi *                    &
-                         HUVALS( ISYMMH( jcol, : nin ) + ielhst )
-                     END IF
-                   END DO
+               DO jcol = 2, nin
+                 pi = gi * W_in( jcol )
+                 IF ( pi /= 0.0_wp ) THEN
+                   H_in( : nin ) = H_in( : nin ) + pi *                        &
+                     HUVALS( ISYMMH( jcol, : nin ) + ielhst )
+                 END IF
+               END DO
 
 !  Scatter the product back onto the elemental variables, W
 
-                   CALL RANGE ( iel, .TRUE., H_in, W_el, nvarel, nin,          &
-                                ITYPEE( iel ), nin, nvarel )
+               CALL RANGE ( iel, .TRUE., H_in, W_el, nvarel, nin,              &
+                            ITYPEE( iel ), nin, nvarel )
 
 !  Add the scattered product to Q
 
-                   ll = ISTAEV( iel )
+               ll = ISTAEV( iel )
 !DIR$ IVDEP
-                   DO ii = 1, nvarel
-                     l = IELVAR( ll )
+               DO ii = 1, nvarel
+                 l = IELVAR( ll )
 
 !  If Q has a nonzero in position L, store its index in INONNZ
 
-                     IF ( ABS( W_el( ii ) ) > smallest ) THEN
+                 IF ( ABS( W_el( ii ) ) > smallest ) THEN
+                   IF ( IUSED( l ) == 0 ) THEN
+                     Q( l ) = W_el( ii )
+                     IUSED( l ) = 1
+                     nnonnz = nnonnz + 1
+                     INONNZ( nnonnz ) = l
+                   ELSE
+                     Q( l ) = Q( l ) + W_el( ii )
+                   END IF
+                 END IF
+                 ll = ll + 1
+               END DO
+
+!  The IEL-th element Hessian has no internal representation
+
+             ELSE
+               lthvar = ISTAEV( iel ) - 1
+               ielhst = ISTADH( iel )
+               DO jcol = 1, nvarel
+                 pi = gi * P( IELVAR( lthvar + jcol ) )
+                 IF ( pi /= 0.0_wp ) THEN
+!DIR$ IVDEP    
+                   DO irow = 1, nvarel
+                     ijhess = ISYMMH( jcol, irow ) + ielhst
+
+!  If Q has a nonzero in position L, store its index in INONNZ
+
+                     IF ( ABS( HUVALS( ijhess ) ) > smallest ) THEN
+                       l = IELVAR( lthvar + irow )
                        IF ( IUSED( l ) == 0 ) THEN
-                         Q( l ) = W_el( ii )
+                         Q( l ) = pi * HUVALS( ijhess )
                          IUSED( l ) = 1
                          nnonnz = nnonnz + 1
                          INONNZ( nnonnz ) = l
                        ELSE
-                         Q( l ) = Q( l ) + W_el( ii )
+                          Q( l ) = Q( l ) + pi * HUVALS( ijhess )
                        END IF
-                     END IF
-                     ll = ll + 1
-                   END DO
-                 ELSE
-
-!  The IEL-th element Hessian has no internal representation
-
-                   lthvar = ISTAEV( iel ) - 1
-                   ielhst = ISTADH( iel )
-                   DO jcol = 1, nvarel
-                     pi = gi * P( IELVAR( lthvar + jcol ) )
-                     IF ( pi /= 0.0_wp ) THEN
-!DIR$ IVDEP      
-                       DO irow = 1, nvarel
-                         ijhess = ISYMMH( jcol, irow ) + ielhst
-
-!  If Q has a nonzero in position L, store its index in INONNZ
-
-                         IF ( ABS( HUVALS( ijhess ) ) > smallest ) THEN
-                           l = IELVAR( lthvar + irow )
-                           IF ( IUSED( l ) == 0 ) THEN
-                             Q( l ) = pi * HUVALS( ijhess )
-                             IUSED( l ) = 1
-                             nnonnz = nnonnz + 1
-                             INONNZ( nnonnz ) = l
-                           ELSE
-                              Q( l ) = Q( l ) + pi * HUVALS( ijhess )
-                           END IF
-                         END IF
-                       END DO
                      END IF
                    END DO
                  END IF
-               END IF
+               END DO
              END IF
+           END IF
 
 !  Check to see if there are any further elements whose variables
 !  include the I-th variable
 
-             IF ( ipt > 0 ) THEN
-               iell = LIST_elements( ipt )
-               ipt = LINK_elem_uses_var( ipt )
-               GO TO 300
-             END IF
+           IF ( ipt > 0 ) THEN
+             iell = LIST_elements( ipt )
+             ipt = LINK_elem_uses_var( ipt )
+             GO TO 310
            END IF
-         END DO
-       ELSE
-         DO j = nvar1, nvar2
-
-!  Consider each nonzero component of P separately
-
-           i = IVAR( j )
-           ipt = LINK_elem_uses_var( i )
-           IF ( ipt >= 0 ) THEN
-
-!  The index of the I-th component lies in the IEL-th nonlinear element
-
-             iell = LIST_elements( i )
-  310        CONTINUE
-
-!  Check to ensure that the IEL-th element has not already been used
-
-             IF ( ISWKSP( iell ) < nbprod ) THEN
-               ISWKSP( iell ) = nbprod
-               iel = IELING( iell )
-               nvarel = ISTAEV( iel + 1 ) - ISTAEV( iel )
-               ig = ISLGRP( iell )
-               IF ( GXEQX( ig ) ) THEN
-                 gi = GSCALE( ig ) * ESCALE( iell )
-               ELSE
-                 gi = GSCALE( ig ) * ESCALE( iell ) * GVALS2( ig )
-               END IF
-               IF ( INTREP( iel ) ) THEN
-
-!  The IEL-th element Hessian has an internal representation. Copy the
-!  elemental variables into W
-
-                 ll = ISTAEV( iel )
-                 W_el( : nvarel ) = P( IELVAR( ll : ll + nvarel - 1 ) )
-
-!  Find the internal variables
-
-                 nin = INTVAR( iel + 1 ) - INTVAR( iel )
-                 CALL RANGE ( iel, .FALSE., W_el, W_in, nvarel, nin,           &
-                              ITYPEE( iel ), nvarel, nin )
-
-!  Multiply the internal variables by the element Hessian and put the
-!  product in W_in. Consider the first column of the element Hessian
-
-                 ielhst = ISTADH( iel )
-                 pi = gi * W_in( 1 )
-                 H_in( : nin ) = pi * HUVALS( ISYMMH( 1, : nin ) + ielhst )
-
-!  Now consider the remaining columns of the element Hessian
-
-                 DO jcol = 2, nin
-                   pi = gi * W_in( jcol )
-                   IF ( pi /= 0.0_wp ) THEN
-                     H_in( : nin ) = H_in( : nin ) + pi *                      &
-                       HUVALS( ISYMMH( jcol, : nin ) + ielhst )
-                   END IF
-                 END DO
-
-!  Scatter the product back onto the elemental variables, W
-
-                 CALL RANGE ( iel, .TRUE., H_in, W_el, nvarel, nin,            &
-                              ITYPEE( iel ), nin, nvarel )
-
-!  Add the scattered product to Q
-
-                 ll = ISTAEV( iel )
-!DIR$ IVDEP
-                 DO ii = 1, nvarel
-                   l = IELVAR( ll )
-
-!  If Q has a nonzero in position L, store its index in INONNZ
-
-                   IF ( ABS( W_el( ii ) ) > smallest ) THEN
-                     IF ( IUSED( l ) == 0 ) THEN
-                       Q( l ) = W_el( ii )
-                       IUSED( l ) = 1
-                       nnonnz = nnonnz + 1
-                       INONNZ( nnonnz ) = l
-                     ELSE
-                       Q( l ) = Q( l ) + W_el( ii )
-                     END IF
-                   END IF
-                   ll = ll + 1
-                 END DO
-               ELSE
-
-!  The IEL-th element Hessian has no internal representation
-
-                 lthvar = ISTAEV( iel ) - 1
-                 ielhst = ISTADH( iel )
-                 DO jcol = 1, nvarel
-                   pi = gi * P( IELVAR( lthvar + jcol ) )
-                   IF ( pi /= 0.0_wp ) THEN
-!DIR$ IVDEP    
-                     DO irow = 1, nvarel
-                       ijhess = ISYMMH( jcol, irow ) + ielhst
-
-!  If Q has a nonzero in position L, store its index in INONNZ
-
-                       IF ( ABS( HUVALS( ijhess ) ) > smallest ) THEN
-                         l = IELVAR( lthvar + irow )
-                         IF ( IUSED( l ) == 0 ) THEN
-                           Q( l ) = pi * HUVALS( ijhess )
-                           IUSED( l ) = 1
-                           nnonnz = nnonnz + 1
-                           INONNZ( nnonnz ) = l
-                         ELSE
-                            Q( l ) = Q( l ) + pi * HUVALS( ijhess )
-                         END IF
-                       END IF
-                     END DO
-                   END IF
-                 END DO
-               END IF
-             END IF
-
-!  Check to see if there are any further elements whose variables
-!  include the I-th variable
-
-             IF ( ipt > 0 ) THEN
-               iell = LIST_elements( ipt )
-               ipt = LINK_elem_uses_var( ipt )
-               GO TO 310
-             END IF
-           END IF
-         END DO
-       END IF
+         END IF
+       END DO
      END IF
 
 !  ==================== the product is complete =======================
@@ -3933,6 +3842,12 @@
          bad_alloc = 'data%IGCOLJ' ; GO TO 600 ; END IF
      END IF
 
+     IF ( ALLOCATED( data%IVALJR ) ) THEN
+       DEALLOCATE( data%IVALJR, STAT = alloc_status )
+       IF ( alloc_status /= 0 ) THEN
+         bad_alloc = 'data%IVALJR' ; GO TO 600 ; END IF
+     END IF
+
      IF ( ALLOCATED( data%LINK_elem_uses_var ) ) THEN
        DEALLOCATE( data%LINK_elem_uses_var, STAT = alloc_status )
        IF ( alloc_status /= 0 ) THEN
@@ -4101,6 +4016,18 @@
        DEALLOCATE( work%ISWKSP, STAT = alloc_status )
        IF ( alloc_status /= 0 ) THEN
          bad_alloc = 'work%ISWKSP' ; GO TO 600 ; END IF
+     END IF
+
+     IF ( ALLOCATED( work%IUSED ) ) THEN
+       DEALLOCATE( work%IUSED, STAT = alloc_status )
+       IF ( alloc_status /= 0 ) THEN
+         bad_alloc = 'work%IUSED' ; GO TO 600 ; END IF
+     END IF
+
+     IF ( ALLOCATED( work%NZ_components_w ) ) THEN
+       DEALLOCATE( work%NZ_components_w, STAT = alloc_status )
+       IF ( alloc_status /= 0 ) THEN
+         bad_alloc = 'work%NZ_components_w' ; GO TO 600 ; END IF
      END IF
 
      IF ( ALLOCATED( work%GSCALE_used ) ) THEN

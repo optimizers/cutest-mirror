@@ -470,6 +470,9 @@
             END DO
           END IF
         END DO
+
+        work%nbprod = 0
+        work%ISWKSP( : data%n ) = 0
       END IF
 
 !  update the counters for the report tool

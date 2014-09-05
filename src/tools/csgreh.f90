@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.1 - 22/08/2013 AT 13:25 GMT.
+! THIS VERSION: CUTEST 1.2 - 05/09/2014 AT 08:15 GMT.
 
 !-*-*-*-*-  C U T E S T    C I N T _ C S G R E H    S U B R O U T I N E  -*-*-*-
 
