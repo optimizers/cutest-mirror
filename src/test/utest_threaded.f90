@@ -260,13 +260,15 @@
       CALL CUTEST_ubandh_threaded( status, n, X, nsemib, H_band, lbandh,       &
                                    maxsbw, thread )
       IF ( status /= 0 ) GO to 900
-      CALL WRITE_H_BAND( out, n, lbandh, H_band, nsemib, maxsbw )
+      CALL WRITE_H_BAND( out, n, lbandh, H_band, nsemib )
+!     CALL WRITE_H_BAND( out, n, lbandh, H_band, nsemib, maxsbw )
       goth = .TRUE.
       WRITE( out, "( ' Call CUTEST_ubandh with goth = .TRUE.' )" )
       CALL CUTEST_ubandh_threaded( status, n, X, nsemib, H_band, lbandh,       &
                                    maxsbw, thread )
       IF ( status /= 0 ) GO to 900
-      CALL WRITE_H_BAND( out, n, lbandh, H_band, nsemib, maxsbw )
+      CALL WRITE_H_BAND( out, n, lbandh, H_band, nsemib )
+!     CALL WRITE_H_BAND( out, n, lbandh, H_band, nsemib, maxsbw )
 
 !  calls and time report
 
@@ -465,8 +467,10 @@
       END DO
       END SUBROUTINE WRITE_RESULT
 
-      SUBROUTINE WRITE_H_BAND( out, n, lbandh, H_band, nsemib, maxsbw )
-      INTEGER :: n, lbandh, maxsbw, out
+!     SUBROUTINE WRITE_H_BAND( out, n, lbandh, H_band, nsemib, maxsbw )
+      SUBROUTINE WRITE_H_BAND( out, n, lbandh, H_band, nsemib )
+      INTEGER :: n, lbandh, out
+!     INTEGER :: maxsbw
       REAL ( KIND = wp ), DIMENSION( 0 : lbandh, n ):: H_band
       INTEGER :: i, j
       WRITE( out, "( ' * H(band)' )" )

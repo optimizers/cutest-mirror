@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.1 - 22/08/2013 AT 11:30 GMT.
+! THIS VERSION: CUTEST 1.2 - 05/09/2014 AT 08:00 GMT.
 
 !-*-*-*-*-  C U T E S T  C I N T _  C S E T U P    S U B R O U T I N E  -*-*-*-
 
@@ -1041,10 +1041,12 @@
              data%GXEQX, data%alllin, data%altriv, data%lfxi, data%lgxi,       &
              data%lhxi, data%lggfx, data%ldx, data%lgrjac, data%lnguvl,        &
              data%lnhuvl, data%ntotin, data%maxsel, data%maxsin, 0,            &
-             out, work%io_buffer, data%l_link_e_u_v, work%FUVALS, data%lfuval, &
-             data%LINK_elem_uses_var, work%ISWKSP, work%ISTAJC, data%ISTAGV,   &
-             data%ISVGRP, data%ISLGRP, data%IGCOLJ, data%ISYMMH, work%W_ws,    &
-             work%W_el, work%W_in, work%H_el, work%H_in,                       &
+             out, work%io_buffer, data%l_link_e_u_v, work%nbprod,              &
+             work%FUVALS, data%lfuval, data%LINK_elem_uses_var,                &
+             work%ISWKSP, work%IUSED, work%ISTAJC, data%ISTAGV, data%ISVGRP,   &
+             data%ISLGRP, data%IGCOLJ, data%IVALJR, data%ISYMMH,               &
+             data%LIST_elements, work%NZ_components_w,                         &
+             work%W_ws, work%W_el, work%W_in, work%H_el, work%H_in,            &
              status, alloc_status, bad_alloc, work%array_status )
       IF ( status /= 0 ) RETURN
 
