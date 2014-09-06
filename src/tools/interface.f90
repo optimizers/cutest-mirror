@@ -170,6 +170,19 @@
        REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: RESULT
        END SUBROUTINE CUTEST_uhprod
        
+       SUBROUTINE CUTEST_ushprod( status, n, goth, X,                          &
+                                  nnz_vector, INDEX_nz_vector, VECTOR,         &
+                                  nnz_result, INDEX_nz_result, RESULT )
+       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+       INTEGER, INTENT( IN ) :: n, nnz_vector
+       INTEGER, INTENT( OUT ) :: status, nnz_result
+       LOGICAL, INTENT( IN ) :: goth
+       INTEGER, DIMENSION( nnz_vector ), INTENT( IN ) :: INDEX_nz_vector
+       INTEGER, DIMENSION( n ), INTENT( OUT ) :: INDEX_nz_result
+       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X, VECTOR
+       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: RESULT
+       END SUBROUTINE CUTEST_ushprod
+
        SUBROUTINE CUTEST_ubandh( cutest_status, n, X, nsemib, BANDH, lbandh,   &
                                  maxsbw )
        INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
@@ -483,6 +496,20 @@
        REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: RESULT
        END SUBROUTINE CUTEST_chprod
   
+       SUBROUTINE CUTEST_cshprod( status, n, m, goth, X, Y,                    &
+                                  nnz_vector, INDEX_nz_vector, VECTOR,         &
+                                  nnz_result, INDEX_nz_result, RESULT )
+       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+       INTEGER, INTENT( IN ) :: n, m, nnz_vector
+       INTEGER, INTENT( OUT ) :: status, nnz_result
+       LOGICAL, INTENT( IN ) :: goth
+       INTEGER, DIMENSION( nnz_vector ), INTENT( IN ) :: INDEX_nz_vector
+       INTEGER, DIMENSION( n ), INTENT( OUT ) :: INDEX_nz_result
+       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X, VECTOR
+       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( m ) :: Y
+       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: RESULT
+       END SUBROUTINE CUTEST_cshprod
+
        SUBROUTINE CUTEST_chcprod( cutest_status, n, m, goth, X, Y, P, RESULT )
        INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
        INTEGER, INTENT( IN ) :: n, m
@@ -493,6 +520,20 @@
        REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: RESULT
        END SUBROUTINE CUTEST_chcprod
   
+       SUBROUTINE CUTEST_cshcprod( status, n, m, goth, X, Y,                   &
+                                   nnz_vector, INDEX_nz_vector, VECTOR,        &
+                                   nnz_result, INDEX_nz_result, RESULT )
+       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+       INTEGER, INTENT( IN ) :: n, m, nnz_vector
+       INTEGER, INTENT( OUT ) :: status, nnz_result
+       LOGICAL, INTENT( IN ) :: goth
+       INTEGER, DIMENSION( nnz_vector ), INTENT( IN ) :: INDEX_nz_vector
+       INTEGER, DIMENSION( n ), INTENT( OUT ) :: INDEX_nz_result
+       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X, VECTOR
+       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( m ) :: Y
+       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: RESULT
+       END SUBROUTINE CUTEST_cshcprod
+
        SUBROUTINE CUTEST_cjprod( cutest_status, n, m, gotj, jtrans, X,         &
                                  VECTOR, lvector, RESULT, lresult )
        INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
@@ -638,6 +679,20 @@
        REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: RESULT
        END SUBROUTINE CUTEST_uhprod_threaded
        
+       SUBROUTINE CUTEST_ushprod_threaded( status, n, goth, X,                 &
+                                   nnz_vector, INDEX_nz_vector, VECTOR,        &
+                                   nnz_result, INDEX_nz_result, RESULT,        &
+                                   thread )
+       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+       INTEGER, INTENT( IN ) :: n, nnz_vector, thread
+       INTEGER, INTENT( OUT ) :: status, nnz_result
+       LOGICAL, INTENT( IN ) :: goth
+       INTEGER, DIMENSION( nnz_vector ), INTENT( IN ) :: INDEX_nz_vector
+       INTEGER, DIMENSION( n ), INTENT( OUT ) :: INDEX_nz_result
+       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X, VECTOR
+       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: RESULT
+       END SUBROUTINE CUTEST_ushprod_threaded
+
        SUBROUTINE CUTEST_ubandh_threaded( cutest_status, n, X, nsemib, BANDH,  &
                                           lbandh, maxsbw, thread )
        INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
@@ -891,6 +946,21 @@
        REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: RESULT
        END SUBROUTINE CUTEST_chprod_threaded
   
+       SUBROUTINE CUTEST_cshprod_threaded( status, n, m, goth, X, Y,           &
+                                   nnz_vector, INDEX_nz_vector, VECTOR,        &
+                                   nnz_result, INDEX_nz_result, RESULT,        &
+                                   thread )
+       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+       INTEGER, INTENT( IN ) :: n, m, nnz_vector, thread
+       INTEGER, INTENT( OUT ) :: status, nnz_result
+       LOGICAL, INTENT( IN ) :: goth
+       INTEGER, DIMENSION( nnz_vector ), INTENT( IN ) :: INDEX_nz_vector
+       INTEGER, DIMENSION( n ), INTENT( OUT ) :: INDEX_nz_result
+       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X, VECTOR
+       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( m ) :: Y
+       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: RESULT
+       END SUBROUTINE CUTEST_cshprod_threaded
+
        SUBROUTINE CUTEST_chcprod_threaded( cutest_status, n, m, goth,          &
                                            X, Y, P, RESULT, thread )
        INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
@@ -902,6 +972,21 @@
        REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: RESULT
        END SUBROUTINE CUTEST_chcprod_threaded
   
+       SUBROUTINE CUTEST_cshcprod_threaded( status, n, m, goth, X, Y,          &
+                                   nnz_vector, INDEX_nz_vector, VECTOR,        &
+                                   nnz_result, INDEX_nz_result, RESULT,        &
+                                   thread )
+       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+       INTEGER, INTENT( IN ) :: n, m, nnz_vector, thread
+       INTEGER, INTENT( OUT ) :: status, nnz_result
+       LOGICAL, INTENT( IN ) :: goth
+       INTEGER, DIMENSION( nnz_vector ), INTENT( IN ) :: INDEX_nz_vector
+       INTEGER, DIMENSION( n ), INTENT( OUT ) :: INDEX_nz_result
+       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X, VECTOR
+       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( m ) :: Y
+       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: RESULT
+       END SUBROUTINE CUTEST_cshcprod_threaded
+
        SUBROUTINE CUTEST_cjprod_threaded( cutest_status, n, m, gotj, X,        &
                                           VECTOR, lvector, RESULT, lresult,    &
                                           thread )
