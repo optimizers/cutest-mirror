@@ -129,6 +129,10 @@ evaluate the objective gradient and finite-element Hessian.
 .B cutest_uhprod \fP(unthreaded) and \fBcutest_uhprod_threaded \fP(threaded)
 evaluate the product of the Hessian of the objective function with a vector.
 .TP
+.B cutest_ushprod \fP(unthreaded) and \fBcutest_ushprod_threaded \fP(threaded)
+evaluate the product of the Hessian of the objective function with a 
+sparse vector.
+.TP
 .B cutest_ubandh \fP(unthreaded) and \fBcutest_ubandh_threaded \fP(threaded)
 obtain the part of the Hessian of the objective that lies within
 a specified band.
@@ -235,9 +239,17 @@ Hessian of the Lagrangian function as a finite-element matrix.
 .B cutest_chprod \fP(unthreaded) and \fBcutest_chprod_threaded \fP(threaded)
 evaluate the product of the Hessian of the Lagrangian function with a vector.
 .TP
+.B cutest_cshprod \fP(unthreaded) and \fBcutest_cshprod_threaded \fP(threaded)
+evaluate the product of the Hessian of the Lagrangian function with a 
+sparse vector.
+.TP
 .B cutest_chcprod \fP(unthreaded) and \fBcutest_chcprod_threaded \fP(threaded)
 evaluate the product of the Hessian of the Lagrangian function not
 including the objective with a vector.
+.TP
+.B cutest_cshcprod \fP(unthreaded) and \fBcutest_cshcprod_threaded \fP(threaded)
+evaluate the product of the Hessian of the Lagrangian function not
+including the objective with a sparse vector.
 .TP
 .B cutest_cjprod \fP(unthreaded) and \fBcutest_cjprod_threaded \fP(threaded)
 evaluate the product of the constraint Jacobian or its transpose with a vector.
@@ -312,6 +324,8 @@ cutest_ugreh(3M),
 cutest_ugreh_threaded(3M),
 cutest_uhprod(3M),
 cutest_uhprod_threaded(3M),
+cutest_ushprod(3M),
+cutest_ushprod_threaded(3M),
 cutest_ubandh(3M),
 cutest_ubandh_threaded(3M),
 cutest_ureport(3M),
