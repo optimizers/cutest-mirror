@@ -26,6 +26,7 @@
       INTEGER, PARAMETER :: out = 6
       INTEGER, PARAMETER :: buffer = 77 
       REAL ( KIND = wp ), PARAMETER :: one = 1.0_wp
+      REAL ( KIND = wp ), PARAMETER :: zero = 0.0_wp
 
 !--------------------------------
 !   L o c a l   V a r i a b l e s
@@ -35,6 +36,7 @@
       INTEGER :: l_h2_1, l_h, lhe_ptr, lhe_val, lhe_row, l_g, G_ne, alloc_stat
       INTEGER :: nonlinear_variables_objective, nonlinear_variables_constraints
       INTEGER :: equality_constraints, linear_constraints
+      INTEGER :: nnz_vector, nnz_result
       REAL ( KIND = wp ) :: f, ci
       LOGICAL :: grad, byrows, goth, gotj
       LOGICAL :: grlagf, jtrans
@@ -42,6 +44,7 @@
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: H_row, H_col, X_type
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: HE_row, HE_row_ptr, HE_val_ptr
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: G_var, J_var, J_fun
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: INDEX_nz_vector, INDEX_nz_result
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: X, X_l, X_u, G, Ji
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: Y, C_l, C_u, C, J_val
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: G_val, H_val, HE_val
@@ -63,7 +66,8 @@
       WRITE( out, "( ' * n = ', I0, ', m = ', I0 )" ) n, m
       l_h2_1 = n
       ALLOCATE( X( n ), X_l( n ), X_u( n ), G( n ), Ji( n ),                   &
-                X_names( n ), X_type( n ), stat = alloc_stat )
+                X_names( n ), X_type( n ), INDEX_nz_vector( n ),               &
+                INDEX_nz_result( n ), stat = alloc_stat )
       IF ( alloc_stat /= 0 ) GO TO 990
       ALLOCATE( C( m ), Y( m ), C_l( m ), C_u( m ), C_names( m ),              &
                 EQUATION( m ), LINEAR( m ), stat = alloc_stat )
@@ -519,7 +523,7 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
 
 !  compute a Hessian-vector product
 
-      VECTOR = one
+      VECTOR( 1 ) = one ; VECTOR( 2 : n ) = zero
       goth = .FALSE.
       WRITE( out, "( ' Call CUTEST_chprod with goth = .FALSE.' )" )
       CALL CUTEST_chprod( status, n, m, goth, X, Y, VECTOR, RESULT )
@@ -531,9 +535,29 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
       IF ( status /= 0 ) GO to 900
       CALL WRITE_RESULT( out, n, VECTOR, RESULT )
 
+!  compute a sparse Hessian-vector product
+
+      nnz_vector = 1 ; INDEX_nz_vector( nnz_vector ) = 1
+      goth = .FALSE.
+      WRITE( out, "( ' Call CUTEST_cshprod with goth = .FALSE.' )" )
+      CALL CUTEST_cshprod( status, n, m, goth, X, Y,                           &
+                           nnz_vector, INDEX_nz_vector, VECTOR,                &
+                           nnz_result, INDEX_nz_result, RESULT )
+      IF ( status /= 0 ) GO to 900
+      CALL WRITE_SRESULT( out, n, nnz_vector, INDEX_nz_vector, VECTOR,         &
+                          nnz_result, INDEX_nz_result, RESULT )
+
+      goth = .TRUE.
+      WRITE( out, "( ' Call CUTEST_cshprod with goth = .TRUE.' )" )
+      CALL CUTEST_cshprod( status, n, m, goth, X, Y,                           &
+                           nnz_vector, INDEX_nz_vector, VECTOR,                &
+                           nnz_result, INDEX_nz_result, RESULT )
+      IF ( status /= 0 ) GO to 900
+      CALL WRITE_SRESULT( out, n, nnz_vector, INDEX_nz_vector, VECTOR,         &
+                          nnz_result, INDEX_nz_result, RESULT )
+
 !  compute a Hessian-vector product ignoring the objective
 
-      VECTOR = one
       goth = .FALSE.
       WRITE( out, "( ' Call CUTEST_chcprod with goth = .FALSE.' )" )
       CALL CUTEST_chcprod( status, n, m, goth, X, Y, VECTOR, RESULT )
@@ -544,6 +568,26 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
       CALL CUTEST_chcprod( status, n, m, goth, X, Y, VECTOR, RESULT )
       IF ( status /= 0 ) GO to 900
       CALL WRITE_RESULT( out, n, VECTOR, RESULT )
+
+!  compute a sparse Hessian-vector product ignoring the objective
+
+      goth = .FALSE.
+      WRITE( out, "( ' Call CUTEST_cshprod with goth = .FALSE.' )" )
+      CALL CUTEST_cshcprod( status, n, m, goth, X, Y,                          &
+                           nnz_vector, INDEX_nz_vector, VECTOR,                &
+                           nnz_result, INDEX_nz_result, RESULT )
+      IF ( status /= 0 ) GO to 900
+      CALL WRITE_SRESULT( out, n, nnz_vector, INDEX_nz_vector, VECTOR,         &
+                          nnz_result, INDEX_nz_result, RESULT )
+
+      goth = .TRUE.
+      WRITE( out, "( ' Call CUTEST_cshprod with goth = .TRUE.' )" )
+      CALL CUTEST_cshcprod( status, n, m, goth, X, Y,                          &
+                           nnz_vector, INDEX_nz_vector, VECTOR,                &
+                           nnz_result, INDEX_nz_result, RESULT )
+      IF ( status /= 0 ) GO to 900
+      CALL WRITE_SRESULT( out, n, nnz_vector, INDEX_nz_vector, VECTOR,         &
+                          nnz_result, INDEX_nz_result, RESULT )
 
 !  compute a Jacobian-vector product
 
@@ -594,7 +638,8 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
       DEALLOCATE( X_type, H_row, H_col, HE_row, HE_row_ptr, HE_val_ptr, X,     &
                   X_l, X_u, G, Ji, Y, C_l, C_u, C, H_val, HE_val, H2_val,      &
                   J_val, J_var, J_fun, J2_val, VECTOR, RESULT,                 &
-                  X_names, C_names, EQUATION, LINEAR, stat = alloc_stat )
+                  X_names, C_names, EQUATION, LINEAR, INDEX_nz_vector,         &
+                  INDEX_nz_result, stat = alloc_stat )
       CLOSE( input )
       STOP
 
@@ -945,5 +990,24 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
         END DO
       END IF
       END SUBROUTINE WRITE_RESULT2
+
+      SUBROUTINE WRITE_SRESULT( out, n, nnz_vector, INDEX_nz_vector, VECTOR,   &
+                                nnz_result, INDEX_nz_result, RESULT )
+      INTEGER :: n, out,  nnz_vector,  nnz_result
+      INTEGER, DIMENSION( nnz_vector ) :: INDEX_nz_vector
+      INTEGER, DIMENSION( n ) :: INDEX_nz_result
+      REAL ( KIND = wp ), DIMENSION( n ) :: VECTOR, RESULT
+      INTEGER :: i, j
+      WRITE( out, "( ' *       i    VECTOR' )" )
+      DO j = 1, nnz_vector
+        i = INDEX_nz_vector( j )
+        WRITE( out, "( ' * ', I7, 2ES12.4 )" ) i, VECTOR( i )
+      END DO
+      WRITE( out, "( ' *       i    RESULT' )" )
+      DO j = 1, nnz_result
+        i = INDEX_nz_result( j )
+        WRITE( out, "( ' * ', I7, 2ES12.4 )" ) i, RESULT( i )
+      END DO
+      END SUBROUTINE WRITE_SRESULT
 
     END PROGRAM CUTEST_test_constrained_tools

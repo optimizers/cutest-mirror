@@ -1,18 +1,18 @@
-'\" e  @(#)cutest_cshprod v1.2 09/2014;
-.TH cutest_cshprod 3M "5 Sep 2014" "CUTEst user documentation" "CUTEst user documentation"
+'\" e  @(#)cutest_cshcprod_threaded v1.2 09/2014;
+.TH cutest_cshcprod_threaded 3M "5 Sep 2014" "CUTEst user documentation" "CUTEst user documentation"
 .SH NAME
-CUTEST_cshprod \- CUTEst tool to form the matrix-vector product of a 
-sparse vector with the Hessian matrix of the Lagrangian.
+CUTEST_cshcprod_threaded \- CUTEst tool to form the matrix-vector product of a 
+spaarse vector with the Hessian matrix of the constraint part of the Lagrangian.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_cshprod( status, n, goth, X, Y,
+CALL CUTEST_cshcprod_threaded( status, n, goth, X, Y,
 nnz_vector, INDEX_nz_vector, VECTOR,
-nnz_result, INDEX_nz_result, RESULT )
+nnz_result, INDEX_nz_result, RESULT, thread )
 .SH DESCRIPTION
-The CUTEST_cshprod subroutine forms the product of a sparse vector with the 
-Hessian matrix of the Lagrangian function 
+The CUTEST_cshcprod_threaded subroutine forms the product of a sparse vector 
+with the Hessian matrix of the constraint part of the Lagrangian function 
 .EQ
-l(x,y) = f(x) + y sup T c(x)
+ y sup T c(x)
 .EN
 corresponding to the problem decoded from a SIF file by the script
 \fIsifdecoder\fP at the point
@@ -65,7 +65,7 @@ The objective function is group-partially separable
 and all constraint functions are partially separable.
 .LP 
 .SH ARGUMENTS
-The arguments of CUTEST_cshprod are as follows
+The arguments of CUTEST_cshcprod_threaded are as follows
 .TP 5
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
@@ -115,14 +115,20 @@ an array that gives the result of multiplying the Hessian by VECTOR.
 goth should be set to .TRUE. whenever
 .TP 3
 .B (1)\fP
-a call has been made to  CUTEST_cdh, CUTEST_csh, CUTEST_cgrdh or CUTEST_csgrsh
+a call has been made to  CUTEST_cdh_threaded, CUTEST_csh_threaded, 
+CUTEST_cgrdh_threaded or CUTEST_csgrsh_threaded
 at the current point, or
 .TP
 .B (2)\fP
-a previous call to CUTEST_chprod, CUTEST_cshprod or
-CUTEST_cshcprod, with goth = .FALSE., at the current point has been made.
+a previous call to CUTEST_chprod_threaded, CUTEST_cshprod_threaded or
+CUTEST_cshcprod_threaded, with goth = .FALSE., 
+at the current point has been made.
 .TP
 .B \fPOtherwise, it should be set .FALSE.
+.TP
+.B thread \fP[out] - integer
+thread chosen for the evaluation; threads are numbered
+from 1 to the value threads set when calling CUTEST_csetup_threaded.
 .LP
 .SH AUTHORS
 I. Bongartz, A.R. Conn, N.I.M. Gould, D. Orban and Ph.L. Toint
@@ -141,4 +147,4 @@ Environment, revisited\fP,
 I. Bongartz, A.R. Conn, N.I.M. Gould and Ph.L. Toint, 
 ACM TOMS, \fB21\fP:1, pp.123-160, 1995.
 
-cutest_chprod(3M), cutest_ushprod(3M), sifdecoder(1).
+cutest_chprod_threaded(3M), cutest_ushprod(3M), sifdecoder(1).

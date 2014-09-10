@@ -1,25 +1,18 @@
-'\" e  @(#)cutest_cshprod v1.2 09/2014;
-.TH cutest_cshprod 3M "5 Sep 2014" "CUTEst user documentation" "CUTEst user documentation"
+'\" e  @(#)cutest_ushprod_threaded v1.2 09/2014;
+.TH cutest_ushprod_threaded 3M "5 Sep 2014" "CUTEst user documentation" "CUTEst user documentation"
 .SH NAME
-CUTEST_cshprod \- CUTEst tool to form the matrix-vector product of a 
-sparse vector with the Hessian matrix of the Lagrangian.
+CUTEST_ushprod_threaded \- CUTEst tool to form the matrix-vector product of a vector with
+the Hessian matrix.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_cshprod( status, n, goth, X, Y,
+CALL CUTEST_ushprod_threaded( status, n, goth, X, 
 nnz_vector, INDEX_nz_vector, VECTOR,
-nnz_result, INDEX_nz_result, RESULT )
+nnz_result, INDEX_nz_result, RESULT, thread )
 .SH DESCRIPTION
-The CUTEST_cshprod subroutine forms the product of a sparse vector with the 
-Hessian matrix of the Lagrangian function 
-.EQ
-l(x,y) = f(x) + y sup T c(x)
-.EN
-corresponding to the problem decoded from a SIF file by the script
-\fIsifdecoder\fP at the point
-.EQ
-(x,y) = 
-.EN
-(X,Y).
+The CUTEST_ushprod_threaded subroutine forms the product of a sparse 
+vector with the Hessian
+matrix of the objective function of the problem decoded from a SIF file
+by the script \fIsifdecoder\fP at the point X.
 
 The problem under consideration
 is to minimize or maximize an objective function
@@ -34,38 +27,15 @@ x
 .EQ
 R sup n
 .EN
-subject to
-general equations
-.EQ
-c sub i (x) ~=~ 0,
-.EN
-.EQ
-~(i
-.EN
-\(mo
-.EQ
-{ 1 ,..., m sub E } ),
-.EN
-general inequalities
-.EQ
-c sub i sup l (x) ~<=~ c sub i (x) ~<=~ c sub i sup u (x),
-.EN
-.EQ
-~(i
-.EN
-\(mo
-.EQ
-{ m sub E + 1 ,..., m }),
-.EN
-and simple bounds
+subject to the simple bounds
 .EQ
 x sup l ~<=~ x ~<=~ x sup u.
 .EN
-The objective function is group-partially separable 
-and all constraint functions are partially separable.
+The objective function is group-partially separable.
+
 .LP 
 .SH ARGUMENTS
-The arguments of CUTEST_cshprod are as follows
+The arguments of CUTEST_ushprod_threaded are as follows
 .TP 5
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array 
@@ -83,10 +53,6 @@ they should be computed (goth = .FALSE.),
 .B X \fP[in] - real/double precision
 when goth = .FALSE., the derivatives will be evaluated at X. Otherwise
 X is not used.
-.TP
-.B Y \fP[in] - real/double precision
-when goth = .FALSE., the derivatives will be evaluated with Lagrange
-multipliers Y. Otherwise Y is not used,
 .TP
 .B nnz_vector \fP[in] - integer
 the number of nonzeros in the vector whose product with the Hessian 
@@ -115,14 +81,19 @@ an array that gives the result of multiplying the Hessian by VECTOR.
 goth should be set to .TRUE. whenever
 .TP 3
 .B (1)\fP
-a call has been made to  CUTEST_cdh, CUTEST_csh, CUTEST_cgrdh or CUTEST_csgrsh
+a call has been made to CUTEST_udh_threaded, CUTEST_ush_threaded, 
+CUTEST_ugrdh_threaded or CUTEST_ugrsh_threaded 
 at the current point, or
 .TP
 .B (2)\fP
-a previous call to CUTEST_chprod, CUTEST_cshprod or
-CUTEST_cshcprod, with goth = .FALSE., at the current point has been made.
+a previous call to CUTEST_uhprod_threaded or CUTEST_ushprod_threaded, 
+with goth = .FALSE., at the current point has been made.
 .TP
 .B \fPOtherwise, it should be set .FALSE.
+.TP
+.B thread \fP[out] - integer
+thread chosen for the evaluation; threads are numbered
+from 1 to the value threads set when calling CUTEST_usetup_threaded.
 .LP
 .SH AUTHORS
 I. Bongartz, A.R. Conn, N.I.M. Gould, D. Orban and Ph.L. Toint
@@ -141,4 +112,4 @@ Environment, revisited\fP,
 I. Bongartz, A.R. Conn, N.I.M. Gould and Ph.L. Toint, 
 ACM TOMS, \fB21\fP:1, pp.123-160, 1995.
 
-cutest_chprod(3M), cutest_ushprod(3M), sifdecoder(1).
+cutest_uhprod_threaded(3M), cutest_cshprod_threaded(3M), sifdecoder(1).
