@@ -27,6 +27,7 @@
       INTEGER, PARAMETER :: threads = 4
       INTEGER, PARAMETER :: BUFFER( 4 ) = (/ 77, 78, 79, 80 /)
       INTEGER, PARAMETER :: thread = 2
+      REAL ( KIND = wp ), PARAMETER :: zero = 0.0_wp
       REAL ( KIND = wp ), PARAMETER :: one = 1.0_wp
 
 !--------------------------------
@@ -35,11 +36,13 @@
 
       INTEGER :: i, n, HE_nel, HE_val_ne, HE_row_ne, status, alloc_stat
       INTEGER :: l_h2_1, l_h, lhe_ptr, H_ne, lhe_val, lhe_row, maxsbw
+      INTEGER :: nnz_vector, nnz_result
       REAL ( KIND = wp ) :: f
       LOGICAL :: grad, byrows, goth
       CHARACTER ( len = 10 ) ::  p_name
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: X_type, H_row, H_col
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: HE_row, HE_row_ptr, HE_val_ptr
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: INDEX_nz_vector, INDEX_nz_result
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: X, X_l, X_u, G
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: H_val, HE_val
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: VECTOR, RESULT
@@ -58,7 +61,8 @@
       WRITE( out, "( ' * n = ', I0 )" ) n
       l_h2_1 = n
       ALLOCATE( X( n ), X_l( n ), X_u( n ), G( n ), VECTOR( n ), RESULT( n ),  &
-                X_names( n ), X_type( n ), stat = alloc_stat )
+                X_names( n ), X_type( n ), INDEX_nz_vector( n ),               &
+                INDEX_nz_result( n ), stat = alloc_stat )
       IF ( alloc_stat /= 0 ) GO TO 990
       ALLOCATE( H2_val( l_h2_1, n ), stat = alloc_stat )
       IF ( alloc_stat /= 0 ) GO TO 990
@@ -236,7 +240,7 @@
 
 !  compute a Hessian-vector product
 
-      VECTOR = one
+      VECTOR( 1 ) = one ; VECTOR( 2 : n ) = zero
       goth = .FALSE.
       WRITE( out, "( ' Call CUTEST_uhprod with goth = .FALSE.' )" )
       CALL CUTEST_uhprod_threaded( status, n, goth, X, VECTOR, RESULT, thread )
@@ -247,6 +251,27 @@
       CALL CUTEST_uhprod_threaded( status, n, goth, X, VECTOR, RESULT, thread )
       IF ( status /= 0 ) GO to 900
       CALL WRITE_RESULT( out, n, VECTOR, RESULT )
+
+!  compute a sparse Hessian-vector product
+
+      nnz_vector = 1 ; INDEX_nz_vector( nnz_vector ) = 1
+      goth = .FALSE.
+      WRITE( out, "( ' Call CUTEST_ushprod with goth = .FALSE.' )" )
+      CALL CUTEST_ushprod_threaded( status, n, goth, X,                        &
+                           nnz_vector, INDEX_nz_vector, VECTOR,                &
+                           nnz_result, INDEX_nz_result, RESULT, thread )
+      IF ( status /= 0 ) GO to 900
+      CALL WRITE_SRESULT( out, n, nnz_vector, INDEX_nz_vector, VECTOR,         &
+                          nnz_result, INDEX_nz_result, RESULT )
+
+      goth = .TRUE.
+      WRITE( out, "( ' Call CUTEST_ushprod with goth = .TRUE.' )" )
+      CALL CUTEST_ushprod_threaded( status, n, goth, X,                        &
+                           nnz_vector, INDEX_nz_vector, VECTOR,                &
+                           nnz_result, INDEX_nz_result, RESULT, thread )
+      IF ( status /= 0 ) GO to 900
+      CALL WRITE_SRESULT( out, n, nnz_vector, INDEX_nz_vector, VECTOR,         &
+                          nnz_result, INDEX_nz_result, RESULT )
 
 !  compute a band of the Hessian
 
@@ -290,7 +315,7 @@
 
       DEALLOCATE( X_type, H_row, H_col, HE_row, HE_row_ptr, HE_val_ptr, X,     &
                   X_l, X_u, G, H_val, HE_val, VECTOR, RESULT, H2_val, H_band,  &
-                  X_names, stat = alloc_stat )
+                  X_names, INDEX_nz_vector, INDEX_nz_result, stat = alloc_stat )
       CLOSE( input )
       STOP
 
@@ -466,6 +491,25 @@
         WRITE( out, "( ' * ', I7, 2ES12.4 )" ) i, VECTOR( i ), RESULT( i )
       END DO
       END SUBROUTINE WRITE_RESULT
+
+      SUBROUTINE WRITE_SRESULT( out, n, nnz_vector, INDEX_nz_vector, VECTOR,   &
+                                nnz_result, INDEX_nz_result, RESULT )
+      INTEGER :: n, out,  nnz_vector,  nnz_result
+      INTEGER, DIMENSION( nnz_vector ) :: INDEX_nz_vector
+      INTEGER, DIMENSION( n ) :: INDEX_nz_result
+      REAL ( KIND = wp ), DIMENSION( n ) :: VECTOR, RESULT
+      INTEGER :: i, j
+      WRITE( out, "( ' *       i    VECTOR' )" )
+      DO j = 1, nnz_vector
+        i = INDEX_nz_vector( j )
+        WRITE( out, "( ' * ', I7, 2ES12.4 )" ) i, VECTOR( i )
+      END DO
+      WRITE( out, "( ' *       i    RESULT' )" )
+      DO j = 1, nnz_result
+        i = INDEX_nz_result( j )
+        WRITE( out, "( ' * ', I7, 2ES12.4 )" ) i, RESULT( i )
+      END DO
+      END SUBROUTINE WRITE_SRESULT
 
 !     SUBROUTINE WRITE_H_BAND( out, n, lbandh, H_band, nsemib, maxsbw )
       SUBROUTINE WRITE_H_BAND( out, n, lbandh, H_band, nsemib )

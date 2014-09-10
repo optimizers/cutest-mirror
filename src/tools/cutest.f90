@@ -145,28 +145,28 @@
         LOGICAL :: array_status = .FALSE.
         LOGICAL :: hessian_setup_complete = .FALSE.
         LOGICAL :: firstg
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISWKSP
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: ICALCF
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISTAJC
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: IUSED
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: NZ_components_w
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: ROW_start
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: POS_in_H
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: USED
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: FILLED
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: H_row
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: H_col
-        INTEGER, ALLOCATABLE, DIMENSION( : ) :: IUSED
-        INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISWKSP
-        INTEGER, ALLOCATABLE, DIMENSION( : ) :: NZ_components_w
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: FUVALS
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: FT
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: GSCALE_used
-        REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: G_temp
+        REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( :  , : ) :: GVALS
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: H_val
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: H_el
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: H_in
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: W_ws
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: W_el
         REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: W_in
-        REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( :  , : ) :: GVALS
+        REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: G_temp
         LOGICAL, ALLOCATABLE, DIMENSION( : ) :: LOGIC
       END TYPE CUTEST_work_type
 
@@ -2916,7 +2916,7 @@
      INTEGER, INTENT( IN    ) :: nbprod, nvargp, lhuval
      INTEGER, INTENT( INOUT ) :: nnonnz
      LOGICAL, INTENT( IN    ) :: alllin
-     INTEGER, INTENT( IN    ), DIMENSION( n ) :: IVAR
+     INTEGER, INTENT( IN    ), DIMENSION( * ) :: IVAR
      INTEGER, INTENT( IN    ), DIMENSION( nel + 1 ) :: ISTAEV, ISTADH
      INTEGER, INTENT( IN    ), DIMENSION( nel + 1 ) :: INTVAR
      INTEGER, INTENT( IN    ), DIMENSION( ntotel  ) :: IELING
@@ -3634,6 +3634,26 @@
        bad_alloc = 'work%ISTAJC' ; GO TO 910
      END IF
 
+     ALLOCATE( work%IUSED(  MAX( data%n, data%ng )  ), STAT = alloc_status )
+     IF ( alloc_status /= 0 ) THEN
+       bad_alloc = 'work%IUSED' ; GO TO 910
+     END IF
+
+     ALLOCATE( work%NZ_components_w( data%ng ), STAT = alloc_status )
+     IF ( alloc_status /= 0 ) THEN
+       bad_alloc = 'work%NZ_components_w' ; GO TO 910
+     END IF
+
+     ALLOCATE( work%FUVALS( data%lfuval ), STAT = alloc_status )
+     IF ( alloc_status /= 0 ) THEN
+       bad_alloc = 'work%FUVALS' ; GO TO 910
+     END IF
+
+     ALLOCATE( work%FT( data%ng ), STAT = alloc_status )
+     IF ( alloc_status /= 0 ) THEN
+       bad_alloc = 'work%FT' ; GO TO 910
+     END IF
+
      ALLOCATE( work%GSCALE_used( data%ng ), STAT = alloc_status )
      IF ( alloc_status /= 0 ) THEN
        bad_alloc = 'work%GSCALE_used' ; GO TO 910
@@ -3644,14 +3664,14 @@
        bad_alloc = 'work%GVALS' ; GO TO 910
      END IF
 
-     ALLOCATE( work%FT( data%ng ), STAT = alloc_status )
+     ALLOCATE( work%H_el( data%maxsel ), STAT = alloc_status )
      IF ( alloc_status /= 0 ) THEN
-       bad_alloc = 'work%FT' ; GO TO 910
+       bad_alloc = 'work%H_el' ; GO TO 910
      END IF
 
-     ALLOCATE( work%FUVALS( data%lfuval ), STAT = alloc_status )
+     ALLOCATE( work%H_in( data%maxsin ), STAT = alloc_status )
      IF ( alloc_status /= 0 ) THEN
-       bad_alloc = 'work%FUVALS' ; GO TO 910
+       bad_alloc = 'work%H_in' ; GO TO 910
      END IF
 
      ALLOCATE( work%W_ws( MAX( data%n, data%ng ) ), STAT = alloc_status )
@@ -3667,16 +3687,6 @@
      ALLOCATE( work%W_in( data%maxsin ), STAT = alloc_status )
      IF ( alloc_status /= 0 ) THEN
        bad_alloc = 'work%W_in' ; GO TO 910
-     END IF
-
-     ALLOCATE( work%H_el( data%maxsel ), STAT = alloc_status )
-     IF ( alloc_status /= 0 ) THEN
-       bad_alloc = 'work%H_el' ; GO TO 910
-     END IF
-
-     ALLOCATE( work%H_in( data%maxsin ), STAT = alloc_status )
-     IF ( alloc_status /= 0 ) THEN
-       bad_alloc = 'work%H_in' ; GO TO 910
      END IF
 
      IF ( constrained ) THEN
