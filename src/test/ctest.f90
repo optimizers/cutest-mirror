@@ -90,7 +90,7 @@
       CALL WRITE_X( out, n, X, X_l, X_u )
       CALL WRITE_Y( out, m, Y, C_l, C_u, EQUATION, LINEAR )
 
-X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
+      X( 1 : 2 )  = (/ 1.1_wp, 2.2_wp /)
 
 !  obtain numbers of nonlinear variables, and equality and linear constraints
 
@@ -132,6 +132,7 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
 !  compute the objective function value
 
       WRITE( out, "( ' CALL CUTEST_cfn' )" )
+
       CALL CUTEST_cfn( status, n, m, X, f, C )
       IF ( status /= 0 ) GO to 900
       CALL WRITE_f( out, f )
@@ -591,13 +592,13 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
 
 !  compute a Jacobian-vector product
 
-      VECTOR = one
+      VECTOR( 1 ) = one ; VECTOR( 2 : MAX( n, m ) ) = zero
       gotj = .FALSE. ; jtrans = .FALSE.
       WRITE( out, "( ' CALL CJPROD with gotj = .FALSE. and jtrans = .FALSE.')" )
       CALL CUTEST_cjprod( status, n, m, gotj, jtrans, X, VECTOR, n, RESULT, m )
       CALL WRITE_RESULT2( out, n, VECTOR, m, RESULT )
       gotj = .TRUE. ; jtrans = .FALSE.
-      WRITE( out, "( ' CALL CJPROD with gotj = .TRUE. and jtrans = .TRUE.' )" )
+      WRITE( out, "( ' CALL CJPROD with gotj = .TRUE. and jtrans = .FALSE.' )" )
       CALL CUTEST_cjprod( status, n, m, gotj, jtrans, X, VECTOR, n, RESULT, m )
       CALL WRITE_RESULT2( out, n, VECTOR, m, RESULT )
       gotj = .FALSE. ; jtrans = .TRUE.
@@ -608,6 +609,37 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
       WRITE( out, "( ' CALL CJPROD with gotj = .TRUE. and jtrans = .TRUE.' )" )
       CALL CUTEST_cjprod( status, n, m, gotj, jtrans, X, VECTOR, m, RESULT, n )
       CALL WRITE_RESULT2( out, m, VECTOR, n, RESULT )
+
+!  compute a sparse Jacobian-vector product
+
+      gotj = .FALSE. ; jtrans = .FALSE.
+      WRITE( out, "( ' CALL CSJPROD with gotj = .FALSE. and jtrans = .FALSE.')")
+      CALL CUTEST_csjprod( status, n, m, gotj, jtrans, X,                      &
+                           nnz_vector, INDEX_nz_vector, VECTOR, n,             &
+                           nnz_result, INDEX_nz_result, RESULT, m )
+      CALL WRITE_SRESULT2( out, nnz_vector, INDEX_nz_vector, VECTOR, n,        &
+                           nnz_result, INDEX_nz_result, RESULT, m )
+      gotj = .TRUE. ; jtrans = .FALSE.
+      WRITE( out, "( ' CALL CSJPROD with gotj = .TRUE. and jtrans = .FALSE.')" )
+      CALL CUTEST_csjprod( status, n, m, gotj, jtrans, X,                      &
+                           nnz_vector, INDEX_nz_vector, VECTOR, n,             &
+                           nnz_result, INDEX_nz_result, RESULT, m )
+      CALL WRITE_SRESULT2( out, nnz_vector, INDEX_nz_vector, VECTOR, n,        &
+                           nnz_result, INDEX_nz_result, RESULT, m )
+      gotj = .FALSE. ; jtrans = .TRUE.
+      WRITE( out, "( ' CALL CSJPROD with gotj = .FALSE. and jtrans = .TRUE.')" )
+      CALL CUTEST_csjprod( status, n, m, gotj, jtrans, X,                      &
+                           nnz_vector, INDEX_nz_vector, VECTOR, m,             &
+                           nnz_result, INDEX_nz_result, RESULT, n )
+      CALL WRITE_SRESULT2( out, nnz_vector, INDEX_nz_vector, VECTOR, m,        &
+                           nnz_result, INDEX_nz_result, RESULT, n )
+      gotj = .TRUE. ; jtrans = .TRUE.
+      WRITE( out, "( ' CALL CSJPROD with gotj = .TRUE. and jtrans = .TRUE.' )" )
+      CALL CUTEST_csjprod( status, n, m, gotj, jtrans, X,                      &
+                           nnz_vector, INDEX_nz_vector, VECTOR, m,             &
+                           nnz_result, INDEX_nz_result, RESULT, n )
+      CALL WRITE_SRESULT2( out, nnz_vector, INDEX_nz_vector, VECTOR, m,        &
+                           nnz_result, INDEX_nz_result, RESULT, n )
 
 !  calls and time report
 
@@ -1009,5 +1041,26 @@ X = (/ 1.1_wp, 2.2_wp, 3.3_wp, 4.4_wp /)
         WRITE( out, "( ' * ', I7, 2ES12.4 )" ) i, RESULT( i )
       END DO
       END SUBROUTINE WRITE_SRESULT
+
+      SUBROUTINE WRITE_SRESULT2( out, nnz_vector, INDEX_nz_vector, VECTOR,     &
+                                 len_vector, nnz_result, INDEX_nz_result,      &
+                                 RESULT, len_result )
+      INTEGER :: len_vector, len_result, out,  nnz_vector,  nnz_result
+      INTEGER, DIMENSION( nnz_vector ) :: INDEX_nz_vector
+      INTEGER, DIMENSION( n ) :: INDEX_nz_result
+      REAL ( KIND = wp ), DIMENSION( len_vector ) :: VECTOR
+      REAL ( KIND = wp ), DIMENSION( len_result ) :: RESULT
+      INTEGER :: i, j
+      WRITE( out, "( ' *       i    VECTOR' )" )
+      DO j = 1, nnz_vector
+        i = INDEX_nz_vector( j )
+        WRITE( out, "( ' * ', I7, 2ES12.4 )" ) i, VECTOR( i )
+      END DO
+      WRITE( out, "( ' *       i    RESULT' )" )
+      DO j = 1, nnz_result
+        i = INDEX_nz_result( j )
+        WRITE( out, "( ' * ', I7, 2ES12.4 )" ) i, RESULT( i )
+      END DO
+      END SUBROUTINE WRITE_SRESULT2
 
     END PROGRAM CUTEST_test_constrained_tools

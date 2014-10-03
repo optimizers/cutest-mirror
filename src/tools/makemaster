@@ -78,7 +78,7 @@ CCUTESTS = $(LCS)(csetup.o) $(LCS)(cdimen.o) $(LCS)(cdimse.o) $(LCS)(cdimsh.o) \
            $(LCS)(ceh.o) $(LCS)(cgrdh.o) $(LCS)(cidh.o) $(LCS)(csh.o) \
            $(LCS)(cshc.o) $(LCS)(cshp.o) $(LCS)(cish.o) $(LCS)(cjprod.o) \
            $(LCS)(cstats.o) $(LCS)(csgr.o) $(LCS)(csgreh.o) $(LCS)(csgrsh.o) \
-           $(LCS)(chprod.o) $(LCS)(chcprod.o) \
+           $(LCS)(csjprod.o) $(LCS)(chprod.o) $(LCS)(chcprod.o) \
            $(LCS)(cshprod.o) $(LCS)(cshcprod.o) $(LCS)(creport.o) \
            $(LCS)(connames.o) $(LCS)(cterminate.o) $(LCS)(lqp.o) 
 
@@ -101,7 +101,7 @@ CCUTESTD = $(LCD)(csetup.o) $(LCD)(cdimen.o) $(LCD)(cdimse.o) $(LCD)(cdimsh.o) \
            $(LCD)(ceh.o) $(LCD)(cgrdh.o) $(LCD)(cidh.o) $(LCD)(csh.o) \
            $(LCD)(cshc.o) $(LCD)(cshp.o) $(LCD)(cish.o) $(LCD)(cjprod.o) \
            $(LCD)(cstats.o) $(LCD)(csgr.o) $(LCD)(csgreh.o) $(LCD)(csgrsh.o) \
-           $(LCD)(chprod.o) $(LCD)(chcprod.o) \
+           $(LCD)(csjprod.o) $(LCD)(chprod.o) $(LCD)(chcprod.o) \
            $(LCD)(cshprod.o) $(LCD)(cshcprod.o) $(LCD)(creport.o) \
            $(LCD)(connames.o) $(LCD)(cterminate.o) $(LCD)(lqp.o) 
 
@@ -211,6 +211,7 @@ $(LC)(cutest.o): ../tools/cutest.f90
 	$(RMARFILE) cshp.o
 	$(RMARFILE) cish.o
 	$(RMARFILE) cjprod.o
+	$(RMARFILE) csjprod.o
 	$(RMARFILE) csgr.o
 	$(RMARFILE) csgreh.o
 	$(RMARFILE) csgrsh.o
@@ -570,6 +571,18 @@ $(LC)(cjprod.o): ../tools/cjprod.f90
                 || ( printf ' %-26s' "=> Disabling optimization " ; \
                    $(FORTRAN) -o cjprod.o $(FFLAGSN) cjprod.f90 )
 	cd $(OBJ); $(ARR) cjprod.o; $(RM) cjprod.f90 cjprod.o
+#	$(MVMODS)
+	@printf '[ OK ]\n'
+
+csjprod.o: $(LC)(csjprod.o)
+
+$(LC)(csjprod.o): ../tools/csjprod.f90
+	@printf ' %-9s %-15s\t\t' "Compiling" "csjprod" 
+	$(SED) -f $(SEDS) ../tools/csjprod.f90 > $(OBJ)/csjprod.f90
+	cd $(OBJ); $(FORTRAN) -o csjprod.o $(FFLAGS) csjprod.f90 \
+                || ( printf ' %-26s' "=> Disabling optimization " ; \
+                   $(FORTRAN) -o csjprod.o $(FFLAGSN) csjprod.f90 )
+	cd $(OBJ); $(ARR) csjprod.o; $(RM) csjprod.f90 csjprod.o
 #	$(MVMODS)
 	@printf '[ OK ]\n'
 

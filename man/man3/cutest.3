@@ -254,6 +254,10 @@ including the objective with a sparse vector.
 .B cutest_cjprod \fP(unthreaded) and \fBcutest_cjprod_threaded \fP(threaded)
 evaluate the product of the constraint Jacobian or its transpose with a vector.
 .TP
+.B cutest_csjprod \fP(unthreaded) and \fBcutest_csjprod_threaded \fP(threaded)
+evaluate the product of the constraint Jacobian or its transpose with a 
+sparse vector.
+.TP
 .B cutest_creport \fP(unthreaded) and \fBcutest_creport_threaded \fP(threaded)
 discover how many evaluations have occured and how long this has taken.
 .TP
@@ -378,10 +382,16 @@ cutest_csgreh(3M),
 cutest_csgreh_threaded(3M),
 cutest_chprod(3M),
 cutest_chprod_threaded(3M),
+cutest_cshprod(3M),
+cutest_cshprod_threaded(3M),
 cutest_chcprod(3M),
 cutest_chcprod_threaded(3M),
+cutest_cshcprod(3M),
+cutest_cshcprod_threaded(3M),
 cutest_cjprod(3M),
 cutest_cjprod_threaded(3M),
+cutest_csjprod(3M),
+cutest_csjprod_threaded(3M),
 cutest_creport(3M),
 cutest_creport_threaded(3M),
 cutest_cterminate(3M),

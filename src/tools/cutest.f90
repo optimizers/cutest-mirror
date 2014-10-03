@@ -83,7 +83,7 @@
       TYPE, PUBLIC :: CUTEST_data_type
         INTEGER :: n, ng, ng1, nel, nel1, ntotel, nvrels, nnza, ngpvlu, nepvlu
         INTEGER :: nvargp, nvar2, nnonnz, nbprod, ntotin, ngng, out
-        INTEGER :: lo, ch, liwork, lwork, la, lb, nobjgr, lu, ltypee, ltypeg
+        INTEGER :: lo, ch, lwork, la, lb, nobjgr, lu, ltypee, ltypeg
         INTEGER :: lstaev, lstadh, lntvar, lcalcf, leling, lintre, lft
         INTEGER :: lgxeqx, licna, lstada, lkndof, lgpvlu, lepvlu, lstep, lstgp
         INTEGER :: lstadg, lgvals, lgscal, lescal, lvscal, lcalcg            
@@ -108,7 +108,7 @@
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: INTVAR
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: IVAR
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: ITYPEV
-        INTEGER, ALLOCATABLE, DIMENSION( : ) :: IWORK
+        INTEGER, ALLOCATABLE, DIMENSION( : ) :: CGROUP
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISTAGV
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISVGRP
         INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISLGRP
@@ -136,7 +136,7 @@
 !  =================================
 
       TYPE, PUBLIC :: CUTEST_work_type
-        INTEGER :: nc2of, nc2og, nc2oh, nc2cf, nc2cg, nc2ch, nhvpr, pnc
+        INTEGER :: nc2of, nc2og, nc2oh, nc2cf, nc2cg, nc2ch, nhvpr, njvpr, pnc
         INTEGER :: llink, lrowst, lpos, lused, lfilled, nbprod
         INTEGER :: lh_row = lmin
         INTEGER :: lh_col = lmin
@@ -769,7 +769,7 @@
 
 !  Initialize workspace values for subroutine hessian_times_sp_vector
 
-       IUSED( : MAX( n, ng ) ) = 0
+      IUSED( : MAX( n, ng ) ) = 0
 
 !  initialize general workspace arrays
 
@@ -2996,7 +2996,7 @@
          IF ( IUSED( ig ) == 0 ) THEN
            AP( ig ) = pi * GRJAC( k )
            IUSED( ig ) = 1
-           nNz_components_w = nnz_components_w + 1
+           nnz_components_w = nnz_components_w + 1
            NZ_components_w( nnz_components_w ) = ig
          ELSE
            AP( ig ) = AP( ig ) + pi * GRJAC( k )
@@ -3611,9 +3611,9 @@
 !  set scalar values
 
      work%lh_row = lmin ; work%lh_col = lmin ; work%lh_val = lmin
-     work%nc2of = 0 ;  work%nc2og = 0 ; work%nc2oh = 0
-     work%nc2cf = 0 ;  work%nc2cg = 0 ; work%nc2ch = 0 ; work%nhvpr = 0
-     work%pnc = 0
+     work%nc2of = 0 ; work%nc2og = 0 ; work%nc2oh = 0
+     work%nc2cf = 0 ; work%nc2cg = 0 ; work%nc2ch = 0 ; work%nhvpr = 0
+     work%njvpr = 0 ; work%pnc = data%numcon
      work%firstg = .TRUE.
 
 !  allocate arrays
@@ -3822,10 +3822,10 @@
          bad_alloc = 'data%ITYPEV' ; GO TO 600 ; END IF
      END IF
 
-     IF ( ALLOCATED( data%IWORK ) ) THEN
-       DEALLOCATE( data%IWORK, STAT = alloc_status )
+     IF ( ALLOCATED( data%CGROUP ) ) THEN
+       DEALLOCATE( data%CGROUP, STAT = alloc_status )
        IF ( alloc_status /= 0 ) THEN
-         bad_alloc = 'data%IWORK' ; GO TO 600 ; END IF
+         bad_alloc = 'data%CGROUP' ; GO TO 600 ; END IF
      END IF
 
      IF ( ALLOCATED( data%ISTAGV ) ) THEN
