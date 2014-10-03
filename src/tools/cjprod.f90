@@ -330,7 +330,7 @@
           END IF
         END DO
 
-!  Form the product result = J vector
+!  form the product result = J vector
 
       ELSE
 
@@ -398,8 +398,8 @@
 
 !  update the counters for the report tool
 
+      work%njvpr = work%njvpr + 1
       IF ( .NOT. gotj ) THEN
-        work%nc2og = work%nc2og + 1
         work%nc2cg = work%nc2cg + work%pnc
       END IF
       status = 0

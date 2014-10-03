@@ -389,9 +389,9 @@
         bad_alloc = 'data%ITYPEV' ; GO TO 910
       END IF
 
-      ALLOCATE( data%IWORK( MAX( m, 2 * n ) ), STAT = alloc_status )
+      ALLOCATE( data%CGROUP( MAX( m, 2 * n ) ), STAT = alloc_status )
       IF ( alloc_status /= 0 ) THEN
-        bad_alloc = 'data%IWORK' ; GO TO 910
+        bad_alloc = 'data%CGROUP' ; GO TO 910
       END IF
 
 !  allocate real workspace
@@ -739,7 +739,7 @@
 
       IF ( v_order == 1 .OR. v_order == 2 ) THEN
 
-!  set addresses in IWORK to reorder variables
+!  set addresses in CGROUP to reorder variables
 
         kndv = 0 
         jwrk = kndv + n
@@ -747,16 +747,16 @@
 !  initialize jwrk and kndv
 
         DO j = 1, n
-          data%IWORK( kndv + j ) = 0
-          data%IWORK( jwrk + j ) = j
+          data%CGROUP( kndv + j ) = 0
+          data%CGROUP( jwrk + j ) = j
         END DO
 
 !  now identify and count nonlinear variables; keep separate counts for 
 !  nonlinear objective and Jacobian variables.
-!  data%IWORK(kndv + j) = 0 ==> j linear everywhere
-!  data%IWORK(kndv + j) = 1 ==> j linear in objective, nonlinear in constraints
-!  data%IWORK(kndv + j) = 2 ==> j linear in constraints, nonlinear in objective
-!  data%IWORK(kndv + j) = 3 ==> j nonlinear everywhere
+!  data%CGROUP(kndv + j) = 0 ==> j linear everywhere
+!  data%CGROUP(kndv + j) = 1 ==> j linear in objective, nonlinear in constraints
+!  data%CGROUP(kndv + j) = 2 ==> j linear in constraints, nonlinear in objective
+!  data%CGROUP(kndv + j) = 3 ==> j nonlinear everywhere
 
         nnlin = 0
         data%nnov = 0
@@ -768,21 +768,21 @@
             DO k = data%ISTAEV( iel ), data%ISTAEV( iel + 1 ) - 1
               j = data%IELVAR( k )
               IF ( i > 0 ) THEN
-                IF ( data%IWORK( kndv + j ) == 0 ) THEN
-                  data%IWORK( kndv + j ) = 1
+                IF ( data%CGROUP( kndv + j ) == 0 ) THEN
+                  data%CGROUP( kndv + j ) = 1
                   data%nnjv = data%nnjv + 1
                   nnlin = nnlin + 1
-                ELSE IF ( data%IWORK( kndv + j ) == 2 ) THEN
-                  data%IWORK( kndv + j ) = 3
+                ELSE IF ( data%CGROUP( kndv + j ) == 2 ) THEN
+                  data%CGROUP( kndv + j ) = 3
                   data%nnjv = data%nnjv + 1
                 END IF
               ELSE
-                IF ( data%IWORK( kndv + j ) == 0 ) THEN
-                  data%IWORK( kndv + j ) = 2
+                IF ( data%CGROUP( kndv + j ) == 0 ) THEN
+                  data%CGROUP( kndv + j ) = 2
                   data%nnov = data%nnov + 1
                   nnlin = nnlin + 1
-                ELSE IF ( data%IWORK( kndv + j ) == 1 ) THEN
-                  data%IWORK( kndv + j ) = 3
+                ELSE IF ( data%CGROUP( kndv + j ) == 1 ) THEN
+                  data%CGROUP( kndv + j ) = 3
                   data%nnov = data%nnov + 1
                 END IF
               END IF
@@ -792,21 +792,21 @@
             DO ii = data%ISTADA( ig ), data%ISTADA( ig + 1 ) - 1
               j = data%ICNA( ii )
               IF ( i > 0 ) THEN
-                IF ( data%IWORK( kndv + j ) == 0 ) THEN
-                  data%IWORK( kndv + j ) = 1
+                IF ( data%CGROUP( kndv + j ) == 0 ) THEN
+                  data%CGROUP( kndv + j ) = 1
                   data%nnjv = data%nnjv + 1
                   nnlin = nnlin + 1
-                ELSE IF ( data%IWORK( kndv + j ) == 2 ) THEN
-                  data%IWORK( kndv + j ) = 3
+                ELSE IF ( data%CGROUP( kndv + j ) == 2 ) THEN
+                  data%CGROUP( kndv + j ) = 3
                   data%nnjv = data%nnjv + 1
                 END IF
               ELSE
-                IF ( data%IWORK( kndv + j ) == 0 ) THEN
-                  data%IWORK( kndv + j ) = 2
+                IF ( data%CGROUP( kndv + j ) == 0 ) THEN
+                  data%CGROUP( kndv + j ) = 2
                   data%nnov = data%nnov + 1
                   nnlin = nnlin + 1
-                ELSE IF ( data%IWORK( kndv + j ) == 1 ) THEN
-                  data%IWORK( kndv + j ) = 3
+                ELSE IF ( data%CGROUP( kndv + j ) == 1 ) THEN
+                  data%CGROUP( kndv + j ) = 3
                   data%nnov = data%nnov + 1
                 END IF
               END IF
@@ -830,19 +830,19 @@
 !  variable i is linear. Now, run backwards through the variables until a 
 !  nonlinear one is encountered
 
-            IF ( data%IWORK( kndv + i ) == 0 ) THEN
+            IF ( data%CGROUP( kndv + i ) == 0 ) THEN
               DO j = nend, i, - 1
-                IF ( data%IWORK( kndv + j ) > 0 ) THEN 
+                IF ( data%CGROUP( kndv + j ) > 0 ) THEN 
                   nend = j - 1
 
 !  interchange the data for variables i and j
 
-                  itemp = data%IWORK( jwrk + i )
-                  data%IWORK( jwrk + i ) = data%IWORK( jwrk + j )
-                  data%IWORK( jwrk + j ) = itemp
-                  itemp = data%IWORK( kndv + i )
-                  data%IWORK( kndv + i ) = data%IWORK( kndv + j )
-                  data%IWORK( kndv + j ) = itemp
+                  itemp = data%CGROUP( jwrk + i )
+                  data%CGROUP( jwrk + i ) = data%CGROUP( jwrk + j )
+                  data%CGROUP( jwrk + j ) = itemp
+                  itemp = data%CGROUP( kndv + i )
+                  data%CGROUP( kndv + i ) = data%CGROUP( kndv + j )
+                  data%CGROUP( kndv + j ) = itemp
                   atemp = X_l( i ) ; X_l( i ) = X_l( j ) ; X_l( j ) = atemp
                   atemp = X_u( i ) ; X_u( i ) = X_u( j ) ; X_u( j ) = atemp
                   atemp = X( i ) ; X( i ) = X( j ) ; X( j ) = atemp
@@ -874,19 +874,19 @@
 !  variable i is linear. Now, run backwards through the variables until a 
 !  linear one is encountered
 
-            IF ( data%IWORK( kndv + i ) > 0 ) THEN
+            IF ( data%CGROUP( kndv + i ) > 0 ) THEN
               DO j = nend, i, - 1
-                IF ( data%IWORK( kndv + j ) == 0 ) THEN 
+                IF ( data%CGROUP( kndv + j ) == 0 ) THEN 
                   nend = j - 1
 
 !  interchange the data for variables i and j
 
-                  itemp = data%IWORK( jwrk + i )
-                  data%IWORK( jwrk + i ) = data%IWORK( jwrk + j )
-                  data%IWORK( jwrk + j ) = itemp
-                  itemp = data%IWORK( kndv + i )
-                  data%IWORK( kndv + i ) = data%IWORK( kndv + j )
-                  data%IWORK( kndv + j ) = itemp
+                  itemp = data%CGROUP( jwrk + i )
+                  data%CGROUP( jwrk + i ) = data%CGROUP( jwrk + j )
+                  data%CGROUP( jwrk + j ) = itemp
+                  itemp = data%CGROUP( kndv + i )
+                  data%CGROUP( kndv + i ) = data%CGROUP( kndv + j )
+                  data%CGROUP( kndv + j ) = itemp
                   atemp = X_l( i ) ; X_l( i ) = X_l( j ) ; X_l( j ) = atemp
                   atemp = X_u( i ) ; X_u( i ) = X_u( j ) ; X_u( j ) = atemp
                   atemp = X( i ) ; X( i ) = X( j ) ; X( j ) = atemp
@@ -909,14 +909,14 @@
 
         DO i = 1, data%nvrels
           j = data%IELVAR( i )
-          data%IELVAR( i ) = data%IWORK( jwrk + j ) 
+          data%IELVAR( i ) = data%CGROUP( jwrk + j ) 
         END DO
         DO i = 1, data%nnza
           j = data%ICNA( i )
-          data%ICNA( i ) = data%IWORK( jwrk + j )
+          data%ICNA( i ) = data%CGROUP( jwrk + j )
         END DO
         DO j = 1, n
-           data%IWORK( jwrk + j ) = j
+           data%CGROUP( jwrk + j ) = j
         END DO
   200   CONTINUE
         IF ( ( data%nnov == nnlin .AND. data%nnjv == nnlin )                   &
@@ -938,20 +938,20 @@
 !  variable i is linear in the Jacobian. Now, run backwards through the 
 !  variables until a nonlinear Jacobian variable is encountered
 
-            IF ( data%IWORK( kndv + i ) == 2 ) THEN
+            IF ( data%CGROUP( kndv + i ) == 2 ) THEN
               DO j = nend, i, - 1
-                IF ( data%IWORK( kndv + j ) == 1 .OR.                          &
-                     data%IWORK( kndv + j ) == 3 ) THEN 
+                IF ( data%CGROUP( kndv + j ) == 1 .OR.                          &
+                     data%CGROUP( kndv + j ) == 3 ) THEN 
                   nend = j - 1
 
 !  Interchange the data for variables i and j
 
-                  itemp = data%IWORK( jwrk + i )
-                  data%IWORK( jwrk + i ) = data%IWORK( jwrk + j )
-                  data%IWORK( jwrk + j ) = itemp
-                  itemp = data%IWORK( kndv + i )
-                  data%IWORK( kndv + i ) = data%IWORK( kndv + j )
-                  data%IWORK( kndv + j ) = itemp
+                  itemp = data%CGROUP( jwrk + i )
+                  data%CGROUP( jwrk + i ) = data%CGROUP( jwrk + j )
+                  data%CGROUP( jwrk + j ) = itemp
+                  itemp = data%CGROUP( kndv + i )
+                  data%CGROUP( kndv + i ) = data%CGROUP( kndv + j )
+                  data%CGROUP( kndv + j ) = itemp
                   atemp = X_l( i ) ; X_l( i ) = X_l( j ) ; X_l( j ) = atemp
                   atemp = X_u( i ) ; X_u( i ) = X_u( j ) ; X_u( j ) = atemp
                   atemp = X( i ) ; X( i ) = X( j ) ; X( j ) = atemp
@@ -979,19 +979,19 @@
 !  variable i is linear in the objective. Now, run backwards through the 
 !  variables until a nonlinear objective variable is encountered
 
-            IF ( data%IWORK( kndv + i ) == 1 ) THEN
+            IF ( data%CGROUP( kndv + i ) == 1 ) THEN
               DO 240 j = nend, i, - 1
-                 IF ( data%IWORK( kndv + j ) > 1 ) THEN 
+                 IF ( data%CGROUP( kndv + j ) > 1 ) THEN 
                    nend = j - 1
 
 !  interchange the data for variables i and j
 
-                   itemp = data%IWORK( jwrk + i )
-                   data%IWORK( jwrk + i ) = data%IWORK( jwrk + j )
-                   data%IWORK( jwrk + j ) = itemp
-                   itemp = data%IWORK( kndv + i )
-                   data%IWORK( kndv + i ) = data%IWORK( kndv + j )
-                   data%IWORK( kndv + j ) = itemp
+                   itemp = data%CGROUP( jwrk + i )
+                   data%CGROUP( jwrk + i ) = data%CGROUP( jwrk + j )
+                   data%CGROUP( jwrk + j ) = itemp
+                   itemp = data%CGROUP( kndv + i )
+                   data%CGROUP( kndv + i ) = data%CGROUP( kndv + j )
+                   data%CGROUP( kndv + j ) = itemp
                    atemp = X_l( i ) ;  X_l( i ) = X_l( j ) ;  X_l( j ) = atemp
                    atemp = X_u( i ) ;  X_u( i ) = X_u( j ) ;  X_u( j ) = atemp
                    atemp = X( i ) ;  X( i ) = X( j ) ;  X( j ) = atemp
@@ -1014,11 +1014,11 @@
   290   CONTINUE
         DO i = 1, data%nvrels
           j = data%IELVAR( i )
-          data%IELVAR( i ) = data%IWORK( jwrk + j ) 
+          data%IELVAR( i ) = data%CGROUP( jwrk + j ) 
         END DO
         DO i = 1, data%nnza
           j = data%ICNA( i )
-          data%ICNA( i ) = data%IWORK( jwrk + j )
+          data%ICNA( i ) = data%CGROUP( jwrk + j )
         END DO
   300   CONTINUE
       ELSE
@@ -1059,7 +1059,7 @@
       DO ig = 1, data%ng
         i = data%KNDOFC( ig )
         IF ( i > 0 ) THEN
-          data%IWORK( i ) = ig
+          data%CGROUP( i ) = ig
           IF ( EQUATN( i ) ) data%meq = data%meq + 1
           IF ( LINEAR( i ) ) data%mlin = data%mlin + 1
         END IF
@@ -1080,21 +1080,21 @@
 
           DO 320 i = 1, m
             IF ( i > mend ) GO TO 390
-            ig = data%IWORK( i )
+            ig = data%CGROUP( i )
 
 !  constraint i is nonlinear. Now, run backwards through the constraints until 
 !  a linear one is encountered
 
             IF ( .NOT. LINEAR( i ) ) THEN
               DO j = mend, i, - 1
-                jg = data%IWORK( j )
+                jg = data%CGROUP( j )
                 IF ( LINEAR( j ) ) THEN
                    mend = j - 1
 
 !  interchange the data for constraints i and j
 
-                   data%IWORK( i ) = jg
-                   data%IWORK( j ) = ig
+                   data%CGROUP( i ) = jg
+                   data%CGROUP( j ) = ig
                    data%KNDOFC( ig ) = j
                    data%KNDOFC( jg ) = i
                    ltemp = LINEAR( i )
@@ -1123,21 +1123,21 @@
 
           DO 340 i = 1, m
             IF ( i > mend ) GO TO 390
-            ig = data%IWORK( i )
+            ig = data%CGROUP( i )
 
 !  constraint i is nonlinear. Now, run backwards through the constraints until 
 !  a linear one is encountered
 
             IF ( LINEAR( i ) ) THEN
               DO j = mend, i, - 1
-                jg = data%IWORK( j )
+                jg = data%CGROUP( j )
                 IF ( .NOT. LINEAR( j ) ) THEN
                    mend = j - 1
 
 !  interchange the data for constraints i and j
 
-                   data%IWORK( i ) = jg
-                   data%IWORK( j ) = ig
+                   data%CGROUP( i ) = jg
+                   data%CGROUP( j ) = ig
                    data%KNDOFC( ig ) = j
                    data%KNDOFC( jg ) = i
                    ltemp = LINEAR( i )
@@ -1169,21 +1169,21 @@
           mend = data%mlin
           DO 420 i = 1, data%mlin
             IF ( i > mend ) GO TO 430
-            ig = data%IWORK( i )
+            ig = data%CGROUP( i )
 
 !  constraint i is an inequality. Now, run backwards through the constraints 
 !  until an equation is encountered
 
             IF ( .NOT. EQUATN( i ) ) THEN
               DO j = mend, i, - 1
-                jg = data%IWORK( j )
+                jg = data%CGROUP( j )
                 IF ( EQUATN( j ) ) THEN
                   mend = j - 1
 
 !  interchange the data for constraints i and j
 
-                  data%IWORK( i ) = jg
-                  data%IWORK( j ) = ig
+                  data%CGROUP( i ) = jg
+                  data%CGROUP( j ) = ig
                   data%KNDOFC( ig ) = j
                   data%KNDOFC( jg ) = i
                   ltemp = LINEAR( i )
@@ -1209,21 +1209,21 @@
           mend = m
           DO 450 i = data%mlin + 1, m
             IF ( i > mend ) GO TO 700
-            ig = data%IWORK( i )
+            ig = data%CGROUP( i )
 
 !  constraint i is an inequality. Now, run backwards through the constraints 
 !  until an equation is encountered
 
             IF ( .NOT. EQUATN( i ) ) THEN
               DO j = mend, i, - 1
-                jg = data%IWORK( j )
+                jg = data%CGROUP( j )
                 IF ( EQUATN( j ) ) THEN
                   mend = j - 1
 
 !  interchange the data for constraints i and j
 
-                  data%IWORK( i ) = jg
-                  data%IWORK( j ) = ig
+                  data%CGROUP( i ) = jg
+                  data%CGROUP( j ) = ig
                   data%KNDOFC( ig ) = j
                   data%KNDOFC( jg ) = i
                   ltemp = LINEAR( i )
@@ -1249,21 +1249,21 @@
           mend = data%mlin
           DO 520 i = 1, data%mlin
             IF ( i > mend ) GO TO 530
-            ig = data%IWORK( i )
+            ig = data%CGROUP( i )
 
 !  constraint i is an equation. Now, run backwards through the constraints 
 !  until an inequality is encountered
 
             IF ( EQUATN( i ) ) THEN
               DO j = mend, i, - 1
-                jg = data%IWORK( j )
+                jg = data%CGROUP( j )
                 IF ( .NOT. EQUATN( j ) ) THEN
                   mend = j - 1
 
 !  interchange the data for constraints i and j
 
-                  data%IWORK( i ) = jg
-                  data%IWORK( j ) = ig
+                  data%CGROUP( i ) = jg
+                  data%CGROUP( j ) = ig
                   data%KNDOFC( ig ) = j
                   data%KNDOFC( jg ) = i
                   ltemp = LINEAR( i )
@@ -1289,21 +1289,21 @@
           mend = m
           DO 550 i = data%mlin + 1, m
             IF ( i > mend ) GO TO 700
-            ig = data%IWORK( i )
+            ig = data%CGROUP( i )
 
 !  constraint i is an equation. Now, run backwards through the constraints 
 !  until an inequality is encountered
 
             IF ( EQUATN( i ) ) THEN
               DO j = mend, i, - 1
-                jg = data%IWORK( j )
+                jg = data%CGROUP( j )
                 IF ( .NOT. EQUATN( j ) ) THEN
                   mend = j - 1
 
 !  interchange the data for constraints i and j
 
-                  data%IWORK( i ) = jg
-                  data%IWORK( j ) = ig
+                  data%CGROUP( i ) = jg
+                  data%CGROUP( j ) = ig
                   data%KNDOFC( ig ) = j
                   data%KNDOFC( jg ) = i
                   ltemp = LINEAR( i )
@@ -1331,21 +1331,21 @@
           mend = m
           DO 620 i = 1, m
             IF ( i > mend ) GO TO 700
-            ig = data%IWORK( i )
+            ig = data%CGROUP( i )
 
 !  constraint i is an inequality. Now, run backwards through the constraints 
 !  until an equation is encountered
 
             IF ( .NOT. EQUATN( i ) ) THEN
               DO j = mend, i, - 1
-                jg = data%IWORK( j )
+                jg = data%CGROUP( j )
                 IF ( EQUATN( j ) ) THEN
                   mend = j - 1
 
 !  interchange the data for constraints i and j
 
-                  data%IWORK( i ) = jg
-                  data%IWORK( j ) = ig
+                  data%CGROUP( i ) = jg
+                  data%CGROUP( j ) = ig
                   data%KNDOFC( ig ) = j
                   data%KNDOFC( jg ) = i
                   ltemp = LINEAR( i )
@@ -1370,21 +1370,21 @@
           mend = m
           DO 650 i = 1, m
             IF ( i > mend ) GO TO 700
-            ig = data%IWORK( i )
+            ig = data%CGROUP( i )
 
 !  constraint i is an equation. Now, run backwards through the constraints 
 !  until an inequality is encountered
 
             IF ( EQUATN( i ) ) THEN
               DO j = mend, i, - 1
-                jg = data%IWORK( j )
+                jg = data%CGROUP( j )
                 IF ( .NOT. EQUATN( j ) ) THEN
                   mend = j - 1
 
 !  interchange the data for constraints i and j
 
-                  data%IWORK( i ) = jg
-                  data%IWORK( j ) = ig
+                  data%CGROUP( i ) = jg
+                  data%CGROUP( j ) = ig
                   data%KNDOFC( ig ) = j
                   data%KNDOFC( jg ) = i
                   ltemp = LINEAR( i )
@@ -1410,7 +1410,7 @@
   700 CONTINUE
       work%nc2of = 0 ; work%nc2og = 0 ; work%nc2oh = 0
       work%nc2cf = 0 ; work%nc2cg = 0 ; work%nc2ch = 0 ; work%nhvpr = 0
-      work%pnc = m
+      work%njvpr = 0 ; work%pnc = m
 
       CALL CPU_TIME( data%sttime )
       data%sutime = data%sttime - data%sutime

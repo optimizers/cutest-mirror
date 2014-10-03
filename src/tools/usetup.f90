@@ -237,6 +237,7 @@
       data%ng1 = data%ng + 1
       data%ngng = data%ng + data%ng
       data%nel1 = data%nel + 1
+      data%numcon = 0
 
 !  allocate integer workspace
 
@@ -320,9 +321,9 @@
         bad_alloc = 'data%ITYPEV' ; GO TO 910
       END IF
 
-      ALLOCATE( data%IWORK( 2 * n ), STAT = alloc_status )
+      ALLOCATE( data%CGROUP( 2 * n ), STAT = alloc_status )
       IF ( alloc_status /= 0 ) THEN
-        bad_alloc = 'data%IWORK' ; GO TO 910
+        bad_alloc = 'data%CGROUP' ; GO TO 910
       END IF
 
 !  allocate real workspace
@@ -635,9 +636,9 @@
 
 !  initialize the performance counters and variables
 
-      work%nc2of = 0 ;  work%nc2og = 0 ; work%nc2oh = 0
-      work%nc2cf = 0 ;  work%nc2cg = 0 ; work%nc2ch = 0 ; work%nhvpr = 0
-      work%pnc = 0
+      work%nc2of = 0 ; work%nc2og = 0 ; work%nc2oh = 0
+      work%nc2cf = 0 ; work%nc2cg = 0 ; work%nc2ch = 0 ; work%nhvpr = 0
+      work%njvpr = 0 ; work%pnc = 0
 
       CALL CPU_TIME( data%sttime )
       data%sutime = data%sttime - data%sutime

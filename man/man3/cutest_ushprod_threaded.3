@@ -75,7 +75,12 @@ an array that gives the indiices of the nonzeros in the result obtained by
 multiplying the Hessian by VECTOR,
 .TP
 .B RESULT \fP[out] - real/double precision
-an array that gives the result of multiplying the Hessian by VECTOR. 
+an array that gives the result of multiplying the Hessian by VECTOR; 
+only the nonzeros will be set,
+.TP
+.B thread \fP[out] - integer
+thread chosen for the evaluation; threads are numbered
+from 1 to the value threads set when calling CUTEST_usetup_threaded.
 .LP
 .SH NOTE
 goth should be set to .TRUE. whenever
@@ -90,10 +95,6 @@ a previous call to CUTEST_uhprod_threaded or CUTEST_ushprod_threaded,
 with goth = .FALSE., at the current point has been made.
 .TP
 .B \fPOtherwise, it should be set .FALSE.
-.TP
-.B thread \fP[out] - integer
-thread chosen for the evaluation; threads are numbered
-from 1 to the value threads set when calling CUTEST_usetup_threaded.
 .LP
 .SH AUTHORS
 I. Bongartz, A.R. Conn, N.I.M. Gould, D. Orban and Ph.L. Toint
