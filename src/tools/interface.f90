@@ -545,6 +545,20 @@
        REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lresult ) :: RESULT
        END SUBROUTINE CUTEST_cjprod
   
+       SUBROUTINE CUTEST_csjprod( cutest_status, n, m, gotj, jtrans, X,        &
+                                  nnz_vector, INDEX_nz_vector, VECTOR, lvector,&
+                                  nnz_result, INDEX_nz_result, RESULT, lresult )
+       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+       INTEGER, INTENT( IN ) :: n, m, nnz_vector, lvector, lresult
+       INTEGER, INTENT( OUT ) :: cutest_status, nnz_result
+       LOGICAL, INTENT( IN ) :: gotj, jtrans
+       INTEGER, DIMENSION( nnz_vector ), INTENT( IN ) :: INDEX_nz_vector
+       INTEGER, DIMENSION( n ), INTENT( OUT ) :: INDEX_nz_result
+       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( lvector ) :: VECTOR
+       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lresult ) :: RESULT
+       END SUBROUTINE CUTEST_csjprod
+
        SUBROUTINE CUTEST_creport( cutest_status, CALLS, CPU )
        INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
        INTEGER, INTENT( OUT ) :: cutest_status
