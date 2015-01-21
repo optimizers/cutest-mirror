@@ -23,7 +23,7 @@
       INTEGER, DIMENSION( 10 ) :: I_temp
       pname = REPEAT( ' ', 10 )
       REWIND( input )
-      READ( input, "( 10I8 )" ) I_temp
+      READ( input, "( 10I10 )" ) I_temp
       READ( input, "( I2, A10 )" ) I_temp( 1 ), pname
       REWIND( input )
       status = 0

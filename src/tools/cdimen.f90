@@ -29,7 +29,7 @@
 !  input the problem dimensions
 
       REWIND( input )
-      READ( input, "( 3I8 )" ) n, ng, nel
+      READ( input, "( 3I10 )" ) n, ng, nel
 
 !  input the problem type
 
@@ -46,7 +46,7 @@
 !  print out problem data. input the number of variables, groups, elements and 
 !  the identity of the objective function group (i = nslack, j = nobjgr)
 
-        IF ( ialgor == 2 ) READ( input, "( 2I8 )" ) i, j
+        IF ( ialgor == 2 ) READ( input, "( 2I10 )" ) i, j
 
 !  input the starting addresses of the elements in each group, of the 
 !  parameters used for each group and of the nonzeros of the linear element 

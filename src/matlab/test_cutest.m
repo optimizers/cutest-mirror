@@ -20,13 +20,15 @@ f = cutest_obj(prob.x);
 fprintf('Evaluating objective and gradient...\n');
 [f,g] = cutest_obj(prob.x);
 
-fprintf('Evaluating objective function...\n');
-f = cutest_sobj(prob.x);
-
-fprintf('Evaluating objective and sparse gradient...\n');
-[f,g] = cutest_sobj(prob.x);
-
 if prob.m > 0
+  fprintf('Evaluating objective function...\n');
+  f = cutest_sobj(prob.x);
+
+  fprintf('Evaluating objective and sparse gradient...\n');
+  [f,g] = cutest_sobj(prob.x);
+
+
+
     fprintf('Reading constraint names...\n');
     cnames = cutest_connames();
 
