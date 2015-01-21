@@ -195,7 +195,7 @@
 !  input the problem dimensions
 
       REWIND( input )
-      READ( input, "( 10I8 )" ) data%n, data%ng, data%nel, data%ntotel,        &
+      READ( input, "( 10I10 )" ) data%n, data%ng, data%nel, data%ntotel,       &
         data%nvrels, data%nnza, data%ngpvlu, data%nepvlu, neltyp, ngrtyp
       n = data%n
       IF ( n <= 0 ) THEN
