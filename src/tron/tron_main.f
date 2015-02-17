@@ -7,6 +7,7 @@ C  Nick Gould, for CGT Productions.
 C  September 2004.
 C  Revised for CUTEst, January 2013
 C
+      IMPLICIT NONE
       INTEGER          LH, I, out, N, INPUT, J, MAXIT, L, P,
      *                 IFLAG, INSPEC, NNZH, NNZH2,
      *                 status, ISAVE( 3 )
@@ -54,19 +55,19 @@ C  Open the relevant file.
 C
       OPEN ( INPUT, FILE = 'OUTSDIF.d', FORM = 'FORMATTED',
      *       STATUS = 'OLD' )
+      REWIND INPUT
 C
 C  Check to see if there is sufficient room
 C
       CALL CUTEST_udimen( status, INPUT, N )
       IF ( status /= 0 ) GO TO 910
 
-      ALLOCATE( HPTR( n + 1 ), LPTR( n + 1 ), LROW( n * p ),
+      ALLOCATE( HPTR( n + 1 ), LPTR( n + 1 ),
      *          BPTR( n + 1 ), IFREE( n ), IWA( 3 * n ),
      *          X( n ), XL( n ), XU( n ), G( n ), 
      *          XC( n ), S( n ), WA( 7 * n ),
-     *          HDIAG( n ), LVAL( n * p ), 
-     *          LDIAG( n ), BDIAG( n ), XNAMES( n ),
-     *          STAT = status )
+     *          HDIAG( n ), LDIAG( n ), BDIAG( n ),
+     *          XNAMES( n ), STAT = status )
       IF ( status /= 0 ) GO TO 990
 C
 C  Set up SIF data.
@@ -80,7 +81,9 @@ C
       IF ( status /= 0 ) GO TO 910
 
       ALLOCATE( HROW( nnzh ), BROW( nnzh ),
-     *          HVAL( nnzh ), BVAL( nnzh ), STAT = status )
+     *          HVAL( nnzh ), BVAL( nnzh ),
+     *          LVAL( nnzh + n * p ), LROW( nnzh + n * p ),
+     *          STAT = status )
       IF ( status /= 0 ) GO TO 990
       lh = nnzh
 C
@@ -99,6 +102,7 @@ C
    30 CONTINUE
 C
 C  Evaluate the function, F
+
 C
          IF (TASK( 1: 1 ) .EQ. 'F' .OR. 
      *       TASK( 1: 5 ) .EQ. 'START' ) THEN
