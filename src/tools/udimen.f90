@@ -21,7 +21,7 @@
 !  --------------------------------------------------------------------------
 
       REWIND( input )
-      READ( input, "( I8 )" ) n
+      READ( input, "( I10 )" ) n
       REWIND( input )
       status = 0
       RETURN

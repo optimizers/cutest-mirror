@@ -940,7 +940,7 @@
 
             IF ( data%CGROUP( kndv + i ) == 2 ) THEN
               DO j = nend, i, - 1
-                IF ( data%CGROUP( kndv + j ) == 1 .OR.                          &
+                IF ( data%CGROUP( kndv + j ) == 1 .OR.                         &
                      data%CGROUP( kndv + j ) == 3 ) THEN 
                   nend = j - 1
 
