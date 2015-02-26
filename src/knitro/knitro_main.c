@@ -220,6 +220,7 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
     integer status;            /* Exit flag from CUTEst tools */
 
     KTR_context *KnitroData;
+    int *cTypes;
     char      szVersion[15 + 1];
 
     VarTypes vtypes;
@@ -464,6 +465,13 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
         if (cl[i] ==  CUTE_INF) cu[i] =  KTR_INFBOUND;
     }
 
+    MALLOC(cTypes, CUTEst_ncon, int);
+    for (i = 0; i < CUTEst_ncon; i++)
+        if (linear[i])
+          cTypes[i] = KTR_CONTYPE_LINEAR;
+        else
+          cTypes[i] = KTR_CONTYPE_GENERAL;
+
 #ifdef KNIT_DEBUG
     fprintf(stderr, "Initializing KNITRO data structure...\n");
 #endif
@@ -473,7 +481,7 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
                                  KTR_OBJTYPE_GENERAL,
                                  bl, bu,
                                  (int)CUTEst_ncon,
-                                 (int *)linear,
+                                 cTypes,
                                  cl, cu,
                                  (int)CUTEst_nnzj,
                                  (int *)jacIndexVars,
@@ -556,6 +564,7 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
     FREE(hessIndexCols);
     FREE(CUTEst_Hess);
     if (Hv) FREE(Hv);
+    FREE(cTypes);
 
     CUTEST_cterminate( &status );
 
