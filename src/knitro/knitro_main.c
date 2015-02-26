@@ -225,6 +225,7 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
 
     VarTypes vtypes;
 
+    int *cType;
     integer ncon_dummy;
     doublereal *x, *bl, *bu, *dummy1, *dummy2;
     doublereal *v = NULL, *cl = NULL, *cu = NULL;
@@ -272,6 +273,7 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
     MALLOC(x,      CUTEst_nvar, doublereal);
     MALLOC(bl,     CUTEst_nvar, doublereal);
     MALLOC(bu,     CUTEst_nvar, doublereal);
+    MALLOC(cType,  CUTEst_ncon, integer);
     if (constrained) {
       MALLOC(equatn, CUTEst_ncon+1,            logical   );
       MALLOC(linear, CUTEst_ncon+1,            logical   );
@@ -475,8 +477,9 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
 #ifdef KNIT_DEBUG
     fprintf(stderr, "Initializing KNITRO data structure...\n");
 #endif
+
     ExitCode = KTR_init_problem(KnitroData,
-                                 CUTEst_nvar,
+                                 (int)CUTEst_nvar,
                                  KTR_OBJGOAL_MINIMIZE,
                                  KTR_OBJTYPE_GENERAL,
                                  bl, bu,
