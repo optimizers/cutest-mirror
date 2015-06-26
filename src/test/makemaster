@@ -210,6 +210,16 @@ run_lqp_test: ctools test_cutest_quadratic
 	cat ../test/test_lqp.output
 	rm $(OBJ)/run_test
 
+run_debug_cutest_constrained: ctools test_cutest_constrained
+	echo " Exhaustive debug of constrained tools"
+	$(SED) -f $(SEDS) ../test/cdebug.f90 > $(OBJ)/cdebug.f90
+	cd $(OBJ) ; echo "$(FORTRAN) $(RUNFFLAGS) $(SPECIAL) -o run_debug \
+            $(C_TEST) cdebug.f90 -L$(OBJ) $(LIBS)"
+	cd $(OBJ) ; $(FORTRAN) $(RUNFFLAGS) $(SPECIAL) -o run_debug \
+            $(C_TEST) cdebug.f90 -L$(OBJ) $(LIBS)
+	- $(OBJ)/run_debug
+	rm $(OBJ)/run_debug
+
 tools: 
 	( cd ../tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      cutest PRECIS=$(PRECIS) PWD=$(PWD)/../tools )
