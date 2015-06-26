@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.1 - 08/08/2013 AT 09:30 GMT.
+! THIS VERSION: CUTEST 1.1 - 26/06/2015 AT 08:30 GMT.
 
 !-*-*-*-*-*-*-*-*-*-*-*-*-*- C U T E S T   M O D U l E -*-*-*-*-*-*-*-*-*-*-*-*-
 
@@ -1943,7 +1943,7 @@
 
 !  deallocate temporary storage
 
-      DEALLOCATE( POS_in_H, ROW_start, USED, STAT = alloc_status )
+      DEALLOCATE( USED, STAT = alloc_status )
 
 !  successful return
 
