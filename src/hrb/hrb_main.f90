@@ -95,7 +95,7 @@
 
 !  Determine required matrix type
 
-      IF ( M > 0 ) THEN
+      IF ( m > 0 ) THEN
    20   CONTINUE
         WRITE( out, 2010 )
         READ( in, 1000 ) matype
@@ -117,15 +117,15 @@
 
 !  Determine required matrix format
 
-   30    CONTINUE
-         WRITE( out, 2030 )
-         READ( in, 1000 ) maform
-         IF ( maform == 'a' ) maform = 'A'
-         IF ( maform == 'e' ) maform = 'E'
-         IF ( maform /= 'A' .AND. maform /= 'E' ) THEN
-            WRITE( out, 2040 ) maform
-            GO TO 30
-         END IF
+   30   CONTINUE
+        WRITE( out, 2030 )
+        READ( in, 1000 ) maform
+        IF ( maform == 'a' ) maform = 'A'
+        IF ( maform == 'e' ) maform = 'E'
+        IF ( maform /= 'A' .AND. maform /= 'E' ) THEN
+          WRITE( out, 2040 ) maform
+          GO TO 30
+        END IF
       END IF
 
 !  Determine the names of the problem, variables and constraints
@@ -162,17 +162,17 @@
 
       IF ( rb ) THEN
         IF ( matype == 'H' ) THEN
-           IF ( maform == 'A' ) THEN
-              prbrhs = pname( 1 : plast ) // '.hes.rhsr'
-           ELSE
-              prbrhs = pname( 1 : plast ) // '.ele.rhsr'
-           END IF
+          IF ( maform == 'A' ) THEN
+            prbrhs = pname( 1 : plast ) // '.hes.rhsr'
+          ELSE
+            prbrhs = pname( 1 : plast ) // '.ele.rhsr'
+          END IF
         ELSE IF ( matype == 'A' ) THEN
-           prbrhs = pname( 1 : plast ) // '.aug.rhsr'
+          prbrhs = pname( 1 : plast ) // '.aug.rhsr'
         ELSE IF ( matype == 'J' ) THEN
-           prbrhs = pname( 1 : plast ) // '.jac.rhsr'
+          prbrhs = pname( 1 : plast ) // '.jac.rhsr'
         ELSE
-           prbrhs = pname( 1 : plast ) // '.jat.rhsr'
+          prbrhs = pname( 1 : plast ) // '.jat.rhsr'
         END IF
 
 !  Open output file for RHS
@@ -221,14 +221,14 @@
       DO i = 1, nj
         IF ( VAL( i ) /= zero ) THEN
           IF ( ROW( i ) > 0 ) THEN
-             na = na + 1
-             j = ROW( i )  
-             ROW( na ) = J
-             COL( na ) = COL( i )  
-             VAL( na ) = VAL( i )
-             SLACK( j ) = MAX( SLACK( j ), ABS( VAL( na ) ) )
+            na = na + 1
+            j = ROW( i )  
+            ROW( na ) = J
+            COL( na ) = COL( i )  
+            VAL( na ) = VAL( i )
+            SLACK( j ) = MAX( SLACK( j ), ABS( VAL( na ) ) )
           ELSE
-             C( COL( i ) ) = - VAL( i )
+            C( COL( i ) ) = - VAL( i )
           END IF  
         END IF
       END DO
@@ -238,21 +238,26 @@
 
       ntotal = n
       DO i = 1, m
-         IF ( .NOT. EQUATN( i ) ) THEN
-            ntotal = ntotal + 1
-            na = na + 1 ; ROW( na ) = i ; COL( na ) = ntotal 
-            IF ( ( CL( i ) == zero .AND. CU( i ) > biginf ) .OR.               &
-                 ( CU( i ) == zero .AND. CL( i ) < - biginf ) ) THEN
-              IF ( CL( i ) == zero ) THEN
-                VAL( na ) = - SLACK( i )
-              ELSE
-                VAL( na ) = SLACK( i )
-              END IF
-            ELSE
+        IF ( .NOT. EQUATN( i ) ) THEN
+          ntotal = ntotal + 1
+          na = na + 1 ; ROW( na ) = i ; COL( na ) = ntotal 
+          IF ( ( CL( i ) == zero .AND. CU( i ) > biginf ) .OR.                 &
+               ( CU( i ) == zero .AND. CL( i ) < - biginf ) ) THEN
+            IF ( CL( i ) == zero ) THEN
               VAL( na ) = - SLACK( i )
+            ELSE
+              VAL( na ) = SLACK( i )
             END IF
-         END IF
+          ELSE
+            VAL( na ) = - SLACK( i )
+          END IF
+!  remove
+!         VAL( na ) = - one
+        END IF
       END DO
+
+!  remove
+!     C = C - one
 
       IF ( matype == 'H' ) THEN
         nnz = 0
@@ -361,7 +366,7 @@
 
       LINE1( 1 : 10 ) = pname
       DO i = 11, 80, 10
-         LINE1( i : i + 9 ) = '          '
+        LINE1( i : i + 9 ) = '          '
       END DO
       LINE1( 73 : 80 ) = pname( 1 : 8 )
 
@@ -403,6 +408,22 @@
 !  Transform from co-ordinate to column format
 
       IF ( maform == 'A' ) CALL REORDER( ncol, nnz, ROW, COL, VAL, IP, IW )
+
+     IF ( matype == 'J' ) THEN
+       write(74,"( ' J' )" )
+       DO j = 1, ncol
+         DO k = IP( j ), IP( j + 1 ) - 1
+           write(74,"( 2I8, ES12.4 )" ) row( k ), j, val( k )
+         END DO
+       END DO
+     ELSE IF ( matype == 'T' ) THEN
+       write(75,"( ' JT' )" )
+       DO j = 1, ncol
+         DO k = IP( j ), IP( j + 1 ) - 1
+           write(75,"( 2I8, ES12.4 )" ) j, row( k ), val( k )
+         END DO
+       END DO
+     END IF 
 
 !  Harwell-Boeing format
 
@@ -447,9 +468,9 @@
         WRITE( UNIT = LINE3( 29 : 42 ), FMT = "( I14 )" ) ncol
         WRITE( UNIT = LINE3( 43 : 56 ), FMT = "( I14 )" ) nnz
         IF ( maform == 'A' ) THEN
-           i = 0
+          i = 0
         ELSE
-           i = nv
+          i = nv
         END IF
         WRITE( UNIT = LINE3( 57 : 70 ), FMT = "( I14 )" ) i
    
@@ -478,9 +499,9 @@
 !  Continue formatting header cards
 
         IF ( maform == 'A' ) THEN
-           i = ( ncol + 10 ) / 10 + ( nnz  + 9 ) / 10 + ( nnz  +  2 ) / 3
+          i = ( ncol + 10 ) / 10 + ( nnz  + 9 ) / 10 + ( nnz  +  2 ) / 3
         ELSE
-           i = ( ncol + 10 ) / 10 + ( nnz  + 9 ) / 10 + ( NV   +  2 ) / 3
+          i = ( ncol + 10 ) / 10 + ( nnz  + 9 ) / 10 + ( NV   +  2 ) / 3
         END IF
         WRITE( UNIT = LINE2( 1: 14 ), FMT = "( 1X, I13 )" ) I
         i = ( ncol + 10 )/10 
@@ -565,8 +586,8 @@
 !S        WRITE( OUTPUT, "( (1P, 3E24.16) )" ) ( VAL( i ), i = 1, nnz )
           WRITE( OUTPUT, "( (1P, 3D24.16) )" ) ( VAL( i ), i = 1, nnz )
         ELSE
-!S        WRITE( OUTPUT, "( (1P, 3E24.16) )" ) ( VAL( i ), i = 1, NV )
-          WRITE( OUTPUT, "( (1P, 3D24.16) )" ) ( VAL( i ), i = 1, NV )
+!S        WRITE( OUTPUT, "( (1P, 3E24.16) )" ) ( VAL( i ), i = 1, nv )
+          WRITE( OUTPUT, "( (1P, 3D24.16) )" ) ( VAL( i ), i = 1, nv )
         END IF
       ELSE
         WRITE( OUTPUT, "( (10I8) )" ) ( IP( i ), i = 1, ncol + 1 )
@@ -575,8 +596,8 @@
 !S        WRITE( OUTPUT, "( (1P, 3E25.16) )" ) ( VAL( i ), i = 1, nnz )
           WRITE( OUTPUT, "( (1P, 3D25.16) )" ) ( VAL( i ), i = 1, nnz )
         ELSE
-!S        WRITE( OUTPUT, "( (1P, 3E25.16) )" ) ( VAL( i ), i = 1, NV )
-          WRITE( OUTPUT, "( (1P, 3D25.16) )" ) ( VAL( i ), i = 1, NV )
+!S        WRITE( OUTPUT, "( (1P, 3E25.16) )" ) ( VAL( i ), i = 1, nv )
+          WRITE( OUTPUT, "( (1P, 3D25.16) )" ) ( VAL( i ), i = 1, nv )
         END IF
       END IF
 
@@ -584,10 +605,10 @@
         IF ( matype == 'A' ) THEN
 !S        WRITE( OUTPUT, "( (1P, 3E24.16) )" ) ( C( i ), i = 1, n ),
           WRITE( OUTPUT, "( (1P, 3D24.16) )" ) ( C( i ), i = 1, n ),           &
-                                                ( B( i ), i = 1, M )
+                                                ( B( i ), i = 1, m )
         ELSE IF ( matype == 'J' ) THEN
-!S        WRITE( OUTPUT, "( (1P, 3E24.16) )" ) ( B( i ), i = 1, M )
-          WRITE( OUTPUT, "( (1P, 3D24.16) )" ) ( B( i ), i = 1, M )
+!S        WRITE( OUTPUT, "( (1P, 3E24.16) )" ) ( B( i ), i = 1, m )
+          WRITE( OUTPUT, "( (1P, 3D24.16) )" ) ( B( i ), i = 1, m )
         ELSE
 !S        WRITE( OUTPUT, "( (1P, 3E24.16) )" ) ( C( i ), i = 1, n )
           WRITE( OUTPUT, "( (1P, 3D24.16) )" ) ( C( i ), i = 1, n )
@@ -596,10 +617,10 @@
         IF ( matype == 'A' ) THEN
 !S        WRITE( OUTRHS, "( (1P, 3E25.16) )" ) ( C( i ), i = 1, n ),
           WRITE( OUTRHS, "( (1P, 3D25.16) )" ) ( C( i ), i = 1, n ),           &
-                                               ( B( i ), i = 1, M )
+                                               ( B( i ), i = 1, m )
         ELSE IF ( matype == 'J' ) THEN
-!S        WRITE( OUTRHS, "( (1P, 3E25.16) )" ) ( B( i ), i = 1, M )
-          WRITE( OUTRHS, "( (1P, 3D25.16) )" ) ( B( i ), i = 1, M )
+!S        WRITE( OUTRHS, "( (1P, 3E25.16) )" ) ( B( i ), i = 1, m )
+          WRITE( OUTRHS, "( (1P, 3D25.16) )" ) ( B( i ), i = 1, m )
         ELSE
 !S        WRITE( OUTRHS, "( (1P, 3E25.16) )" ) ( C( i ), i = 1, n )
           WRITE( OUTRHS, "( (1P, 3D25.16) )" ) ( C( i ), i = 1, n )
