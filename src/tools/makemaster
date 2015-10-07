@@ -73,8 +73,8 @@ UCUTESTS = $(LCS)(usetup.o) $(LCS)(udimen.o) $(LCS)(udimse.o) $(LCS)(udimsh.o) \
 CCUTESTS = $(LCS)(csetup.o) $(LCS)(cdimen.o) $(LCS)(cdimse.o) $(LCS)(cdimsh.o) \
            $(LCS)(cdimsj.o) $(LCS)(cnames.o) $(LCS)(cvartype.o) $(LCS)(cfn.o) \
            $(LCS)(cgr.o) $(LCS)(cofg.o) $(LCS)(cofsg.o) $(LCS)(ccfg.o) \
-           $(LCS)(clfg.o) \
-           $(LCS)(ccfsg.o) $(LCS)(ccifg.o) $(LCS)(ccifsg.o) $(LCS)(cdh.o) \
+           $(LCS)(clfg.o) $(LCS)(ccfsg.o) $(LCS)(ccifg.o) \
+           $(LCS)(ccifsg.o) $(LCS)(cdh.o) $(LCS)(cdhc.o) \
            $(LCS)(ceh.o) $(LCS)(cgrdh.o) $(LCS)(cidh.o) $(LCS)(csh.o) \
            $(LCS)(cshc.o) $(LCS)(cshp.o) $(LCS)(cish.o) $(LCS)(cjprod.o) \
            $(LCS)(cstats.o) $(LCS)(csgr.o) $(LCS)(csgreh.o) $(LCS)(csgrsh.o) \
@@ -96,8 +96,8 @@ UCUTESTD = $(LCD)(usetup.o) $(LCD)(udimen.o) $(LCD)(udimse.o) $(LCD)(udimsh.o) \
 CCUTESTD = $(LCD)(csetup.o) $(LCD)(cdimen.o) $(LCD)(cdimse.o) $(LCD)(cdimsh.o) \
            $(LCD)(cdimsj.o) $(LCD)(cnames.o) $(LCD)(cvartype.o) $(LCD)(cfn.o) \
            $(LCD)(cgr.o) $(LCD)(cofg.o) $(LCD)(cofsg.o) $(LCD)(ccfg.o) \
-           $(LCD)(clfg.o) \
-           $(LCD)(ccfsg.o) $(LCD)(ccifg.o) $(LCD)(ccifsg.o) $(LCD)(cdh.o) \
+           $(LCD)(clfg.o) $(LCD)(ccfsg.o) $(LCD)(ccifg.o) \
+           $(LCD)(ccifsg.o) $(LCD)(cdh.o) $(LCD)(cdhc.o) \
            $(LCD)(ceh.o) $(LCD)(cgrdh.o) $(LCD)(cidh.o) $(LCD)(csh.o) \
            $(LCD)(cshc.o) $(LCD)(cshp.o) $(LCD)(cish.o) $(LCD)(cjprod.o) \
            $(LCD)(cstats.o) $(LCD)(csgr.o) $(LCD)(csgreh.o) $(LCD)(csgrsh.o) \
@@ -203,6 +203,7 @@ $(LC)(cutest.o): ../tools/cutest.f90
 	$(RMARFILE) ccifg.o
 	$(RMARFILE) ccifsg.o
 	$(RMARFILE) cdh.o
+	$(RMARFILE) cdhc.o
 	$(RMARFILE) ceh.o
 	$(RMARFILE) cgrdh.o
 	$(RMARFILE) cidh.o
@@ -475,6 +476,18 @@ $(LC)(cdh.o): ../tools/cdh.f90
                 || ( printf ' %-26s' "=> Disabling optimization " ; \
                    $(FORTRAN) -o cdh.o $(FFLAGSN) cdh.f90 )
 	cd $(OBJ); $(ARR) cdh.o; $(RM) cdh.f90 cdh.o
+#	$(MVMODS)
+	@printf '[ OK ]\n'
+
+cdhc.o: $(LC)(cdhc.o)
+
+$(LC)(cdhc.o): ../tools/cdhc.f90
+	@printf ' %-9s %-15s\t\t' "Compiling" "cdhc" 
+	$(SED) -f $(SEDS) ../tools/cdhc.f90 > $(OBJ)/cdhc.f90
+	cd $(OBJ); $(FORTRAN) -o cdhc.o $(FFLAGS) cdhc.f90 \
+                || ( printf ' %-26s' "=> Disabling optimization " ; \
+                   $(FORTRAN) -o cdhc.o $(FFLAGSN) cdhc.f90 )
+	cd $(OBJ); $(ARR) cdhc.o; $(RM) cdhc.f90 cdhc.o
 #	$(MVMODS)
 	@printf '[ OK ]\n'
 

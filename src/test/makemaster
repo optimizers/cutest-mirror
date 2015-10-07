@@ -137,6 +137,7 @@ run_test_cutest_constrained: ctools test_cutest_constrained
             $(C_TEST) ctest.f90 -L$(OBJ) $(LIBS)"
 	cd $(OBJ) ; $(FORTRAN) $(RUNFFLAGS) $(SPECIAL) -o run_test \
             $(C_TEST) ctest.f90 -L$(OBJ) $(LIBS)
+	valgrind -v --tool=memcheck --leak-check=yes --show-reachable=yes --track-origins=yes $(OBJ)/run_test
 #	- $(OBJ)/run_test
 	- $(OBJ)/run_test >& ../test/test_con.output
 	cat ../test/test_con.output

@@ -1,6 +1,6 @@
 !     ( Last modified on 29 Jan 2013 at 14:15:00 )
 
-!  Dummy LINCOA for testing bobyqa_main interface to CUTEst
+!  Dummy LINCOA for testing lincoa_main interface to CUTEst
 !  Nick Gould, 29th January 2013
 
       SUBROUTINE LINCOA( n, npt, m, A, ia, B, X, rhobeg, rhoend, iprint,       &

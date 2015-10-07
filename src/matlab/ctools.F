@@ -1,4 +1,4 @@
-C THIS VERSION: CUTEST 1.0 - 16/01/2013 AT 10:30 GMT.
+C THIS VERSION: CUTEST 1.3 - 07/10/2015 AT 08:30 GMT.
 
 C-*-*-  C U T E S T    C T O O L S   G A T E W A Y    S U B R O U T I N E  -*-*-
 
@@ -114,6 +114,7 @@ C  Set up tool names.
       TCFSG  = NULLSTR( 'CUTEST_ccfsg' )
       TLFG   = NULLSTR( 'CUTEST_clfg' )
       TDH    = NULLSTR( 'CUTEST_cdh' )
+      TDHC   = NULLSTR( 'CUTEST_cdhc' )
       TGRDH  = NULLSTR( 'CUTEST_cgrdh' )
       TSH    = NULLSTR( 'CUTEST_csh' )
       TSHC   = NULLSTR( 'CUTEST_cshc' )
@@ -819,6 +820,42 @@ C  Copy second and third input arguments into X and V, respectively.
 C  Get the dense Hessian of the Lagrangian evaluated at X and V.
 
          CALL CUTEST_cdh( status, n, m, X, V, n, DH )
+         IF ( status .NE. 0 ) GO TO 910
+
+C  Copy H.
+
+         PLHS( 1 ) = MXCREATEFULL( n, n, 0 )
+         nn = n * n
+         pr = MXGETPR( PLHS( 1 ) )
+         CALL MXCOPYREAL8TOPTR( DH, pr, nn )
+
+      ELSE IF ( EQUAL( TOOL, TDHC ) ) THEN
+
+C  Check number of input and output arguments.
+
+         IF ( nrhs .NE. 3 ) THEN
+            msg = 'CUTEST_cdhc requires x and Lagrange multipliers ' // 
+     *            'y as input.'
+            CALL MEXERRMSGTXT( msg )
+         END IF
+         IF ( nlhs .NE. 1 ) THEN
+            msg = 'CUTEST_cdhc returns one output argument.'
+            CALL MEXERRMSGTXT( msg )
+         END IF
+
+C  Copy second and third input arguments into X and V, respectively.
+
+         iptr = PRHS( 2 )
+         CALL GETVEC( iptr, X, nvar, n )
+         IF( ncon .GT. 0 ) THEN
+           iptr = PRHS( 3 )
+           CALL GETVEC( iptr, V, ncon, m )
+         ENDIF
+
+C  Get the dense Hessian of the contrained part of the
+C  Lagrangian evaluated at X and V.
+
+         CALL CUTEST_cdhc( status, n, m, X, V, n, DH )
          IF ( status .NE. 0 ) GO TO 910
 
 C  Copy H.

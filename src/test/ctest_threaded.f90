@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.0 - 17/11/2012 AT 17:00 GMT.
+! THIS VERSION: CUTEST 1.3 - 07/10/2015 AT 08:20 GMT.
 
 !-*- C U T E S T  t e s t _ c o n s t r a i n e d _ t o o l s  P R O G R A M -*-
 
@@ -332,6 +332,13 @@
 
       WRITE( out, "( ' CALL CUTEST_cdh' )" )
       CALL CUTEST_cdh_threaded( status, n, m, X, Y, l_h2_1, H2_val, thread )
+      IF ( status /= 0 ) GO to 900
+      CALL WRITE_H_dense( out, n, l_h2_1, H2_val )
+
+!  compute the dense Hessian value without the objective function
+
+      WRITE( out, "( ' CALL CUTEST_cdhc' )" )
+      CALL CUTEST_cdhc_threaded( status, n, m, X, Y, l_h2_1, H2_val, thread )
       IF ( status /= 0 ) GO to 900
       CALL WRITE_H_dense( out, n, l_h2_1, H2_val )
 
