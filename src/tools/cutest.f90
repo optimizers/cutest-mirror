@@ -3870,6 +3870,12 @@
          bad_alloc = 'data%ISYMMH' ; GO TO 600 ; END IF
      END IF
 
+     IF ( ALLOCATED( data%LIST_elements ) ) THEN
+       DEALLOCATE( data%LIST_elements, STAT = alloc_status )
+       IF ( alloc_status /= 0 ) THEN
+         bad_alloc = 'data%ISYMMH' ; GO TO 600 ; END IF
+     END IF
+
      IF ( ALLOCATED( data%A ) ) THEN
        DEALLOCATE( data%A, STAT = alloc_status )
        IF ( alloc_status /= 0 ) THEN

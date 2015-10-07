@@ -373,6 +373,15 @@
        REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lh1, n ) :: H
        END SUBROUTINE CUTEST_cdh
        
+       SUBROUTINE CUTEST_cdhc( cutest_status, n, m, X, Y, lh1, H )
+       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+       INTEGER, INTENT( IN ) :: n, m, lh1
+       INTEGER, INTENT( OUT ) :: cutest_status
+       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
+       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( m ) :: Y
+       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lh1, n ) :: H
+       END SUBROUTINE CUTEST_cdhc
+       
        SUBROUTINE CUTEST_cidh( cutest_status, n, X, iprob, lh1, H )
        INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
        INTEGER, INTENT( IN ) :: n, iprob, lh1

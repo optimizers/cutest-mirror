@@ -5,7 +5,8 @@
 		      *                             *
                       *******************************
 
-              ( Last modified on 19 Jan 2013 at 14:10:00 )
+              ( Last modified on 6 Oct 2015 at 15:30:00 )
+
 
 WHAT IS COBYLA?
 ---------------
@@ -17,9 +18,8 @@ HOW DO I GET COBYLA?
 --------------------
 
 COBYLA was written by M.J.D. Powell, DAMTP, Cambridge University, Silver
-Street, Cambridge (GB) (email: mjdp@damtp.cambridge.ac.uk). It is available
-from the author on request.
-
+Street, Cambridge (GB). The package may be obtained from 
+  http://ccpforge.cse.rl.ac.uk/gf/project/powell/wiki/
 
 CREATING THE OBJECT MODULE FOR COBYLA
 -------------------------------------

@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.0 - 17/11/2012 AT 17:00 GMT.
+! THIS VERSION: CUTEST 1.3 - 07/10/2015 AT 08:20 GMT.
 
 !-*- C U T E S T  t e s t _ c o n s t r a i n e d _ t o o l s  P R O G R A M -*-
 
@@ -330,6 +330,13 @@
 
       WRITE( out, "( ' CALL CUTEST_cdh' )" )
       CALL CUTEST_cdh( status, n, m, X, Y, l_h2_1, H2_val )
+      IF ( status /= 0 ) GO to 900
+      CALL WRITE_H_dense( out, n, l_h2_1, H2_val )
+
+!  compute the dense Hessian value without the objective function
+
+      WRITE( out, "( ' CALL CUTEST_cdhc' )" )
+      CALL CUTEST_cdhc( status, n, m, X, Y, l_h2_1, H2_val )
       IF ( status /= 0 ) GO to 900
       CALL WRITE_H_dense( out, n, l_h2_1, H2_val )
 
@@ -669,7 +676,7 @@
 
       DEALLOCATE( X_type, H_row, H_col, HE_row, HE_row_ptr, HE_val_ptr, X,     &
                   X_l, X_u, G, Ji, Y, C_l, C_u, C, H_val, HE_val, H2_val,      &
-                  J_val, J_var, J_fun, J2_val, VECTOR, RESULT,                 &
+                  J_val, J_var, J_fun, J2_val, VECTOR, RESULT, g_val, g_var,   &
                   X_names, C_names, EQUATION, LINEAR, INDEX_nz_vector,         &
                   INDEX_nz_result, stat = alloc_stat )
       CLOSE( input )
