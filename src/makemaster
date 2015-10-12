@@ -73,6 +73,8 @@ all_single: tools_single
                    ql  PRECIS=single PWD=$(PWD)/ql )
 #	( cd qplib ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
 #                   qplib  PRECIS=single PWD=$(PWD)/qplib )
+	( cd ral_nlls  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   ral_nlls  PRECIS=single PWD=$(PWD)/ral_nlls )
 	( cd snopt  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    snopt  PRECIS=single PWD=$(PWD)/snopt )
 	( cd spg  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
@@ -156,6 +158,8 @@ all_double: tools_double
                    ql  PRECIS=double PWD=$(PWD)/ql )
 	( cd qplib ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    qplib  PRECIS=double PWD=$(PWD)/qplib )
+	( cd ral_nlls  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   ral_nlls  PRECIS=double PWD=$(PWD)/ral_nlls )
 	( cd snopt  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    snopt  PRECIS=double PWD=$(PWD)/snopt )
 	( cd spg  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
@@ -305,6 +309,8 @@ run_test_single: tools_single test_single
              run_test PRECIS=single PWD=$(PWD)/praxis )
 	( cd ql  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
              run_test  PRECIS=single PWD=$(PWD)/ql )
+	( cd ral_nlls  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test  PRECIS=single PWD=$(PWD)/ral_nlls )
 	( cd snopt  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
              run_test PRECIS=single PWD=$(PWD)/snopt )
 	( cd spg  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
@@ -380,6 +386,8 @@ run_test_double: tools_double test_double
              run_test PRECIS=double PWD=$(PWD)/praxis )
 	( cd ql  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
              run_test  PRECIS=double PWD=$(PWD)/ql )
+	( cd ral_nlls  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+             run_test  PRECIS=double PWD=$(PWD)/ral_nlls )
 	( cd snopt  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
              run_test PRECIS=double PWD=$(PWD)/snopt )
 	( cd spg  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
