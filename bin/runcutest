@@ -220,7 +220,7 @@ Decode_Problem() {
     ${RM} ELFUN.f GROUP.f RANGE.f EXTER.f
     ${RM} ELFUN.o GROUP.o RANGE.o EXTER.o
     if [[ ${SIFDECODE+set} == 'set' ]]; then
-        echo "sifdecoder -A ${ARCH} ${sd_opts[@]} $1"
+        echo "sifdecoder -A ${ARCH} -st ${START} ${sd_opts[@]} $1"
         ${SIFDECODE}/bin/sifdecoder -A ${ARCH} ${sd_opts[@]} $1
         cd -
         [[ $? != 0 ]] && exit $?
