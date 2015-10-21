@@ -1,3 +1,6 @@
+s/c_float[ ]*$/c_double/g
+s/c_float,/c_double,/g
+s/c_float /c_double /g
 s/_single[ ]*$/_double/g
 s/_single,/_double,/g
 s/_single /_double /g
