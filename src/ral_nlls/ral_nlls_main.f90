@@ -9,6 +9,11 @@
 !  Nick Gould, October 2015
 
       IMPLICIT NONE
+
+      type, extends( params_base_type ) :: user_type
+         ! still empty
+      end type user_type
+
       INTEGER :: status, i, m, n
       INTEGER( c_int ) :: len_work_integer, len_work_real
       REAL( c_double ), PARAMETER :: infty = 1.0D+19
@@ -16,46 +21,53 @@
       REAL( c_double ), DIMENSION( : ), ALLOCATABLE :: Y, C_l, C_u, F
       REAL( c_double ), DIMENSION( : ), ALLOCATABLE ::  Work_real
       INTEGER( c_int ), DIMENSION( : ), ALLOCATABLE ::  Work_integer
+      type( user_type ), target :: params
       TYPE( NLLS_inform_type ) :: inform
       TYPE( NLLS_control_type ) :: control
       LOGICAL, DIMENSION( : ), ALLOCATABLE  :: EQUATN, LINEAR
       CHARACTER ( LEN = 10 ) :: pname
       CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : )  :: VNAMES, CNAMES
       REAL( c_double ), DIMENSION( 2 ) :: CPU
-      REAL( c_double ), DIMENSION( 4 ) :: CALLS
+      REAL( c_double ), DIMENSION( 7 ) :: CALLS
       INTEGER :: io_buffer = 11
       INTEGER, PARAMETER :: input = 55, indr = 46, out = 6
 
 !  Interface blocks
 
      INTERFACE
-       SUBROUTINE eval_F( status, n, m, X, F )
+       SUBROUTINE eval_F( status, n, m, X, F, params )
          USE ISO_C_BINDING
+         import :: params_base_type
          INTEGER ( c_int ), INTENT( OUT ) :: status
          INTEGER ( c_int ), INTENT( IN ) :: n, m
          REAL ( c_double ), DIMENSION( n ), INTENT( IN ) :: X
          REAL ( c_double ), DIMENSION( m ), INTENT( OUT ) :: F
+         class( params_base_type ), intent(in) :: params
        END SUBROUTINE eval_F
      END INTERFACE
 
      INTERFACE
-       SUBROUTINE eval_J( status, n, m, X, J )
+       SUBROUTINE eval_J( status, n, m, X, J, params )
          USE ISO_C_BINDING
+         import :: params_base_type
          INTEGER ( c_int ), INTENT( OUT ) :: status
          INTEGER ( c_int ), INTENT( IN ) :: n, m
          REAL ( c_double ), DIMENSION( n ), INTENT( IN ) :: X
-         REAL ( c_double ), DIMENSION( m , n ), INTENT( OUT ) :: J
+         REAL ( c_double ), DIMENSION( m * n ), INTENT( OUT ) :: J
+         class( params_base_type ), intent(in) :: params
        END SUBROUTINE eval_J
      END INTERFACE
 
      INTERFACE
-       SUBROUTINE eval_HF( status, n, m, X, F, H )
+       SUBROUTINE eval_HF( status, n, m, X, F, H, params )
          USE ISO_C_BINDING
+         import :: params_base_type
          INTEGER ( c_int ), INTENT( OUT ) :: status
          INTEGER ( c_int ), INTENT( IN ) :: n, m
          REAL ( c_double ), DIMENSION( n ), INTENT( IN ) :: X
          REAL ( c_double ), DIMENSION( m ), INTENT( IN ) :: F
-         REAL ( c_double ), DIMENSION( n , n ), INTENT( OUT ) :: H
+         REAL ( c_double ), DIMENSION( n**n ), INTENT( OUT ) :: H
+         class( params_base_type ), intent(in) :: params
        END SUBROUTINE eval_HF
      END INTERFACE
 
@@ -102,32 +114,47 @@
 
 !  error = unit for error messages
 !  out = unit for information
+!  print_level = level of output desired (<=0 = nothing)
+!  nlls_method = method used (1=dogleg, 2=AINT, 3=More-Sorensen)
+!  model = model used (1=first order, 2=Newton)
+!  initial_radius = initial TR radius
 
 !  set up algorithmic input data
 
-      READ ( indr, 1000 ) control%error, control%out, control%print_level
+      READ ( indr, 1000 ) control%error, control%out, control%print_level,     &
+        control%nlls_method, control%model, control%initial_radius
       CLOSE ( indr )
+write(6,*) control%initial_radius
 
 !  call the minimizer
-
-      CALL RAL_NLLS( n, m, X, Work_integer, len_work_integer, Work_real,       &
-                     len_work_real, eval_F, eval_J, eval_HF,                   &
-                     control, inform )
-    
+!     control%print_level = 3
+!     control%nlls_method = 1
+!     control%model = 1
+!     inform%iter = 23
+!      open(unit=42,file="/numerical/trees/ral_nlls/src/results.out")
+      CALL RAL_NLLS( n, m, X,                                    &
+!              Work_integer, len_work_integer, Work_real, len_work_real &
+                     eval_F, eval_J, eval_HF, params,            &
+                     inform, control)!, inform )
+!      write(42,'(a,i0,a,i0)') 'status = ', inform%status,'       iter = ', inform%iter
+      WRITE( out , "( A, I0, A, I0)") 'status = ', inform%status,              &
+          '       iter = ', inform%iter
+!     close(unit=42)
       IF ( status /= 0 ) GO TO 910
 
 !  output report
 
-      CALL CUTEST_ureport( status, CALLS, CPU )
+      CALL CUTEST_creport( status, CALLS, CPU )
       IF ( status /= 0 ) GO TO 910
 
       ALLOCATE( F( m ), VNAMES( n ), CNAMES( m ), STAT = status )
       CALL CUTEST_cnames( status, n, m, pname, VNAMES, CNAMES )
-      CALL eval_F( status, n, m, X, F )
+      CALL eval_F( status, n, m, X, F, params)
 
       WRITE( out, 2110 ) ( i, VNAMES( i ), X( i ), i = 1, n )
-      WRITE( out, 2120 ) ( i, CNAMES( i ), F( i ), i = 1, m )
-      WRITE( out, 2000 ) pname, n, CALLS( 1 ), inform%obj, CPU( 1 ), CPU( 2 )
+!     WRITE( out, 2120 ) ( i, CNAMES( i ), F( i ), i = 1, m )
+      WRITE( out, 2000 ) pname, n, m, inform%obj, INT( CALLS( 5 ) ),           &
+        INT( CALLS( 6 ) ), INT( CALLS( 7 ) ), CPU( 1 ), CPU( 2 )
 
 !  clean-up data structures
 
@@ -152,13 +179,16 @@
 2000 FORMAT( /, 24('*'), ' CUTEst statistics ', 24('*') //,                    &
           ' Package used            :  RAL_NLLS ',  /,                         &
           ' Problem                 :  ', A10,    /,                           &
-          ' # variables             =      ', I10 /,                           &
-          ' # residuals             =        ', F8.2 /,                        &
-          ' Final f                 = ', E15.7 /,                              &
-          ' Set up time             =      ', 0P, F10.2, ' seconds' /,         &
-          ' Solve time              =      ', 0P, F10.2, ' seconds' //,        &
-          66('*') / )
-1000 FORMAT( I6, /, I6, /, I6 )
+          ' # variables             =  ', I0, /,                               &
+          ' # residuals             =  ', I0, /,                               &
+          ' Final f                 =', ES15.7 /,                              &
+          ' # residual evaluations  =  ', I0, /,                               &
+          ' # Jacobian evaluations  =  ', I0, /,                               &
+          ' # Hessian evaluations   =  ', I0, /,                               &
+          ' Set up time             =  ', 0P, F0.2, ' seconds' /,             &
+          ' Solve time              =  ', 0P, F0.2, ' seconds' //,            &
+           66('*') / )
+1000 FORMAT( I6, 4( /, I6 ), /, E12.0  )
 2110 FORMAT( /, ' The variables:', /, &
           '     i name          value',  /, ( I6, 1X, A10, 1P, D12.4 ) )
 2120 FORMAT( /, ' The constraints:', /, '     i name          value',          &
@@ -168,12 +198,15 @@
 
       END PROGRAM RAL_NLLS_main
 
-      SUBROUTINE eval_F( status, n, m, X, F )
+      SUBROUTINE eval_F( status, n, m, X, F, params )
       USE ISO_C_BINDING
+      use :: nlls_module, only : params_base_type
+      
       INTEGER ( c_int ), INTENT( OUT ) :: status
       INTEGER ( c_int ), INTENT( IN ) :: n, m
       REAL ( c_double ), DIMENSION( n ), INTENT( IN ) :: X
       REAL ( c_double ), DIMENSION( m ), INTENT( OUT ) :: F
+      class( params_base_type ), intent(in) :: params
       REAL ( c_double ) :: obj
 
 !  evaluate the residuals F
@@ -182,32 +215,43 @@
       RETURN
       END SUBROUTINE eval_F
 
-      SUBROUTINE eval_J( status, n, m, X, J )
+      SUBROUTINE eval_J( status, n, m, X, J, params)
       USE ISO_C_BINDING
+      use :: nlls_module, only : params_base_type
+      
       INTEGER ( c_int ), INTENT( OUT ) :: status
       INTEGER ( c_int ), INTENT( IN ) :: n, m
       REAL ( c_double ), DIMENSION( n ), INTENT( IN ) :: X
-      REAL ( c_double ), DIMENSION( m , n ), INTENT( OUT ) :: J
+      REAL ( c_double ), DIMENSION( m * n ), INTENT( OUT ) :: J
+      class( params_base_type ), intent(in) :: params
       REAL ( c_double ), DIMENSION( n ) :: G
       REAL ( c_double ), DIMENSION( m ) :: Y
+      REAL ( c_double ), DIMENSION( m , n ) :: Jmatrix
 
 !  evaluate the residual Jacobian J
 
-      CALL CUTEST_cgr( status, n, m, X, Y, .FALSE., G, .FALSE., m, n, J )
+      CALL CUTEST_cgr( status, n, m, X, Y, .FALSE., G, .FALSE., m, n, Jmatrix ) 
+      ! convert the Jacobian to a vector....
+      J = reshape(Jmatrix, (/n*m/) )
       RETURN
       END SUBROUTINE eval_J
 
-      SUBROUTINE eval_HF( status, n, m, X, F, H )
+      SUBROUTINE eval_HF( status, n, m, X, F, H, params)
       USE ISO_C_BINDING
+      use :: nlls_module, only : params_base_type
+      
       INTEGER ( c_int ), INTENT( OUT ) :: status
       INTEGER ( c_int ), INTENT( IN ) :: n, m
       REAL ( c_double ), DIMENSION( n ), INTENT( IN ) :: X
       REAL ( c_double ), DIMENSION( m ), INTENT( IN ) :: F
-      REAL ( c_double ), DIMENSION( n , n ), INTENT( OUT ) :: H
-
+      REAL ( c_double ), DIMENSION( n*n ), INTENT( OUT ) :: H
+      class( params_base_type ), intent(in) :: params
+      
+      real ( c_double ), dimension(n,n) :: Hmatrix
 !  evaluate the product H = sum F_i Hessian F_i
 
-      CALL CUTEST_cdhc( status, n, m, X, F, n, H )
+      CALL CUTEST_cdhc( status, n, m, X, F, n, Hmatrix )
+      H = reshape(Hmatrix, (/n*n/) )
       RETURN
       END SUBROUTINE eval_HF
 
