@@ -15,7 +15,7 @@
 
 !  scalar arguments
 
-      INTEGER :: n, m, matmax, i, j , ntotal, status
+      INTEGER :: n, m, matmax, i, j, k, ntotal, status
       INTEGER :: na, ne, nh, nj, nv, plast, nrow, ncol, nnz, colmax
       INTEGER, PARAMETER :: in = 5, out = 6, input = 55
       INTEGER, PARAMETER :: output = 56, outrhs = 57

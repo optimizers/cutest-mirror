@@ -73,12 +73,8 @@
 
    CONTAINS
 
-     SUBROUTINE RAL_NLLS( n, m, X,                                             &
-          !               Work_int, len_work_int,                              &
-          !               Work_real, len_work_real,                            &
-                          eval_F, eval_J, eval_HF,                             &
-                          params,                                              &
-                          inform, control)!, inform )
+     SUBROUTINE RAL_NLLS( n, m, X, eval_F, eval_J, eval_HF,                    &
+                          params, inform, control )
     
 !  -----------------------------------------------------------------------------
 !  RAL_NLLS, a fortran subroutine for finding a first-order critical
@@ -91,10 +87,8 @@
 
 !   Dummy arguments
 
-     INTEGER( c_int ), INTENT( IN ) :: n, m!, len_work_int, len_work_real
+     INTEGER( c_int ), INTENT( IN ) :: n, m
      REAL( c_double ), DIMENSION( n ), INTENT( INOUT ) :: X
-!     INTEGER( c_int ), INTENT( OUT ) :: Work_int( len_work_int )
-!     REAL( c_double ), INTENT( OUT ) :: Work_real( len_work_real )
      class( params_base_type ) :: params
      TYPE( NLLS_inform_type ), INTENT( OUT ) :: inform
      TYPE( NLLS_control_type ), INTENT( IN ) :: control

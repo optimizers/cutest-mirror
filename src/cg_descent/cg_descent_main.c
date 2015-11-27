@@ -374,7 +374,7 @@ double cg_valgrad
                sl = strlen("maxit") ;
                if (strncmp (s, "maxit", sl) == 0)
                {
-                   sscanf (s+sl, "%d", &cg_parm.maxit) ;
+                   sscanf (s+sl, "%ld", &cg_parm.maxit) ;
                    continue ;
                }
                sl = strlen("ntries") ;

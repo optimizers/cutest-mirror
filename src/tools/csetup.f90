@@ -1050,9 +1050,6 @@
              status, alloc_status, bad_alloc, work%array_status )
       IF ( status /= 0 ) RETURN
 
-      IF ( .NOT. ( e_order == 1 .OR. e_order == 2 .OR.                         &
-                   l_order == 1 .OR. l_order == 2 ) .OR. m == 0 ) GO TO 700
-
 !  record which group is associated with each constraint
 
       data%meq = 0 ; data%mlin = 0
@@ -1064,6 +1061,9 @@
           IF ( LINEAR( i ) ) data%mlin = data%mlin + 1
         END IF
       END DO
+
+      IF ( .NOT. ( e_order == 1 .OR. e_order == 2 .OR.                         &
+                   l_order == 1 .OR. l_order == 2 ) .OR. m == 0 ) GO TO 700
 
 !  the constraints are to be reordered to separate linear and nonlinear ones
 

@@ -26,11 +26,14 @@
       TYPE( NLLS_control_type ) :: control
       LOGICAL, DIMENSION( : ), ALLOCATABLE  :: EQUATN, LINEAR
       CHARACTER ( LEN = 10 ) :: pname
+      CHARACTER ( LEN = 20 ) :: summary_file = REPEAT( ' ', 20 )
       CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : )  :: VNAMES, CNAMES
       REAL( c_double ), DIMENSION( 2 ) :: CPU
       REAL( c_double ), DIMENSION( 7 ) :: CALLS
       INTEGER :: io_buffer = 11
+      INTEGER :: summary_unit, iores
       INTEGER, PARAMETER :: input = 55, indr = 46, out = 6
+      LOGICAL :: filexx
 
 !  Interface blocks
 
@@ -118,28 +121,47 @@
 !  nlls_method = method used (1=dogleg, 2=AINT, 3=More-Sorensen)
 !  model = model used (1=first order, 2=Newton)
 !  initial_radius = initial TR radius
+!  stop_g_absolute = absolute stopping tolerance
+!  stop_g_relative = relative stopping tolerance
+!  summary_unit = write a one line summary to this unit (-ve = don't write)
+!  summary_file = file name for summary (20 chars max)
 
 !  set up algorithmic input data
 
-      READ ( indr, 1000 ) control%error, control%out, control%print_level,     &
-        control%nlls_method, control%model, control%initial_radius
+      READ ( indr, "( I6, 4( /, I6 ), 3( /, E12.0 ), /, I6, /, A )" )          &
+        control%error, control%out, control%print_level,                       &
+        control%nlls_method, control%model, control%initial_radius,            &
+        control%stop_g_absolute, control%stop_g_relative,                      &
+        summary_unit, summary_file
       CLOSE ( indr )
-write(6,*) control%initial_radius
+
+write(6,*) summary_unit, summary_file
+
+      IF ( summary_unit > 0 ) THEN
+        INQUIRE( FILE = summary_file, EXIST = filexx )
+        IF ( filexx ) THEN
+           OPEN( summary_unit, FILE = summary_file, FORM = 'FORMATTED',        &
+               STATUS = 'OLD', IOSTAT = iores )
+        ELSE
+           OPEN( summary_unit, FILE = summary_file, FORM = 'FORMATTED',        &
+                STATUS = 'NEW', IOSTAT = iores )
+        END IF
+        IF ( iores /= 0 ) THEN 
+          write( out, "( ' IOSTAT = ', I0, ' when opening file ', A,           &
+        &  '. Stopping ' )" ) iores, summary_file
+          STOP
+        END IF
+        CALL CUTEST_probname( status, pname )
+        WRITE( summary_unit, "( A10 )" ) pname
+      END IF
 
 !  call the minimizer
-!     control%print_level = 3
-!     control%nlls_method = 1
-!     control%model = 1
-!     inform%iter = 23
-!      open(unit=42,file="/numerical/trees/ral_nlls/src/results.out")
-      CALL RAL_NLLS( n, m, X,                                    &
-!              Work_integer, len_work_integer, Work_real, len_work_real &
-                     eval_F, eval_J, eval_HF, params,            &
-                     inform, control)!, inform )
-!      write(42,'(a,i0,a,i0)') 'status = ', inform%status,'       iter = ', inform%iter
+
+      CALL RAL_NLLS( n, m, X, eval_F, eval_J, eval_HF,                         &
+                     params, inform, control )
+
       WRITE( out , "( A, I0, A, I0)") 'status = ', inform%status,              &
           '       iter = ', inform%iter
-!     close(unit=42)
       IF ( status /= 0 ) GO TO 910
 
 !  output report
@@ -155,6 +177,15 @@ write(6,*) control%initial_radius
 !     WRITE( out, 2120 ) ( i, CNAMES( i ), F( i ), i = 1, m )
       WRITE( out, 2000 ) pname, n, m, inform%obj, INT( CALLS( 5 ) ),           &
         INT( CALLS( 6 ) ), INT( CALLS( 7 ) ), CPU( 1 ), CPU( 2 )
+
+!  write summary if required
+
+      IF ( summary_unit > 0 ) THEN
+        BACKSPACE( summary_unit )
+        WRITE( summary_unit, "( A10, 4I6, ES12.4 )" )                          &
+          pname, n, m, inform%status, inform%iter, inform%obj
+        CLOSE(  summary_unit )
+      END IF
 
 !  clean-up data structures
 
@@ -185,14 +216,13 @@ write(6,*) control%initial_radius
           ' # residual evaluations  =  ', I0, /,                               &
           ' # Jacobian evaluations  =  ', I0, /,                               &
           ' # Hessian evaluations   =  ', I0, /,                               &
-          ' Set up time             =  ', 0P, F0.2, ' seconds' /,             &
-          ' Solve time              =  ', 0P, F0.2, ' seconds' //,            &
+          ' Set up time             =  ', 0P, F0.2, ' seconds' /,              &
+          ' Solve time              =  ', 0P, F0.2, ' seconds' //,             &
            66('*') / )
-1000 FORMAT( I6, 4( /, I6 ), /, E12.0  )
 2110 FORMAT( /, ' The variables:', /, &
           '     i name          value',  /, ( I6, 1X, A10, 1P, D12.4 ) )
-2120 FORMAT( /, ' The constraints:', /, '     i name          value',          &
-          /, ( I6, 1X, A10, 1P, D12.4 ) )
+!2120 FORMAT( /, ' The constraints:', /, '     i name          value',         &
+!         /, ( I6, 1X, A10, 1P, D12.4 ) )
 
 !  End of RAL_NLLS_main
 
