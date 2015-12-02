@@ -1,6 +1,6 @@
 ! THIS VERSION: CUTEST 1.3 - 24/11/2015 AT 10:20 GMT
 
-!-*-*-*-  C U T E S T   C I N T _ C I H P R O D    S U B R O U T I N E  -*-*-*-
+!-*-*-  C U T E S T   C I N T _ C C H P R O D S    S U B R O U T I N E  -*-*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
 !  Principal author: Nick Gould
@@ -8,29 +8,29 @@
 !  History -
 !   fortran 2003 version released in CUTEst, 24th November 2015
 
-      SUBROUTINE CUTEST_Cint_cihprod( status, n, m, goth, X, VECTOR, lhs,      &
-                                      HS_val, HS_ind, HS_ptr )
+      SUBROUTINE CUTEST_Cint_cchprods( status, n, m, goth, X, VECTOR, lchp,    &
+                                       CHP_val, CHP_ind, CHP_ptr )
       USE CUTEST
       USE, INTRINSIC :: ISO_C_BINDING, ONLY : C_Bool
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
 !  dummy arguments
 
-      INTEGER, INTENT( IN ) :: n, m, lhs
+      INTEGER, INTENT( IN ) :: n, m, lchp
       INTEGER, INTENT( OUT ) :: status
       LOGICAL ( KIND = C_Bool ), INTENT( IN ) :: goth
       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X, VECTOR
-      INTEGER, INTENT( INOUT ), DIMENSION( m + 1 ) :: HS_ptr
-      INTEGER, INTENT( INOUT ), DIMENSION( lhs ) :: HS_ind
-      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lhs ) :: HS_val
+      INTEGER, INTENT( INOUT ), DIMENSION( m + 1 ) :: CHP_ptr
+      INTEGER, INTENT( INOUT ), DIMENSION( lchp ) :: CHP_ind
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lchp ) :: CHP_val
 
 !  ---------------------------------------------------------------------------
 !  compute the matrix-vector products H_i(x) v, i = 1, ..., m, between all of 
 !  the Hessian matrices H_i(x) of the constraint functions for the problem and
 !  a given vector v stored in VECTOR. The nonzero entries of the resulting 
-!  products H_i(x) v and their indices occur in (HS_val(k),HS_ind), k = 
-!  HS_ptr(i),..., HS_ptr(i+1)-1, i = 1, ..., m. If goth is .TRUE. the second 
-!  derivatives, HS_ind, and HS_ptr are assumed to have already been computed. 
+!  products H_i(x) v and their indices occur in (CHP_val(k),CHP_ind), k = 
+!  CHP_ptr(i),..., CHP_ptr(i+1)-1, i = 1, ..., m. If goth is .TRUE. the second 
+!  derivatives, CHP_ind, and CHP_ptr are assumed to have already been computed. 
 !  If the user is unsure, set goth = .FALSE. the first time a product is 
 !  required with the Hessians evaluated at X. X is not used if goth = .TRUE.
 !  ---------------------------------------------------------------------------
@@ -38,15 +38,15 @@
       LOGICAL :: goth_fortran
 
       goth_fortran = goth
-      CALL CUTEST_cihprod( status, n, m, goth_fortran, X, VECTOR, lhs,         &
-                           HS_val, HS_ind, HS_ptr )
+      CALL CUTEST_cchprods( status, n, m, goth_fortran, X, VECTOR, lchp,       &
+                           CHP_val, CHP_ind, CHP_ptr )
       RETURN
 
-!  end of subroutine CUTEST_Cint_cihprod
+!  end of subroutine CUTEST_Cint_cchprods
 
-      END SUBROUTINE CUTEST_Cint_cihprod
+      END SUBROUTINE CUTEST_Cint_cchprods
 
-!-*-*-*-*-*-  C U T E S T    C I H P R O D    S U B R O U T I N E  -*-*-*-*-*-
+!-*-*-*-*-*-  C U T E S T    C C H P R O D S    S U B R O U T I N E  -*-*-*-*-*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
 !  Principal author: Nick Gould
@@ -54,43 +54,43 @@
 !  History -
 !   fortran 2003 version released in CUTEst, 24th November 2015
 
-      SUBROUTINE CUTEST_cihprod( status, n, m, goth, X, VECTOR, lhs,           &
-                                 HS_val, HS_ind, HS_ptr )
+      SUBROUTINE CUTEST_cchprods( status, n, m, goth, X, VECTOR, lchp,         &
+                                 CHP_val, CHP_ind, CHP_ptr )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
 !  dummy arguments
 
-      INTEGER, INTENT( IN ) :: n, m, lhs
+      INTEGER, INTENT( IN ) :: n, m, lchp
       INTEGER, INTENT( OUT ) :: status
       LOGICAL, INTENT( IN ) :: goth
       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X, VECTOR
-      INTEGER, INTENT( INOUT ), DIMENSION( m + 1 ) :: HS_ptr
-      INTEGER, INTENT( INOUT ), DIMENSION( lhs ) :: HS_ind
-      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lhs ) :: HS_val
+      INTEGER, INTENT( INOUT ), DIMENSION( m + 1 ) :: CHP_ptr
+      INTEGER, INTENT( INOUT ), DIMENSION( lchp ) :: CHP_ind
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lchp ) :: CHP_val
 
 !  ---------------------------------------------------------------------------
 !  compute the matrix-vector products H_i(x) v, i = 1, ..., m, between all of 
 !  the Hessian matrices H_i(x) of the constraint functions for the problem and
 !  a given vector v stored in VECTOR. The nonzero entries of the resulting 
-!  products H_i(x) v and their indices occur in (HS_val(k),HS_ind), k = 
-!  HS_ptr(i),..., HS_ptr(i+1)-1, i = 1, ..., m. If goth is .TRUE. the second 
-!  derivatives, HS_ind, and HS_ptr are assumed to have already been computed. 
+!  products H_i(x) v and their indices occur in (CHP_val(k),CHP_ind), k = 
+!  CHP_ptr(i),..., CHP_ptr(i+1)-1, i = 1, ..., m. If goth is .TRUE. the second 
+!  derivatives, CHP_ind, and CHP_ptr are assumed to have already been computed. 
 !  If the user is unsure, set goth = .FALSE. the first time a product is 
 !  required with the Hessians evaluated at X. X is not used if goth = .TRUE.
 !  ---------------------------------------------------------------------------
 
-      CALL CUTEST_cihprod_threadsafe( CUTEST_data_global,                      &
-                                      CUTEST_work_global( 1 ),                 &
-                                      status, n, m, goth, X, VECTOR, lhs,      &
-                                      HS_val, HS_ind, HS_ptr )
+      CALL CUTEST_cchprods_threadsafe( CUTEST_data_global,                     &
+                                       CUTEST_work_global( 1 ),                &
+                                       status, n, m, goth, X, VECTOR, lchp,    &
+                                       CHP_val, CHP_ind, CHP_ptr )
       RETURN
 
-!  end of subroutine CUTEST_cihprod
+!  end of subroutine CUTEST_cchprods
 
-      END SUBROUTINE CUTEST_cihprod
+      END SUBROUTINE CUTEST_cchprods
 
-!-*-  C U T E S T   C I H P R O D _ t h r e a d e d   S U B R O U T I N E  -*-
+!-*-  C U T E S T   C C H P R O D S _ t h r e a d e d   S U B R O U T I N E  -*-
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
 !  Principal author: Nick Gould
@@ -98,28 +98,28 @@
 !  History -
 !   fortran 2003 version released in CUTEst, 24th November 2015
 
-      SUBROUTINE CUTEST_cihprod_threaded( status, n, m, goth, X, VECTOR, lhs,  &
-                                          HS_val, HS_ind, HS_ptr, thread )
+      SUBROUTINE CUTEST_cchprods_threaded( status, n, m, goth, X, VECTOR, lchp,&
+                                           CHP_val, CHP_ind, CHP_ptr, thread )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
 !  dummy arguments
 
-      INTEGER, INTENT( IN ) :: n, m, lhs, thread
+      INTEGER, INTENT( IN ) :: n, m, lchp, thread
       INTEGER, INTENT( OUT ) :: status
       LOGICAL, INTENT( IN ) :: goth
       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X, VECTOR
-      INTEGER, INTENT( INOUT ), DIMENSION( m + 1 ) :: HS_ptr
-      INTEGER, INTENT( INOUT ), DIMENSION( lhs ) :: HS_ind
-      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lhs ) :: HS_val
+      INTEGER, INTENT( INOUT ), DIMENSION( m + 1 ) :: CHP_ptr
+      INTEGER, INTENT( INOUT ), DIMENSION( lchp ) :: CHP_ind
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lchp ) :: CHP_val
 
 !  ---------------------------------------------------------------------------
 !  compute the matrix-vector products H_i(x) v, i = 1, ..., m, between all of 
 !  the Hessian matrices H_i(x) of the constraint functions for the problem and
 !  a given vector v stored in VECTOR. The nonzero entries of the resulting 
-!  products H_i(x) v and their indices occur in (HS_val(k),HS_ind), k = 
-!  HS_ptr(i),..., HS_ptr(i+1)-1, i = 1, ..., m. If goth is .TRUE. the second 
-!  derivatives, HS_ind, and HS_ptr are assumed to have already been computed. 
+!  products H_i(x) v and their indices occur in (CHP_val(k),CHP_ind), k = 
+!  CHP_ptr(i),..., CHP_ptr(i+1)-1, i = 1, ..., m. If goth is .TRUE. the second 
+!  derivatives, CHP_ind, and CHP_ptr are assumed to have already been computed. 
 !  If the user is unsure, set goth = .FALSE. the first time a product is 
 !  required with the Hessians evaluated at X. X is not used if goth = .TRUE.
 !  ---------------------------------------------------------------------------
@@ -135,17 +135,17 @@
 
 !  evaluate using specified thread
 
-      CALL CUTEST_cihprod_threadsafe( CUTEST_data_global,                      &
-                                      CUTEST_work_global( thread ),            &
-                                      status, n, m, goth, X, VECTOR, lhs,      &
-                                      HS_val, HS_ind, HS_ptr )
+      CALL CUTEST_cchprods_threadsafe( CUTEST_data_global,                     &
+                                       CUTEST_work_global( thread ),           &
+                                       status, n, m, goth, X, VECTOR, lchp,    &
+                                       CHP_val, CHP_ind, CHP_ptr )
       RETURN
 
-!  end of subroutine CUTEST_cihprod_threaded
+!  end of subroutine CUTEST_cchprods_threaded
 
-      END SUBROUTINE CUTEST_cihprod_threaded
+      END SUBROUTINE CUTEST_cchprods_threaded
 
-!-  C U T E S T   C I H P R O D _ t h r e a d s a f e   S U B R O U T I N E  -
+!-  C U T E S T   C C H P R O D S _ t h r e a d s a f e   S U B R O U T I N E  -
 
 !  Copyright reserved, Gould/Orban/Toint, for GALAHAD productions
 !  Principal authors: Nick Gould
@@ -153,8 +153,9 @@
 !  History -
 !   fortran 2003 version released in CUTEst, 24th November 2015
 
-      SUBROUTINE CUTEST_cihprod_threadsafe( data, work, status, n, m, goth, X, &
-                                            VECTOR, lhs, HS_val, HS_ind, HS_ptr)
+      SUBROUTINE CUTEST_cchprods_threadsafe( data, work, status, n, m, goth,   &
+                                             X, VECTOR, lchp, CHP_val, CHP_ind,&
+                                             CHP_ptr)
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
@@ -162,21 +163,21 @@
 
       TYPE ( CUTEST_data_type ), INTENT( IN ) :: data
       TYPE ( CUTEST_work_type ), INTENT( INOUT ) :: work
-      INTEGER, INTENT( IN ) :: n, m, lhs
+      INTEGER, INTENT( IN ) :: n, m, lchp
       INTEGER, INTENT( OUT ) :: status
       LOGICAL, INTENT( IN ) :: goth
       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X, VECTOR
-      INTEGER, INTENT( INOUT ), DIMENSION( m + 1 ) :: HS_ptr
-      INTEGER, INTENT( INOUT ), DIMENSION( lhs ) :: HS_ind
-      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lhs ) :: HS_val
+      INTEGER, INTENT( INOUT ), DIMENSION( m + 1 ) :: CHP_ptr
+      INTEGER, INTENT( INOUT ), DIMENSION( lchp ) :: CHP_ind
+      REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lchp ) :: CHP_val
 
 !  ---------------------------------------------------------------------------
 !  compute the matrix-vector products H_i(x) v, i = 1, ..., m, between all of 
 !  the Hessian matrices H_i(x) of the constraint functions for the problem and
 !  a given vector v stored in VECTOR. The nonzero entries of the resulting 
-!  products H_i(x) v and their indices occur in (HS_val(k),HS_ind), k = 
-!  HS_ptr(i),..., HS_ptr(i+1)-1, i = 1, ..., m. If goth is .TRUE. the second 
-!  derivatives, HS_ind, and HS_ptr are assumed to have already been computed. 
+!  products H_i(x) v and their indices occur in (CHP_val(k),CHP_ind), k = 
+!  CHP_ptr(i),..., CHP_ptr(i+1)-1, i = 1, ..., m. If goth is .TRUE. the second 
+!  derivatives, CHP_ind, and CHP_ptr are assumed to have already been computed. 
 !  If the user is unsure, set goth = .FALSE. the first time a product is 
 !  required with the Hessians evaluated at X. X is not used if goth = .TRUE.
 !  ---------------------------------------------------------------------------
@@ -268,13 +269,13 @@
         ls = 1
         DO ic = 1, m
           ig = data%CGROUP( ic )
-          HS_ptr( ic ) = ls
+          CHP_ptr( ic ) = ls
           DO k = data%ISTAGV( ig ), data%ISTAGV( ig + 1 ) - 1
-            HS_ind( ls ) = data%ISVGRP( k )
+            CHP_ind( ls ) = data%ISVGRP( k )
             ls = ls + 1
           END DO
         END DO
-        HS_ptr( m + 1 ) = ls
+        CHP_ptr( m + 1 ) = ls
       END IF
 
 !  loop over the constraints
@@ -311,8 +312,8 @@
 
             IF ( data%INTREP( iel ) ) THEN
               nin = data%INTVAR( iel + 1 ) - k
-              CALL RANGE( iel, .TRUE., work%FUVALS( k : k + nin - 1 ),        &
-                          work%H_el, nvarel, nin, data%ITYPEE( iel ),         &
+              CALL RANGE( iel, .TRUE., work%FUVALS( k : k + nin - 1 ),         &
+                          work%H_el, nvarel, nin, data%ITYPEE( iel ),          &
                           nin, nvarel )
               DO i = 1, nvarel
                 j = data%IELVAR( l )
@@ -341,8 +342,8 @@
 !  form the inner product of the group gradient, grad h_ig, with VECTOR
 
           prod = 0.0_wp
-!         DO l = HS_ptr( ic ), HS_ptr( ic + 1 ) - 1
-!           j = HS_ind( l )
+!         DO l = CHP_ptr( ic ), CHP_ptr( ic + 1 ) - 1
+!           j = CHP_ind( l )
           DO l = data%ISTAGV( ig ), data%ISTAGV( ig + 1 ) - 1
             j = data%ISVGRP( l )
             prod = prod + work%W_ws( j ) * VECTOR( j )
@@ -355,8 +356,8 @@
 !  form the scaled group gradient 
 !    grad h_ig * ( g''(h_ig) * grad(trans) h_ig VECTOR )
 
-!         DO l = HS_ptr( ic ), HS_ptr( ic + 1 ) - 1
-!           j = HS_ind( l )
+!         DO l = CHP_ptr( ic ), CHP_ptr( ic + 1 ) - 1
+!           j = CHP_ind( l )
           DO l = data%ISTAGV( ig ), data%ISTAGV( ig + 1 ) - 1
             j = data%ISVGRP( l )
             work%W_ws( j ) = prod * work%W_ws( j )
@@ -445,6 +446,8 @@
               lthvar = data%ISTAEV( iel ) - 1
               ielhst = data%ISTADH( iel )
               DO jcol = 1, nvarel
+write(6,*) VECTOR
+write(6,*) gi, data%IELVAR( lthvar + jcol )
                 pi = gi * VECTOR( data%IELVAR( lthvar + jcol ) )
                 IF ( pi /= 0.0_wp ) THEN
 !DIR$ IVDEP  
@@ -461,10 +464,10 @@
 
 !  copy the nonzeros back to the ith column of H_i s
 
-!       DO l = HS_ptr( ic ), HS_ptr( ic + 1 ) - 1
-!         HS_val( l ) = work%W_ws( HS_ind( l ) )
+!       DO l = CHP_ptr( ic ), CHP_ptr( ic + 1 ) - 1
+!         CHP_val( l ) = work%W_ws( CHP_ind( l ) )
         DO l = data%ISTAGV( ig ), data%ISTAGV( ig + 1 ) - 1
-          HS_val( l ) = work%W_ws( data%ISVGRP( l ) )
+          CHP_val( l ) = work%W_ws( data%ISVGRP( l ) )
         END DO
       END DO
 
@@ -495,12 +498,12 @@
 
   930 CONTINUE
       IF ( data%out > 0 ) WRITE( data%out,                                     &
-        "( ' ** SUBROUTINE CIHPROD: error flag raised during SIF evaluation')" )
+        "( ' ** SUBROUTINE CCHPRODS: error flag raised during SIF evaluation')")
       status = 3
       RETURN
 
-!  end of subroutine CUTEST_cihprod_threadsafe
+!  end of subroutine CUTEST_cchprods_threadsafe
 
-      END SUBROUTINE CUTEST_cihprod_threadsafe
+      END SUBROUTINE CUTEST_cchprods_threadsafe
 
 

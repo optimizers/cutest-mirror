@@ -22,8 +22,9 @@
 !  unit number is required
 
       IMPLICIT NONE
-      INTEGER :: funit, status
-      CHARACTER ( LEN = 64 ) fname
+      INTEGER, INTENT( IN ) :: funit
+      INTEGER, INTENT( OUT ) :: status
+      CHARACTER ( LEN = 64 ), INTENT( IN ) :: fname
       
       OPEN( funit, FILE = fname, STATUS = 'UNKNOWN', ERR = 900 )
       status = 0
@@ -42,7 +43,8 @@
 ! Exit value status: = 0 = successful return, 1 = error
 
       IMPLICIT NONE
-      INTEGER :: funit, status
+      INTEGER, INTENT( IN ) :: funit
+      INTEGER, INTENT( OUT ) :: status
 
       CLOSE( funit, ERR = 900 )
       status = 0

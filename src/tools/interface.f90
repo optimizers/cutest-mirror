@@ -139,8 +139,8 @@
        SUBROUTINE CUTEST_ueh( cutest_status, n, X, ne, le, IPRNHI, IPRHI,      &
                               lirnhi, IRNHI, lhi, Hi, byrows )
        INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
-       INTEGER, INTENT( IN ) :: n, ne, le, lirnhi, lhi 
-       INTEGER, INTENT( OUT ) :: cutest_status
+       INTEGER, INTENT( IN ) :: n, le, lirnhi, lhi 
+       INTEGER, INTENT( OUT ) :: cutest_status, ne
        LOGICAL, INTENT( IN ) :: byrows
        INTEGER, INTENT( OUT ), DIMENSION( lirnhi ) :: IRNHI
        INTEGER, INTENT( OUT ), DIMENSION( le ) :: IPRNHI, IPRHI
@@ -486,7 +486,7 @@
        INTEGER, INTENT( IN ) :: n, m, lcjac, le, lirnhi, lhi 
        INTEGER, INTENT( OUT ) :: cutest_status, ne, nnzj
        LOGICAL, INTENT( IN ) :: grlagf, byrows
-       INTEGER, INTENT( IN ), DIMENSION( lcjac ) :: INDVAR, INDFUN
+       INTEGER, INTENT( OUT ), DIMENSION( lcjac ) :: INDVAR, INDFUN
        INTEGER, INTENT( OUT ), DIMENSION( lirnhi ) :: IRNHI
        INTEGER, INTENT( OUT ), DIMENSION( le ) :: IPRNHI, IPRHI
        REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X
@@ -567,6 +567,22 @@
        REAL ( KIND = wp ), INTENT( IN ), DIMENSION( lvector ) :: VECTOR
        REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lresult ) :: RESULT
        END SUBROUTINE CUTEST_csjprod
+
+       SUBROUTINE CUTEST_cdimchp( cutest_status, nnzchp )
+       INTEGER, INTENT( OUT ) :: cutest_status, nnzchp
+       END SUBROUTINE CUTEST_cdimchp
+
+       SUBROUTINE CUTEST_cchprods( cutest_status, n, m, goth, X, VECTOR,       &
+                                   lchp, CHP_val, CHP_ind, CHP_ptr )
+       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+       INTEGER, INTENT( IN ) :: n, m, lchp
+       INTEGER, INTENT( OUT ) :: cutest_status
+       LOGICAL, INTENT( IN ) :: goth
+       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X, VECTOR
+       INTEGER, INTENT( INOUT ), DIMENSION( m + 1 ) :: CHP_ptr
+       INTEGER, INTENT( INOUT ), DIMENSION( lchp ) :: CHP_ind
+       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lchp ) :: CHP_val
+       END SUBROUTINE CUTEST_cchprods
 
        SUBROUTINE CUTEST_creport( cutest_status, CALLS, CPU )
        INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
@@ -1022,6 +1038,19 @@
        REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lresult ) :: RESULT
        END SUBROUTINE CUTEST_cjprod_threaded
   
+       SUBROUTINE CUTEST_cchprods_threaded( cutest_status, n, m, goth, X,      &
+                                            VECTOR, lchp, CHP_val, CHP_ind,    &
+                                            CHP_ptr )
+       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
+       INTEGER, INTENT( IN ) :: n, m, lchp
+       INTEGER, INTENT( OUT ) :: cutest_status
+       LOGICAL, INTENT( IN ) :: goth
+       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( n ) :: X, VECTOR
+       INTEGER, INTENT( INOUT ), DIMENSION( m + 1 ) :: CHP_ptr
+       INTEGER, INTENT( INOUT ), DIMENSION( lchp ) :: CHP_ind
+       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lchp ) :: CHP_val
+       END SUBROUTINE CUTEST_cchprods_threaded
+
        SUBROUTINE CUTEST_creport_threaded( cutest_status, CALLS, CPU, thread )
        INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
        INTEGER, INTENT( IN ) :: thread
