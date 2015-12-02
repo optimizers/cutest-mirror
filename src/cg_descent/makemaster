@@ -107,14 +107,26 @@ ctools:
 
 #  individual compilations
 
-$(OBJ)/$(package)_test.o: ../$(package)/$(package)_test.f
+$(OBJ)/$(package)_test.o: ../$(package)/$(package)_test.c
+	@printf ' %-9s %-15s\t\t' "Compiling" "$(package)_test" 
+	$(SED) -f $(SEDS) ../$(package)/$(package)_test.c > \
+          $(OBJ)/$(package)_test.c
+	cd $(OBJ); $(CC) -o $(package)_test.o $(CFLAGS) \
+          $(package)_test.c \
+            || ( printf ' %-26s' "=> Disabling optimization " ; \
+              $(CC) -o $(package)_test.o $(CFLAGSN) $(package)_test.c )
+	$(RM) $(OBJ)/$(package)_test.c
+	@printf '[ OK ]\n'
+
+$(OBJ)/$(package)_test_fortran.o: ../$(package)/$(package)_test.f
 	@printf ' %-9s %-15s\t\t' "Compiling" "$(package)_test" 
 	$(SED) -f $(SEDS) ../$(package)/$(package)_test.f > \
           $(OBJ)/$(package)_test.f
-	cd $(OBJ); $(FORTRAN) -o $(package)_test.o $(FFLAGS77) \
+	cd $(OBJ); $(FORTRAN) -o $(package)_test_fortran.o $(FFLAGS77) \
           $(package)_test.f \
             || ( printf ' %-26s' "=> Disabling optimization " ; \
-              $(FORTRAN) -o $(package)_test.o $(FFLAGS77N) $(package)_test.f )
+              $(FORTRAN) -o $(package)_test_fortran.o \
+                 $(FFLAGS77N) $(package)_test.f )
 	$(RM) $(OBJ)/$(package)_test.f
 	@printf '[ OK ]\n'
 

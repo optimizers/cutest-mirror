@@ -93,7 +93,7 @@ run_test: tools test_cutest $(OBJ)/$(package)_main.o
 	rm $(OBJ)/run_test ../$(package)/OUTSDIF.d
 	echo " Test of constrained $(package)"
 	cd $(OBJ) ; $(CC) -o run_test \
-            $(package)_main.o $(C_TEST) -L$(OBJ) $(LIBS)  $(CRUNFFLAGS)
+            $(package)_main.o $(C_TEST) -L$(OBJ) $(LIBS) $(CRUNFFLAGS)
 	ln -fs $(CUTEST)/src/test/c_OUTSDIF.d ../$(package)/OUTSDIF.d
 	- $(OBJ)/run_test >& ../$(package)/c_test.output
 	cat ../$(package)/c_test.output

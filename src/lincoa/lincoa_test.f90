@@ -11,7 +11,7 @@
 
       INTEGER :: n, npt, m, ia, iprint, maxfun
       REAL( KIND = wp ) :: rhobeg, rhoend
-      REAL( KIND = wp ) :: A(( ia, * ), B( * ), X( * ), W( * )
+      REAL( KIND = wp ) :: A( ia, * ), B( * ), X( * ), W( * )
 
       REAL( KIND = wp ) :: f
       CALL CALFUN( n, X, f )

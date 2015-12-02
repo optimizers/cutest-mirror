@@ -1,10 +1,10 @@
- Solving problem: ALLINITC 0
+ Solving problem: ALLINITC4 
 
 ************************ CUTEst statistics ************************
 
  Package used            :  ALGENCAN
- Problem                 :  ALLINITC 0
- # variables             =               4
+ Problem                 :  ALLINITC4 
+ # variables             =               5
  # constraints           =               1
  # objective functions   =            1.00
  # objective gradients   =            0.00
