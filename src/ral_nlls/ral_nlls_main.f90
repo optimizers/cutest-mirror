@@ -15,64 +15,23 @@
       end type user_type
 
       INTEGER :: status, i, m, n
-      INTEGER( c_int ) :: len_work_integer, len_work_real
-      REAL( c_double ), PARAMETER :: infty = 1.0D+19
       REAL( c_double ), DIMENSION( : ), ALLOCATABLE :: X, X_l, X_u
       REAL( c_double ), DIMENSION( : ), ALLOCATABLE :: Y, C_l, C_u, F
-      REAL( c_double ), DIMENSION( : ), ALLOCATABLE ::  Work_real
-      INTEGER( c_int ), DIMENSION( : ), ALLOCATABLE ::  Work_integer
       type( user_type ), target :: params
       TYPE( NLLS_inform_type ) :: inform
       TYPE( NLLS_control_type ) :: control
       LOGICAL, DIMENSION( : ), ALLOCATABLE  :: EQUATN, LINEAR
       CHARACTER ( LEN = 10 ) :: pname
       CHARACTER ( LEN = 20 ) :: summary_file = REPEAT( ' ', 20 )
+      CHARACTER ( LEN = 20 ) :: iter_summary_file = REPEAT( ' ', 20 )
       CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : )  :: VNAMES, CNAMES
       REAL( c_double ), DIMENSION( 2 ) :: CPU
       REAL( c_double ), DIMENSION( 7 ) :: CALLS
       INTEGER :: io_buffer = 11
-      INTEGER :: summary_unit, iores
+      INTEGER :: summary_unit, iter_summary_unit, iores
       INTEGER, PARAMETER :: input = 55, indr = 46, out = 6
       LOGICAL :: filexx
 
-!  Interface blocks
-
-     INTERFACE
-       SUBROUTINE eval_F( status, n, m, X, F, params )
-         USE ISO_C_BINDING
-         import :: params_base_type
-         INTEGER ( c_int ), INTENT( OUT ) :: status
-         INTEGER ( c_int ), INTENT( IN ) :: n, m
-         REAL ( c_double ), DIMENSION( n ), INTENT( IN ) :: X
-         REAL ( c_double ), DIMENSION( m ), INTENT( OUT ) :: F
-         class( params_base_type ), intent(in) :: params
-       END SUBROUTINE eval_F
-     END INTERFACE
-
-     INTERFACE
-       SUBROUTINE eval_J( status, n, m, X, J, params )
-         USE ISO_C_BINDING
-         import :: params_base_type
-         INTEGER ( c_int ), INTENT( OUT ) :: status
-         INTEGER ( c_int ), INTENT( IN ) :: n, m
-         REAL ( c_double ), DIMENSION( n ), INTENT( IN ) :: X
-         REAL ( c_double ), DIMENSION( m * n ), INTENT( OUT ) :: J
-         class( params_base_type ), intent(in) :: params
-       END SUBROUTINE eval_J
-     END INTERFACE
-
-     INTERFACE
-       SUBROUTINE eval_HF( status, n, m, X, F, H, params )
-         USE ISO_C_BINDING
-         import :: params_base_type
-         INTEGER ( c_int ), INTENT( OUT ) :: status
-         INTEGER ( c_int ), INTENT( IN ) :: n, m
-         REAL ( c_double ), DIMENSION( n ), INTENT( IN ) :: X
-         REAL ( c_double ), DIMENSION( m ), INTENT( IN ) :: F
-         REAL ( c_double ), DIMENSION( n**n ), INTENT( OUT ) :: H
-         class( params_base_type ), intent(in) :: params
-       END SUBROUTINE eval_HF
-     END INTERFACE
 
 !  open the relevant file
 
@@ -102,11 +61,6 @@
 !  allocate more space 
 
       DEALLOCATE( X_l, X_u, Y, C_l, C_u, EQUATN, LINEAR )
-      len_work_integer = 0
-      len_work_real = m + n * ( m + n )
-      ALLOCATE( Work_integer( len_work_integer ), Work_real( len_work_real ),  &
-                STAT = status )
-      IF ( status /= 0 ) GO TO 990
 
 !  open the Spec file for the method
 
@@ -128,20 +82,33 @@
 
 !  set up algorithmic input data
 
-      READ ( indr, "( I6, 4( /, I6 ), 3( /, E12.0 ), /, I6, /, A )" )          &
-        control%error, control%out, control%print_level,                       &
-        control%nlls_method, control%model, control%initial_radius,            &
-        control%stop_g_absolute, control%stop_g_relative,                      &
-        summary_unit, summary_file
+      READ( indr, "( I6, 5( /, I6 ), 3( /, E12.0 ), /, L20, /, I6, /,          &
+     &                A, /, I6, /, A ) ")                                      &
+           control%error,                                                      &
+           control%out,                                                        &
+           control%print_level,                                                &
+           control%nlls_method,                                                &
+           control%model,                                                      &
+           control%maxit,                                                      &
+           control%initial_radius,                                             &
+           control%stop_g_absolute,                                            &
+           control%stop_g_relative,                                            &
+           control%output_progress_vectors,                                    &
+           summary_unit,                                                       &
+           summary_file,                                                       &
+           iter_summary_unit,                                                  &
+           iter_summary_file             
+
       CLOSE ( indr )
 
-write(6,*) summary_unit, summary_file
+!write(6,*) summary_unit, summary_file
+!write(6,*) iter_summary_unit, iter_summary_file
 
       IF ( summary_unit > 0 ) THEN
         INQUIRE( FILE = summary_file, EXIST = filexx )
         IF ( filexx ) THEN
            OPEN( summary_unit, FILE = summary_file, FORM = 'FORMATTED',        &
-               STATUS = 'OLD', IOSTAT = iores )
+               STATUS = 'OLD', IOSTAT = iores , position="append")
         ELSE
            OPEN( summary_unit, FILE = summary_file, FORM = 'FORMATTED',        &
                 STATUS = 'NEW', IOSTAT = iores )
@@ -155,6 +122,26 @@ write(6,*) summary_unit, summary_file
         WRITE( summary_unit, "( A10 )" ) pname
       END IF
 
+      IF ( iter_summary_unit > 0 .and. control%output_progress_vectors ) THEN
+        INQUIRE( FILE = iter_summary_file, EXIST = filexx )
+        IF ( filexx ) THEN
+           OPEN( iter_summary_unit, FILE=iter_summary_file, FORM='FORMATTED',  &
+               STATUS = 'OLD', IOSTAT = iores , position="append")
+        ELSE
+           OPEN( iter_summary_unit, FILE=iter_summary_file, FORM='FORMATTED',  &
+                STATUS = 'NEW', IOSTAT = iores )
+        END IF
+        IF ( iores /= 0 ) THEN 
+          write( out, "( ' IOSTAT = ', I0, ' when opening file ', A,           &
+        &  '. Stopping ' )" ) iores, iter_summary_file
+          STOP
+        END IF
+        CALL CUTEST_probname( status, pname )
+        WRITE( iter_summary_unit, "( A10 )" ) pname
+      END IF
+
+      write(*,*) 'calling the minimizer...'
+      
 !  call the minimizer
 
       CALL RAL_NLLS( n, m, X, eval_F, eval_J, eval_HF,                         &
@@ -182,15 +169,22 @@ write(6,*) summary_unit, summary_file
 
       IF ( summary_unit > 0 ) THEN
         BACKSPACE( summary_unit )
-        WRITE( summary_unit, "( A10, 4I6, ES12.4 )" )                          &
-          pname, n, m, inform%status, inform%iter, inform%obj
+        WRITE( summary_unit, "( A10, 4I6, ES23.15E3, ES23.15E3 )" )            &
+          pname, n, m, inform%status, inform%iter, inform%obj, inform%norm_g
         CLOSE(  summary_unit )
       END IF
 
+      IF ( iter_summary_unit > 0 .and. control%output_progress_vectors ) THEN
+        BACKSPACE( iter_summary_unit )
+        do i = 1,inform%iter + 1
+           WRITE( iter_summary_unit, "( ES23.15E3, ES23.15E3 )" )              &
+                inform%resvec(i), inform%gradvec(i)
+        end do
+        CLOSE(  iter_summary_unit )
+      END IF
 !  clean-up data structures
 
-      DEALLOCATE( X, F, VNAMES, CNAMES, Work_integer, Work_real,               &
-                  STAT = status )
+      DEALLOCATE( X, F, VNAMES, CNAMES, STAT = status )
       IF ( status /= 0 ) GO TO 910
       CALL CUTEST_cterminate( status )
       STOP
@@ -226,23 +220,19 @@ write(6,*) summary_unit, summary_file
 
 !  End of RAL_NLLS_main
 
-      END PROGRAM RAL_NLLS_main
+    contains
 
       SUBROUTINE eval_F( status, n, m, X, F, params )
-      USE ISO_C_BINDING
       use :: nlls_module, only : params_base_type
-      
-      INTEGER ( c_int ), INTENT( OUT ) :: status
-      INTEGER ( c_int ), INTENT( IN ) :: n, m
-      REAL ( c_double ), DIMENSION( n ), INTENT( IN ) :: X
-      REAL ( c_double ), DIMENSION( m ), INTENT( OUT ) :: F
-      class( params_base_type ), intent(in) :: params
-      REAL ( c_double ) :: obj
-
+      integer, intent(out) :: status
+      integer, intent(in) :: n,m
+      double precision, dimension(*), intent(in)  :: x
+      double precision, dimension(*), intent(out) :: f
+      class(params_base_type), intent(in) :: params
+      double precision :: obj
 !  evaluate the residuals F
 
       CALL CUTEST_cfn( status, n, m, X, obj, F )
-      RETURN
       END SUBROUTINE eval_F
 
       SUBROUTINE eval_J( status, n, m, X, J, params)
@@ -251,8 +241,8 @@ write(6,*) summary_unit, summary_file
       
       INTEGER ( c_int ), INTENT( OUT ) :: status
       INTEGER ( c_int ), INTENT( IN ) :: n, m
-      REAL ( c_double ), DIMENSION( n ), INTENT( IN ) :: X
-      REAL ( c_double ), DIMENSION( m * n ), INTENT( OUT ) :: J
+      REAL ( c_double ), DIMENSION( * ), INTENT( IN ) :: X
+      REAL ( c_double ), DIMENSION( * ), INTENT( OUT ) :: J
       class( params_base_type ), intent(in) :: params
       REAL ( c_double ), DIMENSION( n ) :: G
       REAL ( c_double ), DIMENSION( m ) :: Y
@@ -262,28 +252,31 @@ write(6,*) summary_unit, summary_file
 
       CALL CUTEST_cgr( status, n, m, X, Y, .FALSE., G, .FALSE., m, n, Jmatrix ) 
       ! convert the Jacobian to a vector....
-      J = reshape(Jmatrix, (/n*m/) )
+      J(1:m*n) = reshape(Jmatrix, (/n*m/) )
       RETURN
       END SUBROUTINE eval_J
 
-      SUBROUTINE eval_HF( status, n, m, X, F, H, params)
+      SUBROUTINE eval_HF( status, n, m, X, F, H, params )
       USE ISO_C_BINDING
       use :: nlls_module, only : params_base_type
       
       INTEGER ( c_int ), INTENT( OUT ) :: status
       INTEGER ( c_int ), INTENT( IN ) :: n, m
-      REAL ( c_double ), DIMENSION( n ), INTENT( IN ) :: X
-      REAL ( c_double ), DIMENSION( m ), INTENT( IN ) :: F
-      REAL ( c_double ), DIMENSION( n*n ), INTENT( OUT ) :: H
+      REAL ( c_double ), DIMENSION( * ), INTENT( IN ) :: X
+      REAL ( c_double ), DIMENSION( * ), INTENT( IN ) :: F
+      REAL ( c_double ), DIMENSION( * ), INTENT( OUT ) :: H
       class( params_base_type ), intent(in) :: params
       
       real ( c_double ), dimension(n,n) :: Hmatrix
 !  evaluate the product H = sum F_i Hessian F_i
 
       CALL CUTEST_cdhc( status, n, m, X, F, n, Hmatrix )
-      H = reshape(Hmatrix, (/n*n/) )
+      H(1:n*n) = reshape(Hmatrix, (/n*n/) )
       RETURN
       END SUBROUTINE eval_HF
+
+    END PROGRAM RAL_NLLS_main
+
 
 
 

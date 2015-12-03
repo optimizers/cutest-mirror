@@ -46,12 +46,14 @@
        REAL ( KIND = wp ) :: radius_increase = two
        REAL ( KIND = wp ) :: radius_reduce = half
        REAL ( KIND = wp ) :: radius_reduce_max = sixteenth
-
+       real ( kind = wp ) :: hybrid_switch = 0.1_wp
      LOGICAL :: subproblem_eig_fact = .FALSE.
      integer  :: more_sorensen_maxits = 500
      real(wp) :: more_sorensen_shift = 1e-8
      real(wp) :: more_sorensen_tiny = 10.0 * epsmch
      real(wp) :: more_sorensen_tol = 1e-6
+     
+     logical :: output_progress_vectors = .false.
 
      END TYPE NLLS_control_type
 
@@ -62,6 +64,10 @@
      INTEGER :: f_eval = 0
      INTEGER :: g_eval = 0
      INTEGER :: h_eval = 0
+     integer :: convergence_normf = 0
+     integer :: convergence_normg = 0
+     real(wp), allocatable :: resvec(:)
+     real(wp), allocatable :: gradvec(:)
      REAL ( KIND = wp ) :: obj = HUGE( one )
      REAL ( KIND = wp ) :: norm_g = HUGE( one )
 !      REAL( c_double ) :: obj = HUGE( 1.0_c_double )
@@ -70,6 +76,43 @@
      type params_base_type
      ! deliberately empty
      end type params_base_type
+     
+     ABSTRACT INTERFACE
+       SUBROUTINE eval_F_type( status, n, m, X, F , params )
+         import :: params_base_type
+         implicit none
+         INTEGER, INTENT( OUT ) :: status
+         INTEGER, INTENT( IN ) :: n, m
+         double precision, DIMENSION( * ), INTENT( IN ) :: X
+         double precision, DIMENSION( * ), INTENT( OUT ) :: F
+         class( params_base_type ), intent( in ) :: params
+       END SUBROUTINE eval_F_type
+     END INTERFACE
+
+     ABSTRACT INTERFACE
+       SUBROUTINE eval_j_type( status, n, m, X, J, params )
+         USE ISO_C_BINDING
+         import :: params_base_type
+         INTEGER ( c_int ), INTENT( OUT ) :: status
+         INTEGER ( c_int ), INTENT( IN ) :: n, m
+         REAL ( c_double ), DIMENSION( * ), INTENT( IN ) :: X
+         REAL ( c_double ), DIMENSION( * ), INTENT( OUT ) :: J
+         class( params_base_type ), intent( in ) :: params
+       END SUBROUTINE eval_j_type
+     END INTERFACE
+
+     ABSTRACT INTERFACE
+       SUBROUTINE eval_HF_type( status, n, m, X, F, H, params ) 
+         USE ISO_C_BINDING
+         import :: params_base_type
+         INTEGER ( c_int ), INTENT( OUT ) :: status
+         INTEGER ( c_int ), INTENT( IN ) :: n, m
+         REAL ( c_double ), DIMENSION( * ), INTENT( IN ) :: X
+         REAL ( c_double ), DIMENSION( * ), INTENT( IN ) :: F
+         REAL ( c_double ), DIMENSION( * ), INTENT( OUT ) :: H
+         class( params_base_type ), intent( in ) :: params
+       END SUBROUTINE eval_HF_type
+     END INTERFACE
 
    CONTAINS
 
@@ -92,45 +135,11 @@
      class( params_base_type ) :: params
      TYPE( NLLS_inform_type ), INTENT( OUT ) :: inform
      TYPE( NLLS_control_type ), INTENT( IN ) :: control
+     procedure( eval_f_type ) :: eval_F
+     procedure( eval_j_type ) :: eval_J
+     procedure( eval_hf_type ) :: eval_HF
 
 !  Interface blocks
-
-     INTERFACE
-       SUBROUTINE eval_F( status, n, m, X, F , params )
-         USE ISO_C_BINDING
-         import :: params_base_type
-         INTEGER ( c_int ), INTENT( OUT ) :: status
-         INTEGER ( c_int ), INTENT( IN ) :: n, m
-         REAL ( c_double ), DIMENSION( n ), INTENT( IN ) :: X
-         REAL ( c_double ), DIMENSION( m ), INTENT( OUT ) :: F
-         class( params_base_type ), intent( in ) :: params
-       END SUBROUTINE eval_F
-     END INTERFACE
-
-     INTERFACE
-       SUBROUTINE eval_J( status, n, m, X, J, params )
-         USE ISO_C_BINDING
-         import :: params_base_type
-         INTEGER ( c_int ), INTENT( OUT ) :: status
-         INTEGER ( c_int ), INTENT( IN ) :: n, m
-         REAL ( c_double ), DIMENSION( n ), INTENT( IN ) :: X
-         REAL ( c_double ), DIMENSION( m * n ), INTENT( OUT ) :: J
-         class( params_base_type ), intent( in ) :: params
-       END SUBROUTINE eval_J
-     END INTERFACE
-
-     INTERFACE
-       SUBROUTINE eval_HF( status, n, m, X, F, H, params ) 
-         USE ISO_C_BINDING
-         import :: params_base_type
-         INTEGER ( c_int ), INTENT( OUT ) :: status
-         INTEGER ( c_int ), INTENT( IN ) :: n, m
-         REAL ( c_double ), DIMENSION( n ), INTENT( IN ) :: X
-         REAL ( c_double ), DIMENSION( m ), INTENT( IN ) :: F
-         REAL ( c_double ), DIMENSION( n*n ), INTENT( OUT ) :: H
-         class( params_base_type ), intent( in ) :: params
-       END SUBROUTINE eval_HF
-     END INTERFACE
 
 !  Local variables
 
