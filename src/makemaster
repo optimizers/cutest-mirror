@@ -37,6 +37,8 @@ all_single: tools_single
                    gen90  PRECIS=single PWD=$(PWD)/gen90 )
 	( cd genc  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    genc  PRECIS=single PWD=$(PWD)/genc )
+	( cd gsl  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   gsl  PRECIS=single PWD=$(PWD)/gsl )
 	( cd hrb  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    hrb  PRECIS=single PWD=$(PWD)/hrb )
 	( cd ipopt  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
@@ -122,6 +124,8 @@ all_double: tools_double
                    gen90  PRECIS=double PWD=$(PWD)/gen90 )
 	( cd genc  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    genc  PRECIS=double PWD=$(PWD)/genc )
+	( cd gsl  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   gsl  PRECIS=double PWD=$(PWD)/gsl )
 	( cd hrb  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    hrb  PRECIS=double PWD=$(PWD)/hrb )
 	( cd ipopt  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
@@ -277,6 +281,8 @@ run_test_single: tools_single test_single
              run_test PRECIS=single PWD=$(PWD)/gen90 )
 	( cd genc  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
              run_test PRECIS=single PWD=$(PWD)/genc )
+#	( cd gsl  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+#             run_test PRECIS=single PWD=$(PWD)/gsl )
 	( cd hrb  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
              run_test PRECIS=single PWD=$(PWD)/hrb )
 	( cd ipopt  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
@@ -354,6 +360,8 @@ run_test_double: tools_double test_double
              run_test PRECIS=double PWD=$(PWD)/gen90 )
 	( cd genc  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
              run_test PRECIS=double PWD=$(PWD)/genc )
+#	( cd gsl  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+#             run_test PRECIS=double PWD=$(PWD)/gsl )
 	( cd hrb  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
              run_test PRECIS=double PWD=$(PWD)/hrb )
 	( cd ipopt  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
