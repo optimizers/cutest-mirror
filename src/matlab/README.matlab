@@ -68,6 +68,26 @@ In order to create a MEX file, you can proceed similarly
     >> unix(cmd);
 
 
+Troubleshooting
+---------------
+
+If Matlab complains that
+
+    Symbol not found: __gfortran_transfer_array_write
+      Referenced from: /private/tmp/cutest-matlab/mcutest.mexmaci64
+      Expected in: /Applications/Matlab/MATLAB_R2015b.app/sys/os/maci64/libgfortran.3.dylib
+
+(the paths may look different on your system) the solution consists in editing `.matlab7rc.sh`. On OSX, this file is found in /Applications/Matlab/MATLAB_R2015b.app/bin. Open the file and search for your MEX architecture (e.g., `maci64`) and look for the line
+
+    LDPATH_PREFIX=''
+
+Insert the path where your `libgfortran` is found, e.g.,
+
+    LDPATH_PREFIX='/usr/local/lib/gcc/5'
+
+and restart Matlab.
+
+
 Reference
 ---------
 
