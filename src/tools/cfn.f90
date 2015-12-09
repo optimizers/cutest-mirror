@@ -184,10 +184,10 @@
             END IF
           END IF
         END DO
-      ELSE
 
 !  there are no constraints, so we need not check KNDOFC
 
+      ELSE
         DO ig = 1, data%ng
           IF ( data%GXEQX( ig ) ) THEN
             f = f + data%GSCALE( ig ) * work%FT( ig )
