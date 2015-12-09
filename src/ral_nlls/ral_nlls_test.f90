@@ -79,12 +79,13 @@
      
      ABSTRACT INTERFACE
        SUBROUTINE eval_F_type( status, n, m, X, F , params )
+         USE ISO_C_BINDING
          import :: params_base_type
          implicit none
          INTEGER, INTENT( OUT ) :: status
          INTEGER, INTENT( IN ) :: n, m
-         REAL ( c_double ),, DIMENSION( * ), INTENT( IN ) :: X
-         REAL ( c_double ),, DIMENSION( * ), INTENT( OUT ) :: F
+         REAL ( c_double ), DIMENSION( * ), INTENT( IN ) :: X
+         REAL ( c_double ), DIMENSION( * ), INTENT( OUT ) :: F
          class( params_base_type ), intent( in ) :: params
        END SUBROUTINE eval_F_type
      END INTERFACE

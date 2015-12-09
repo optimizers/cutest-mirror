@@ -223,13 +223,15 @@
     contains
 
       SUBROUTINE eval_F( status, n, m, X, F, params )
+      USE ISO_C_BINDING
       use :: nlls_module, only : params_base_type
-      integer, intent(out) :: status
-      integer, intent(in) :: n,m
-      double precision, dimension(*), intent(in)  :: x
-      double precision, dimension(*), intent(out) :: f
+
+      INTEGER ( c_int ), INTENT( OUT ) :: status
+      INTEGER ( c_int ), INTENT( IN ) :: n, m
+      REAL ( c_double ), DIMENSION( * ), INTENT( IN ) :: X
+      REAL ( c_double ), DIMENSION( * ), INTENT( OUT ) :: f
       class(params_base_type), intent(in) :: params
-      double precision :: obj
+      REAL ( c_double ) :: obj
 !  evaluate the residuals F
 
       CALL CUTEST_cfn( status, n, m, X, obj, F )
