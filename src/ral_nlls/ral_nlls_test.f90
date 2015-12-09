@@ -83,8 +83,8 @@
          implicit none
          INTEGER, INTENT( OUT ) :: status
          INTEGER, INTENT( IN ) :: n, m
-         double precision, DIMENSION( * ), INTENT( IN ) :: X
-         double precision, DIMENSION( * ), INTENT( OUT ) :: F
+         REAL ( c_double ),, DIMENSION( * ), INTENT( IN ) :: X
+         REAL ( c_double ),, DIMENSION( * ), INTENT( OUT ) :: F
          class( params_base_type ), intent( in ) :: params
        END SUBROUTINE eval_F_type
      END INTERFACE
@@ -144,7 +144,8 @@
 !  Local variables
 
      INTEGER :: status, start_f, end_f, start_j, start_h, w_end
-     INTEGER :: len_work_int, len_work_real
+!    INTEGER :: len_work_int
+     INTEGER :: len_work_real
      INTEGER( c_int ), allocatable :: Work_int( : )
      REAL( c_double ), allocatable :: Work_real( : ) 
      
@@ -190,7 +191,8 @@
 
 !  evaluate HF
 
-     CALL eval_HF( status, n, m, X, WORK_real( start_f ), WORK_real( start_h ), params )
+     CALL eval_HF( status, n, m, X, WORK_real( start_f ),                      &
+                   WORK_real( start_h ), params )
      IF ( status /= 0 ) THEN
        status = error_eval_HF
        GO TO 990

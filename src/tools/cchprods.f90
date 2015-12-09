@@ -446,8 +446,8 @@
               lthvar = data%ISTAEV( iel ) - 1
               ielhst = data%ISTADH( iel )
               DO jcol = 1, nvarel
-write(6,*) VECTOR
-write(6,*) gi, data%IELVAR( lthvar + jcol )
+!write(6,*) VECTOR
+!write(6,*) gi, data%IELVAR( lthvar + jcol )
                 pi = gi * VECTOR( data%IELVAR( lthvar + jcol ) )
                 IF ( pi /= 0.0_wp ) THEN
 !DIR$ IVDEP  
