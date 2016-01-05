@@ -8,8 +8,8 @@
 !  History -
 !   fortran 2003 version released in CUTEst, 24th November 2015
 
-      SUBROUTINE CUTEST_Cint_cchprods( status, n, m, goth, X, VECTOR, lchp,    &
-                                       CHP_val, CHP_ind, CHP_ptr )
+      SUBROUTINE CUTEST_Cint_cchprods( status, n, m, goth, X, VECTOR,          &
+                                       lchp, CHP_val, CHP_ind, CHP_ptr )
       USE CUTEST
       USE, INTRINSIC :: ISO_C_BINDING, ONLY : C_Bool
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
@@ -25,13 +25,13 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lchp ) :: CHP_val
 
 !  ---------------------------------------------------------------------------
-!  compute the matrix-vector products H_i(x) v, i = 1, ..., m, between all of 
+!  compute the matrix-vector products H_i(x) v, i = 1, ..., m, between each of
 !  the Hessian matrices H_i(x) of the constraint functions for the problem and
-!  a given vector v stored in VECTOR. The nonzero entries of the resulting 
-!  products H_i(x) v and their indices occur in (CHP_val(k),CHP_ind), k = 
-!  CHP_ptr(i),..., CHP_ptr(i+1)-1, i = 1, ..., m. If goth is .TRUE. the second 
-!  derivatives, CHP_ind, and CHP_ptr are assumed to have already been computed. 
-!  If the user is unsure, set goth = .FALSE. the first time a product is 
+!  a given vector v stored in VECTOR. The nonzero entries of the resulting
+!  products H_i(x) v and their indices occur in (CHP_val(k),CHP_ind), k =
+!  CHP_ptr(i),..., CHP_ptr(i+1)-1, i = 1, ..., m. If goth is .TRUE. the second
+!  derivatives, CHP_ind, and CHP_ptr are assumed to have already been computed.
+!  If the user is unsure, set goth = .FALSE. the first time a product is
 !  required with the Hessians evaluated at X. X is not used if goth = .TRUE.
 !  ---------------------------------------------------------------------------
 
@@ -54,8 +54,8 @@
 !  History -
 !   fortran 2003 version released in CUTEst, 24th November 2015
 
-      SUBROUTINE CUTEST_cchprods( status, n, m, goth, X, VECTOR, lchp,         &
-                                 CHP_val, CHP_ind, CHP_ptr )
+      SUBROUTINE CUTEST_cchprods( status, n, m, goth, X, VECTOR,               &
+                                  lchp, CHP_val, CHP_ind, CHP_ptr )
       USE CUTEST
       INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
@@ -70,13 +70,13 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lchp ) :: CHP_val
 
 !  ---------------------------------------------------------------------------
-!  compute the matrix-vector products H_i(x) v, i = 1, ..., m, between all of 
+!  compute the matrix-vector products H_i(x) v, i = 1, ..., m, between each of
 !  the Hessian matrices H_i(x) of the constraint functions for the problem and
-!  a given vector v stored in VECTOR. The nonzero entries of the resulting 
-!  products H_i(x) v and their indices occur in (CHP_val(k),CHP_ind), k = 
-!  CHP_ptr(i),..., CHP_ptr(i+1)-1, i = 1, ..., m. If goth is .TRUE. the second 
-!  derivatives, CHP_ind, and CHP_ptr are assumed to have already been computed. 
-!  If the user is unsure, set goth = .FALSE. the first time a product is 
+!  a given vector v stored in VECTOR. The nonzero entries of the resulting
+!  products H_i(x) v and their indices occur in (CHP_val(k),CHP_ind), k =
+!  CHP_ptr(i),..., CHP_ptr(i+1)-1, i = 1, ..., m. If goth is .TRUE. the second
+!  derivatives, CHP_ind, and CHP_ptr are assumed to have already been computed.
+!  If the user is unsure, set goth = .FALSE. the first time a product is
 !  required with the Hessians evaluated at X. X is not used if goth = .TRUE.
 !  ---------------------------------------------------------------------------
 
@@ -114,13 +114,13 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lchp ) :: CHP_val
 
 !  ---------------------------------------------------------------------------
-!  compute the matrix-vector products H_i(x) v, i = 1, ..., m, between all of 
+!  compute the matrix-vector products H_i(x) v, i = 1, ..., m, between each of
 !  the Hessian matrices H_i(x) of the constraint functions for the problem and
-!  a given vector v stored in VECTOR. The nonzero entries of the resulting 
-!  products H_i(x) v and their indices occur in (CHP_val(k),CHP_ind), k = 
-!  CHP_ptr(i),..., CHP_ptr(i+1)-1, i = 1, ..., m. If goth is .TRUE. the second 
-!  derivatives, CHP_ind, and CHP_ptr are assumed to have already been computed. 
-!  If the user is unsure, set goth = .FALSE. the first time a product is 
+!  a given vector v stored in VECTOR. The nonzero entries of the resulting
+!  products H_i(x) v and their indices occur in (CHP_val(k),CHP_ind), k =
+!  CHP_ptr(i),..., CHP_ptr(i+1)-1, i = 1, ..., m. If goth is .TRUE. the second
+!  derivatives, CHP_ind, and CHP_ptr are assumed to have already been computed.
+!  If the user is unsure, set goth = .FALSE. the first time a product is
 !  required with the Hessians evaluated at X. X is not used if goth = .TRUE.
 !  ---------------------------------------------------------------------------
 
@@ -172,13 +172,13 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lchp ) :: CHP_val
 
 !  ---------------------------------------------------------------------------
-!  compute the matrix-vector products H_i(x) v, i = 1, ..., m, between all of 
+!  compute the matrix-vector products H_i(x) v, i = 1, ..., m, between each of
 !  the Hessian matrices H_i(x) of the constraint functions for the problem and
-!  a given vector v stored in VECTOR. The nonzero entries of the resulting 
-!  products H_i(x) v and their indices occur in (CHP_val(k),CHP_ind), k = 
-!  CHP_ptr(i),..., CHP_ptr(i+1)-1, i = 1, ..., m. If goth is .TRUE. the second 
-!  derivatives, CHP_ind, and CHP_ptr are assumed to have already been computed. 
-!  If the user is unsure, set goth = .FALSE. the first time a product is 
+!  a given vector v stored in VECTOR. The nonzero entries of the resulting
+!  products H_i(x) v and their indices occur in (CHP_val(k),CHP_ind), k =
+!  CHP_ptr(i),..., CHP_ptr(i+1)-1, i = 1, ..., m. If goth is .TRUE. the second
+!  derivatives, CHP_ind, and CHP_ptr are assumed to have already been computed.
+!  If the user is unsure, set goth = .FALSE. the first time a product is
 !  required with the Hessians evaluated at X. X is not used if goth = .TRUE.
 !  ---------------------------------------------------------------------------
 
@@ -188,7 +188,7 @@
       INTEGER :: ijhess, j, jcol, k, l, ll, ls, lthvar, nvarel, nin
       REAL ( KIND = wp ) :: ftt, gdash, g2dash, gi, pi, prod, scalee
       LOGICAL :: nullwk
-      EXTERNAL :: RANGE 
+      EXTERNAL :: RANGE
 
 !  there are non-trivial group functions
 
@@ -353,7 +353,7 @@
 
           prod = prod * g2dash
 
-!  form the scaled group gradient 
+!  form the scaled group gradient
 !    grad h_ig * ( g''(h_ig) * grad(trans) h_ig VECTOR )
 
 !         DO l = CHP_ptr( ic ), CHP_ptr( ic + 1 ) - 1
@@ -450,7 +450,7 @@
 !write(6,*) gi, data%IELVAR( lthvar + jcol )
                 pi = gi * VECTOR( data%IELVAR( lthvar + jcol ) )
                 IF ( pi /= 0.0_wp ) THEN
-!DIR$ IVDEP  
+!DIR$ IVDEP
                   DO irow = 1, nvarel
                     ijhess = data%ISYMMH( jcol, irow ) + ielhst
                     l = data%IELVAR( lthvar + irow )
@@ -464,10 +464,10 @@
 
 !  copy the nonzeros back to the ith column of H_i s
 
-!       DO l = CHP_ptr( ic ), CHP_ptr( ic + 1 ) - 1
-!         CHP_val( l ) = work%W_ws( CHP_ind( l ) )
-        DO l = data%ISTAGV( ig ), data%ISTAGV( ig + 1 ) - 1
-          CHP_val( l ) = work%W_ws( data%ISVGRP( l ) )
+        DO l = CHP_ptr( ic ), CHP_ptr( ic + 1 ) - 1
+          CHP_val( l ) = work%W_ws( CHP_ind( l ) )
+!       DO l = data%ISTAGV( ig ), data%ISTAGV( ig + 1 ) - 1
+!         CHP_val( l ) = work%W_ws( data%ISVGRP( l ) )
         END DO
       END DO
 
@@ -482,7 +482,7 @@
 !       work%GSCALE_used, data%ESCALE, work%FUVALS( : data%lnhuvl ),           &
 !       data%lnhuvl, data%GXEQX, data%INTREP, data%IGCOLJ,                     &
 !       data%ISLGRP, data%ITYPEE, data%ISYMMH, work%ISTAJC,                    &
-!       work%W_ws, work%W_el, work%W_in, work%H_in, RANGE )                  
+!       work%W_ws, work%W_el, work%W_in, work%H_in, RANGE )
 
 !  update the counters for the report tool
 

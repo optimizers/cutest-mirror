@@ -38,7 +38,11 @@ foreach pack ( cutest_ccfg cutest_ccfsg cutest_ccifg cutest_ccifsg cutest_cdh \
                cutest_ush_threaded \
                cutest_ushprod_threaded cutest_cshprod_threaded \
                cutest_cshcprod_threaded cutest_csjprod_threaded \
+               cutest_cdimchp cutest_cchprods cutest_cchprods_threaded \
                cutest )
+end
+
+foreach pack ( cutest_cdimchp cutest_cchprods cutest_cchprods_threaded )
 
 #foreach pack ( cutest_cdhc cutest_cdhc_threaded cutest )
 #foreach pack ( cutest_ushprod cutest_cshprod cutest_cshcprod cutest_csjprod \
