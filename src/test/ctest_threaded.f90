@@ -39,6 +39,7 @@
       INTEGER :: nonlinear_variables_objective, nonlinear_variables_constraints
       INTEGER :: equality_constraints, linear_constraints
       INTEGER :: nnz_vector, nnz_result
+      INTEGER :: CHP_ne, l_chp, l_j2_1, l_j2_2, l_j, icon, iprob
       REAL ( KIND = wp ) :: f, ci
       LOGICAL :: grad, byrows, goth, gotj
       LOGICAL :: grlagf, jtrans
@@ -46,11 +47,12 @@
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: H_row, H_col, X_type
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: HE_row, HE_row_ptr, HE_val_ptr
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: G_var, J_var, J_fun
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: CHP_ind, CHP_ptr
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: INDEX_nz_vector, INDEX_nz_result
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: X, X_l, X_u, G, Ji
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: Y, C_l, C_u, C, J_val
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) ::  G_val, H_val, HE_val
-      REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: VECTOR, RESULT
+      REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: VECTOR, RESULT, CHP_val
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : , : ) :: H2_val
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : , : ) :: J2_val
       LOGICAL, ALLOCATABLE, DIMENSION( : ) :: EQUATION, LINEAR
@@ -79,7 +81,7 @@
       IF ( alloc_stat /= 0 ) GO TO 990
       ALLOCATE( H2_val( l_h2_1, n ), stat = alloc_stat )
       IF ( alloc_stat /= 0 ) GO TO 990
-      l_j2_1 = MAX( m, n ) ; l_j2_2 = l_j2_1      
+      l_j2_1 = MAX( m, n ) ; l_j2_2 = l_j2_1
       ALLOCATE( J2_val( l_j2_1, l_j2_2 ), stat = alloc_stat )
       IF ( alloc_stat /= 0 ) GO TO 990
 
@@ -665,6 +667,34 @@
       CALL WRITE_SRESULT2( out, nnz_vector, INDEX_nz_vector, VECTOR, m,        &
                            nnz_result, INDEX_nz_result, RESULT, n )
 
+!  compute the number of nonzeros when forming the products of the constraint
+!  Hessians with a vector
+
+      WRITE( out, "( ' CALL CUTEST_cdimchp' )" )
+      CALL CUTEST_cdimchp( status, CHP_ne )
+      IF ( status /= 0 ) GO to 900
+      WRITE( out, "( ' * CHP_ne = ', I0 )" ) CHP_ne
+
+      l_chp = CHP_ne
+      ALLOCATE( CHP_val( l_chp ), CHP_ind( l_chp ), CHP_ptr( m + 1 ),          &
+                stat = alloc_stat )
+      IF ( alloc_stat /= 0 ) GO TO 990
+
+!  compute the matrix-vector products between each constraint Hessian and a
+!  vector
+
+      goth = .FALSE.
+      WRITE( out, "( ' Call CUTEST_cchprods with goth = .FALSE.' )" )
+      CALL CUTEST_cchprods_threaded( status, n, m, goth, X, VECTOR, l_chp,     &
+                                     CHP_val, CHP_ind, CHP_ptr, thread )
+      CALL WRITE_CHP( out, m, l_chp, CHP_val, CHP_ind, CHP_ptr )
+
+      goth = .TRUE.
+      WRITE( out, "( ' Call CUTEST_cchprods with goth = .TRUE.' )" )
+      CALL CUTEST_cchprods_threaded( status, n, m, goth, X, VECTOR, l_chp,     &
+                                     CHP_val, CHP_ind, CHP_ptr, thread )
+      CALL WRITE_CHP( out, m, l_chp, CHP_val, CHP_ind, CHP_ptr )
+
 !  calls and time report
 
 !     WRITE( out, "( ' CALL CUTEST_creport for thread 1' )" )
@@ -687,7 +717,8 @@
                   X_l, X_u, G, Ji, Y, C_l, C_u, C, H_val, HE_val, H2_val,      &
                   J_val, J_var, J_fun, J2_val, VECTOR, RESULT,                 &
                   X_names, C_names, EQUATION, LINEAR, INDEX_nz_vector,         &
-                  INDEX_nz_result, stat = alloc_stat )
+                  INDEX_nz_result, CHP_val, CHP_ind, CHP_ptr,                  &
+                  stat = alloc_stat )
       CLOSE( input )
       STOP
 
@@ -710,6 +741,7 @@
       SUBROUTINE WRITE_X( out, n, X, X_l, X_u )
       INTEGER :: n, out
       REAL ( KIND = wp ), DIMENSION( n ) :: X, X_l, X_u
+      INTEGER :: i
       WRITE( out, "( ' *       i      X_l          X          X_u' )" )
       DO i = 1, n
         WRITE( out, "( ' * ', I7, 3ES12.4 )" ) i, X_l( i ), X( i ), X_u( i )
@@ -720,6 +752,7 @@
       INTEGER :: m, out
       REAL ( KIND = wp ), DIMENSION( m ) :: Y, C_l, C_u
       LOGICAL, DIMENSION( m ) :: EQUATION, LINEAR
+      INTEGER :: i
       WRITE( out, "( ' *       i      C_l         C_u          Y   ',          &
     &   '      EQUATION   LINEAR' )" )
       DO i = 1, m
@@ -862,7 +895,7 @@
       END SUBROUTINE WRITE_H_dense
 
       SUBROUTINE WRITE_J_dense( out, n, m, l_j2_1, l_j2_2, J2_val )
-      INTEGER :: n, m, l_J2_1, out
+      INTEGER :: n, m, l_J2_1, l_j2_2, out
       REAL ( KIND = wp ), DIMENSION( l_j2_1, l_j2_2 ) :: J2_val
       INTEGER :: i, j
       WRITE( out, "( ' * J(dense)' )" )
@@ -895,7 +928,7 @@
       END SUBROUTINE WRITE_J_dense
 
       SUBROUTINE WRITE_JT_dense( out, n, m, l_j2_1, l_j2_2, J2_val )
-      INTEGER :: n, m, l_J2_1, out
+      INTEGER :: n, m, l_J2_1, l_j2_2, out
       REAL ( KIND = wp ), DIMENSION( l_j2_1, l_j2_2 ) :: J2_val
       INTEGER :: i, j
       WRITE( out, "( ' * J(transpose)(dense)' )" )
@@ -995,6 +1028,7 @@
       INTEGER, DIMENSION( lhe_ptr ) :: HE_row_ptr, HE_val_ptr
       INTEGER, DIMENSION( lhe_row ) :: HE_row
       REAL ( KIND = wp ), DIMENSION( lhe_val ) :: HE_val
+      INTEGER :: i
       WRITE( out, "( ' * H(element)' )" )
       DO i = 1, ne
         IF (  HE_row_ptr( i + 1 ) > HE_row_ptr( i ) ) THEN
@@ -1078,5 +1112,27 @@
         WRITE( out, "( ' * ', I7, 2ES12.4 )" ) i, RESULT( i )
       END DO
       END SUBROUTINE WRITE_SRESULT2
+
+      SUBROUTINE WRITE_CHP( out, m, l_chp, CHP_val, CHP_ind, CHP_ptr )
+      INTEGER :: m, l_chp, out
+      INTEGER, DIMENSION( m + 1 ) :: CHP_ptr
+      INTEGER, DIMENSION( l_chp ) :: CHP_ind
+      REAL ( KIND = wp ), DIMENSION( l_chp ) :: CHP_val
+      INTEGER :: i
+      WRITE( out, "( ' * CH(product)' )" )
+      DO i = 1, m
+        IF (  CHP_ptr( i + 1 ) > CHP_ptr( i ) ) THEN
+          WRITE( out, "( ' * constraint Hessian ', I0 )" ) i
+          WRITE( out, "( ' * product indices ', 5I12, /,                       &
+         &  ( ' *', 17X, 5I12 ) )" )                                           &
+            CHP_ind( CHP_ptr( i ) : CHP_ptr( i + 1 ) - 1 )
+          WRITE( out, "( ' * product values  ', 5ES12.4, /,                    &
+         &  ( ' *', 9X, 5ES12.4 ) )" )                                         &
+            CHP_val( CHP_ptr( i ) : CHP_ptr( i + 1 ) - 1 )
+        ELSE
+          WRITE( out, "( ' * no Hessian indices for constraint ', I0 )" ) i
+        END IF
+      END DO
+      END SUBROUTINE WRITE_CHP
 
     END PROGRAM CUTEST_test_constrained_tools
