@@ -11,10 +11,10 @@
 #include <string.h>
 #include <math.h>
 
-#include <gsl_blas.h>
-#include <gsl_matrix.h>
-#include <gsl_multifit_nlin.h>
-#include <gsl_vector.h>
+#include <gsl/gsl_blas.h>
+#include <gsl/gsl_matrix.h>
+#include <gsl/gsl_multifit_nlin.h>
+#include <gsl/gsl_vector.h>
 
 #define GENCMA
 
@@ -106,9 +106,10 @@ int MAINENTRY( void ){
     integer ierr;              /* Exit flag from OPEN and CLOSE */
     integer status;            /* Exit flag from CUTEst tools */
     integer gsl_status;        /* Exit flag from GSL */
+    integer conv_status;       /* Status of the convergence of the alg */
     integer grad_status;       /* Exit flag from computing gradient */
     
-    FILE *indr, *summary;
+    FILE *indr, *summary, *iter_summary;
 
     VarTypes vtypes;
 
@@ -136,11 +137,12 @@ int MAINENTRY( void ){
     int info;
     double fnval;
 
-    int write_summary, summary_size;
+    int write_summary, summary_size, write_iter_summary;
     int stopping_test;
     double normJf, normf;
     double tol_gradient, tol_func;
-    char summary_file[20];
+    char summary_file[20], iter_summary_file[20];
+    int fnevals, jacevals, hessevals;
 
     /* Open problem description file OUTSDIF.d */
     ierr = 0;
@@ -336,10 +338,22 @@ int MAINENTRY( void ){
       printf("Error: failed to read write_summary from GSL.SPC; using default (0). \n");
       write_summary = 0;
     }
-    ierr = fscanf( indr, "%s", summary_file);
+    ierr = fscanf( indr, "%s%*[^\n]\n", summary_file);
     if (ierr != 1) {
       printf("Error: failed to read summary_file from GSL.SPC; using default (GSL.SPC). \n");
-      strncpy(summary_file,"GSL.SPC",20);
+      strncpy(summary_file,"GSL.sum",20);
+    }
+    ierr = fscanf( indr, "%i%*[^\n]\n", &write_iter_summary);
+    if (ierr != 1) {
+      printf("Error: failed to read write_iter_summary from GSL.SPC; using default (0). \n");
+      write_iter_summary = 0;
+    }
+    ierr = fscanf( indr, "%s%*[^\n]\n", iter_summary_file);
+    if (ierr != 1) {
+      printf(
+	     "Error: failed to read iter_summary_file from GSL.SPC; using default (GSL.SPC). \n"
+	     );
+      strncpy(iter_summary_file,"GSL_iter.sum",20);
     }
     
     fclose(indr);
@@ -361,7 +375,16 @@ int MAINENTRY( void ){
 	fprintf( summary, "\n%10s", pname );
       }
     }
-    
+
+    if ( write_iter_summary == 1 ) {
+      printf("Writing iteration summary to %s \n", iter_summary_file);
+      iter_summary = fopen(iter_summary_file,"w"); /* append summary, create if doesn't exist */
+      if ( iter_summary == NULL ) {
+	fprintf(stderr, "Error: can't open %s for writing\n",iter_summary_file);
+	exit(1);
+      }
+    }
+      
     /* Call the optimizer */
     /*ExitCode = gsl_multifit_fdfsolver_driver(gsl, maxiter, epsabs, epsrel);
     switch(ExitCode) {
@@ -385,7 +408,11 @@ int MAINENTRY( void ){
     grad_status = gsl_multifit_gradient(gsl->J, gsl->f, gradient);
     normJf = gsl_blas_dnrm2(gradient);
     printf("||J0'f0||/||f0|| = %e\n", normJf/normf);
-    
+
+    if ( write_iter_summary == 1) { 
+      fprintf(iter_summary,"%23.15e  %23.15e\n",fnval, normJf);
+    }
+
     if (stopping_test == 1) {
 
       /* set tol_gradient = max(epsabs, ||J^Tf||/||f|| * epsrel) */
@@ -407,38 +434,48 @@ int MAINENTRY( void ){
        printf("===== Iteration %d =====\n", iter);
        iter++;
        gsl_status = gsl_multifit_fdfsolver_iterate(gsl);
-       printf("itr status =%s\n", gsl_strerror(gsl_status));
-       if(gsl_status) break;
+       if(gsl_status) {
+	 printf("test status = %s\n", gsl_strerror(gsl_status));
+	 break;
+       }
 
-       /* check for convergence */       
+       /*************************/
+       /* check for convergence */
+       /*************************/
        normf = gsl_blas_dnrm2(gsl->f);
        fnval = 0.5*normf*normf;
        printf("0.5 ||f||^2 = %e\n", fnval);
-
        
        grad_status = gsl_multifit_gradient(gsl->J, gsl->f, gradient);
        normJf = gsl_blas_dnrm2(gradient);
        printf("||J'f||/||f|| = %e\n", normJf/normf);
-       
-	  
-       if (grad_status) break;
+       if (grad_status) {
+	 printf("Error computing gradient\n");
+	 break;
+       }
+
+       if ( write_iter_summary == 1 ) { 
+	 fprintf(iter_summary,"%23.15e  %23.15e\n", fnval, normJf);
+       }
+
+
        if (stopping_test == 1) {
 	 /* test on the scaled gradient */
 	 if ( (normJf/normf) > tol_gradient) {
-	   gsl_status = GSL_CONTINUE;
+	   conv_status = GSL_CONTINUE;
 	 }
 	 else {
-	   gsl_status = GSL_SUCCESS;
+	   conv_status = GSL_SUCCESS;
 	   printf("Scaled gradient test successful\n");
 	   break;
 	 }
 	 
 	 /* test on the function value */
 	 if (normf > tol_func ){
-	   gsl_status = GSL_CONTINUE;
+	   conv_status = GSL_CONTINUE;
 	 }
 	 else {
-	   gsl_status = GSL_SUCCESS;
+	   conv_status = GSL_SUCCESS;
 	   printf("Norm of function test successful\n");
 	   break;
 	 }
@@ -446,20 +483,25 @@ int MAINENTRY( void ){
        }
        else if (stopping_test == 2) {
 	 /* Stop if |dx_i| < epsabs + epsrel |x_i| for all i. */
-	 gsl_status = gsl_multifit_test_delta(gsl->dx, gsl->x, epsabs, epsrel);
+	 conv_status = gsl_multifit_test_delta(gsl->dx, gsl->x, epsabs, epsrel);
        } 
        else if (stopping_test == 3) { 
 	 /* stop if || g ||_inf < epsabs */
-	 gsl_status = gsl_multifit_test_gradient(gradient,epsabs);
+	 conv_status = gsl_multifit_test_gradient(gradient,epsabs);
        } 
        else {
 	 printf("Error: unsupported stopping test \n");
-	 gsl_status = GSL_EINVAL; /* made up error code... */
+	 conv_status = GSL_EINVAL; /* made up error code... */
        }
-       printf("test status = %s\n", gsl_strerror(gsl_status));
-    }
-    while(gsl_status==GSL_CONTINUE && iter < maxiter);
 
+       if (gsl_status) {
+	 conv_status = gsl_status;
+       }
+       
+       printf("test status = %s\n", gsl_strerror(conv_status));
+    }
+    while(conv_status==GSL_CONTINUE && iter < maxiter);
+    
     /* Calculate final value */
     /*    normf = gsl_blas_dnrm2(gsl->f);
 	  fnval = 0.5*normf*normf;*/
@@ -473,16 +515,35 @@ int MAINENTRY( void ){
         exit(status);
     }
 
+    fnevals = (int) calls[0];
+    jacevals = (int) calls[1];
+    hessevals = (int) calls[2];
+    
+    if ( iter == maxiter ) { 
+      gsl_status = -999; 
+    }
+
+    if ( gsl_status ) { /* count as a failure */
+      iter = -iter;
+      fnevals = -fnevals;
+      jacevals = -jacevals;
+      hessevals = -hessevals;
+    };
+
     /* write summary if required */
     if ( write_summary == 1) {
       fprintf( 
-	      summary, "%6i %6i %6i %6i %23.15e %23.15e",
+	      summary, "%6i %6i %6i %6i %6i %6i %6i %23.15e %23.15e %23.15e",
 	      (int)CUTEst_nvar,
 	      (int)CUTEst_ncon,
 	      gsl_status, 
 	      iter, 
+	      fnevals,
+	      jacevals,
+	      hessevals,
 	      fnval,
-	      normJf
+	      normJf,
+	      normJf/normf
 	);
     }
 

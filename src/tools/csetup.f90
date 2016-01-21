@@ -489,7 +489,7 @@
 
       data%ltypee = data%nel
       data%ltypeg = data%ng
-      data%lstep  = data%nel1 
+      data%lstep  = data%nel1
       data%lstgp = data%ng1
       data%lcalcf = MAX( data%nel, data%ng )
       data%lcalcg = data%ng
@@ -507,7 +507,7 @@
       work%lh_col = lmin
       work%lh_val = lmin
 
-!  print out problem data. input the number of variables, groups, elements and 
+!  print out problem data. input the number of variables, groups, elements and
 !  the identity of the objective function group
 
       IF ( debug ) WRITE( out, 1100 ) pname, n, data%ng, data%nel
@@ -577,7 +577,7 @@
       IF ( debug ) WRITE( out, 1110 ) 'ICNA  ',                                &
         ( data%ICNA( i ), i = 1, data%nnza )
 
-!  input the values of the nonzeros in each linear element, the constant term 
+!  input the values of the nonzeros in each linear element, the constant term
 !  in each group, the lower and upper bounds on the variables.
 
       READ( input, 1020 ) ( data%A( i ), i = 1, data%nnza )
@@ -680,7 +680,7 @@
 
 !  consider which groups are constraints. Of these, decide which are
 !  equations, which are linear, allocate starting values for the
-!  Lagrange multipliers and set lower and upper bounds on any inequality 
+!  Lagrange multipliers and set lower and upper bounds on any inequality
 !  constraints. Reset KNDOFC to point to the list of constraint groups.
 
       mmax = MIN( SIZE( LINEAR ), SIZE( EQUATN ),                              &
@@ -741,7 +741,7 @@
 
 !  set addresses in CGROUP to reorder variables
 
-        kndv = 0 
+        kndv = 0
         jwrk = kndv + n
 
 !  initialize jwrk and kndv
@@ -751,7 +751,7 @@
           data%CGROUP( jwrk + j ) = j
         END DO
 
-!  now identify and count nonlinear variables; keep separate counts for 
+!  now identify and count nonlinear variables; keep separate counts for
 !  nonlinear objective and Jacobian variables.
 !  data%CGROUP(kndv + j) = 0 ==> j linear everywhere
 !  data%CGROUP(kndv + j) = 1 ==> j linear in objective, nonlinear in constraints
@@ -827,12 +827,12 @@
           DO 120 i = 1, n
             IF ( i > nend ) GO TO 130
 
-!  variable i is linear. Now, run backwards through the variables until a 
+!  variable i is linear. Now, run backwards through the variables until a
 !  nonlinear one is encountered
 
             IF ( data%CGROUP( kndv + i ) == 0 ) THEN
               DO j = nend, i, - 1
-                IF ( data%CGROUP( kndv + j ) > 0 ) THEN 
+                IF ( data%CGROUP( kndv + j ) > 0 ) THEN
                   nend = j - 1
 
 !  interchange the data for variables i and j
@@ -858,7 +858,7 @@
               GO TO 130
             END IF
   120     CONTINUE
-  130     CONTINUE 
+  130     CONTINUE
 
 !  reorder the variables so that all nonlinear variables occur after the
 !  linear ones
@@ -871,12 +871,12 @@
           DO 140 i = 1, n
             IF ( i > nend ) GO TO 150
 
-!  variable i is linear. Now, run backwards through the variables until a 
+!  variable i is linear. Now, run backwards through the variables until a
 !  linear one is encountered
 
             IF ( data%CGROUP( kndv + i ) > 0 ) THEN
               DO j = nend, i, - 1
-                IF ( data%CGROUP( kndv + j ) == 0 ) THEN 
+                IF ( data%CGROUP( kndv + j ) == 0 ) THEN
                   nend = j - 1
 
 !  interchange the data for variables i and j
@@ -902,14 +902,14 @@
               GO TO 150
             END IF
   140     CONTINUE
-  150     CONTINUE 
+  150     CONTINUE
         END IF
 
 !  change entries in IELVAR and ICNA to reflect reordering of variables
 
         DO i = 1, data%nvrels
           j = data%IELVAR( i )
-          data%IELVAR( i ) = data%CGROUP( jwrk + j ) 
+          data%IELVAR( i ) = data%CGROUP( jwrk + j )
         END DO
         DO i = 1, data%nnza
           j = data%ICNA( i )
@@ -922,26 +922,26 @@
         IF ( ( data%nnov == nnlin .AND. data%nnjv == nnlin )                   &
            .OR. ( data%nnov == 0 ) .OR. ( data%nnjv == 0 ) ) GO TO 300
 
-!  reorder the nonlinear variables so that the smaller set (nonlinear objective 
+!  reorder the nonlinear variables so that the smaller set (nonlinear objective
 !  or nonlinear Jacobian) occurs at the beginning of the larger set
 
         nend = nnlin
         IF ( data%nnjv <= data%nnov ) THEN
 
-!  put the nonlinear Jacobian variables first. Reset data%nnov to indicate all 
+!  put the nonlinear Jacobian variables first. Reset data%nnov to indicate all
 !  nonlinear variables are treated as  nonlinear objective variables.
 
           data%nnov = nnlin
-          DO 220 i = 1, nnlin 
+          DO 220 i = 1, nnlin
             IF ( i > nend ) GO TO 290
 
-!  variable i is linear in the Jacobian. Now, run backwards through the 
+!  variable i is linear in the Jacobian. Now, run backwards through the
 !  variables until a nonlinear Jacobian variable is encountered
 
             IF ( data%CGROUP( kndv + i ) == 2 ) THEN
               DO j = nend, i, - 1
                 IF ( data%CGROUP( kndv + j ) == 1 .OR.                         &
-                     data%CGROUP( kndv + j ) == 3 ) THEN 
+                     data%CGROUP( kndv + j ) == 3 ) THEN
                   nend = j - 1
 
 !  Interchange the data for variables i and j
@@ -973,15 +973,15 @@
 
         ELSE
           data%nnjv = nnlin
-          DO 250 i = 1, nnlin 
+          DO 250 i = 1, nnlin
             IF ( i > nend ) GO TO 290
 
-!  variable i is linear in the objective. Now, run backwards through the 
+!  variable i is linear in the objective. Now, run backwards through the
 !  variables until a nonlinear objective variable is encountered
 
             IF ( data%CGROUP( kndv + i ) == 1 ) THEN
               DO 240 j = nend, i, - 1
-                 IF ( data%CGROUP( kndv + j ) > 1 ) THEN 
+                 IF ( data%CGROUP( kndv + j ) > 1 ) THEN
                    nend = j - 1
 
 !  interchange the data for variables i and j
@@ -1014,7 +1014,7 @@
   290   CONTINUE
         DO i = 1, data%nvrels
           j = data%IELVAR( i )
-          data%IELVAR( i ) = data%CGROUP( jwrk + j ) 
+          data%IELVAR( i ) = data%CGROUP( jwrk + j )
         END DO
         DO i = 1, data%nnza
           j = data%ICNA( i )
@@ -1082,7 +1082,7 @@
             IF ( i > mend ) GO TO 390
             ig = data%CGROUP( i )
 
-!  constraint i is nonlinear. Now, run backwards through the constraints until 
+!  constraint i is nonlinear. Now, run backwards through the constraints until
 !  a linear one is encountered
 
             IF ( .NOT. LINEAR( i ) ) THEN
@@ -1125,7 +1125,7 @@
             IF ( i > mend ) GO TO 390
             ig = data%CGROUP( i )
 
-!  constraint i is nonlinear. Now, run backwards through the constraints until 
+!  constraint i is nonlinear. Now, run backwards through the constraints until
 !  a linear one is encountered
 
             IF ( LINEAR( i ) ) THEN
@@ -1162,7 +1162,7 @@
   390   CONTINUE
         IF ( data%meq == 0 .OR. data%meq == m ) GO TO 700
 
-!  reorder the linear constraints so that the equations occur before the 
+!  reorder the linear constraints so that the equations occur before the
 !  inequalities
 
         IF ( e_order == 1 ) THEN
@@ -1171,7 +1171,7 @@
             IF ( i > mend ) GO TO 430
             ig = data%CGROUP( i )
 
-!  constraint i is an inequality. Now, run backwards through the constraints 
+!  constraint i is an inequality. Now, run backwards through the constraints
 !  until an equation is encountered
 
             IF ( .NOT. EQUATN( i ) ) THEN
@@ -1202,7 +1202,7 @@
             END IF
   420     CONTINUE
 
-!  reorder the nonlinear constraints so that the equations occur before the 
+!  reorder the nonlinear constraints so that the equations occur before the
 !  inequalities
 
   430     CONTINUE
@@ -1211,7 +1211,7 @@
             IF ( i > mend ) GO TO 700
             ig = data%CGROUP( i )
 
-!  constraint i is an inequality. Now, run backwards through the constraints 
+!  constraint i is an inequality. Now, run backwards through the constraints
 !  until an equation is encountered
 
             IF ( .NOT. EQUATN( i ) ) THEN
@@ -1242,7 +1242,7 @@
             END IF
   450     CONTINUE
 
-!  reorder the linear constraints so that the inequalities occur before the 
+!  reorder the linear constraints so that the inequalities occur before the
 !  equations
 
         ELSE IF ( e_order == 2 ) THEN
@@ -1251,7 +1251,7 @@
             IF ( i > mend ) GO TO 530
             ig = data%CGROUP( i )
 
-!  constraint i is an equation. Now, run backwards through the constraints 
+!  constraint i is an equation. Now, run backwards through the constraints
 !  until an inequality is encountered
 
             IF ( EQUATN( i ) ) THEN
@@ -1282,7 +1282,7 @@
             END IF
   520     CONTINUE
 
-!  reorder the nonlinear constraints so that the inequalties occur before the 
+!  reorder the nonlinear constraints so that the inequalties occur before the
 !  equations
 
   530     CONTINUE
@@ -1291,7 +1291,7 @@
             IF ( i > mend ) GO TO 700
             ig = data%CGROUP( i )
 
-!  constraint i is an equation. Now, run backwards through the constraints 
+!  constraint i is an equation. Now, run backwards through the constraints
 !  until an inequality is encountered
 
             IF ( EQUATN( i ) ) THEN
@@ -1333,7 +1333,7 @@
             IF ( i > mend ) GO TO 700
             ig = data%CGROUP( i )
 
-!  constraint i is an inequality. Now, run backwards through the constraints 
+!  constraint i is an inequality. Now, run backwards through the constraints
 !  until an equation is encountered
 
             IF ( .NOT. EQUATN( i ) ) THEN
@@ -1364,7 +1364,7 @@
             END IF
   620     CONTINUE
 
-!  reorder the constraints so that the inequalities occur before the equations 
+!  reorder the constraints so that the inequalities occur before the equations
 
         ELSE IF ( e_order == 2 ) THEN
           mend = m
@@ -1372,7 +1372,7 @@
             IF ( i > mend ) GO TO 700
             ig = data%CGROUP( i )
 
-!  constraint i is an equation. Now, run backwards through the constraints 
+!  constraint i is an equation. Now, run backwards through the constraints
 !  until an inequality is encountered
 
             IF ( EQUATN( i ) ) THEN
@@ -1438,7 +1438,7 @@
  1120 FORMAT( 1X, A6, /, ( 1X, 1P, 4D16.8 ) )
  1130 FORMAT( 1X, A6, /, ( 1X, 72L1 ) )
  1140 FORMAT( 1X, A6, /, ( 1X, 8A10 ) )
- 1180 FORMAT( 1X, A6, /, 1P, 2D16.6 )
+ 1180 FORMAT( 1X, A6, /, 1P, 2D16.8 )
  2000 FORMAT( /, ' ** SUBROUTINE CUTEST_csetup: array length ', A,             &
                  ' too small.', /, ' -- Increase the dimension to at least ',  &
                  I0, ' and restart.' )

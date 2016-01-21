@@ -411,7 +411,7 @@
 
       data%ltypee = data%nel
       data%ltypeg = data%ng
-      data%lstep  = data%nel1 
+      data%lstep  = data%nel1
       data%lstgp = data%ng1
       data%lcalcf = MAX( data%nel, data%ng )
       data%lcalcg = data%ng
@@ -429,7 +429,7 @@
       work%lh_col = lmin
       work%lh_val = lmin
 
-!  print out problem data. input the number of variables, groups, elements and 
+!  print out problem data. input the number of variables, groups, elements and
 !  the identity of the objective function group
 
       IF ( debug ) WRITE( out, 1100 ) pname, n, data%ng, data%nel
@@ -509,8 +509,8 @@
       IF ( debug ) WRITE( out, 1110 ) 'ICNA  ',                                &
         ( data%ICNA( i ), i = 1, data%nnza )
 
-!  input the values of the nonzeros in each linear element, the constant term 
-!  in each group, the lower and upper bounds on the variables and the starting 
+!  input the values of the nonzeros in each linear element, the constant term
+!  in each group, the lower and upper bounds on the variables and the starting
 !  point for the minimization
 
       READ( input, 1020 ) ( data%A( i ), i = 1, data%nnza )
@@ -610,7 +610,7 @@
       READ( input, 1010 ) ( data%ITYPEV( i ), i = 1, n )
 !     CLOSE( input )
 
-!  partition the workspace arrays work%FUVALS, IWK and WK. Initialize certain 
+!  partition the workspace arrays work%FUVALS, IWK and WK. Initialize certain
 !  portions of IWK
 
       work%firstg = .TRUE.
@@ -666,7 +666,7 @@
  1120 FORMAT( 1X, A6, /, ( 1X, 1P, 4D16.8 ) )
  1130 FORMAT( 1X, A6, /, ( 1X, 72L1 ) )
  1140 FORMAT( 1X, A6, /, ( 1X, 8A10 ) )
- 1180 FORMAT( 1X, A6, /, 1P, 2D16.6 )
+ 1180 FORMAT( 1X, A6, /, 1P, 2D16.8 )
  2000 FORMAT( /, ' ** SUBROUTINE CUTEST_usetup: array length ', A,             &
                  ' too small.', /, ' -- Increase the dimension to at least ',  &
                  I0, ' and restart.' )

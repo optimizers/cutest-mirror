@@ -1,7 +1,7 @@
 !  Dummy RAL_NLLS for testing ral_nlls_main interface to CUTEst
 !  Nick Gould, 6th October 2015
 
-   MODULE NLLS_MODULE
+   MODULE RAL_NLLS_DOUBLE
 
      USE ISO_C_BINDING
 
@@ -15,7 +15,8 @@
      INTEGER, PARAMETER :: error_eval_F = - 3
      INTEGER, PARAMETER :: error_eval_J = - 4
      INTEGER, PARAMETER :: error_eval_HF = - 5
-
+     
+     real (kind = wp), parameter :: tenm3 = 1.0e-3
      real (kind = wp), parameter :: tenm5 = 1.0e-5
      real (kind = wp), parameter :: tenm8 = 1.0e-8
      real (kind = wp), parameter :: epsmch = epsilon(1.0_wp)
@@ -28,7 +29,7 @@
      real (kind = wp), parameter :: half = 0.5
      real (kind = wp), parameter :: sixteenth = 0.0625
   
-     TYPE, PUBLIC :: NLLS_control_type
+     TYPE, PUBLIC :: Nlls_options
        INTEGER :: error = 6
        INTEGER :: out = 6
        INTEGER :: print_level = 0
@@ -38,6 +39,8 @@
        INTEGER :: lls_solver = 1
        REAL ( KIND = wp ) :: stop_g_absolute = tenm5
        REAL ( KIND = wp ) :: stop_g_relative = tenm8
+       INTEGER :: relative_tr_radius = 0
+       REAL ( KIND = wp ) :: initial_radius_scale = 1.0!tenm3
        REAL ( KIND = wp ) :: initial_radius = hundred
        REAL ( KIND = wp ) :: maximum_radius = ten ** 8
        REAL ( KIND = wp ) :: eta_successful = ten ** ( - 8 )
@@ -47,17 +50,21 @@
        REAL ( KIND = wp ) :: radius_reduce = half
        REAL ( KIND = wp ) :: radius_reduce_max = sixteenth
        real ( kind = wp ) :: hybrid_switch = 0.1_wp
+       logical :: exact_second_derivatives = .true.
      LOGICAL :: subproblem_eig_fact = .FALSE.
      integer  :: more_sorensen_maxits = 500
      real(wp) :: more_sorensen_shift = 1e-8
      real(wp) :: more_sorensen_tiny = 10.0 * epsmch
      real(wp) :: more_sorensen_tol = 1e-6
      
+     real(wp) :: hybrid_tol = 0.02
+     integer :: hybrid_switch_its = 3
+     
      logical :: output_progress_vectors = .false.
 
-     END TYPE NLLS_control_type
+  END TYPE Nlls_options
 
-     TYPE, PUBLIC :: NLLS_inform_type
+  TYPE, PUBLIC :: NLLS_inform
      INTEGER :: status = 0
      INTEGER :: alloc_status = 0
      INTEGER :: iter = 0
@@ -70,8 +77,9 @@
      real(wp), allocatable :: gradvec(:)
      REAL ( KIND = wp ) :: obj = HUGE( one )
      REAL ( KIND = wp ) :: norm_g = HUGE( one )
+     REAL ( KIND = wp ) :: scaled_g = HUGE( one ) 
 !      REAL( c_double ) :: obj = HUGE( 1.0_c_double )
-     END TYPE NLLS_inform_type
+  END TYPE NLLS_inform
 
      type params_base_type
      ! deliberately empty
@@ -79,13 +87,12 @@
      
      ABSTRACT INTERFACE
        SUBROUTINE eval_F_type( status, n, m, X, F , params )
-         USE ISO_C_BINDING
          import :: params_base_type
          implicit none
          INTEGER, INTENT( OUT ) :: status
          INTEGER, INTENT( IN ) :: n, m
-         REAL ( c_double ), DIMENSION( * ), INTENT( IN ) :: X
-         REAL ( c_double ), DIMENSION( * ), INTENT( OUT ) :: F
+         double precision, DIMENSION( * ), INTENT( IN ) :: X
+         double precision, DIMENSION( * ), INTENT( OUT ) :: F
          class( params_base_type ), intent( in ) :: params
        END SUBROUTINE eval_F_type
      END INTERFACE
@@ -117,8 +124,8 @@
 
    CONTAINS
 
-     SUBROUTINE RAL_NLLS( n, m, X, eval_F, eval_J, eval_HF,                    &
-                          params, inform, control )
+     SUBROUTINE NLLS_SOLVE( n, m, X, eval_F, eval_J, eval_HF,                    &
+          params, options, inform )
     
 !  -----------------------------------------------------------------------------
 !  RAL_NLLS, a fortran subroutine for finding a first-order critical
@@ -134,8 +141,8 @@
      INTEGER( c_int ), INTENT( IN ) :: n, m
      REAL( c_double ), DIMENSION( n ), INTENT( INOUT ) :: X
      class( params_base_type ) :: params
-     TYPE( NLLS_inform_type ), INTENT( OUT ) :: inform
-     TYPE( NLLS_control_type ), INTENT( IN ) :: control
+     TYPE( Nlls_inform ), INTENT( OUT ) :: inform
+     TYPE( Nlls_options ), INTENT( IN ) :: options
      procedure( eval_f_type ) :: eval_F
      procedure( eval_j_type ) :: eval_J
      procedure( eval_hf_type ) :: eval_HF
@@ -145,8 +152,7 @@
 !  Local variables
 
      INTEGER :: status, start_f, end_f, start_j, start_h, w_end
-!    INTEGER :: len_work_int
-     INTEGER :: len_work_real
+     INTEGER :: len_work_int, len_work_real
      INTEGER( c_int ), allocatable :: Work_int( : )
      REAL( c_double ), allocatable :: Work_real( : ) 
      
@@ -192,8 +198,7 @@
 
 !  evaluate HF
 
-     CALL eval_HF( status, n, m, X, WORK_real( start_f ),                      &
-                   WORK_real( start_h ), params )
+     CALL eval_HF( status, n, m, X, WORK_real( start_f ), WORK_real( start_h ), params )
      IF ( status /= 0 ) THEN
        status = error_eval_HF
        GO TO 990
@@ -202,6 +207,6 @@
  990 CONTINUE
      inform%status = status
      RETURN
-     END SUBROUTINE RAL_NLLS
+   END SUBROUTINE NLLS_SOLVE
 
-   END MODULE NLLS_MODULE
+   END MODULE RAL_NLLS_DOUBLE
