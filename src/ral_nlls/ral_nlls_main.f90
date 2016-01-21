@@ -2,7 +2,7 @@
 
       PROGRAM RAL_NLLS_main
       USE ISO_C_BINDING
-      USE NLLS_MODULE
+      USE RAL_NLLS_DOUBLE
 
 !  RAL_NLLS test driver for problems derived from SIF files
 
@@ -18,8 +18,8 @@
       REAL( c_double ), DIMENSION( : ), ALLOCATABLE :: X, X_l, X_u
       REAL( c_double ), DIMENSION( : ), ALLOCATABLE :: Y, C_l, C_u, F
       type( user_type ), target :: params
-      TYPE( NLLS_inform_type ) :: inform
-      TYPE( NLLS_control_type ) :: control
+      TYPE( Nlls_inform ) :: inform
+      TYPE( Nlls_options ) :: control
       LOGICAL, DIMENSION( : ), ALLOCATABLE  :: EQUATN, LINEAR
       CHARACTER ( LEN = 10 ) :: pname
       CHARACTER ( LEN = 20 ) :: summary_file = REPEAT( ' ', 20 )
@@ -31,6 +31,7 @@
       INTEGER :: summary_unit, iter_summary_unit, iores
       INTEGER, PARAMETER :: input = 55, indr = 46, out = 6
       LOGICAL :: filexx
+      INTEGER :: fnevals, jacevals, hessevals, localiter
 
 
 !  open the relevant file
@@ -82,18 +83,23 @@
 
 !  set up algorithmic input data
 
-      READ( indr, "( I6, 5( /, I6 ), 3( /, E12.0 ), /, L20, /, I6, /,          &
-     &                A, /, I6, /, A ) ")                                      &
+      READ( indr, "( I6, 6( /, I6 ), 5( /, E12.0 ), /, I6,                     &
+                     2 ( /, L20 ), /, I6, /, A, /, I6, /, A ) ")               &
            control%error,                                                      &
            control%out,                                                        &
            control%print_level,                                                &
            control%nlls_method,                                                &
            control%model,                                                      &
            control%maxit,                                                      &
+           control%relative_tr_radius,                                         &
+           control%initial_radius_scale,                                       &
            control%initial_radius,                                             &
            control%stop_g_absolute,                                            &
            control%stop_g_relative,                                            &
+           control%hybrid_tol,                                                 &
+           control%hybrid_switch_its,                                          &
            control%output_progress_vectors,                                    &
+           control%exact_second_derivatives,                                   &
            summary_unit,                                                       &
            summary_file,                                                       &
            iter_summary_unit,                                                  &
@@ -103,6 +109,7 @@
 
 !write(6,*) summary_unit, summary_file
 !write(6,*) iter_summary_unit, iter_summary_file
+write(6,*) iter_summary_unit, iter_summary_file
 
       IF ( summary_unit > 0 ) THEN
         INQUIRE( FILE = summary_file, EXIST = filexx )
@@ -144,8 +151,8 @@
       
 !  call the minimizer
 
-      CALL RAL_NLLS( n, m, X, eval_F, eval_J, eval_HF,                         &
-                     params, inform, control )
+      CALL NLLS_SOLVE( n, m, X, eval_F, eval_J, eval_HF,                         &
+           params, control, inform )
 
       WRITE( out , "( A, I0, A, I0)") 'status = ', inform%status,              &
           '       iter = ', inform%iter
@@ -167,10 +174,24 @@
 
 !  write summary if required
 
+      localiter = inform%iter
+      fnevals = int( calls(5) ) 
+      jacevals = int( calls(6) ) 
+      hessevals = int( calls(7) ) 
+      
+      if ( inform%status .ne. 0 ) then 
+         localiter = -localiter
+         fnevals = -fnevals
+         jacevals = -jacevals
+         hessevals = -hessevals
+      end if
+
       IF ( summary_unit > 0 ) THEN
         BACKSPACE( summary_unit )
-        WRITE( summary_unit, "( A10, 4I6, ES23.15E3, ES23.15E3 )" )            &
-          pname, n, m, inform%status, inform%iter, inform%obj, inform%norm_g
+        WRITE( summary_unit, "( A10, 7I6, ES23.15E3, ES23.15E3, ES23.15E3 )" ) &
+          pname, n, m, inform%status,localiter,                                &
+          fnevals, jacevals, hessevals,                                        &
+          inform%obj, inform%norm_g, inform%scaled_g
         CLOSE(  summary_unit )
       END IF
 
@@ -223,15 +244,13 @@
     contains
 
       SUBROUTINE eval_F( status, n, m, X, F, params )
-      USE ISO_C_BINDING
-      use :: nlls_module, only : params_base_type
-
-      INTEGER ( c_int ), INTENT( OUT ) :: status
-      INTEGER ( c_int ), INTENT( IN ) :: n, m
-      REAL ( c_double ), DIMENSION( * ), INTENT( IN ) :: X
-      REAL ( c_double ), DIMENSION( * ), INTENT( OUT ) :: f
+      use :: ral_nlls_double, only : params_base_type
+      integer, intent(out) :: status
+      integer, intent(in) :: n,m
+      double precision, dimension(*), intent(in)  :: x
+      double precision, dimension(*), intent(out) :: f
       class(params_base_type), intent(in) :: params
-      REAL ( c_double ) :: obj
+      double precision :: obj
 !  evaluate the residuals F
 
       CALL CUTEST_cfn( status, n, m, X, obj, F )
@@ -239,7 +258,7 @@
 
       SUBROUTINE eval_J( status, n, m, X, J, params)
       USE ISO_C_BINDING
-      use :: nlls_module, only : params_base_type
+      use :: ral_nlls_double, only : params_base_type
       
       INTEGER ( c_int ), INTENT( OUT ) :: status
       INTEGER ( c_int ), INTENT( IN ) :: n, m
@@ -260,7 +279,7 @@
 
       SUBROUTINE eval_HF( status, n, m, X, F, H, params )
       USE ISO_C_BINDING
-      use :: nlls_module, only : params_base_type
+      use :: ral_nlls_double, only : params_base_type
       
       INTEGER ( c_int ), INTENT( OUT ) :: status
       INTEGER ( c_int ), INTENT( IN ) :: n, m
