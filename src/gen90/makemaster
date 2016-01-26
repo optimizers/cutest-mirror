@@ -96,7 +96,7 @@ test90_double: $(gen90)
 
 run_test: run_test90
 
-run_test90: tools test_cutest test90
+run_test90: tools test_cutest $(package) test90
 	echo " Test of unconstrained gen90"
 	cd $(OBJ) ; $(FORTRAN) $(RUNFFLAGS) $(SPECIAL) -o run_test90 \
             gen90_main.o gen90.o $(U_TEST) -L$(OBJ) $(LIBS)

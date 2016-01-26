@@ -9,7 +9,9 @@ C  Nick Gould,  11th January 2013
      $                   inform, iter, istate,
      $                   c, cJacu, clamda, objf, gradu, R, x,
      $                   iw, leniw, w, lenw )
-      implicit           double precision (a-h,o-z)
+      integer n, nclin, ncnln, leniw, lenw, ldA, ldJu, ldR
+      integer inform, iter
+      double precision objf
       external           funcon, funobj
       integer            istate(n+nclin+ncnln)
       integer            iw(leniw)
@@ -33,8 +35,8 @@ C  Nick Gould,  11th January 2013
       INTEGER :: lformh, lvlder, lverfy, msgnp , nlnf, nlnj, nlnx
       INTEGER :: nncnln, nsave, nload, ksave
       INTEGER :: ipadnp( 12 ), IPSVNP( mxparm )
-      COMMON / NPPAR1/ IPSVNP, idbgnp, itmxnp, jvrfy1, jvrfy2, jvrfy3, 
-     *                 jvrfy4, ldbgnp, lformh, lvlder, lverfy, msgnp, 
+      COMMON / NPPAR1/ IPSVNP, idbgnp, itmxnp, jvrfy1, jvrfy2, jvrfy3,
+     *                 jvrfy4, ldbgnp, lformh, lvlder, lverfy, msgnp,
      *                 nlnf, nlnj, nlnx, nncnln, nsave, nload, ksave,
      *                 IPADNP
       lvlder = 2

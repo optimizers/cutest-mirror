@@ -89,16 +89,16 @@ PROGRAM GEN90_main
 
   X = 0.0_wp ; x( 1 ) = 1.0_wp
   dummy = 0.0D+0
-  Write(6,*) ' CUTEST_cfn: x0 = ', X
+! Write(6,*) ' CUTEST_cfn: x0 = ', X
   If ( constrained ) Then
     ALLOCATE( C( m ) )
     CALL CUTEST_cfn( status, n, m, X, dummy, C )
-    Write(6,*) ' CUTEST_cfn: F(x0) = ', dummy
-    Write(6,*) ' CUTEST_cfn: C(x0) = ', C
+!   Write(6,*) ' CUTEST_cfn: F(x0) = ', dummy
+!   Write(6,*) ' CUTEST_cfn: C(x0) = ', C
     DEALLOCATE( C )
   ELSE
     CALL CUTEST_ufn( status, n, X, dummy )
-    Write(6,*) ' CUTEST_ufn: F(x0) = ', dummy
+!   Write(6,*) ' CUTEST_ufn: F(x0) = ', dummy
   END IF
   IF ( status /= 0 ) GO TO 910
 
@@ -125,12 +125,12 @@ PROGRAM GEN90_main
 !  Evaluating all the constraints thus results in PNC evaluations, where
 !  PNC is the number of constraints in the problem.  Note that PNC does not
 !  include repetitions for constraints having full ranges.
-  
+
 !  (N, is the dimension of the problem, M is the number of constraints,
 !   DUMMY is the final value of the objective function)
 
   IF ( constrained ) THEN
-     CALL CUTEST_creport( status, CALLS, CPU )      
+     CALL CUTEST_creport( status, CALLS, CPU )
   ELSE
      CALL CUTEST_ureport( status, CALLS, CPU )
   ENDIF
@@ -138,7 +138,7 @@ PROGRAM GEN90_main
   WRITE ( out, 2000 ) pname, n, m, nlin, neq, m-neq, nbnds,                    &
      CALLS( 1 ), CALLS( 2 ), CALLS( 3 )
   IF ( constrained ) WRITE( out, 2010 ) CALLS( 5 ), CALLS( 6 ), CALLS( 7 )
-  WRITE ( out, 2020 ) exitcode, dummy, CPU( 1 ), CPU( 2 ) 
+  WRITE ( out, 2020 ) exitcode, dummy, CPU( 1 ), CPU( 2 )
 !
 !  Free allocated memory
 !

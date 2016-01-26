@@ -29,11 +29,13 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
 #include "cutest.h"
 #include "cg_user.h"
 
+  /*
 #ifdef Isg95
 #define MAINENTRY MAIN_
 #else
 #define MAINENTRY main
 #endif
+  */
 
 /* prototypes */
 double cg_value
@@ -95,9 +97,9 @@ double cg_valgrad
         cg_stats Stats ;
         cg_parameter cg_parm ;
 
-
         /* Open problem description file OUTSDIF.d */
         ierr = 0;
+
         FORTRAN_open( &funit, fname, &ierr ) ;
         if( ierr ) {
             printf("Error opening file OUTSDIF.d.\nAborting.\n") ;
@@ -446,7 +448,6 @@ double cg_valgrad
            }
            fclose (spec) ;
         }
-
 
         /* Call the optimizer */
 

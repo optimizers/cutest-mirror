@@ -137,7 +137,7 @@ ctools:
 $(OBJ)/genc.o: ../genc/genc.c
 	@printf ' %-9s %-15s\t\t' "Compiling" "genc"
 	$(SED) -f $(SEDS) ../genc/genc.c > $(OBJ)/genc.c
-	cd $(OBJ); $(CC) -o genc.o $(CFLAGS) genc.c \
+	cd $(OBJ); $(CC) -o genc.o -g $(CFLAGS) genc.c \
                 || ( printf ' %-26s' "=> Disabling optimization " ; \
                    $(CC) -o genc.o $(CFLAGSN) genc.c )
 	$(RM) $(OBJ)/genc.c

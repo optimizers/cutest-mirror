@@ -16,5 +16,5 @@ C     ARRAY ARGUMENTS
       double precision x(n)
       double precision g(n)
       call evalf(n,x,f,inform)
-      if ( inform .ne. 0 ) call evalf(n,x,g,inform)
+      if ( inform .ne. 0 ) call evalg(n,x,g,inform)
       end

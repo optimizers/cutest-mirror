@@ -10,7 +10,14 @@ s/_double /_single /g
 s/_DOUBLE[ ]*$/_SINGLE/g
 s/_DOUBLE,/_SINGLE,/g
 s/_DOUBLE /_SINGLE /g
+s/ DOUBLE PRECISION,/ REAL,/g
+s/ DOUBLE PRECISION / REAL /g
+s/ double precision,/ real,/g
+s/ double precision / real /g
 s/D+0/E+0/g
+s/D+1/E+1/g
+s/D+2/E+2/g
+s/D-1/E-1/g
 s/real_bytes = 8/real_bytes = 4/g
 s/MA27ID/MA27I/g
 s/MA27AD/MA27A/g

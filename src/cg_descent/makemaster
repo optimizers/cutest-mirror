@@ -77,7 +77,7 @@ all: $(package)
 #  basic packages
 
 $(package): $(package)_$(PRECIS)
-	@printf ' %-21s\n' "CUTEst: $(package) ($(PRECIS) $(SUCC)" 
+	@printf ' %-21s\n' "CUTEst: $(package) ($(PRECIS) $(SUCC)"
 $(package)_single: $($(PACKAGE))
 $(package)_double: $($(PACKAGE))
 
@@ -88,6 +88,18 @@ run_test: tools test_cutest_unconstrained $(package) $(OBJ)/$(package)_test.o
 	cd $(OBJ) ; $(FORTRAN) $(RUNFFLAGS) $(SPECIAL) -o run_test \
             $(package)_main.o $(package)_test.o $(U_TEST) -L$(OBJ) $(LIBS)
 	ln -fs $(CUTEST)/src/test/u_OUTSDIF.d ../$(package)/OUTSDIF.d
+#	- valgrind -v --tool=memcheck --leak-check=yes --show-reachable=yes --track-origins=yes $(OBJ)/run_test
+#	- $(OBJ)/run_test
+	- $(OBJ)/run_test >& ../$(package)/u_test.output
+	cat ../$(package)/u_test.output
+	rm $(OBJ)/run_test ../$(package)/OUTSDIF.d
+
+run_test_fortran: tools test_cutest_unconstrained $(package) \
+ $(OBJ)/$(package)_test_fortran.o
+	echo " Test of unconstrained $(package)"
+	cd $(OBJ) ; $(FORTRAN) $(RUNFFLAGS) $(SPECIAL) -o run_test \
+          $(package)_main_fortran.o $(package)_test.o $(U_TEST) -L$(OBJ) $(LIBS)
+	ln -fs $(CUTEST)/src/test/u_OUTSDIF.d ../$(package)/OUTSDIF.d
 	- $(OBJ)/run_test >& ../$(package)/u_test.output
 	cat ../$(package)/u_test.output
 	rm $(OBJ)/run_test ../$(package)/OUTSDIF.d
@@ -95,20 +107,20 @@ run_test: tools test_cutest_unconstrained $(package) $(OBJ)/$(package)_test.o
 test_cutest_unconstrained:
 	( cd ../test ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
             test_cutest_unconstrained PRECIS=$(PRECIS) PWD=$(PWD)/../test )
-tools: 
+tools:
 	( cd ../tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      cutest PRECIS=$(PRECIS) PWD=$(PWD)/../tools )
-utools: 
+utools:
 	( cd ../tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      cutest_unconstrained PRECIS=$(PRECIS) PWD=$(PWD)/../tools )
-ctools: 
+ctools:
 	( cd ../tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      cutest_constrained PRECIS=$(PRECIS) PWD=$(PWD)/../tools )
 
 #  individual compilations
 
 $(OBJ)/$(package)_test.o: ../$(package)/$(package)_test.c
-	@printf ' %-9s %-15s\t\t' "Compiling" "$(package)_test" 
+	@printf ' %-9s %-15s\t\t' "Compiling" "$(package)_test"
 	$(SED) -f $(SEDS) ../$(package)/$(package)_test.c > \
           $(OBJ)/$(package)_test.c
 	cd $(OBJ); $(CC) -o $(package)_test.o $(CFLAGS) \
@@ -119,7 +131,7 @@ $(OBJ)/$(package)_test.o: ../$(package)/$(package)_test.c
 	@printf '[ OK ]\n'
 
 $(OBJ)/$(package)_test_fortran.o: ../$(package)/$(package)_test.f
-	@printf ' %-9s %-15s\t\t' "Compiling" "$(package)_test" 
+	@printf ' %-9s %-15s\t\t' "Compiling" "$(package)_test"
 	$(SED) -f $(SEDS) ../$(package)/$(package)_test.f > \
           $(OBJ)/$(package)_test.f
 	cd $(OBJ); $(FORTRAN) -o $(package)_test_fortran.o $(FFLAGS77) \
@@ -133,7 +145,7 @@ $(OBJ)/$(package)_test_fortran.o: ../$(package)/$(package)_test.f
 #  CUTEst interface main programs
 
 $(OBJ)/$(package)_main.o: ../$(package)/$(package)_main.c
-	@printf ' %-9s %-15s\t\t' "Compiling" "$(package)_main" 
+	@printf ' %-9s %-15s\t\t' "Compiling" "$(package)_main"
 	$(SED) -f $(SEDS) ../$(package)/$(package)_main.c > \
           $(OBJ)/$(package)_main.c
 	cd $(OBJ); $(CC) -o $(package)_main.o $(CFLAGS) $(package)_main.c \
@@ -143,7 +155,7 @@ $(OBJ)/$(package)_main.o: ../$(package)/$(package)_main.c
 	@printf '[ OK ]\n'
 
 $(OBJ)/$(package)_main_fortran.o: ../$(package)/$(package)_main.f
-	@printf ' %-9s %-15s\t\t' "Compiling" "$(package)_main" 
+	@printf ' %-9s %-15s\t\t' "Compiling" "$(package)_main"
 	$(SED) -f $(SEDS) ../$(package)/$(package)_main.f > \
           $(OBJ)/$(package)_main.f
 	cd $(OBJ); $(FORTRAN) -o $(package)_main_fortran.o $(FFLAGS77) \
@@ -156,14 +168,14 @@ $(OBJ)/$(package)_main_fortran.o: ../$(package)/$(package)_main.f
 
 #  book keeping
 
-clean: 
-	@printf ' %-9s\t\t' "Cleaning" 
+clean:
+	@printf ' %-9s\t\t' "Cleaning"
 	$(RM) $(OBJ)/*
 	@printf '[ OK ]\n'
 
-cleanall: 
+cleanall:
 	@printf ' %-14s\t\t' \
-          "Removing all $(PRECIS) precision object and module files" 
+          "Removing all $(PRECIS) precision object and module files"
 	$(RM) $(OBJ)/* $(MOD)/*
 	@printf '[ OK ]\n'
 

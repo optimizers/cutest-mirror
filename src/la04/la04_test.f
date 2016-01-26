@@ -6,8 +6,7 @@ C  Nick Gould, 6th January 2013
       SUBROUTINE LA04AD(A,LA,IRN,IP,M,N,B,C,BND,KB,LB,JOB,CNTL,IX,JX,X,
      +                  Z,G,RINFO,WS,LWS,IWS,LIWS)
       INTEGER LA,KB,LB,M,N,LWS,LIWS
-      DOUBLE PRECISION
-     +                A(LA),B(M),BND(2,KB),C(N),CNTL(15),G(N),
+      DOUBLE PRECISION A(LA),B(M),BND(2,KB),C(N),CNTL(15),G(N),
      +                RINFO(40),WS(LWS),X(N+M),Z(N)
       INTEGER IP(N+1),IRN(LA),IWS(LIWS),IX(M),JOB,JX(KB)
       INTEGER :: i
@@ -30,12 +29,12 @@ C  Nick Gould, 6th January 2013
       END IF
       RINFO( 1 ) = 0.0D0
       RETURN
-      END 
+      END
 
       SUBROUTINE LA04ID(CNTL)
       DOUBLE PRECISION CNTL(15)
       RETURN
-      END 
+      END
 
       SUBROUTINE MC49AD(IND,NC,NR,NNZ,IRN,JCN,YESA,LA,A,LIP,IP,LIW,IW,
      +                  IFLAG)
@@ -48,4 +47,4 @@ C  Nick Gould, 6th January 2013
         IP( i ) = 1
    10 CONTINUE
       RETURN
-      END 
+      END

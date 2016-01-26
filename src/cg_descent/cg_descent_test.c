@@ -84,7 +84,7 @@ int cg_descent /*  return status of solution process:
 {
   int status ;
   double f, gnorm ;
-  double *g ; 
+  double *g ;
   g = (double *) malloc (n*sizeof (double)) ;
 
   printf (" Calling dummy cg_descent\n");

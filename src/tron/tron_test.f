@@ -8,16 +8,16 @@ C  Nick Gould,  4th January 2013
      *               BVAL, BDIAG, BPTR, BROW,
      *               LVAL, LDIAG, LPTR, LROW,
      *               XC, S, IFREE, ISAVE, DSAVE, WA, IWA )
-      INTEGER n, maxit
+      INTEGER n, maxit, ISAVE( 3 )
       DOUBLE PRECISION f, frtol, fatol, fmin, cgtol, delta, DSAVE( 3 )
       CHARACTER ( LEN = 60 ) :: TASK
 
       INTEGER HPTR( n + 1 ), LPTR( n + 1 ),
      *          BPTR( n + 1 ), IFREE( n ), IWA( 3 * n ),
      *          HROW( * ), BROW( * ), LROW( * )
-      DOUBLE PRECISION X( n ), XL( n ), XU( n ), G( n ), 
+      DOUBLE PRECISION X( n ), XL( n ), XU( n ), G( n ),
      *          XC( n ), S( n ), WA( 7 * n ),
-     *          HDIAG( n ), LVAL( * ), HVAL( * ), BVAL( * ), 
+     *          HDIAG( n ), LVAL( * ), HVAL( * ), BVAL( * ),
      *          LDIAG( n ), BDIAG( n )
 
       IF ( TASK( 1: 5 ) .EQ. 'START' ) THEN
@@ -32,13 +32,13 @@ C  Nick Gould,  4th January 2013
       INTEGER n
       DOUBLE PRECISION x(n), xl(n), xu(n), g(n)
       INTEGER i
-      dgpnrm2 = 0.0d0
+      dgpnrm2 = 0.0D+0
       DO i = 1, n
         IF (xl(i) .ne. xu(i)) THEN
           IF (x(i) .eq. xl(i)) THEN
-             dgpnrm2 = dgpnrm2 + min(g(i),0.0d0)**2
+             dgpnrm2 = dgpnrm2 + min(g(i),0.0D+0)**2
           ELSE IF (x(i) .eq. xu(i)) THEN
-             dgpnrm2 = dgpnrm2 + max(g(i),0.0d0)**2
+             dgpnrm2 = dgpnrm2 + max(g(i),0.0D+0)**2
           ELSE
              dgpnrm2 = dgpnrm2 + g(i)**2
           END IF
@@ -52,7 +52,7 @@ C  Nick Gould,  4th January 2013
       INTEGER n, lx
       DOUBLE PRECISION x(n)
       INTEGER i
-      dnrm2 = 0.0d0
+      dnrm2 = 0.0D+0
       DO i = 1, n
         dnrm2 = dnrm2 + x(i)**2
       END DO
