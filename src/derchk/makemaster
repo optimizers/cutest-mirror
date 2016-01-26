@@ -77,7 +77,7 @@ all: $(package)
 #  basic packages
 
 $(package): $(package)_$(PRECIS)
-	@printf ' %-21s\n' "CUTEst: $(package) ($(PRECIS) $(SUCC)" 
+	@printf ' %-21s\n' "CUTEst: $(package) ($(PRECIS) $(SUCC)"
 $(package)_single: $($(PACKAGE))
 $(package)_double: $($(PACKAGE))
 
@@ -102,20 +102,20 @@ run_test: tools test_cutest $(OBJ)/$(package)_main.o
 test_cutest:
 	( cd ../test ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
             test_cutest PRECIS=$(PRECIS) PWD=$(PWD)/../test )
-tools: 
+tools:
 	( cd ../tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      cutest PRECIS=$(PRECIS) PWD=$(PWD)/../tools )
-utools: 
+utools:
 	( cd ../tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      cutest_unconstrained PRECIS=$(PRECIS) PWD=$(PWD)/../tools )
-ctools: 
+ctools:
 	( cd ../tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      cutest_constrained PRECIS=$(PRECIS) PWD=$(PWD)/../tools )
 
 #  CUTEst interface main programs
 
 $(OBJ)/$(package)_main.o: ../$(package)/$(package)_main.c
-	@printf ' %-9s %-15s\t\t' "Compiling" "$(package)_main" 
+	@printf ' %-9s %-15s\t\t' "Compiling" "$(package)_main"
 	$(SED) -f $(SEDS) ../$(package)/$(package)_main.c > \
           $(OBJ)/$(package)_main.c
 	cd $(OBJ); $(CC) -o $(package)_main.o $(CFLAGS) $(package)_main.c \
@@ -126,14 +126,14 @@ $(OBJ)/$(package)_main.o: ../$(package)/$(package)_main.c
 
 #  book keeping
 
-clean: 
-	@printf ' %-9s\t\t' "Cleaning" 
+clean:
+	@printf ' %-9s\t\t' "Cleaning"
 	$(RM) $(OBJ)/*
 	@printf '[ OK ]\n'
 
-cleanall: 
+cleanall:
 	@printf ' %-14s\t\t' \
-          "Removing all $(PRECIS) precision object and module files" 
+          "Removing all $(PRECIS) precision object and module files"
 	$(RM) $(OBJ)/* $(MOD)/*
 	@printf '[ OK ]\n'
 

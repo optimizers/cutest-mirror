@@ -1,20 +1,28 @@
-C     ( Last modified on 30 Jan 2013 at 11:40:00 )
+C     ( Last modified on 35 Jan 2016 at 14:40:00 )
 
 C  Dummy FILTERSD for testing filtersd_main interface to CUTEst
 C  Nick Gould,  30th January 2013
 
-      SUBROUTINE filterSD(n, m, x, al, f, fmin, cstype, bl, bu, ws, lws, 
-     *  v, nv, maxa, maxla, maxu, maxiu, kmax, maxg, rho, htol, rgtol, 
+      SUBROUTINE filterSD(n, m, x, al, f, fmin, cstype, bl, bu, ws, lws,
+     *  v, nv, maxa, maxla, maxu, maxiu, kmax, maxg, rho, htol, rgtol,
      *  maxit, iprint, nout, ifail)
-      IMPLICIT DOUBLE PRECISION ( a-h, o-z )
+      INTEGER :: n, m, nv ,maxa, maxla, maxu, maxiu, kmax
+      INTEGER :: maxg, maxit, iprint, nout, ifail
+      DOUBLE PRECISION :: f, fmin, rho, htol, rgtol
       INTEGER :: lws( * )
-      DIMENSION :: x( * ), al( * ), bl( * ), bu( * ), ws( * ), v( * )
+      DOUBLE PRECISION :: x( * ), al( * ), bl( * ), bu( * )
+      DOUBLE PRECISION :: ws( * ), v( * )
       CHARACTER :: cstype( * )
+
+      INTEGER :: last1, ncx1
+      INTEGER :: mlp, mxf, ipeq, k, itn, nft, ngt, iter, npv, ngr, ninf
+      DOUBLE PRECISION :: ainfty, ubd, dnorm, h, hJt, hJ, rgnorm, vstep
+
       COMMON / defaultc / ainfty, ubd, mlp, mxf
       COMMON / statsc / dnorm, h, hJt, hJ, ipeq, k, itn, nft, ngt
       COMMON / infoc / rgnorm, vstep, iter, npv, ngr, ninf
 
-      last1 = maxu + 1  
+      last1 = maxu + 1
       ncx1 = last1 + 2 * maxa
       CALL FUNCTIONS( n, m, x, f, ws( ncx1 ),ws, lws )
       CALL GRADIENTS( n, m, x, ws( last1 ), ws, lws )

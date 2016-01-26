@@ -3,7 +3,7 @@ C     ( Last modified on 9 Jan 2013 at 12:40:00 )
 C  Dummy FILTERSQP for testing filtersqp_main interface to CUTEst
 C  Nick Gould,  9th January 2013
 
-      subroutine readpar (iprint, kmax, maxf, maxiter, mlp, mxiwk, 
+      subroutine readpar (iprint, kmax, maxf, maxiter, mlp, mxiwk,
      .                    mxwk, nobj, nout, rho, stackmax)
       implicit none
 c     ... declaration of passed parameters
@@ -17,22 +17,22 @@ c print flag
 c max. number of iterations allowed to SQP solver
       maxiter = 1
 c output channel
-      nout = 6      
+      nout = 6
 c max dimension of null space
       kmax = 2000
 c max length of filter
-      maxf = 50    
+      maxf = 50
 c level for resolving degeneracy in QP
-      mlp = 200    
+      mlp = 200
 c length of non-cutest real workspace required by filterSQP
-      mxwk = 10000000 
+      mxwk = 10000000
 c length of non-cutest integer workspace required by filterSQP
       mxiwk = 500000
 c initial trust region radius
       rho = 10.0
 
-      infty = HUGE( 1.0D0 )
-      eps = EPSILON( 1.0D0 )
+      infty = HUGE( 1.0D+0 )
+      eps = EPSILON( 1.0D+0 )
       return
       end
 
@@ -48,14 +48,14 @@ c initial trust region radius
      .                     nout,ifail,rho,x,c,f,fmin,blo,bup,s,a,la,ws,
      .                     lws,lam,cstype,user,iuser,max_iter,istat,
      .                     rstat)
-      integer n, m, kmax, maxa, maxf, mlp, mxwk, mxiwk, 
+      integer n, m, kmax, maxa, maxf, mlp, mxwk, mxiwk,
      .        iprint, nout, ifail, max_iter
       double precision    rho, f, fmin
       integer la(0:maxa+m+2), lws(mxiwk), iuser(*), istat(14)
-      double precision    a(maxa), blo(n+m), bup(n+m), x(n), c(m), 
+      double precision    a(maxa), blo(n+m), bup(n+m), x(n), c(m),
      .        lam(n+m), ws(mxwk), user(*), rstat(7), s(n+m)
       character cstype(m)
-      integer flag, l_hess, li_hess, i
+      integer flag, l_hess, li_hess, i, mxa
 
       l_hess  = mxwk
       li_hess = mxiwk

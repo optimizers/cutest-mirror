@@ -4,13 +4,14 @@ C  Dummy MINOSS for testing minos_main interface to CUTEst
 C  Nick Gould,  14th January 2013
 
       subroutine minoss( start, m, n, nb, ne, nname,
-     $                   nncon, nnobj, nnjac, 
+     $                   nncon, nnobj, nnjac,
      $                   iobj, objadd, names,
      $                   a, ha, ka, bl, bu, name1, name2,
-     $                   hs, xn, pi, rc, 
+     $                   hs, xn, pi, rc,
      $                   inform, mincor, ns, ninf, sinf, obj,
      $                   z, nwcore )
 C     implicit           double precision (a-h,o-z)
+      integer            nwcore, nprob, nstate
       integer            m, n, nb, ne, nname, nncon, nnobj, nnjac
       integer            iobj, inform, mincor, ns, ninf
       character*8        start

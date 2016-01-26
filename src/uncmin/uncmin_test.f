@@ -8,6 +8,7 @@ C  Nick Gould, 5th January 2013
      *             iagflg, iahflg, out, dlt, gradtl, stp,
      *             steptl, XPLS, fpls, GPLS, itrmcd, A, WRK )
       INTEGER :: nr, n, method, iexp, msg, ndigit, ilim, itrmcd
+      INTEGER :: out, iagflg, iahflg
       DOUBLE PRECISION :: dlt, gradtl, stp, steptl, fscale, fpls
       DOUBLE PRECISION :: X( n ), TYPSIZ( n ), XPLS( n ), GPLS( n )
       DOUBLE PRECISION :: A( nr, n ), WRK( nr, 8 )

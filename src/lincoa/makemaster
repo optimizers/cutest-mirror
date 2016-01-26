@@ -61,7 +61,7 @@ LRMARFILE = $(CUTEST)/bin/rmarfile $(AR) $(GREP) $(LLC)
 #  compilation agenda
 
 $(PACKAGE) = $(OBJ)/$(package)_main.o
-U_TEST = u_elfun.o u_group.o u_range.o
+C_TEST = c_elfun.o c_group.o c_range.o
 
 SUCC = precision version) compiled successfully
 
@@ -72,38 +72,38 @@ all: $(package)
 #  basic packages
 
 $(package): $(package)_$(PRECIS)
-	@printf ' %-21s\n' "CUTEst: $(package) ($(PRECIS) $(SUCC)" 
+	@printf ' %-21s\n' "CUTEst: $(package) ($(PRECIS) $(SUCC)"
 $(package)_single: $($(PACKAGE))
 $(package)_double: $($(PACKAGE))
 
 # run example tests
 
 run_test: tools test_cutest_constrained $(package) $(OBJ)/$(package)_test.o
-	echo " Test of unconstrained $(package)"
+	echo " Test of constrained $(package)"
 	cd $(OBJ) ; $(FORTRAN) $(RUNFFLAGS) $(SPECIAL) -o run_test \
-            $(package)_main.o $(package)_test.o $(U_TEST) -L$(OBJ) $(LIBS)
-	ln -fs $(CUTEST)/src/test/u_OUTSDIF.d ../$(package)/OUTSDIF.d
-	- $(OBJ)/run_test >& ../$(package)/u_test.output
-	cat ../$(package)/u_test.output
+            $(package)_main.o $(package)_test.o $(C_TEST) -L$(OBJ) $(LIBS)
+	ln -fs $(CUTEST)/src/test/c_OUTSDIF.d ../$(package)/OUTSDIF.d
+	- $(OBJ)/run_test >& ../$(package)/c_test.output
+	cat ../$(package)/c_test.output
 	rm $(OBJ)/run_test ../$(package)/OUTSDIF.d
 
 test_cutest_constrained:
 	( cd ../test ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
             test_cutest_constrained PRECIS=$(PRECIS) PWD=$(PWD)/../test )
-tools: 
+tools:
 	( cd ../tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      cutest PRECIS=$(PRECIS) PWD=$(PWD)/../tools )
-utools: 
+utools:
 	( cd ../tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      cutest_unconstrained PRECIS=$(PRECIS) PWD=$(PWD)/../tools )
-ctools: 
+ctools:
 	( cd ../tools ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                      cutest_constrained PRECIS=$(PRECIS) PWD=$(PWD)/../tools )
 
 #  individual compilations
 
 $(OBJ)/$(package)_test.o: ../$(package)/$(package)_test.f90
-	@printf ' %-9s %-15s\t\t' "Compiling" "$(package)_test" 
+	@printf ' %-9s %-15s\t\t' "Compiling" "$(package)_test"
 	$(SED) -f $(SEDS) ../$(package)/$(package)_test.f90 > \
           $(OBJ)/$(package)_test.f90
 	cd $(OBJ); $(FORTRAN) -o $(package)_test.o $(FFLAGS) \
@@ -116,7 +116,7 @@ $(OBJ)/$(package)_test.o: ../$(package)/$(package)_test.f90
 #  CUTEst interface main programs
 
 $(OBJ)/$(package)_main.o: ../$(package)/$(package)_main.f90
-	@printf ' %-9s %-15s\t\t' "Compiling" "$(package)_main" 
+	@printf ' %-9s %-15s\t\t' "Compiling" "$(package)_main"
 	$(SED) -f $(SEDS) ../$(package)/$(package)_main.f90 > \
           $(OBJ)/$(package)_main.f90
 	cd $(OBJ); $(FORTRAN) -o $(package)_main.o $(FFLAGS) \
@@ -128,14 +128,14 @@ $(OBJ)/$(package)_main.o: ../$(package)/$(package)_main.f90
 
 #  book keeping
 
-clean: 
-	@printf ' %-9s\t\t' "Cleaning" 
+clean:
+	@printf ' %-9s\t\t' "Cleaning"
 	$(RM) $(OBJ)/*
 	@printf '[ OK ]\n'
 
-cleanall: 
+cleanall:
 	@printf ' %-14s\t\t' \
-          "Removing all $(PRECIS) precision object and module files" 
+          "Removing all $(PRECIS) precision object and module files"
 	$(RM) $(OBJ)/* $(MOD)/*
 	@printf '[ OK ]\n'
 

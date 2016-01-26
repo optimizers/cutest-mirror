@@ -51,9 +51,9 @@ C  compute problem dimensions
       CALL CUTEST_cdimen( status, cnr_input, n, m )
       IF ( status /= 0 ) GO TO 910
 
-C  allocate space 
+C  allocate space
 
-      ALLOCATE( X( n ), X_l( n ), X_u( n ), Z_l( n ), Z_u( n ), 
+      ALLOCATE( X( n ), X_l( n ), X_u( n ), Z_l( n ), Z_u( n ),
      *          G( m ), G_l( m ), G_u( m ), LAM( m ),
      *          EQUATN( m ), LINEAR( m ), VNAMES( n ), GNAMES( m ),
      *          STAT = status )
@@ -61,8 +61,8 @@ C  allocate space
 
 C  set up the data structures necessary to hold the problem functions
 
-      CALL CUTEST_csetup( status,cnr_input, out, io_buffer, 
-     1                    n, m, X, X_l, X_u, LAM, G_l, G_u, 
+      CALL CUTEST_csetup( status,cnr_input, out, io_buffer,
+     1                    n, m, X, X_l, X_u, LAM, G_l, G_u,
      2                    equatn, linear, 0, 0, 0 )
       CLOSE( cnr_input )
 
@@ -84,7 +84,7 @@ C  obtain the number of nonzeros in Jacobian and Hessian
       nele_jac = nele_jac - n
       CALL CUTEST_cdimsh( status, nele_hess )
 
-C  allocate furter space 
+C  allocate furter space
 
       nz = MAX( nele_jac, nele_hess, 2 * n )
 C correction by Elizabeth Wong: 12/3/14
@@ -98,8 +98,8 @@ C  get problem name
 C  call IPOPT
 
       idx_STYLE = 1
-      iproblem = IPCREATE( n, X_L, X_U, m, G_L, G_U, 
-     *                     nele_jac, nele_hess, idx_style, 
+      iproblem = IPCREATE( n, X_L, X_U, m, G_L, G_U,
+     *                     nele_jac, nele_hess, idx_style,
      *                     EV_F, EV_G, EV_GRAD_F, EV_JAC_G, EV_HESS )
       IF ( iproblem .EQ. 0 ) THEN
         write(*,*) 'Error creating Ipopt Problem.'
@@ -120,7 +120,7 @@ C     Display CUTEst statistics
       STOP
 
   910 CONTINUE
-      WRITE( out, "( ' CUTEst error, status = ', i0, ', stopping' )") 
+      WRITE( out, "( ' CUTEst error, status = ', i0, ', stopping' )")
      *   status
       STOP
 
@@ -704,7 +704,7 @@ C
          do i = 1, N
             DAT(i) = 0.d0
          enddo
-         call CUTEST_csh( ierr, N, M, DAT(1), DAT(1), 
+         call CUTEST_csh( ierr, N, M, DAT(1), DAT(1),
      1                    nnzh2, NNZH, DAT(N+1), IRNH, ICNH)
       else
 C
@@ -716,7 +716,7 @@ C
                do i = 1, M
                   DAT(i) = LAM(i)/OBJFACT
                enddo
-               call CUTEST_csh( ierr, N, M, X, DAT(1), 
+               call CUTEST_csh( ierr, N, M, X, DAT(1),
      1                       nnzh2, NNZH, HESS, IDAT(1), IDAT(1+NNZH))
                do i = 1, NNZH
                   HESS(i) = HESS(i)*OBJFACT
@@ -732,7 +732,7 @@ C     the objective function entries
             do i = 1, M
                DAT(i) = 0.d0
             enddo
-C           call CUTEST_csh( ierr, N, M, X, DAT(1), nnzh2, 
+C           call CUTEST_csh( ierr, N, M, X, DAT(1), nnzh2,
 C    1           NNZH, DAT(1+M), IDAT(1), IDAT(1+NNZH))
 C           IF ( ierr /= 0 ) RETURN
             call CUTEST_cshc( ierr, N, M, X, LAM, nnzh2, NNZH, HESS,

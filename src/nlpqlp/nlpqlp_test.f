@@ -3,11 +3,11 @@
 !  Dummy NLPQLP for testing ql_main interface to CUTEst
 !  Nick Gould, 22nd February 2013
 
-      SUBROUTINE NLPQLP ( l, m, me, mmax, n, nmax, mnn2, X, F, G, 
-     &                    DF, DG, U, XL, XU, C, D, acc, accqp, stpmin, 
-     &                    maxfun, maxit, maxnm, rho, iprint, mode, iout, 
-     &                    ifail, WA, lwa, KWA, lkwa, ACTIVE, lactiv, lql, 
-     &                    QL )
+      SUBROUTINE NLPQLP ( l, m, me, mmax, n, nmax, mnn2, X, F, G,
+     &                    DF, DG, U, XL, XU, C, D, acc, accqp, stpmin,
+     &                    maxfun, maxit, maxnm, rho, iprint, mode, iout,
+     &                    ifail, WA, lwa, KWA, lkwa, ACTIVE, lactiv,
+     &                    lql, QL )
       INTEGER :: m, me, l, n, mmax, nmax, mnn2, lwa, lkwa, lactiv
       INTEGER :: maxfun, maxit, maxnm, iprint, mode, iout, ifail
       DOUBLE PRECISION ::  acc, accqp, stpmin, rho
@@ -22,7 +22,7 @@
         ifail = - 1
       ELSE IF ( ifail == - 1 ) THEN
         ifail = - 2
-      ELSE 
+      ELSE
         KWA( 1 ) = 2
         KWA( 2 ) = 2
         KWA( 3 ) = 1
@@ -32,7 +32,7 @@
       RETURN
       END
 
-      SUBROUTINE QL( m, me, mmax, n, nmax, mnn, C, D, A, B,     
+      SUBROUTINE QL( m, me, mmax, n, nmax, mnn, C, D, A, B,
      &               XL, XU, X, U, eps, mode, iout, ifail, iprint,
      &               WAR, lwar, IWAR, liwar )
       INTEGER :: m, me, iout, mode, ifail, iprint

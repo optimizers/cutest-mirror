@@ -5,11 +5,11 @@ C  Nick Gould,  4th January 2013
 
       SUBROUTINE CGFAM( n, X, f, G, D, GOLD, IPRINT, eps, W,
      *               iflag, irest, method, finish )
-      INTEGER n, iflag, irest, method, IPRINT( 2 ) 
+      INTEGER n, iflag, irest, method, IPRINT( 2 )
       DOUBLE PRECISION f, eps
       LOGICAL finish
       DOUBLE PRECISION X( n ), G( n ), D( n ), GOLD( n ), W( n )
 
-      FLAG = FLAG + 1
+      iflag = iflag + 1
       RETURN
       END

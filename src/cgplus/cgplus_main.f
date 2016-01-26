@@ -21,7 +21,7 @@ C  Revised for CUTEst, January 2013
       COMMON / CGDD /  mp, lp
       COMMON / RUNINF / iter, nfun
       DOUBLE PRECISION :: CPU( 2 ), CALLS( 4 )
-C     
+C
 C  Open the Spec file for the method.
 
       spcdat = 'CGPLUS.SPC'
@@ -55,7 +55,7 @@ C  Check to see if there is sufficient room
       CALL CUTEST_udimen( status, input, n )
       IF ( status /= 0 ) GO TO 910
 
-      ALLOCATE( X( n ), G( n ), D( n ), GOLD( n ), W( n ), XNAMES( n ), 
+      ALLOCATE( X( n ), G( n ), D( n ), GOLD( n ), W( n ), XNAMES( n ),
      *          STAT = status )
       IF ( status /= 0 ) GO TO 990
 
@@ -104,7 +104,7 @@ C  Test for termination
         IF ( iflag .LE. 0 .OR. iter .GT. maxit ) GO TO 50
         IF ( iflag .EQ. 1 ) GO TO 20
 
-C Termination Test.  The user may replace it by some other test. However, 
+C Termination Test.  The user may replace it by some other test. However,
 C the parameter 'FINISH' must be set to 'TRUE' when the test is satisfied.
 
         IF ( iflag .EQ. 2 ) THEN
@@ -126,17 +126,18 @@ C  Terminal exit.
          gnorm = MAX( gnorm, ABS( G( i ) ) )
   110 CONTINUE
       WRITE ( out, 2010 ) f, gnorm
+C     WRITE ( out, 2040 )
 C      DO 120 I = 1, N
 C         WRITE( out, 2020 ) XNAMES( I ), X( I ), G( I )
 C  120 CONTINUE
       WRITE ( out, 2000 ) pname, n, INT( CALLS(1) ), INT( CALLS(2) ),
-     *                    iflag, F, CPU(1), CPU(2) 
+     *                    iflag, F, CPU(1), CPU(2)
       CLOSE( input  )
       CALL CUTEST_uterminate( status )
       STOP
 
   910 CONTINUE
-      WRITE( out, "( ' CUTEst error, status = ', i0, ', stopping' )") 
+      WRITE( out, "( ' CUTEst error, status = ', i0, ', stopping' )")
      *   status
       STOP
 
@@ -152,17 +153,17 @@ C  Non-executable statements.
      *    ,' Problem                 :  ', A10,    /
      *    ,' # variables             =      ', I10 /
      *    ,' # objective functions   =      ', I10 /
-     *    ,' # objective gradients   =      ', I10 / 
+     *    ,' # objective gradients   =      ', I10 /
      *     ' Exit code               =      ', I10 /
      *    ,' Final f                 = ', E15.7 /
      *    ,' Set up time             =      ', 0P, F10.2, ' seconds' /
      *     ' Solve time              =      ', 0P, F10.2, ' seconds' //
      *     66('*') / )
- 2010 FORMAT( ' Final objective function value  = ', 1P, D12.4, 
-     *        /, ' Final norm of gradient          = ', 1P, D12.4,
-     *        //, '                 X         G ' )
+ 2010 FORMAT( ' Final objective function value  = ', 1P, D12.4,
+     *        /, ' Final norm of gradient          = ', 1P, D12.4 )
 C2020 FORMAT(  1X, A10, 1P, 2D12.4 )
  2030 FORMAT(  /, ' ** Warning from CGPMA. The problem as stated',
      *            ' includes simple bounds. ', /,
      *            '    These bounds will be ignored. ' )
+C2040 FORMAT( /, '                 X         G ' )
       END

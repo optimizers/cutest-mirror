@@ -32,7 +32,7 @@
       CALL CUTEST_cdimen( status, input, n, m )
       IF ( status /= 0 ) GO TO 910
 
-!  allocate space 
+!  allocate space
 
       ALLOCATE( X( n ), X_l( n ), X_u( n ), G( n ), Y( m ), C_l( m ),          &
                 C_u( m ), J( m, n ), EQUATN( m ), LINEAR( m ), STAT = status )
@@ -52,7 +52,7 @@
       CALL CUTEST_cgr( status, n, m, X, Y, .FALSE., G, .FALSE., m, n, J  )
       IF ( status /= 0 ) GO TO 910
 
-!  compute the number of constraints (include simple bounds, constraints 
+!  compute the number of constraints (include simple bounds, constraints
 !  bounded on both sides and equality constraints)
 
       mc = 0
@@ -65,7 +65,7 @@
         IF ( C_u( i ) < infty ) mc = mc + 1
       END DO
 
-!  allocate further space 
+!  allocate further space
 
       DEALLOCATE( EQUATN, LINEAR )
       ALLOCATE( A( n, mc ), B( mc ), STAT = status )
@@ -124,7 +124,7 @@
       IF ( npt <= 0 ) npt = 2 * n + 1
       npt = MIN( MAX( npt, n + 2 ), ( n + 1 ) * ( n + 2 ) / 2 )
 
-!  allocate the temporary work array W of length at least mc*(2+n) + 
+!  allocate the temporary work array W of length at least mc*(2+n) +
 !  npt*(4+n+npt) + n*(9+3*n) + max( mc+3*n, 2*mc+n, 2*npt) ... so double this
 
       lw = 2 * ( mc * ( 2 + n ) + npt * ( 4 + n + npt ) + n * ( 9 + 3 * n ) +  &
@@ -217,7 +217,7 @@
 
       CALL CUTEST_uofg( status, n, X, f, G, .FALSE. )
       IF ( status /= 0 ) GO TO 910
-      f = CUTEST_problem_global%f
+!     f = CUTEST_problem_global%f
       RETURN
 
   910 CONTINUE

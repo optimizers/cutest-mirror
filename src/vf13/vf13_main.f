@@ -38,7 +38,7 @@ C  compute problem dimensions
       CALL CUTEST_cdimen( status, input, n, m )
       IF ( status /= 0 ) GO TO 910
 
-C  allocate space 
+C  allocate space
 
       mmax = 2 * ( n + m )
       lcn = n + 1
@@ -46,13 +46,13 @@ C  allocate space
       liw  = n + 1
       ALLOCATE( IW( liw ), X( n ), BL( n ), BU( n ), G( n ), C( mmax ),
      *          CL( mmax ), CU( mmax ), CN( lcn, mmax ), W ( lw ),
-     *          EQUATN( mmax ), LINEAR( mmax ), VNAME( n ), 
+     *          EQUATN( mmax ), LINEAR( mmax ), VNAME( n ),
      *          CNAME( mmax ), STAT = status )
       IF ( status /= 0 ) GO TO 990
 
 C  set up the data structures necessary to hold the problem functions
 
-      CALL VF13SE( input, out, n, m, mgeq, meq, mcon, X, BL, BU, n, 
+      CALL VF13SE( input, out, n, m, mgeq, meq, mcon, X, BL, BU, n,
      *             EQUATN, LINEAR, C, CL, CU, mmax )
       IF ( DEBUG ) THEN
          WRITE( 6, 2030 ) ( i, X( i ), BL( i ), BU( i ), i = 1, n )
@@ -100,16 +100,16 @@ C  perform another iteration of the minimization
       IF ( INF .EQ. 0 ) GO TO 10
       CALL CUTEST_creport( status, CALLS, CPU )
       CALL CUTEST_cnames( status, N, M, PNAME, VNAME, CNAME )
-      WRITE( 6, 2110 ) f, ( i, VNAME( i ), X( i ), BL( i ), BU( i ), 
+      WRITE( 6, 2110 ) f, ( i, VNAME( i ), X( i ), BL( i ), BU( i ),
      *                      i = 1, n )
-      IF ( mcon .GT. 0 ) WRITE( 6, 2120 ) ( i, CNAME( i ), C( i ), 
+      IF ( mcon .GT. 0 ) WRITE( 6, 2120 ) ( i, CNAME( i ), C( i ),
      *     CL( i ), CU( i ), EQUATN( i ), LINEAR( i ), i = 1, mcon )
-      WRITE ( 6, 2000 ) pname, n, mcon, CALLS( 1 ), CALLS( 2 ), 
+      WRITE ( 6, 2000 ) pname, n, mcon, CALLS( 1 ), CALLS( 2 ),
      *                  CALLS( 5 ), CALLS( 6 ), F, CPU( 1 ), CPU( 2 )
       STOP
 
   910 CONTINUE
-      WRITE( out, "( ' CUTEst error, status = ', i0, ', stopping' )") 
+      WRITE( out, "( ' CUTEst error, status = ', i0, ', stopping' )")
      *   status
       STOP
 
@@ -123,7 +123,7 @@ C  perform another iteration of the minimization
      *,' # variables             =      ', I10 /
      *,' # constraints           =      ', I10 /
      *,' # objective functions   =        ', F8.2 /
-     *,' # objective gradients   =        ', F8.2 / 
+     *,' # objective gradients   =        ', F8.2 /
      *,' # constraints functions =        ', F8.2 /
      *,' # constraints gradients =        ', F8.2 /
      *,' Final f                 = ', E15.7 /
@@ -144,19 +144,19 @@ C  perform another iteration of the minimization
  2090 FORMAT( /, ' Constraint ', I6 )
  2110 FORMAT( /, ' the objective function value: ', 1P, D12.4, /,
      *        /, ' the variables:', /,
-     *        '     I name          value    lower bound upper bound', 
+     *        '     I name          value    lower bound upper bound',
      *        /, ( I6, 1X, A10, 1P, 3D12.4 ) )
  2120 FORMAT( /, ' the constraints:', /,
-     *        '     I name          value    lower bound upper bound', 
-     *        ' equality?   linear? ', 
+     *        '     I name          value    lower bound upper bound',
+     *        ' equality?   linear? ',
      *        /, ( I6, 1X, A10, 1P, 3D12.4, 5X, L1, 10X, L1 ) )
 
 C  End of VF13MA
 
       END
 
-      SUBROUTINE VF13SE( input, out, n, m, mgeq, meq, 
-     *                   mcon, X, BL, BU, nmax, EQUATN, 
+      SUBROUTINE VF13SE( input, out, n, m, mgeq, meq,
+     *                   mcon, X, BL, BU, nmax, EQUATN,
      *                   LINEAR, V, CL, CU, mmax  )
       INTEGER :: input, out, n, m, mgeq, meq, mcon, nmax, mmax
       DOUBLE PRECISION :: X( nmax ), BL( nmax ), BU( nmax )
@@ -174,14 +174,14 @@ C  7th November, 1991.
 
 C  Set up the data structures necessary to hold the problem functions.
 
-      CALL CUTEST_csetup( status, input, out, io_buffer, n, m, 
-     *                    X, BL, BU, V, CL, CU, EQUATN, LINEAR, 
+      CALL CUTEST_csetup( status, input, out, io_buffer, n, m,
+     *                    X, BL, BU, V, CL, CU, EQUATN, LINEAR,
      *                    1, 0, 0 )
       IF ( status /= 0 ) GO TO 910
 
 C  Count the number of general equality constraints.
 
-      m = mcon
+      mcon = m
       mgeq = 0
       DO 20 i = 1, m
          IF ( EQUATN( i ) ) mgeq = mgeq + 1
@@ -217,13 +217,13 @@ C
       RETURN
 
   910 CONTINUE
-      WRITE( out, "( ' CUTEst error, status = ', i0, ', stopping' )") 
+      WRITE( out, "( ' CUTEst error, status = ', i0, ', stopping' )")
      *   status
       STOP
 C
 C  Non-executable statements.
 C
- 2000 FORMAT( /, ' ** Program CUTEst_csetup: array length ', A6, 
+ 2000 FORMAT( /, ' ** Program CUTEst_csetup: array length ', A6,
      *           ' too small.', /, ' -- Miminimization abandoned.',
      *        /, ' -- Increase the parameter ', A6, ' by at least ', I8,
      *           ' and restart.'  )
@@ -264,8 +264,8 @@ C
    10    CONTINUE
       END IF
 C
-C  If constraints have both lower and upper bounds, they have to 
-C  be included twice! Reverse the signs of less-than-or-equal-to 
+C  If constraints have both lower and upper bounds, they have to
+C  be included twice! Reverse the signs of less-than-or-equal-to
 C  constraints.
 C
       mt = mcon + mfixed
@@ -302,7 +302,7 @@ C
       RETURN
 
   910 CONTINUE
-      WRITE( out, "( ' CUTEst error, status = ', i0, ', stopping' )") 
+      WRITE( out, "( ' CUTEst error, status = ', i0, ', stopping' )")
      *   status
       STOP
 
@@ -310,7 +310,7 @@ C  End of VF13FN.
 
       END
 
-      SUBROUTINE VF13GR( n, mgeq, meq, mcon, X, lv, V, G, 
+      SUBROUTINE VF13GR( n, mgeq, meq, mcon, X, lv, V, G,
      *                   lcn, mmax, CN, BL, BU, CL, CU, firstg )
       INTEGER :: n, mgeq, meq, mcon, lv, lcn, mmax
       LOGICAL :: firstg
@@ -335,7 +335,7 @@ C  at the initial point in a dense format.
      *                 .TRUE., lcn, mmax, CN )
       IF ( status /= 0 ) GO TO 910
 
-C  If there are fixed variables, shift all the  gradients of the 
+C  If there are fixed variables, shift all the  gradients of the
 C  inequality constraints.
 
       mfixed = meq - mgeq
@@ -401,7 +401,7 @@ C  Include the gradients of any simple bounds, including fixed variables
       RETURN
 
   910 CONTINUE
-      WRITE( out, "( ' CUTEst error, status = ', i0, ', stopping' )") 
+      WRITE( out, "( ' CUTEst error, status = ', i0, ', stopping' )")
      *   status
       STOP
 

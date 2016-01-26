@@ -4,12 +4,12 @@
 !  Nick Gould, 28th February 2013
 
       SUBROUTINE PENNLPF( n, m_lin, m, nnzg, nnzh,
-     &                    X_l, X_u, C_l, C_u, X, Y, 
+     &                    X_l, X_u, C_l, C_u, X, Y,
      &                    PENNON_evalof, PENNON_evalog, PENNON_evaloh,
      &                    PENNON_evalcf, PENNON_evalcg, PENNON_evalch,
-     &                    IOPTIONS, DOPTIONS, IRESULTS, DRESULTS, 
+     &                    IOPTIONS, DOPTIONS, IRESULTS, DRESULTS,
      &                    status )
-      INTEGER :: n, m_lin, m, max_nnzg, max_nnzh, status
+      INTEGER :: n, m_lin, m, nnzg, nnzh, status
       INTEGER :: IOPTIONS( 17 ), IRESULTS( 4 )
       DOUBLE PRECISION, DIMENSION( n ) :: X, X_l, X_u
       DOUBLE PRECISION, DIMENSION( m ) :: Y, C_l, C_u
