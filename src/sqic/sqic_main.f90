@@ -173,8 +173,8 @@
      locA(n+1) = neA+1
 
      x(n+1)    =  0.0
-     bl(n+1)   = -1.0d+20
-     bu(n+1)   =  1.0d+20
+     bl(n+1)   = -1.0D+20
+     bu(n+1)   =  1.0D+20
 
      ! Objective
      ! uofg returns ObjAdd and cObj.
