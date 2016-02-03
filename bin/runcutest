@@ -467,7 +467,7 @@ if [[ ${PKG} == "matlab" ]]; then
     fi
     (( OUTPUT )) && printf '\nBuilding MEX file ...\n'
     outputName=mcutest
-    command="${MEXFORTRAN} -cxx -I${CUTEST}/include -output ${outputName} ${CUTEST}/objects/${ARCH}/${PRECISION}/mcutest.o ELFUN.o GROUP.o RANGE.o ${EXTER} -L${LIBDIR} -lcutest ${BLAS} ${LAPACK} ${PACKLIBS} -lgfortran -g"
+    command="${MEXFORTRAN} -cxx -I${CUTEST}/include -output ${outputName} ${CUTEST}/objects/${ARCH}/${PRECISION}/mcutest.o ELFUN.o GROUP.o RANGE.o ${EXTER} -L${LIBDIR} -lcutest ${ALT_LIB_PATH[@]} ${BLAS} ${LAPACK} ${PACKLIBS} -lgfortran -g"
     (( show_commands )) && echo "$command"
     $command
     Run_Post
