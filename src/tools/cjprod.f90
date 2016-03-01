@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.1 - 22/08/2013 AT 13:30 GMT
+! THIS VERSION: CUTEST 1.4 - 26/02/2016 AT 08:00 GMT.
 
 !-*-*-*-*-  C U T E S T   C I N T _ C J P R O D    S U B R O U T I N E  -*-*-*-
 
@@ -25,11 +25,11 @@
 
 !   -------------------------------------------------------------------
 !  compute the matrix-vector product between the Jacobian matrix of the
-!  constraints (jtrans = .FALSE.), or its transpose (jtrans = .TRUE.) 
-!  for the problem, and a given vector VECTOR. The result is placed in 
-!  RESULT. If gotj is .TRUE. the first derivatives are assumed to have 
-!  already been computed. If the user is unsure, set gotj = .FALSE. the 
-!  first time a product is required with the Jacobian evaluated at X. 
+!  constraints (jtrans = .FALSE.), or its transpose (jtrans = .TRUE.)
+!  for the problem, and a given vector VECTOR. The result is placed in
+!  RESULT. If gotj is .TRUE. the first derivatives are assumed to have
+!  already been computed. If the user is unsure, set gotj = .FALSE. the
+!  first time a product is required with the Jacobian evaluated at X.
 !  X is not used if gotj = .TRUE.
 !   -------------------------------------------------------------------
 
@@ -70,11 +70,11 @@
 
 !   -------------------------------------------------------------------
 !  compute the matrix-vector product between the Jacobian matrix of the
-!  constraints (jtrans = .FALSE.), or its transpose (jtrans = .TRUE.) 
-!  for the problem, and a given vector VECTOR. The result is placed in 
-!  RESULT. If gotj is .TRUE. the first derivatives are assumed to have 
-!  already been computed. If the user is unsure, set gotj = .FALSE. the 
-!  first time a product is required with the Jacobian evaluated at X. 
+!  constraints (jtrans = .FALSE.), or its transpose (jtrans = .TRUE.)
+!  for the problem, and a given vector VECTOR. The result is placed in
+!  RESULT. If gotj is .TRUE. the first derivatives are assumed to have
+!  already been computed. If the user is unsure, set gotj = .FALSE. the
+!  first time a product is required with the Jacobian evaluated at X.
 !  X is not used if gotj = .TRUE.
 !   -------------------------------------------------------------------
 
@@ -113,11 +113,11 @@
 
 !   -------------------------------------------------------------------
 !  compute the matrix-vector product between the Jacobian matrix of the
-!  constraints (jtrans = .FALSE.), or its transpose (jtrans = .TRUE.) 
-!  for the problem, and a given vector VECTOR. The result is placed in 
-!  RESULT. If gotj is .TRUE. the first derivatives are assumed to have 
-!  already been computed. If the user is unsure, set gotj = .FALSE. the 
-!  first time a product is required with the Jacobian evaluated at X. 
+!  constraints (jtrans = .FALSE.), or its transpose (jtrans = .TRUE.)
+!  for the problem, and a given vector VECTOR. The result is placed in
+!  RESULT. If gotj is .TRUE. the first derivatives are assumed to have
+!  already been computed. If the user is unsure, set gotj = .FALSE. the
+!  first time a product is required with the Jacobian evaluated at X.
 !  X is not used if gotj = .TRUE.
 !   -------------------------------------------------------------------
 
@@ -170,11 +170,11 @@
 
 !   -------------------------------------------------------------------
 !  compute the matrix-vector product between the Jacobian matrix of the
-!  constraints (jtrans = .FALSE.), or its transpose (jtrans = .TRUE.) 
-!  for the problem, and a given vector VECTOR. The result is placed in 
-!  RESULT. If gotj is .TRUE. the first derivatives are assumed to have 
-!  already been computed. If the user is unsure, set gotj = .FALSE. the 
-!  first time a product is required with the Jacobian evaluated at X. 
+!  constraints (jtrans = .FALSE.), or its transpose (jtrans = .TRUE.)
+!  for the problem, and a given vector VECTOR. The result is placed in
+!  RESULT. If gotj is .TRUE. the first derivatives are assumed to have
+!  already been computed. If the user is unsure, set gotj = .FALSE. the
+!  first time a product is required with the Jacobian evaluated at X.
 !  X is not used if gotj = .TRUE.
 !   -------------------------------------------------------------------
 
@@ -184,8 +184,11 @@
       INTEGER :: l, iel, nvarel, nin
       INTEGER :: ifstat, igstat
       REAL ( KIND = wp ) :: ftt, prod, scalee
-      EXTERNAL :: RANGE 
-      IF ( data%numcon == 0 ) RETURN
+      REAL ( KIND = wp ) :: time_in, time_out
+      EXTERNAL :: RANGE
+
+      IF ( work%record_times ) CALL CPU_TIME( time_in )
+      IF ( data%numcon == 0 ) GO TO 990
 
 !  check input data
 
@@ -193,13 +196,13 @@
              ( .NOT. jtrans .AND. lvector < n ) ) THEN
          IF ( data%out > 0 ) WRITE( data%out,                                  &
            "( ' ** SUBROUTINE CJPROD: Increase the size of VECTOR' )" )
-         status = 2 ; RETURN
+         status = 2 ; GO TO 990
       END IF
       IF ( ( jtrans .AND. lresult < n ) .OR.                                   &
              ( .NOT. jtrans .AND. lresult < m ) ) THEN
          IF ( data%out > 0 ) WRITE( data%out,                                  &
            "( ' ** SUBROUTINE CJPROD: Increase the size of RESULT' )" )
-         status = 2 ; RETURN
+         status = 2 ; GO TO 990
       END IF
 
 !  there are non-trivial group functions
@@ -403,7 +406,7 @@
         work%nc2cg = work%nc2cg + work%pnc
       END IF
       status = 0
-      RETURN
+      GO TO 990
 
 !  unsuccessful returns
 
@@ -411,6 +414,14 @@
       IF ( data%out > 0 ) WRITE( data%out,                                     &
         "( ' ** SUBROUTINE CJPROD: error flag raised during SIF evaluation' )" )
       status = 3
+
+!  update elapsed CPU time if required
+
+  990 CONTINUE
+      IF ( work%record_times ) THEN
+        CALL CPU_TIME( time_out )
+        work%time_cjprod = work%time_cjprod + time_out - time_in
+      END IF
       RETURN
 
 !  end of subroutine CUTEST_cjprod_threadsafe

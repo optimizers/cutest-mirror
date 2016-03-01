@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.2 - 01/10/2014 AT 20:50 GMT
+! THIS VERSION: CUTEST 1.4 - 26/02/2016 AT 08:00 GMT.
 
 !-*-*-*-*-  C U T E S T   C I N T _ C S J P R O D    S U B R O U T I N E  -*-*-
 
@@ -30,14 +30,14 @@
 
 !  -------------------------------------------------------------------------
 !  compute the matrix-vector product between the constraint Jacobian matrix
-!  (or its transpose if jtrans is .TRUE.) for the problem and a given sparse 
-!  vector VECTOR. The result is placed in RESULT. If gotj is .TRUE. the 
-!  Jacobian is assumed to have already been computed. If the user is unsure, 
+!  (or its transpose if jtrans is .TRUE.) for the problem and a given sparse
+!  vector VECTOR. The result is placed in RESULT. If gotj is .TRUE. the
+!  Jacobian is assumed to have already been computed. If the user is unsure,
 !  set gotj = .FALSE. the first time a product is required with the Jacobian
-!  evaluated at X. X is not used if gotj = .TRUE. Only the components 
-!  INDEX_nz_vector(1:nnz_vector) of VECTOR(1:lvector) are nonzero, and the 
-!  remaining components of VECTOR need not have been be set. On exit, only 
-!  the components INDEX_nz_result(1:nnz_result) of RESULT(1:lresult) are 
+!  evaluated at X. X is not used if gotj = .TRUE. Only the components
+!  INDEX_nz_vector(1:nnz_vector) of VECTOR(1:lvector) are nonzero, and the
+!  remaining components of VECTOR need not have been be set. On exit, only
+!  the components INDEX_nz_result(1:nnz_result) of RESULT(1:lresult) are
 !  nonzero, and the remaining components of RESULT may not have been set.
 !  -------------------------------------------------------------------------
 
@@ -81,15 +81,15 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lresult ) :: RESULT
 
 !  -----------------------------------------------------------------------
-!  compute the matrix-vector product between the Hessian matrix of 
-!  the Lagrangian function for the problem and a given sparse vector 
+!  compute the matrix-vector product between the Hessian matrix of
+!  the Lagrangian function for the problem and a given sparse vector
 !  VECTOR. The result is placed in RESULT. If gotj is .TRUE. the second
-!  derivatives are assumed to have already been computed. If the user is 
-!  unsure, set gotj = .FALSE. the first time a product is required with 
+!  derivatives are assumed to have already been computed. If the user is
+!  unsure, set gotj = .FALSE. the first time a product is required with
 !  the Hessian evaluated at X and Y. X and Y are not used if gotj = .TRUE.
-!  Only the components INDEX_nz_vector(1:nnz_vector) of VECTOR are nonzero, 
-!  and the remaining components of VECTOR need not have been be set. On 
-!  exit, only the components INDEX_nz_result(1:nnz_result) of RESULT are 
+!  Only the components INDEX_nz_vector(1:nnz_vector) of VECTOR are nonzero,
+!  and the remaining components of VECTOR need not have been be set. On
+!  exit, only the components INDEX_nz_result(1:nnz_result) of RESULT are
 !  nonzero, and the remaining components of RESULT may not have been set.
 !  -----------------------------------------------------------------------
 
@@ -134,15 +134,15 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lresult ) :: RESULT
 
 !  -----------------------------------------------------------------------
-!  compute the matrix-vector product between the Hessian matrix of 
-!  the Lagrangian function for the problem and a given sparse vector 
+!  compute the matrix-vector product between the Hessian matrix of
+!  the Lagrangian function for the problem and a given sparse vector
 !  VECTOR. The result is placed in RESULT. If gotj is .TRUE. the second
-!  derivatives are assumed to have already been computed. If the user is 
-!  unsure, set gotj = .FALSE. the first time a product is required with 
+!  derivatives are assumed to have already been computed. If the user is
+!  unsure, set gotj = .FALSE. the first time a product is required with
 !  the Hessian evaluated at X and Y. X and Y are not used if gotj = .TRUE.
-!  Only the components INDEX_nz_vector(1:nnz_vector) of VECTOR are nonzero, 
-!  and the remaining components of VECTOR need not have been be set. On 
-!  exit, only the components INDEX_nz_result(1:nnz_result) of RESULT are 
+!  Only the components INDEX_nz_vector(1:nnz_vector) of VECTOR are nonzero,
+!  and the remaining components of VECTOR need not have been be set. On
+!  exit, only the components INDEX_nz_result(1:nnz_result) of RESULT are
 !  nonzero, and the remaining components of RESULT may not have been set.
 !  -----------------------------------------------------------------------
 
@@ -203,14 +203,14 @@
 
 !  -------------------------------------------------------------------------
 !  compute the matrix-vector product between the constraint Jacobian matrix
-!  (or its transpose if jtrans is .TRUE.) for the problem and a given sparse 
-!  vector VECTOR. The result is placed in RESULT. If gotj is .TRUE. the 
-!  Jacobian is assumed to have already been computed. If the user is unsure, 
+!  (or its transpose if jtrans is .TRUE.) for the problem and a given sparse
+!  vector VECTOR. The result is placed in RESULT. If gotj is .TRUE. the
+!  Jacobian is assumed to have already been computed. If the user is unsure,
 !  set gotj = .FALSE. the first time a product is required with the Jacobian
-!  evaluated at X. X is not used if gotj = .TRUE. Only the components 
-!  INDEX_nz_vector(1:nnz_vector) of VECTOR(1:lvector) are nonzero, and the 
-!  remaining components of VECTOR need not have been be set. On exit, only 
-!  the components INDEX_nz_result(1:nnz_result) of RESULT(1:lresult) are 
+!  evaluated at X. X is not used if gotj = .TRUE. Only the components
+!  INDEX_nz_vector(1:nnz_vector) of VECTOR(1:lvector) are nonzero, and the
+!  remaining components of VECTOR need not have been be set. On exit, only
+!  the components INDEX_nz_result(1:nnz_result) of RESULT(1:lresult) are
 !  nonzero, and the remaining components of RESULT may not have been set.
 !  -------------------------------------------------------------------------
 
@@ -218,7 +218,10 @@
 
       INTEGER :: i, ig, j, k, l, ifstat, igstat
       REAL ( KIND = wp ) :: ftt, pi
-      EXTERNAL :: RANGE 
+      REAL ( KIND = wp ) :: time_in, time_out
+      EXTERNAL :: RANGE
+
+      IF ( work%record_times ) CALL CPU_TIME( time_in )
 
 !  check input data
 
@@ -226,13 +229,13 @@
              ( .NOT. jtrans .AND. lvector < n ) ) THEN
          IF ( data%out > 0 ) WRITE( data%out,                                  &
            "( ' ** SUBROUTINE CSJPROD: Increase the size of VECTOR' )" )
-         status = 2 ; RETURN
+         status = 2 ; GO TO 990
       END IF
       IF ( ( jtrans .AND. lresult < n ) .OR.                                   &
              ( .NOT. jtrans .AND. lresult < m ) ) THEN
          IF ( data%out > 0 ) WRITE( data%out,                                  &
            "( ' ** SUBROUTINE CSJPROD: Increase the size of RESULT' )" )
-         status = 2 ; RETURN
+         status = 2 ; GO TO 990
       END IF
 
 !  there are non-trivial group functions
@@ -391,7 +394,7 @@
         work%nc2cg = work%nc2cg + work%pnc
       END IF
       status = 0
-      RETURN
+      GO TO 990
 
 !  unsuccessful returns
 
@@ -399,6 +402,14 @@
       IF ( data%out > 0 ) WRITE( data%out,                                     &
         "( ' ** SUBROUTINE CSJPROD: error flag raised during SIF evaluation')" )
       status = 3
+
+!  update elapsed CPU time if required
+
+  990 CONTINUE
+      IF ( work%record_times ) THEN
+         CALL CPU_TIME( time_out )
+         work%time_csjprod = work%time_csjprod + time_out - time_in
+      END IF
       RETURN
 
 !  end of subroutine CUTEST_csjprod_threadsafe

@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.1 - 14/06/2013 AT 14:00 GMT.
+! THIS VERSION: CUTEST 1.4 - 26/02/2016 AT 09:00 GMT.
 
 !-*-*-*-*-*-*-  C U T E S T    U G R S H    S U B R O U T I N E  -*-*-*-*-*-*-
 
@@ -24,9 +24,9 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lh ) :: H_val
 
 !  -------------------------------------------------------------------
-!  compute the gradient and Hessian matrix of a group partially 
-!  separable function. The upper triangle of the Hessian is stored 
-!  in coordinate form, i.e., the entry H_val(i) has row index H_row(i) 
+!  compute the gradient and Hessian matrix of a group partially
+!  separable function. The upper triangle of the Hessian is stored
+!  in coordinate form, i.e., the entry H_val(i) has row index H_row(i)
 !  and column index H_col(i) for i = 1, ...., nnzh
 !  -------------------------------------------------------------------
 
@@ -63,9 +63,9 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lh ) :: H_val
 
 !  -------------------------------------------------------------------
-!  compute the gradient and Hessian matrix of a group partially 
-!  separable function. The upper triangle of the Hessian is stored 
-!  in coordinate form, i.e., the entry H_val(i) has row index H_row(i) 
+!  compute the gradient and Hessian matrix of a group partially
+!  separable function. The upper triangle of the Hessian is stored
+!  in coordinate form, i.e., the entry H_val(i) has row index H_row(i)
 !  and column index H_col(i) for i = 1, ...., nnzh
 !  -------------------------------------------------------------------
 
@@ -115,9 +115,9 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lh ) :: H_val
 
 !  -------------------------------------------------------------------
-!  compute the gradient and Hessian matrix of a group partially 
-!  separable function. The upper triangle of the Hessian is stored 
-!  in coordinate form, i.e., the entry H_val(i) has row index H_row(i) 
+!  compute the gradient and Hessian matrix of a group partially
+!  separable function. The upper triangle of the Hessian is stored
+!  in coordinate form, i.e., the entry H_val(i) has row index H_row(i)
 !  and column index H_col(i) for i = 1, ...., nnzh
 !  -------------------------------------------------------------------
 
@@ -125,8 +125,11 @@
 
       INTEGER :: i, ig, j, ifstat, igstat, alloc_status
       REAL ( KIND = wp ) :: ftt
+      REAL ( KIND = wp ) :: time_in, time_out
       CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
-      EXTERNAL :: RANGE 
+      EXTERNAL :: RANGE
+
+      IF ( work%record_times ) CALL CPU_TIME( time_in )
 
 !  there are non-trivial group functions
 
@@ -233,14 +236,14 @@
 
 !  check for errors in the assembly
 
-      IF ( status > 0 ) RETURN
+      IF ( status > 0 ) GO TO 990
 
 !  update the counters for the report tool
 
       work%nc2og = work%nc2og + 1
       work%nc2oh = work%nc2oh + 1
       status = 0
-      RETURN
+      GO TO 990
 
 !  unsuccessful returns
 
@@ -248,6 +251,14 @@
       IF ( data%out > 0 ) WRITE( data%out,                                     &
         "( ' ** SUBROUTINE UGRSH: error flag raised during SIF evaluation' )" )
       status = 3
+
+!  update elapsed CPU time if required
+
+  990 CONTINUE
+      IF ( work%record_times ) THEN
+        CALL CPU_TIME( time_out )
+        work%time_ugrsh = work%time_ugrsh + time_out - time_in
+      END IF
       RETURN
 
 !  end of subroutine CUTEST_ugrsh_threadsafe

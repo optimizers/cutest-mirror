@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.0 - 23/12/2012 AT 15:15 GMT.
+! THIS VERSION: CUTEST 1.4 - 26/02/2016 AT 09:00 GMT.
 
 !-*-*-*-*-*-*-*-  C U T E S T    U F N    S U B R O U T I N E  -*-*-*-*-*-*-*-
 
@@ -108,7 +108,10 @@
 
       INTEGER :: i, j, ig, ifstat, igstat
       REAL ( KIND = wp ) :: ftt, one, zero
+      REAL ( KIND = wp ) :: time_in, time_out
       PARAMETER ( zero = 0.0_wp, one = 1.0_wp )
+
+      IF ( work%record_times ) CALL CPU_TIME( time_in )
 
 !  increment the counter for calls to the objective function value
 
@@ -176,7 +179,7 @@
         END DO
       END IF
       status = 0
-      RETURN
+      GO TO 990
 
 !  unsuccessful returns
 
@@ -184,6 +187,14 @@
       IF ( data%out > 0 ) WRITE( data%out,                                     &
         "( ' ** SUBROUTINE UFN: error flag raised by SIF evaluation' )" )
       status = 3
+
+!  update elapsed CPU time if required
+
+  990 CONTINUE
+      IF ( work%record_times ) THEN
+        CALL CPU_TIME( time_out )
+        work%time_ufn = work%time_ufn + time_out - time_in
+      END IF
       RETURN
 
 !  end of subroutine CUTEST_ufn_threadsafe

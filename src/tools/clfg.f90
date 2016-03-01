@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.2 - 12/10/2013 AT 13:30 GMT.
+! THIS VERSION: CUTEST 1.4 - 26/02/2016 AT 08:00 GMT.
 
 !-*-*-*-*-*-*-*-  C U T E S T    C L F G    S U B R O U T I N E  -*-*-*-*-*-*-*-
 
@@ -30,7 +30,7 @@
 !  f gives the value of the Lagrangian function evaluated at (X,Y)
 
 !  G is an array which gives the value of the gradient of the
-!    Lagrangian function evaluated at (X,Y). G(i) gives the partial 
+!    Lagrangian function evaluated at (X,Y). G(i) gives the partial
 !    derivative of the Lagrangian function wrt variable X(i)
 !  ------------------------------------------------------------------------
 
@@ -73,7 +73,7 @@
 !  f gives the value of the Lagrangian function evaluated at (X,Y)
 
 !  G is an array which gives the value of the gradient of the
-!    Lagrangian function evaluated at (X,Y). G(i) gives the partial 
+!    Lagrangian function evaluated at (X,Y). G(i) gives the partial
 !    derivative of the Lagrangian function wrt variable X(i)
 !  ------------------------------------------------------------------------
 
@@ -115,7 +115,7 @@
 !  f gives the value of the Lagrangian function evaluated at (X,Y)
 
 !  G is an array which gives the value of the gradient of the
-!    Lagrangian function evaluated at (X,Y). G(i) gives the partial 
+!    Lagrangian function evaluated at (X,Y). G(i) gives the partial
 !    derivative of the Lagrangian function wrt variable X(i)
 !  ------------------------------------------------------------------------
 
@@ -172,7 +172,7 @@
 !  f gives the value of the Lagrangian function evaluated at (X,Y)
 
 !  G is an array which gives the value of the gradient of the
-!    Lagrangian function evaluated at (X,Y). G(i) gives the partial 
+!    Lagrangian function evaluated at (X,Y). G(i) gives the partial
 !    derivative of the Lagrangian function wrt variable X(i)
 !  ------------------------------------------------------------------------
 
@@ -182,7 +182,10 @@
       INTEGER :: nelow, nelup, istrgv, iendgv, ifstat, igstat
       LOGICAL :: nontrv
       REAL ( KIND = wp ) :: ftt, gi, scalee, gii
-      EXTERNAL :: RANGE 
+      REAL ( KIND = wp ) :: time_in, time_out
+      EXTERNAL :: RANGE
+
+      IF ( work%record_times ) CALL CPU_TIME( time_in )
 
 !  there are non-trivial group functions.
 
@@ -257,7 +260,7 @@
             gii = data%GSCALE( ig )
           ELSE
             gii = Y( icon ) * data%GSCALE( ig )
-          END IF 
+          END IF
           IF ( data%GXEQX( ig ) ) THEN
             f = f + gii * work%FT( ig )
           ELSE
@@ -384,7 +387,7 @@
                   jj = work%ISTAJC( ll )
                   work%FUVALS( data%lgrjac + jj ) = work%W_ws( ll )
 
-!  increment the address for the next nonzero in the column of the Jacobian 
+!  increment the address for the next nonzero in the column of the Jacobian
 !  for variable ll
 
                   work%ISTAJC( ll ) = jj + 1
@@ -413,8 +416,8 @@
                 END IF
               END DO
 
-!  the group is non-trivial; increment the starting addresses for the groups 
-!  used by each variable in the (unchanged) linear element to avoid resetting 
+!  the group is non-trivial; increment the starting addresses for the groups
+!  used by each variable in the (unchanged) linear element to avoid resetting
 !  the nonzeros in the Jacobian
 
               IF ( nontrv ) THEN
@@ -427,7 +430,7 @@
             END IF
           END DO
 
-!  reset the starting addresses for the lists of groups using each variable to 
+!  reset the starting addresses for the lists of groups using each variable to
 !  their values on entry
 
           DO i = n, 2, - 1
@@ -461,9 +464,8 @@
         work%nc2cg = work%nc2cg + work%pnc
       END IF
       work%nc2of = work%nc2of + 1
-
       status = 0
-      RETURN
+      GO TO 990
 
 !  unsuccessful returns
 
@@ -471,6 +473,14 @@
       IF ( data%out > 0 ) WRITE( data%out,                                     &
         "( ' ** SUBROUTINE CLFG: error flag raised during SIF evaluation' )" )
       status = 3
+
+!  update elapsed CPU time if required
+
+  990 CONTINUE
+      IF ( work%record_times ) THEN
+        CALL CPU_TIME( time_out )
+        work%time_clfg = work%time_clfg + time_out - time_in
+      END IF
       RETURN
 
 !  end of subroutine CUTEST_clfg_threadsafe

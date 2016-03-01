@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.1 - 22/08/2013 AT 13:20 GMT
+! THIS VERSION: CUTEST 1.4 - 26/02/2016 AT 08:00 GMT.
 
 !-*-*-*-*-  C U T E S T   C I N T _ C S G R S H    S U B R O U T I N E  -*-*-*-
 
@@ -255,7 +255,10 @@
       REAL ( KIND = wp ) :: ftt, gi, scalee, gii
       CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
       LOGICAL :: nontrv
-      EXTERNAL :: RANGE 
+      REAL ( KIND = wp ) :: time_in, time_out
+      EXTERNAL :: RANGE
+
+      IF ( work%record_times ) CALL CPU_TIME( time_in )
 
 !  there are non-trivial group functions
 
@@ -479,7 +482,7 @@
                   work%G_temp( ll ) = work%G_temp( ll ) + gii * work%W_ws( ll )
               END IF
 
-!  increment the address for the next nonzero in the column of the Jacobian 
+!  increment the address for the next nonzero in the column of the Jacobian
 !  for variable ll
 
               IF ( nontrv ) THEN
@@ -490,7 +493,7 @@
           END IF
         END DO
 
-!  reset the starting addresses for the lists of groups using each variable to 
+!  reset the starting addresses for the lists of groups using each variable to
 !  their values on entry
 
         DO i = n, 2, - 1
@@ -575,7 +578,7 @@
 
 !  check for errors in the assembly
 
-      IF ( status > 0 ) RETURN
+      IF ( status > 0 ) GO TO 990
 
 !  record the sparse Hessian
 
@@ -590,7 +593,7 @@
       work%nc2oh = work%nc2oh + 1
       work%nc2ch = work%nc2ch + work%pnc
       status = 0
-      RETURN
+      GO TO 990
 
 !  unsuccessful returns
 
@@ -598,6 +601,14 @@
       IF ( data%out > 0 ) WRITE( data%out,                                     &
         "( ' ** SUBROUTINE CSGRSH: error flag raised during SIF evaluation' )" )
       status = 3
+
+!  update elapsed CPU time if required
+
+  990 CONTINUE
+      IF ( work%record_times ) THEN
+        CALL CPU_TIME( time_out )
+        work%time_csgrsh = work%time_csgrsh + time_out - time_in
+      END IF
       RETURN
 
 !  end of subroutine CUTEST_csgrsh_threadsafe

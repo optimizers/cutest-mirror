@@ -1,5 +1,5 @@
 '\" e  @(#)cutest_report v1.0 12/2012;
-.TH report 3 "4 Dec 2012" "CUTEst user documentation" "CUTEst user documentation"
+.TH cutest_ureport 3 "4 Dec 2012" "CUTEst user documentation" "CUTEst user documentation"
 .SH NAME
 CUTEST_ureport \- CUTEst tool to obtain statistics concerning function
 evaluation and CPU time used.
@@ -7,7 +7,7 @@ evaluation and CPU time used.
 .HP 1i
 CALL CUTEST_ureport( status, CALLS, TIME )
 .SH DESCRIPTION
-The CUTEST_ureport subroutine obtains statistics concerning 
+The CUTEST_ureport subroutine obtains statistics concerning
 function evaluation and CPU
 time used for unconstrained or bound-constrained optimization in a standardized
 format.
@@ -31,12 +31,12 @@ x sup l ~<=~ x ~<=~ x sup u.
 .EN
 The objective function is group-partially separable.
 
-.LP 
+.LP
 .SH ARGUMENTS
 The arguments of CUTEST_ureport are as follows
 .TP 5
 .B status \fP[out] - integer
-the outputr status: 0 for a succesful call, 1 for an array 
+the outputr status: 0 for a succesful call, 1 for an array
 allocation/deallocation error, 2 for an array bound error,
 3 for an evaluation error,
 .TP
@@ -61,7 +61,7 @@ TIME( 2 ): CPU time (in seconds) since the end of CUTEST_usetup.
 .SH AUTHORS
 I. Bongartz, A.R. Conn, N.I.M. Gould, D. Orban and Ph.L. Toint
 .SH "SEE ALSO"
-\fICUTEst: a Constrained and Unconstrained Testing 
+\fICUTEst: a Constrained and Unconstrained Testing
 Environment with safe threads\fP,
    N.I.M. Gould, D. Orban and Ph.L. Toint,
    Computational Optimization and Applications \fB60\fP:3, pp.545-557, 2014.
@@ -72,5 +72,5 @@ Environment, revisited\fP,
    ACM TOMS, \fB29\fP:4, pp.373-394, 2003.
 
 \fICUTE: Constrained and Unconstrained Testing Environment\fP,
-   I. Bongartz, A.R. Conn, N.I.M. Gould and Ph.L. Toint, 
+   I. Bongartz, A.R. Conn, N.I.M. Gould and Ph.L. Toint,
    ACM TOMS, \fB21\fP:1, pp.123-160, 1995.

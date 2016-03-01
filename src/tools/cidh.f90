@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.0 - 29/12/2012 AT 13:35 GMT.
+! THIS VERSION: CUTEST 1.4 - 26/02/2016 AT 08:00 GMT.
 
 !-*-*-*-*-*-*-*-  C U T E S T    C I D H    S U B R O U T I N E  -*-*-*-*-*-*-
 
@@ -20,13 +20,13 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lh1, n ) :: H
 
 !  ------------------------------------------------------------
-!  compute the Hessian matrix of a specified problem function 
-!  (iprob = 0 is the objective function, while iprob > 0 is the 
-!  iprob-th constraint) of a problem initially written in 
+!  compute the Hessian matrix of a specified problem function
+!  (iprob = 0 is the objective function, while iprob > 0 is the
+!  iprob-th constraint) of a problem initially written in
 !  Standard Input Format (SIF).
 
-!  H is a two-dimensional array which gives the value of the 
-!    Hessian matrix of the proble function evaluated at X. 
+!  H is a two-dimensional array which gives the value of the
+!    Hessian matrix of the proble function evaluated at X.
 !    The i,j-th component of the array will contain the
 !    derivative with respect to variables X(i) and X(j)
 !  ------------------------------------------------------------
@@ -60,13 +60,13 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lh1, n ) :: H
 
 !  ------------------------------------------------------------
-!  compute the Hessian matrix of a specified problem function 
-!  (iprob = 0 is the objective function, while iprob > 0 is the 
-!  iprob-th constraint) of a problem initially written in 
+!  compute the Hessian matrix of a specified problem function
+!  (iprob = 0 is the objective function, while iprob > 0 is the
+!  iprob-th constraint) of a problem initially written in
 !  Standard Input Format (SIF).
 
-!  H is a two-dimensional array which gives the value of the 
-!    Hessian matrix of the proble function evaluated at X. 
+!  H is a two-dimensional array which gives the value of the
+!    Hessian matrix of the proble function evaluated at X.
 !    The i,j-th component of the array will contain the
 !    derivative with respect to variables X(i) and X(j)
 !  ------------------------------------------------------------
@@ -115,13 +115,13 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lh1, n ) :: H
 
 !  ------------------------------------------------------------
-!  compute the Hessian matrix of a specified problem function 
-!  (iprob = 0 is the objective function, while iprob > 0 is the 
-!  iprob-th constraint) of a problem initially written in 
+!  compute the Hessian matrix of a specified problem function
+!  (iprob = 0 is the objective function, while iprob > 0 is the
+!  iprob-th constraint) of a problem initially written in
 !  Standard Input Format (SIF).
 
-!  H is a two-dimensional array which gives the value of the 
-!    Hessian matrix of the proble function evaluated at X. 
+!  H is a two-dimensional array which gives the value of the
+!    Hessian matrix of the proble function evaluated at X.
 !    The i,j-th component of the array will contain the
 !    derivative with respect to variables X(i) and X(j)
 !  ------------------------------------------------------------
@@ -131,19 +131,22 @@
       INTEGER :: i, ig, j, ncalcf, ncalcg, ifstat, igstat, k, nnzh, alloc_status
       REAL ( KIND = wp ) :: ftt
       CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
-      EXTERNAL :: RANGE 
+      REAL ( KIND = wp ) :: time_in, time_out
+      EXTERNAL :: RANGE
+
+      IF ( work%record_times ) CALL CPU_TIME( time_in )
 
 !  check input parameters
 
       IF ( lh1 < n ) THEN
         IF ( data%out > 0 ) WRITE( data%out, "( ' ** SUBROUTINE CIDH: ',       &
        &   'Increase the leading dimension of H to ', I0 )" ) n
-        status = 2 ; RETURN
+        status = 2 ; GO TO 990
       END IF
       IF ( iprob < 0 ) THEN
         WRITE( data%out, "( ' ** SUBROUTINE CIDH: invalid problem index ',     &
        &  'iprob = ', I0 )" ) iprob
-        status = 2 ; RETURN
+        status = 2 ; GO TO 990
       END IF
 
 !  find group index ig of constraint iprob
@@ -159,7 +162,7 @@
         IF ( ig == 0 ) THEN
           WRITE( data%out, "( ' ** SUBROUTINE CIDH: invalid problem index ',   &
          &  'iprob = ', I0 )" ) iprob
-          status = 2 ; RETURN
+          status = 2 ; GO TO 990
         END IF
       END IF
 
@@ -349,13 +352,13 @@
 
 !  check for errors in the assembly
 
-      IF ( status > 0 ) RETURN
+      IF ( status > 0 ) GO TO 990
 
 !  initialize the dense matrix
 
       H( : n, : n ) = 0.0_wp
 
-!  transfer the matrix from co-ordinate to dense storage and symmetrize the 
+!  transfer the matrix from co-ordinate to dense storage and symmetrize the
 !  martix
 
       DO k = 1, nnzh
@@ -367,11 +370,11 @@
 
       IF ( iprob == 0 ) THEN
         work%nc2oh = work%nc2oh + 1
-      ELSE 
+      ELSE
         work%nc2ch = work%nc2ch + 1
-      ENDIF 
+      ENDIF
       status = 0
-      RETURN
+      GO TO 990
 
 !  unsuccessful returns
 
@@ -379,6 +382,14 @@
       IF ( data%out > 0 ) WRITE( data%out,                                     &
         "( ' ** SUBROUTINE CIDH: error flag raised during SIF evaluation' )" )
       status = 3
+
+!  update elapsed CPU time if required
+
+  990 CONTINUE
+      IF ( work%record_times ) THEN
+        CALL CPU_TIME( time_out )
+        work%time_cidh = work%time_cidh + time_out - time_in
+      END IF
       RETURN
 
 !  end of subroutine CUTEST_cidh_threadsafe

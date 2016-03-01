@@ -10,7 +10,7 @@
 !   Became separate package CUTEr, April 2004
 !   Updated fortran 2003 version released October 2012
 
-!  For full documentation, see 
+!  For full documentation, see
 !   http://galahad.rl.ac.uk/galahad-www/specs.html
 
     MODULE CUTEST
@@ -48,7 +48,7 @@
 !   G e n e r i c  i n t e r f a c e s
 !-------------------------------------
 
-!  define generic interfaces to routines for allocating and extending 
+!  define generic interfaces to routines for allocating and extending
 !  allocatable arrays
 
       INTERFACE CUTEST_allocate_array
@@ -86,7 +86,7 @@
         INTEGER :: lo, ch, lwork, la, lb, nobjgr, lu, ltypee, ltypeg
         INTEGER :: lstaev, lstadh, lntvar, lcalcf, leling, lintre, lft
         INTEGER :: lgxeqx, licna, lstada, lkndof, lgpvlu, lepvlu, lstep, lstgp
-        INTEGER :: lstadg, lgvals, lgscal, lescal, lvscal, lcalcg            
+        INTEGER :: lstadg, lgvals, lgscal, lescal, lvscal, lcalcg
         INTEGER :: l_link_e_u_v, lfuval, lelvar, maxsel, maxsin
         INTEGER :: lfxi, lgxi, lhxi, lggfx, ldx, lgrjac, lnguvl, lnhuvl
         INTEGER :: meq, mlin, nnov, nnjv, numvar, numcon, threads
@@ -142,6 +142,50 @@
         INTEGER :: lh_col = lmin
         INTEGER :: lh_val = lmin
         INTEGER :: io_buffer = io_buffer
+        REAL ( KIND = wp ) :: time_ccfg = 0.0_wp
+        REAL ( KIND = wp ) :: time_ccfsg = 0.0_wp
+        REAL ( KIND = wp ) :: time_cch = 0.0_wp
+        REAL ( KIND = wp ) :: time_cchprods = 0.0_wp
+        REAL ( KIND = wp ) :: time_ccifg = 0.0_wp
+        REAL ( KIND = wp ) :: time_ccifsg = 0.0_wp
+        REAL ( KIND = wp ) :: time_cdh = 0.0_wp
+        REAL ( KIND = wp ) :: time_cdhc = 0.0_wp
+        REAL ( KIND = wp ) :: time_cdimchp = 0.0_wp
+        REAL ( KIND = wp ) :: time_ceh = 0.0_wp
+        REAL ( KIND = wp ) :: time_cfn = 0.0_wp
+        REAL ( KIND = wp ) :: time_cgr = 0.0_wp
+        REAL ( KIND = wp ) :: time_cgrdh = 0.0_wp
+        REAL ( KIND = wp ) :: time_chcprod = 0.0_wp
+        REAL ( KIND = wp ) :: time_chprod = 0.0_wp
+        REAL ( KIND = wp ) :: time_cidh = 0.0_wp
+        REAL ( KIND = wp ) :: time_cish = 0.0_wp
+        REAL ( KIND = wp ) :: time_cjprod = 0.0_wp
+        REAL ( KIND = wp ) :: time_clfg = 0.0_wp
+        REAL ( KIND = wp ) :: time_cofg = 0.0_wp
+        REAL ( KIND = wp ) :: time_cofsg = 0.0_wp
+        REAL ( KIND = wp ) :: time_csgr = 0.0_wp
+        REAL ( KIND = wp ) :: time_csgreh = 0.0_wp
+        REAL ( KIND = wp ) :: time_csgrsh = 0.0_wp
+        REAL ( KIND = wp ) :: time_csh = 0.0_wp
+        REAL ( KIND = wp ) :: time_cshc = 0.0_wp
+        REAL ( KIND = wp ) :: time_cshcprod = 0.0_wp
+        REAL ( KIND = wp ) :: time_cshp = 0.0_wp
+        REAL ( KIND = wp ) :: time_cshprod = 0.0_wp
+        REAL ( KIND = wp ) :: time_csjprod = 0.0_wp
+        REAL ( KIND = wp ) :: time_ubandh = 0.0_wp
+        REAL ( KIND = wp ) :: time_udh = 0.0_wp
+        REAL ( KIND = wp ) :: time_ueh = 0.0_wp
+        REAL ( KIND = wp ) :: time_ufn = 0.0_wp
+        REAL ( KIND = wp ) :: time_ugr = 0.0_wp
+        REAL ( KIND = wp ) :: time_ugrdh = 0.0_wp
+        REAL ( KIND = wp ) :: time_ugreh = 0.0_wp
+        REAL ( KIND = wp ) :: time_ugrsh = 0.0_wp
+        REAL ( KIND = wp ) :: time_uhprod = 0.0_wp
+        REAL ( KIND = wp ) :: time_uofg = 0.0_wp
+        REAL ( KIND = wp ) :: time_ush = 0.0_wp
+        REAL ( KIND = wp ) :: time_ushp = 0.0_wp
+        REAL ( KIND = wp ) :: time_ushprod = 0.0_wp
+        LOGICAL :: record_times = .FALSE.
         LOGICAL :: array_status = .FALSE.
         LOGICAL :: hessian_setup_complete = .FALSE.
         LOGICAL :: firstg
@@ -210,7 +254,7 @@
 
       INTEGER, INTENT( IN ) :: n, ng, nel, ntotel, nvrels, nnza
       INTEGER, INTENT( IN ) :: iprint, out, buffer
-      INTEGER, INTENT( OUT ) :: lfxi, lgxi, lhxi, lggfx, ldx, lgrjac  
+      INTEGER, INTENT( OUT ) :: lfxi, lgxi, lhxi, lggfx, ldx, lgrjac
       INTEGER, INTENT( OUT ) :: lnguvl, lnhuvl, nvargp, status, alloc_status
       INTEGER, INTENT( OUT ) :: ntotin, maxsel, maxsin
       LOGICAL, INTENT( OUT ) :: altriv, alllin, array_status
@@ -225,13 +269,13 @@
       LOGICAL, INTENT( IN ), DIMENSION( ng  ) :: GXEQX
 
 !-------------------------------------------------------------
-!   D u m m y   A r g u m e n t s  f o r   w o r k s p a c e 
+!   D u m m y   A r g u m e n t s  f o r   w o r k s p a c e
 !-------------------------------------------------------------
 
       INTEGER, INTENT( INOUT ) :: l_link_e_u_v, lfuval, nbprod
 
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: FUVALS
-  
+
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISWKSP
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: IUSED
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: ISTAJC
@@ -244,7 +288,7 @@
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: LINK_elem_uses_var
       INTEGER, ALLOCATABLE, DIMENSION( : ) :: NZ_components_w
       INTEGER, ALLOCATABLE, DIMENSION( : , : ) :: ISYMMH
-  
+
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: W_ws
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: W_el
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: W_in
@@ -303,14 +347,14 @@
         ELSE ; llink = SIZE( LINK_elem_uses_var ) ; reallocate = .FALSE.
         END IF
       END IF
-      IF ( reallocate ) THEN 
+      IF ( reallocate ) THEN
         ALLOCATE( LINK_elem_uses_var( llink ), STAT = alloc_status )
-        IF ( alloc_status /= 0 ) THEN 
+        IF ( alloc_status /= 0 ) THEN
           bad_alloc = 'LINK_e' ; GO TO 600 ; END IF
       END IF
 
-!  LINK_elem_uses_var( i ) will be used as a list of links chaining the 
-!  elements using variable i. If LINK_elem_uses_var( i ) is negative, the 
+!  LINK_elem_uses_var( i ) will be used as a list of links chaining the
+!  elements using variable i. If LINK_elem_uses_var( i ) is negative, the
 !  list is empty
 
       LINK_elem_uses_var( : n ) = - 1
@@ -365,7 +409,7 @@
           END DO
         END DO
       END IF
-       
+
       l_link_e_u_v = iielts
 
 !  -- Calculate the starting addresses for the integer workspace --
@@ -373,15 +417,15 @@
 !  ISWKSP( j ), j = 1, ..., MAX( ntotel, nel, n ), is used for workspace
 
       lnwksp = MAX( MAX( ntotel, nel ), n )
-      
+
       reallocate = .TRUE.
       IF ( ALLOCATED( ISWKSP ) ) THEN
         IF ( SIZE( ISWKSP ) < lnwksp ) THEN ; DEALLOCATE( ISWKSP )
         ELSE ; reallocate = .FALSE. ; END IF
       END IF
-      IF ( reallocate ) THEN 
+      IF ( reallocate ) THEN
         ALLOCATE( ISWKSP( lnwksp ), STAT = alloc_status )
-        IF ( alloc_status /= 0 ) THEN 
+        IF ( alloc_status /= 0 ) THEN
           bad_alloc = 'ISWKSP' ; GO TO 600 ; END IF
       END IF
 
@@ -393,9 +437,9 @@
         IF ( SIZE( IUSED ) < MAX( n, ng ) ) THEN ; DEALLOCATE( IUSED )
         ELSE ; reallocate = .FALSE. ; END IF
       END IF
-      IF ( reallocate ) THEN 
+      IF ( reallocate ) THEN
         ALLOCATE( IUSED( MAX( n, ng ) ), STAT = alloc_status )
-        IF ( alloc_status /= 0 ) THEN 
+        IF ( alloc_status /= 0 ) THEN
           bad_alloc = 'IUSED' ; GO TO 600 ; END IF
       END IF
 
@@ -407,9 +451,9 @@
         IF ( SIZE( ISLGRP ) < ntotel ) THEN ; DEALLOCATE( ISLGRP )
         ELSE ; reallocate = .FALSE. ; END IF
       END IF
-      IF ( reallocate ) THEN 
+      IF ( reallocate ) THEN
         ALLOCATE( ISLGRP( ntotel ), STAT = alloc_status )
-        IF ( alloc_status /= 0 ) THEN 
+        IF ( alloc_status /= 0 ) THEN
           bad_alloc = 'ISLGRP' ; GO TO 600 ; END IF
       END IF
 
@@ -423,9 +467,9 @@
         IF ( SIZE( ISTAJC ) < n + 1 ) THEN ; DEALLOCATE( ISTAJC )
         ELSE ; reallocate = .FALSE. ; END IF
       END IF
-      IF ( reallocate ) THEN 
+      IF ( reallocate ) THEN
         ALLOCATE( ISTAJC( n + 1 ), STAT = alloc_status )
-        IF ( alloc_status /= 0 ) THEN 
+        IF ( alloc_status /= 0 ) THEN
           bad_alloc = 'ISTAJC' ; GO TO 600 ; END IF
       END IF
 
@@ -439,9 +483,9 @@
         IF ( SIZE( ISTAGV ) < ng + 1 ) THEN ; DEALLOCATE( ISTAGV )
         ELSE ; reallocate = .FALSE. ; END IF
       END IF
-      IF ( reallocate ) THEN 
+      IF ( reallocate ) THEN
         ALLOCATE( ISTAGV( ng + 1 ), STAT = alloc_status )
-        IF ( alloc_status /= 0 ) THEN 
+        IF ( alloc_status /= 0 ) THEN
           bad_alloc = 'ISTAGV' ; GO TO 600 ; END IF
       END IF
 
@@ -449,13 +493,13 @@
 
       reallocate = .TRUE.
       IF ( ALLOCATED( LIST_elements ) ) THEN
-        IF ( SIZE( LIST_elements ) < l_link_e_u_v ) THEN 
+        IF ( SIZE( LIST_elements ) < l_link_e_u_v ) THEN
           DEALLOCATE( LIST_elements )
         ELSE ; reallocate = .FALSE. ; END IF
       END IF
-      IF ( reallocate ) THEN 
+      IF ( reallocate ) THEN
         ALLOCATE( LIST_elements( l_link_e_u_v ), STAT = alloc_status )
-        IF ( alloc_status /= 0 ) THEN 
+        IF ( alloc_status /= 0 ) THEN
           bad_alloc = 'LIST_e' ; GO TO 600 ; END IF
       END IF
 
@@ -463,8 +507,8 @@
 
       IF ( .NOT. alllin ) THEN
 
-!  LINK_elem_uses_var( i ) will be used as a list of links chaining the 
-!  elements using variable i. If LINK_elem_uses_var( i ) is negative, the 
+!  LINK_elem_uses_var( i ) will be used as a list of links chaining the
+!  elements using variable i. If LINK_elem_uses_var( i ) is negative, the
 !  list is empty
 
         LINK_elem_uses_var( : n ) = - 1
@@ -525,12 +569,12 @@
           IF ( SIZE( ISYMMH, 1 ) /= maxsin .OR. SIZE( ISYMMH, 2 ) /= maxsin ) &
             THEN  ; DEALLOCATE( ISYMMH ) ; ELSE ; reallocate = .FALSE. ; END IF
         END IF
-        IF ( reallocate ) THEN 
+        IF ( reallocate ) THEN
           ALLOCATE( ISYMMH( maxsin, maxsin ), STAT = alloc_status )
           IF ( alloc_status /= 0 ) THEN ; bad_alloc = 'ISYMMH' ; GO TO 600
           END IF
         END IF
-        
+
         CALL CUTEST_symmh( maxsin, ISYMMH )
       ELSE
         ALLOCATE( ISYMMH( 0, 0 ), STAT = alloc_status )
@@ -613,9 +657,9 @@
         IF ( SIZE( ISVGRP ) < nvargp ) THEN ; DEALLOCATE( ISVGRP )
         ELSE ; reallocate = .FALSE. ; END IF
       END IF
-      IF ( reallocate ) THEN 
+      IF ( reallocate ) THEN
         ALLOCATE( ISVGRP( nvargp ), STAT = alloc_status )
-        IF ( alloc_status /= 0 ) THEN 
+        IF ( alloc_status /= 0 ) THEN
           bad_alloc = 'ISVGRP' ; GO TO 600 ; END IF
       END IF
 
@@ -693,7 +737,7 @@
 
       nbprod = 0
       ISWKSP( : lnwksp ) = 0
-      
+
 !     DEALLOCATE( ISWKSP, STAT = alloc_status )
 !     IF ( alloc_status /= 0 ) THEN
 !       bad_alloc = 'ISWKSP' ; GO TO 600 ; END IF
@@ -707,14 +751,14 @@
         IF ( SIZE( IGCOLJ ) < nvargp ) THEN ; DEALLOCATE( IGCOLJ )
         ELSE ; reallocate = .FALSE. ; END IF
       END IF
-      IF ( reallocate ) THEN 
+      IF ( reallocate ) THEN
         ALLOCATE( IGCOLJ( nvargp ), STAT = alloc_status )
-        IF ( alloc_status /= 0 ) THEN 
+        IF ( alloc_status /= 0 ) THEN
           bad_alloc = 'IGCOLJ' ; GO TO 600 ; END IF
       END IF
 
 !  IVALJR( j ), j = 1, ..., nvargp, will contain the positions in GRJAC of the
-!  nonzeros of the Jacobian of the groups corresponding to the variables as 
+!  nonzeros of the Jacobian of the groups corresponding to the variables as
 !  ordered in ISVGRP( j )
 
        reallocate = .TRUE.
@@ -722,7 +766,7 @@
          IF ( SIZE( IVALJR ) < nvargp ) THEN ; DEALLOCATE( IVALJR )
          ELSE ; reallocate = .FALSE. ; END IF
        END IF
-       IF ( reallocate ) THEN 
+       IF ( reallocate ) THEN
          ALLOCATE( IVALJR( nvargp ), STAT = alloc_status )
          IF ( alloc_status /= 0 ) THEN ; bad_alloc = 'IVALJR' ; GO TO 600
          END IF
@@ -785,22 +829,22 @@
       ALLOCATE( W_ws( MAX( n, ng ) ), STAT = alloc_status )
       IF ( alloc_status /= 0 ) THEN ; bad_alloc = 'W_ws' ; GO TO 600
       END IF
-      
+
       IF ( ALLOCATED( W_el ) ) DEALLOCATE( W_el )
       ALLOCATE( W_el( maxsel ), STAT = alloc_status )
       IF ( alloc_status /= 0 ) THEN ; bad_alloc = 'W_el' ; GO TO 600
       END IF
-      
+
       IF ( ALLOCATED( W_in ) ) DEALLOCATE( W_in )
       ALLOCATE( W_in( maxsin ), STAT = alloc_status )
       IF ( alloc_status /= 0 ) THEN ; bad_alloc = 'W_in' ; GO TO 600
       END IF
-      
+
       IF ( ALLOCATED( H_el ) ) DEALLOCATE( H_el )
       ALLOCATE( H_el( maxsel ), STAT = alloc_status )
       IF ( alloc_status /= 0 ) THEN ; bad_alloc = 'H_el' ; GO TO 600
       END IF
-      
+
       IF ( ALLOCATED( H_in ) ) DEALLOCATE( H_in )
       ALLOCATE( H_in( maxsin ), STAT = alloc_status )
       IF ( alloc_status /= 0 ) THEN ; bad_alloc = 'H_in' ; GO TO 600
@@ -843,9 +887,9 @@
         IF ( SIZE( FUVALS ) < lfuval ) THEN ; DEALLOCATE( FUVALS )
         ELSE ; reallocate = .FALSE. ; END IF
       END IF
-      IF ( reallocate ) THEN 
+      IF ( reallocate ) THEN
         ALLOCATE( FUVALS( lfuval ), STAT = alloc_status )
-        IF ( alloc_status /= 0 ) THEN 
+        IF ( alloc_status /= 0 ) THEN
           bad_alloc = 'FUVALS' ; GO TO 600 ; END IF
       END IF
 
@@ -893,7 +937,7 @@
 
 !  History -
 !   ( based on Conn-Gould-Toint fortran 77 version LANCELOT A, ~1992 )
-!   fortran 90 version originally released pre GALAHAD Version 1.0. February 
+!   fortran 90 version originally released pre GALAHAD Version 1.0. February
 !     7th 1995 as LANCELOT_form_gradients as part of the LANCELOT module
 !   update released with GALAHAD Version 2.0. February 16th 2005
 !   fortran 2003 version released in CUTEst, 5th November 2012
@@ -1036,7 +1080,7 @@
               jj = ISTAJC( ll )
               GRJAC( jj ) = GRAD_el( ll )
 
-!  increment the address for the next nonzero in the column of the Jacobian 
+!  increment the address for the next nonzero in the column of the Jacobian
 !  for variable ll
 
               ISTAJC( ll ) = jj + 1
@@ -1145,7 +1189,7 @@
       LOGICAL, INTENT( IN ), DIMENSION( nel ) :: INTREP
 
 !---------------------------------------------------------------
-!   D u m m y   A r g u m e n t s   f o r   W o r k s p a c e 
+!   D u m m y   A r g u m e n t s   f o r   W o r k s p a c e
 !--------------------------------------------------------------
 
       INTEGER, INTENT( INOUT ) :: lh_row, lh_col, lh_val
@@ -1205,8 +1249,8 @@
         maxsbw = 0
         DIAG = 0.0_wp ; OFFDIA = 0.0_wp
 
-!  if a co-ordinate scheme is to be used, determine the rows structure of the 
-!  second derivative matrix of a groups partially separable function with 
+!  if a co-ordinate scheme is to be used, determine the rows structure of the
+!  second derivative matrix of a groups partially separable function with
 !  possible repititions if this has not already been done
 
       ELSE
@@ -1230,7 +1274,7 @@
           IF ( alloc_status /= 0 ) THEN
             bad_alloc = 'FILLED' ; GO TO 980 ; END IF
 
-!  now pass through the nonzeros, setting up the position in the future 
+!  now pass through the nonzeros, setting up the position in the future
 !  H_row and H_col arrays of the data gathered from the groups
 
           USED = 0
@@ -1255,7 +1299,7 @@
 
 !  allocate space for the row and column indices and values
 
-          lh_row = nnzh 
+          lh_row = nnzh
           CALL CUTEST_allocate_array( H_row, lh_row, alloc_status )
           IF ( alloc_status /= 0 ) THEN
             bad_alloc = 'H_row' ; GO TO 980 ; END IF
@@ -1379,7 +1423,7 @@
 
             ELSE
 
-!  there is an entry in position (i,j) to be stored in 
+!  there is an entry in position (i,j) to be stored in
 !  H_row/col(COL(ROW_start(i)))
 
               kk = POS_in_H( ROW_start( i ) )
@@ -1472,7 +1516,7 @@
               DO k = listvs, l
                 i = IELVAR( k )
 
-!  skip all elements which lie outside a band of width nsemib; only the upper 
+!  skip all elements which lie outside a band of width nsemib; only the upper
 !  triangle of the matrix is stored
 
                 IF ( use_band .AND. i /= 0 ) maxsbw = MAX( maxsbw, ABS( j - i ))
@@ -1516,7 +1560,7 @@
 
                   ELSE
 
-!  there is an entry in position (i,j) to be stored in 
+!  there is an entry in position (i,j) to be stored in
 !  H_row/col(COL(ROW_start(i)))
 
                     kk = POS_in_H( ROW_start( ii ) )
@@ -1534,7 +1578,7 @@
           END DO
         END DO
       END DO
-      
+
 !  restore the starting addresses
 
       DO i = n - 1, 1, - 1
@@ -1620,7 +1664,7 @@
                       lh_row, lh_col, H_row, H_col, ROW_start, POS_in_H,       &
                       USED, FILLED, lrowst, lpos, lused, lfilled, nnzh )
 
-!  Determine the sparisity pattern of the second derivative matrix of a groups 
+!  Determine the sparisity pattern of the second derivative matrix of a groups
 !  partially separable function in co-ordinate format
 
 !  History -
@@ -1644,7 +1688,7 @@
       LOGICAL, INTENT( IN ), DIMENSION( ng ) :: GXEQX
 
 !---------------------------------------------------------------
-!   D u m m y   A r g u m e n t s   f o r   W o r k s p a c e 
+!   D u m m y   A r g u m e n t s   f o r   W o r k s p a c e
 !--------------------------------------------------------------
 
       INTEGER, INTENT( INOUT ) :: lh_row, lh_col, lrowst, lpos, lused, lfilled
@@ -1664,7 +1708,7 @@
       CHARACTER ( LEN = 2 ), DIMENSION( 36, 36 ) :: MATRIX
 !     CHARACTER ( LEN = 80 ) :: array
 
-!  determine the rows structure of the second derivative matrix of a 
+!  determine the rows structure of the second derivative matrix of a
 !  groups partially separable function with possible repititions
 
       IF ( .NOT. hessian_setup_complete ) THEN
@@ -1687,7 +1731,7 @@
         IF ( alloc_status /= 0 ) THEN
           bad_alloc = 'FILLED' ; GO TO 980 ; END IF
 
-!  now pass through the nonzeros, setting up the position in the future 
+!  now pass through the nonzeros, setting up the position in the future
 !  H_row and H_col arrays of the data gathered from the groups
 
         USED = 0
@@ -1712,7 +1756,7 @@
 
 !  allocate space for the row and column indices
 
-        lh_row = nnzh 
+        lh_row = nnzh
         CALL CUTEST_allocate_array( H_row, lh_row, alloc_status )
         IF ( alloc_status /= 0 ) THEN
           bad_alloc = 'H_row' ; GO TO 980 ; END IF
@@ -1746,7 +1790,7 @@
             i = ISVGRP( k )
             IF ( i == 0 .OR. i > j ) CYCLE
 
-!  there is an entry in position (i,j) to be stored in 
+!  there is an entry in position (i,j) to be stored in
 !  H_row/col(COL(ROW_start(i)))
 
             kk = POS_in_H( ROW_start( i ) )
@@ -1787,7 +1831,7 @@
                     jj = i
                   END IF
 
-!  there is an entry in position (i,j) to be stored in 
+!  there is an entry in position (i,j) to be stored in
 !  H_row/col(COL(ROW_start(i)))
 
                   kk = POS_in_H( ROW_start( ii ) )
@@ -1800,7 +1844,7 @@
           END DO
         END DO
       END DO
-      
+
 !  restore the starting addresses
 
       DO i = n - 1, 1, - 1
@@ -1869,7 +1913,7 @@
                       alloc_status, bad_alloc, hessian_setup_complete,         &
                       ROW_start, POS_in_H, USED, lrowst, lpos, lused, nnzh )
 
-!  Determine the number of nonzeros in the second derivative matrix of a 
+!  Determine the number of nonzeros in the second derivative matrix of a
 !  groups partially separable function in co-ordinate format
 
 !  History -
@@ -1893,7 +1937,7 @@
       LOGICAL, INTENT( IN ), DIMENSION( ng  ) :: GXEQX
 
 !---------------------------------------------------------------
-!   D u m m y   A r g u m e n t s   f o r   W o r k s p a c e 
+!   D u m m y   A r g u m e n t s   f o r   W o r k s p a c e
 !--------------------------------------------------------------
 
       INTEGER, INTENT( INOUT ) :: lrowst, lpos, lused
@@ -1907,7 +1951,7 @@
 
       INTEGER :: i, j, k, l
 
-!  determine the rows structure of the second derivative matrix of a 
+!  determine the rows structure of the second derivative matrix of a
 !  groups partially separable function with possible repititions
 
       IF ( .NOT. hessian_setup_complete ) THEN
@@ -1970,7 +2014,7 @@
                       error, status, alloc_status, bad_alloc,                  &
                       ROW_start, POS_in_H, lrowst, lpos )
 
-!  Determine the rows structure of the second derivative matrix of a 
+!  Determine the rows structure of the second derivative matrix of a
 !  groups partially separable function with possible repititions
 
 !  History -
@@ -1993,7 +2037,7 @@
       LOGICAL, INTENT( IN ), DIMENSION( ng  ) :: GXEQX
 
 !---------------------------------------------------------------
-!   D u m m y   A r g u m e n t s   f o r   W o r k s p a c e 
+!   D u m m y   A r g u m e n t s   f o r   W o r k s p a c e
 !--------------------------------------------------------------
 
       INTEGER, INTENT( INOUT ) :: lrowst, lpos
@@ -2086,8 +2130,8 @@
           END DO
         END DO
       END DO
-      
-!  ROW_start(i) is changed to give the starting address for the list of 
+
+!  ROW_start(i) is changed to give the starting address for the list of
 !  column entries (with repeats) in row i (and ROW_start(n+1) points one
 !  beyond the end)
 
@@ -2178,7 +2222,7 @@
           END DO
         END DO
       END DO
-      
+
 !  restore the starting addresses
 
       DO i = n - 1, 1, - 1
@@ -2221,7 +2265,7 @@
 !  separable function into finite-element format
 
 !           ne
-!      H = sum H_e, 
+!      H = sum H_e,
 !          e=1
 
 !  where each element H_e involves a small subset of the rows of H.
@@ -2248,7 +2292,7 @@
       INTEGER, INTENT( IN ), DIMENSION( nvargp ) :: ISVGRP
       INTEGER, INTENT( IN ), DIMENSION( nel ) :: ITYPEE
       INTEGER, DIMENSION( lhe_ptr ) :: HE_row_ptr
-      INTEGER, DIMENSION( lhe_ptr ) :: HE_val_ptr 
+      INTEGER, DIMENSION( lhe_ptr ) :: HE_val_ptr
       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( nnza ) :: A
       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( lnguvl ) :: GUVALS
       REAL ( KIND = wp ), INTENT( IN ), DIMENSION( lnhuvl ) :: HUVALS
@@ -2264,13 +2308,13 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( : ) :: W_in
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( : ) :: H_el
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( : ) :: H_in
-      EXTERNAL :: RANGE 
+      EXTERNAL :: RANGE
 
 !---------------------------------------------------------------
-!   D u m m y   A r g u m e n t s   f o r   W o r k s p a c e 
+!   D u m m y   A r g u m e n t s   f o r   W o r k s p a c e
 !--------------------------------------------------------------
 
-      INTEGER, ALLOCATABLE, DIMENSION( : ) :: HE_row 
+      INTEGER, ALLOCATABLE, DIMENSION( : ) :: HE_row
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: HE_val
 
 !  local variables
@@ -2285,7 +2329,7 @@
       CALL CUTEST_allocate_array( HE_row, lhe_row, alloc_status )
       IF ( alloc_status /= 0 ) THEN
         bad_alloc = 'HE_row' ; status = 1 ; GO TO 980 ; END IF
-      
+
       CALL CUTEST_allocate_array( HE_val, lhe_val, alloc_status )
       IF ( alloc_status /= 0 ) THEN
         bad_alloc = 'HE_val' ; status = 1 ; GO TO 980 ; END IF
@@ -2352,7 +2396,7 @@
 
 !  skip if the group contributes nothing to the Hessian
 
-        IF ( GXEQX( ig ) .OR. g2dash == 0.0_wp ) THEN 
+        IF ( GXEQX( ig ) .OR. g2dash == 0.0_wp ) THEN
           HE_val( HE_val_ptr( ne ) : HE_val_ptr( ne ) + nsizee - 1 ) = 0.0_wp
           CYCLE
         END IF
@@ -2475,7 +2519,7 @@
           DO l = listvs, listve
             j = ISWKSP( IELVAR( l ) )
 
-!  the iel-th element has an internal representation. Compute the j-th column 
+!  the iel-th element has an internal representation. Compute the j-th column
 !  of the element Hessian matrix
 
             IF ( INTREP( iel ) ) THEN
@@ -2595,21 +2639,21 @@
                                               he_val_ne, he_row_ne, status )
 
 !  --------------------------------------------------------------------------
-!  compute the number of elements and the space required to store the Hessian 
+!  compute the number of elements and the space required to store the Hessian
 !  matrix of a problem initially written in Standard Input Format (SIF)
 
-!  The matrix is represented in "finite element format", i.e., 
+!  The matrix is represented in "finite element format", i.e.,
 
 !           ne
-!      H = sum H_e, 
+!      H = sum H_e,
 !          e=1
 
 !  where each element H_i involves a small subset of the rows of H.
 !  H is stored as a list of the row indices involved in each element
-!  and the upper triangle of H_e (stored by rows or columns). 
+!  and the upper triangle of H_e (stored by rows or columns).
 
 !  ne (integer) number of elements
-!  he_val_ne (integer) number of entries needed to store the real values of H. 
+!  he_val_ne (integer) number of entries needed to store the real values of H.
 !         Specifically, the sum of the number of entries in the upper triangle
 !         of each H_e
 !  he_row_ne (integer) number of entries needed to store the integer entries of
@@ -2741,7 +2785,7 @@
 !  =========================== rank-one terms ============================
 
 !  if the ig-th group is non-trivial, form the product of P with the sum of
-!  rank-one first order terms, A(trans) * GVALS3 * A. A is stored by both 
+!  rank-one first order terms, A(trans) * GVALS3 * A. A is stored by both
 !  rows and columns
 
 !  initialize AP and Q as zero
@@ -2761,7 +2805,7 @@
 
 !  multiply W by the diagonal matrix GVALS3
 
-     WHERE ( GXEQX( : ng ) ) 
+     WHERE ( GXEQX( : ng ) )
        AP( : ng ) = AP( : ng ) * GSCALE( : ng )
      ELSEWHERE
        AP( : ng ) = AP( : ng ) * GSCALE( : ng ) * GVALS3( : ng )
@@ -2859,7 +2903,7 @@
            DO jcol = 1, nvarel
              pi = gi * P( IELVAR( lthvar + jcol ) )
              IF ( pi /= 0.0_wp ) THEN
-!DIR$ IVDEP  
+!DIR$ IVDEP
                DO irow = 1, nvarel
                  ijhess = ISYMMH( jcol, irow ) + ielhst
                  l = IELVAR( lthvar + irow )
@@ -2893,10 +2937,10 @@
 
 !  ----------------------------------------------------------------------
 !  evaluate Q, the product of the hessian of a groups partially separable
-!  function with the sparse vector P. The nonzero components of P have 
-!  indices IVAR( i ), i = nvar1, ..., nvar2. The nonzero components of 
-!  the product Q have indices INNONZ( i ), i = 1, ..., nnonnz. The 
-!  components of ISWKSP must be less than nbprod on entry; on exit they 
+!  function with the sparse vector P. The nonzero components of P have
+!  indices IVAR( i ), i = nvar1, ..., nvar2. The nonzero components of
+!  the product Q have indices INNONZ( i ), i = 1, ..., nnonnz. The
+!  components of ISWKSP must be less than nbprod on entry; on exit they
 !  will be no larger than nbprod
 !  ----------------------------------------------------------------------
 
@@ -2940,7 +2984,7 @@
      INTEGER, INTENT( IN ), DIMENSION( : ) :: ISTAGV
      INTEGER, INTENT( IN ), DIMENSION( : ) :: IVALJR
      INTEGER, INTENT( IN ), DIMENSION( : ) :: ISTAJC
-     INTEGER, INTENT( INOUT ), DIMENSION( : ) :: IUSED 
+     INTEGER, INTENT( INOUT ), DIMENSION( : ) :: IUSED
      INTEGER, INTENT( IN ), DIMENSION( : ) :: LIST_elements
      INTEGER, INTENT( IN ), DIMENSION( : , : ) :: ISYMMH
 
@@ -2979,7 +3023,7 @@
 
 !  If the IG-th group is non-trivial, form the product of P with the
 !  sum of rank-one first order terms, A(trans) * GVALS3 * A. A is
-!  stored by both rows and columns. 
+!  stored by both rows and columns.
 
      nnz_components_w = 0
 
@@ -3043,7 +3087,7 @@
 !  ======================= second-order terms =======================
 
 !  Now consider the product of P with the second order terms (that is, the
-!  2nd derivatives of the elements). 
+!  2nd derivatives of the elements).
 
        DO j = nvar1, nvar2
 
@@ -3136,7 +3180,7 @@
                DO jcol = 1, nvarel
                  pi = gi * P( IELVAR( lthvar + jcol ) )
                  IF ( pi /= 0.0_wp ) THEN
-!DIR$ IVDEP    
+!DIR$ IVDEP
                    DO irow = 1, nvarel
                      ijhess = ISYMMH( jcol, irow ) + ielhst
 
@@ -3267,7 +3311,7 @@
                                              status, alloc_status )
 
 !  -------------------------------------------------------------------------
-!  extend an integer array so that its length is increaed from old_length to 
+!  extend an integer array so that its length is increaed from old_length to
 !  as close to new_length as possible while keeping existing data intact
 !  -------------------------------------------------------------------------
 
@@ -3410,7 +3454,7 @@
                                           status, alloc_status )
 
 !  ---------------------------------------------------------------------
-!  extend a real array so that its length is increaed from old_length to 
+!  extend a real array so that its length is increaed from old_length to
 !  as close to new_length as possible while keeping existing data intact
 !  ---------------------------------------------------------------------
 
@@ -3577,7 +3621,7 @@
 !-----------------------------------------------
 
      INTEGER :: i, j, k
-     
+
      k = 0
      DO j = 1, maxszh
        DO i = 1, j - 1
@@ -3605,7 +3649,7 @@
      CHARACTER ( LEN = 24 ), INTENT( OUT ) :: bad_alloc
 
 !  set default output values
- 
+
      status = 0 ; alloc_status = 0 ; bad_alloc = REPEAT( ' ', 24 )
 
 !  set scalar values
@@ -3727,7 +3771,7 @@
      CHARACTER ( LEN = 24 ), INTENT( OUT ) :: bad_alloc
 
 !  set default output values
- 
+
      status = 0 ; alloc_status = 0 ; bad_alloc = REPEAT( ' ', 24 )
 
 !  delallocate any array in data that has been allocated
@@ -3975,7 +4019,7 @@
      CHARACTER ( LEN = 24 ), INTENT( OUT ) :: bad_alloc
 
 !  set default output values
- 
+
      status = 0 ; alloc_status = 0 ; bad_alloc = REPEAT( ' ', 24 )
 
 !  delallocate any array in work that has been allocated

@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.1 - 22/08/2013 AT 13:00 GMT.
+! THIS VERSION: CUTEST 1.4 - 26/02/2016 AT 08:00 GMT.
 
 !-*-*-*-*-  C U T E S T   C I N T _  C C I F G    S U B R O U T I N E  -*-*-*-*-
 
@@ -24,10 +24,10 @@
 
 !  -----------------------------------------------------------------
 !  evaluate constraint function icon and possibly its gradient, for
-!  constraints initially written in Standard Input Format (SIF).  
+!  constraints initially written in Standard Input Format (SIF).
 !  The constraint gradient is stored as a dense vector in array GCI;
-!  that is, GCI(j) is the partial derivative of constraint icon with 
-!  respect to variable j. (Subroutine CSCIFG performs the same 
+!  that is, GCI(j) is the partial derivative of constraint icon with
+!  respect to variable j. (Subroutine CSCIFG performs the same
 !  calculations for a sparse constraint gradient vector.)
 !  -----------------------------------------------------------------
 
@@ -65,10 +65,10 @@
 
 !  -----------------------------------------------------------------
 !  evaluate constraint function icon and possibly its gradient, for
-!  constraints initially written in Standard Input Format (SIF).  
+!  constraints initially written in Standard Input Format (SIF).
 !  The constraint gradient is stored as a dense vector in array GCI;
-!  that is, GCI(j) is the partial derivative of constraint icon with 
-!  respect to variable j. (Subroutine CSCIFG performs the same 
+!  that is, GCI(j) is the partial derivative of constraint icon with
+!  respect to variable j. (Subroutine CSCIFG performs the same
 !  calculations for a sparse constraint gradient vector.)
 !  -----------------------------------------------------------------
 
@@ -105,10 +105,10 @@
 
 !  -----------------------------------------------------------------
 !  evaluate constraint function icon and possibly its gradient, for
-!  constraints initially written in Standard Input Format (SIF).  
+!  constraints initially written in Standard Input Format (SIF).
 !  The constraint gradient is stored as a dense vector in array GCI;
-!  that is, GCI(j) is the partial derivative of constraint icon with 
-!  respect to variable j. (Subroutine CSCIFG performs the same 
+!  that is, GCI(j) is the partial derivative of constraint icon with
+!  respect to variable j. (Subroutine CSCIFG performs the same
 !  calculations for a sparse constraint gradient vector.)
 !  -----------------------------------------------------------------
 
@@ -159,10 +159,10 @@
 
 !  -----------------------------------------------------------------
 !  evaluate constraint function icon and possibly its gradient, for
-!  constraints initially written in Standard Input Format (SIF).  
+!  constraints initially written in Standard Input Format (SIF).
 !  The constraint gradient is stored as a dense vector in array GCI;
-!  that is, GCI(j) is the partial derivative of constraint icon with 
-!  respect to variable j. (Subroutine CSCIFG performs the same 
+!  that is, GCI(j) is the partial derivative of constraint icon with
+!  respect to variable j. (Subroutine CSCIFG performs the same
 !  calculations for a sparse constraint gradient vector.)
 !  -----------------------------------------------------------------
 
@@ -171,20 +171,23 @@
       INTEGER :: i, j, iel, k, ig, ii, ig1, l, ll, neling
       INTEGER :: nin, nvarel, nelow, nelup, istrgv, iendgv, ifstat, igstat
       REAL ( KIND = wp ) :: ftt, gi, scalee
+      REAL ( KIND = wp ) :: time_in, time_out
       LOGICAL :: nontrv
       INTEGER, DIMENSION( 1 ) :: ICALCG
-      EXTERNAL :: RANGE 
+      EXTERNAL :: RANGE
+
+      IF ( work%record_times ) CALL CPU_TIME( time_in )
 
 !  Return if there are no constraints.
 
-      IF ( data%numcon == 0 ) RETURN
+      IF ( data%numcon == 0 ) GO TO 990
 
 !  check input parameters
 
       IF ( icon <= 0 ) THEN
         IF ( data%out > 0 ) WRITE( data%out, "( ' ** SUBROUTINE CCIFG: ',      &
        &    'invalid constraint index icon ' )" )
-        status = 2 ; RETURN
+        status = 2 ; GO TO 990
       END IF
 
 !  find group index ig of constraint icon
@@ -199,7 +202,7 @@
       IF ( ig == 0 ) THEN
         IF ( data%out > 0 ) WRITE( data%out, "( ' ** SUBROUTINE CCIFG: ',      &
        &    'invalid constraint index icon ' )" )
-        status = 2 ; RETURN
+        status = 2 ; GO TO 990
       END IF
 
 !  determine nonlinear elements in group ig. Record their indices in ICALCF
@@ -223,12 +226,12 @@
                   1, ifstat )
       IF ( ifstat /= 0 ) GO TO 930
 
-!  compute the group argument value FTT. Consider only the group associated 
+!  compute the group argument value FTT. Consider only the group associated
 !  with constraint icon
 
       ftt = - data%B( ig )
 
-!  include the contribution from the linear element only if the variable 
+!  include the contribution from the linear element only if the variable
 !  belongs to the first n variables
 
       DO i = data%ISTADA( ig ), data%ISTADA( ig + 1 ) - 1
@@ -388,7 +391,7 @@
         END IF
       END IF
       status = 0
-      RETURN
+      GO TO 990
 
 !  unsuccessful returns
 
@@ -396,6 +399,14 @@
       IF ( data%out > 0 ) WRITE( data%out,                                     &
         "( ' ** SUBROUTINE CCIFG: error flag raised during SIF evaluation' )" )
       status = 3
+
+!  update elapsed CPU time if required
+
+  990 CONTINUE
+      IF ( work%record_times ) THEN
+        CALL CPU_TIME( time_out )
+        work%time_ccifg = work%time_ccifg + time_out - time_in
+      END IF
       RETURN
 
 !  end of subroutine CUTEST_ccifg_threadsafe

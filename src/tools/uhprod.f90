@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.1 - 22/08/2013 AT 11:50 GMT.
+! THIS VERSION: CUTEST 1.4 - 26/02/2016 AT 09:00 GMT.
 
 !-*-*-*-*-*-  C U T E S T   C I N T _ U H P R O D   S U B R O U T I N E  -*-*-*-
 
@@ -25,7 +25,7 @@
 !  compute the matrix-vector product between the Hessian matrix of
 !  a group partially separable function and a given vector VECTOR.
 !  The result is placed in RESULT. If goth is .TRUE. the second
-!  derivatives are assumed to have already been computed. If the user 
+!  derivatives are assumed to have already been computed. If the user
 !  is unsure, set goth = .FALSE. the first time a product is required
 !  with the Hessian evaluated at X. X is not used if  goth = .TRUE.
 !  ------------------------------------------------------------------
@@ -64,7 +64,7 @@
 !  compute the matrix-vector product between the Hessian matrix of
 !  a group partially separable function and a given vector VECTOR.
 !  The result is placed in RESULT. If goth is .TRUE. the second
-!  derivatives are assumed to have already been computed. If the user 
+!  derivatives are assumed to have already been computed. If the user
 !  is unsure, set goth = .FALSE. the first time a product is required
 !  with the Hessian evaluated at X. X is not used if  goth = .TRUE.
 !  ------------------------------------------------------------------
@@ -103,7 +103,7 @@
 !  compute the matrix-vector product between the Hessian matrix of
 !  a group partially separable function and a given vector VECTOR.
 !  The result is placed in RESULT. If goth is .TRUE. the second
-!  derivatives are assumed to have already been computed. If the user 
+!  derivatives are assumed to have already been computed. If the user
 !  is unsure, set goth = .FALSE. the first time a product is required
 !  with the Hessian evaluated at X. X is not used if  goth = .TRUE.
 !  ------------------------------------------------------------------
@@ -156,7 +156,7 @@
 !  compute the matrix-vector product between the Hessian matrix of
 !  a group partially separable function and a given vector VECTOR.
 !  The result is placed in RESULT. If goth is .TRUE. the second
-!  derivatives are assumed to have already been computed. If the user 
+!  derivatives are assumed to have already been computed. If the user
 !  is unsure, set goth = .FALSE. the first time a product is required
 !  with the Hessian evaluated at X. X is not used if  goth = .TRUE.
 !  ------------------------------------------------------------------
@@ -165,7 +165,10 @@
 
       INTEGER :: i, ig, j, ifstat, igstat
       REAL ( KIND = wp ) :: ftt
-      EXTERNAL :: RANGE 
+      REAL ( KIND = wp ) :: time_in, time_out
+      EXTERNAL :: RANGE
+
+      IF ( work%record_times ) CALL CPU_TIME( time_in )
 
 !  there are non-trivial group functions
 
@@ -265,7 +268,7 @@
       work%nhvpr = work%nhvpr + 1
       IF ( .NOT. goth ) work%nc2oh = work%nc2oh + 1
       status = 0
-      RETURN
+      GO TO 990
 
 !  unsuccessful returns
 
@@ -273,6 +276,14 @@
       IF ( data%out > 0 ) WRITE( data%out,                                     &
         "( ' ** SUBROUTINE UHPROD: error flag raised during SIF evaluation' )" )
       status = 3
+
+!  update elapsed CPU time if required
+
+  990 CONTINUE
+      IF ( work%record_times ) THEN
+        CALL CPU_TIME( time_out )
+        work%time_uhprod = work%time_uhprod + time_out - time_in
+      END IF
       RETURN
 
 !  end of subroutine CUTEST_uhprod_threadsafe

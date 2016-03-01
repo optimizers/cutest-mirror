@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.1 - 22/08/2013 AT 11:30 GMT.
+! THIS VERSION: CUTEST 1.4 - 26/02/2016 AT 09:00 GMT.
 
 !-*-*-*-*-*-  C U T E S T  C I N T _  U O F G    S U B R O U T I N E  -*-*-*-*-
 
@@ -26,8 +26,8 @@
 !  compute the value of the objective function and its gradient
 !  for a function initially written in Standard Input Format (SIF)
 
-!  G     is an array which gives the value of the gradient of the 
-!        objective function evaluated at X. G(i) gives the partial 
+!  G     is an array which gives the value of the gradient of the
+!        objective function evaluated at X. G(i) gives the partial
 !        derivative of the objective function wrt variable X(i)
 !  ---------------------------------------------------------------
 
@@ -67,8 +67,8 @@
 !  compute the value of the objective function and its gradient
 !  for a function initially written in Standard Input Format (SIF)
 
-!  G     is an array which gives the value of the gradient of the 
-!        objective function evaluated at X. G(i) gives the partial 
+!  G     is an array which gives the value of the gradient of the
+!        objective function evaluated at X. G(i) gives the partial
 !        derivative of the objective function wrt variable X(i)
 !  ---------------------------------------------------------------
 
@@ -106,8 +106,8 @@
 !  compute the value of the objective function and its gradient
 !  for a function initially written in Standard Input Format (SIF)
 
-!  G     is an array which gives the value of the gradient of the 
-!        objective function evaluated at X. G(i) gives the partial 
+!  G     is an array which gives the value of the gradient of the
+!        objective function evaluated at X. G(i) gives the partial
 !        derivative of the objective function wrt variable X(i)
 !  ---------------------------------------------------------------
 
@@ -159,8 +159,8 @@
 !  compute the value of the objective function and its gradient
 !  for a function initially written in Standard Input Format (SIF)
 
-!  G     is an array which gives the value of the gradient of the 
-!        objective function evaluated at X. G(i) gives the partial 
+!  G     is an array which gives the value of the gradient of the
+!        objective function evaluated at X. G(i) gives the partial
 !        derivative of the objective function wrt variable X(i)
 !  ---------------------------------------------------------------
 
@@ -168,7 +168,10 @@
 
       INTEGER :: i, j, ig, ifstat, igstat
       REAL ( KIND = wp ) :: ftt
-      EXTERNAL :: RANGE 
+      REAL ( KIND = wp ) :: time_in, time_out
+      EXTERNAL :: RANGE
+
+      IF ( work%record_times ) CALL CPU_TIME( time_in )
 
 !  there are non-trivial group functions
 
@@ -191,11 +194,11 @@
       DO ig = 1, data%ng
         ftt = - data%B( ig )
 
-!  include the contribution from the linear element only if the variable 
+!  include the contribution from the linear element only if the variable
 !  belongs to the first n variables
 
         DO i = data%ISTADA( ig ), data%ISTADA( ig + 1 ) - 1
-          j = data%ICNA( i ) 
+          j = data%ICNA( i )
           IF ( j <= n ) ftt = ftt + data%A( i ) * X( j )
         END DO
 
@@ -286,7 +289,7 @@
       work%nc2of = work%nc2of + 1
       IF ( grad ) work%nc2og = work%nc2og + 1
       status = 0
-      RETURN
+      GO TO 990
 
 !  unsuccessful returns
 
@@ -294,6 +297,14 @@
       IF ( data%out > 0 ) WRITE( data%out,                                     &
         "( ' ** SUBROUTINE UOFG: Error flag raised during SIF evaluation' )" )
       status = 3
+
+!  update elapsed CPU time if required
+
+  990 CONTINUE
+      IF ( work%record_times ) THEN
+        CALL CPU_TIME( time_out )
+        work%time_uofg = work%time_uofg + time_out - time_in
+      END IF
       RETURN
 
 !  end of subroutine CUTEST_uofg_threadsafe

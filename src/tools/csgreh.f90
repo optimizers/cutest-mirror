@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.2 - 05/09/2014 AT 08:15 GMT.
+! THIS VERSION: CUTEST 1.4 - 26/02/2016 AT 08:00 GMT.
 
 !-*-*-*-*-  C U T E S T    C I N T _ C S G R E H    S U B R O U T I N E  -*-*-*-
 
@@ -30,14 +30,14 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lhe_val ) :: HE_val
 
 !  ----------------------------------------------------------------------------
-!  compute the constraint Jacobian in co-ordinate format and Hessian matrix 
-!  of the Lagrangian function of a problem initially written in Standard 
+!  compute the constraint Jacobian in co-ordinate format and Hessian matrix
+!  of the Lagrangian function of a problem initially written in Standard
 !  Input Format (SIF)
 
-!  the Hessian matrix is represented in "finite element format", i.e., 
+!  the Hessian matrix is represented in "finite element format", i.e.,
 
 !           ne
-!      H = sum H_e, 
+!      H = sum H_e,
 !          e=1
 
 !  where each element H_i involves a small subset of the rows of H. H is stored
@@ -46,17 +46,17 @@
 
 !  ne (integer) number of elements
 !  HE_row (integer array) a list of the row indices involved which each
-!          element. Those for element e directly proceed those for 
+!          element. Those for element e directly proceed those for
 !          element e + 1, e = 1, ..., ne-1
-!  HE_row_ptr (integer array) pointers to the position in HE_row of the first 
-!          row index in each element. HE_row_ptr(ne+1) points to the first 
+!  HE_row_ptr (integer array) pointers to the position in HE_row of the first
+!          row index in each element. HE_row_ptr(ne+1) points to the first
 !          empty location in IRPNHI
 !  HE_val (real array) a list of the nonzeros in the upper triangle of
-!          H_e, stored by rows, or by columns, for each element. Those 
-!          for element i directly proceed those for element, e + 1, 
+!          H_e, stored by rows, or by columns, for each element. Those
+!          for element i directly proceed those for element, e + 1,
 !          e = 1, ..., ne-1
-!  HE_val_ptr (integer array) pointers to the position in HE_val of the first 
-!          nonzero in each element. HE_val_ptr(ne+1) points to the first 
+!  HE_val_ptr (integer array) pointers to the position in HE_val of the first
+!          nonzero in each element. HE_val_ptr(ne+1) points to the first
 !          empty location in HE_val
 !  byrows (bool) must be set .TRUE. if the upper triangle of each H_e is
 !          to be stored by rows, and .FALSE. if it is to be stored by columns
@@ -106,14 +106,14 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lhe_val ) :: HE_val
 
 !  ----------------------------------------------------------------------------
-!  compute the constraint Jacobian in co-ordinate format and Hessian matrix 
-!  of the Lagrangian function of a problem initially written in Standard 
+!  compute the constraint Jacobian in co-ordinate format and Hessian matrix
+!  of the Lagrangian function of a problem initially written in Standard
 !  Input Format (SIF)
 
-!  the Hessian matrix is represented in "finite element format", i.e., 
+!  the Hessian matrix is represented in "finite element format", i.e.,
 
 !           ne
-!      H = sum H_e, 
+!      H = sum H_e,
 !          e=1
 
 !  where each element H_i involves a small subset of the rows of H. H is stored
@@ -122,17 +122,17 @@
 
 !  ne (integer) number of elements
 !  HE_row (integer array) a list of the row indices involved which each
-!          element. Those for element e directly proceed those for 
+!          element. Those for element e directly proceed those for
 !          element e + 1, e = 1, ..., ne-1
-!  HE_row_ptr (integer array) pointers to the position in HE_row of the first 
-!          row index in each element. HE_row_ptr(ne+1) points to the first 
+!  HE_row_ptr (integer array) pointers to the position in HE_row of the first
+!          row index in each element. HE_row_ptr(ne+1) points to the first
 !          empty location in IRPNHI
 !  HE_val (real array) a list of the nonzeros in the upper triangle of
-!          H_e, stored by rows, or by columns, for each element. Those 
-!          for element i directly proceed those for element, e + 1, 
+!          H_e, stored by rows, or by columns, for each element. Those
+!          for element i directly proceed those for element, e + 1,
 !          e = 1, ..., ne-1
-!  HE_val_ptr (integer array) pointers to the position in HE_val of the first 
-!          nonzero in each element. HE_val_ptr(ne+1) points to the first 
+!  HE_val_ptr (integer array) pointers to the position in HE_val of the first
+!          nonzero in each element. HE_val_ptr(ne+1) points to the first
 !          empty location in HE_val
 !  byrows (logical) must be set .TRUE. if the upper triangle of each H_e is
 !          to be stored by rows, and .FALSE. if it is to be stored by columns
@@ -180,14 +180,14 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lhe_val ) :: HE_val
 
 !  ----------------------------------------------------------------------------
-!  compute the constraint Jacobian in co-ordinate format and Hessian matrix 
-!  of the Lagrangian function of a problem initially written in Standard 
+!  compute the constraint Jacobian in co-ordinate format and Hessian matrix
+!  of the Lagrangian function of a problem initially written in Standard
 !  Input Format (SIF)
 
-!  the Hessian matrix is represented in "finite element format", i.e., 
+!  the Hessian matrix is represented in "finite element format", i.e.,
 
 !           ne
-!      H = sum H_e, 
+!      H = sum H_e,
 !          e=1
 
 !  where each element H_i involves a small subset of the rows of H. H is stored
@@ -196,17 +196,17 @@
 
 !  ne (integer) number of elements
 !  HE_row (integer array) a list of the row indices involved which each
-!          element. Those for element e directly proceed those for 
+!          element. Those for element e directly proceed those for
 !          element e + 1, e = 1, ..., ne-1
-!  HE_row_ptr (integer array) pointers to the position in HE_row of the first 
-!          row index in each element. HE_row_ptr(ne+1) points to the first 
+!  HE_row_ptr (integer array) pointers to the position in HE_row of the first
+!          row index in each element. HE_row_ptr(ne+1) points to the first
 !          empty location in IRPNHI
 !  HE_val (real array) a list of the nonzeros in the upper triangle of
-!          H_e, stored by rows, or by columns, for each element. Those 
-!          for element i directly proceed those for element, e + 1, 
+!          H_e, stored by rows, or by columns, for each element. Those
+!          for element i directly proceed those for element, e + 1,
 !          e = 1, ..., ne-1
-!  HE_val_ptr (integer array) pointers to the position in HE_val of the first 
-!          nonzero in each element. HE_val_ptr(ne+1) points to the first 
+!  HE_val_ptr (integer array) pointers to the position in HE_val of the first
+!          nonzero in each element. HE_val_ptr(ne+1) points to the first
 !          empty location in HE_val
 !  byrows (logical) must be set .TRUE. if the upper triangle of each H_e is
 !          to be stored by rows, and .FALSE. if it is to be stored by columns
@@ -268,14 +268,14 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lhe_val ) :: HE_val
 
 !  ----------------------------------------------------------------------------
-!  compute the constraint Jacobian in co-ordinate format and Hessian matrix 
-!  of the Lagrangian function of a problem initially written in Standard 
+!  compute the constraint Jacobian in co-ordinate format and Hessian matrix
+!  of the Lagrangian function of a problem initially written in Standard
 !  Input Format (SIF)
 
-!  the Hessian matrix is represented in "finite element format", i.e., 
+!  the Hessian matrix is represented in "finite element format", i.e.,
 
 !           ne
-!      H = sum H_e, 
+!      H = sum H_e,
 !          e=1
 
 !  where each element H_i involves a small subset of the rows of H. H is stored
@@ -284,17 +284,17 @@
 
 !  ne (integer) number of elements
 !  HE_row (integer array) a list of the row indices involved which each
-!          element. Those for element e directly proceed those for 
+!          element. Those for element e directly proceed those for
 !          element e + 1, e = 1, ..., ne-1
-!  HE_row_ptr (integer array) pointers to the position in HE_row of the first 
-!          row index in each element. HE_row_ptr(ne+1) points to the first 
+!  HE_row_ptr (integer array) pointers to the position in HE_row of the first
+!          row index in each element. HE_row_ptr(ne+1) points to the first
 !          empty location in IRPNHI
 !  HE_val (real array) a list of the nonzeros in the upper triangle of
-!          H_e, stored by rows, or by columns, for each element. Those 
-!          for element i directly proceed those for element, e + 1, 
+!          H_e, stored by rows, or by columns, for each element. Those
+!          for element i directly proceed those for element, e + 1,
 !          e = 1, ..., ne-1
-!  HE_val_ptr (integer array) pointers to the position in HE_val of the first 
-!          nonzero in each element. HE_val_ptr(ne+1) points to the first 
+!  HE_val_ptr (integer array) pointers to the position in HE_val of the first
+!          nonzero in each element. HE_val_ptr(ne+1) points to the first
 !          empty location in HE_val
 !  byrows (logical) must be set .TRUE. if the upper triangle of each H_e is
 !          to be stored by rows, and .FALSE. if it is to be stored by columns
@@ -308,7 +308,10 @@
       LOGICAL :: nontrv
       REAL ( KIND = wp ) :: ftt, gi, scalee, gii
       CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
+      REAL ( KIND = wp ) :: time_in, time_out
       EXTERNAL :: RANGE
+
+      IF ( work%record_times ) CALL CPU_TIME( time_in )
 
 !  there are non-trivial group functions
 
@@ -385,7 +388,7 @@
            END IF
          END DO
 
-!  compute the gradient values. Initialize the gradient of the objective 
+!  compute the gradient values. Initialize the gradient of the objective
 !  function as zero
 
          nnzj = 0
@@ -532,7 +535,7 @@
                    work%G_temp( ll ) = work%G_temp( ll ) + gii * work%W_ws( ll )
                END IF
 
-!  increment the address for the next nonzero in the column of the Jacobian 
+!  increment the address for the next nonzero in the column of the Jacobian
 !  for variable ll
 
                IF ( nontrv ) THEN
@@ -594,7 +597,7 @@
         IF ( data%out > 0 ) WRITE( data%out,                                   &
           "( /, ' ** SUBROUTINE CSGREH: array length lj too small.',           &
          &    /, ' -- Increase the parameter lj to at least ', I0 )" ) nnzj
-        status = 2 ; RETURN
+        status = 2 ; GO TO 990
       END IF
 
 !  assemble the Hessian
@@ -633,26 +636,26 @@
                         lhe_val_int, work%H_row, HE_row_ptr, work%H_val,       &
                         HE_val_ptr, byrows, 0, data%out, data%out,             &
                         work%io_buffer, alloc_status, bad_alloc, status )
-      END IF 
+      END IF
 
 !  check for errors in the assembly
 
-      IF ( status > 0 ) RETURN
+      IF ( status > 0 ) GO TO 990
 
 !  check that HE_row and HE_val are large enough
 
       IF ( lhe_row < HE_row_ptr( ne + 1 ) - 1 ) THEN
         IF ( data%out > 0 ) WRITE( data%out, "( ' ** SUBROUTINE CSGREH: ',     &
        &  'Increase the dimension of HE_row to ',  I0 )" )                     &
-             HE_row_ptr( ne + 1 ) - 1 
-        status = 2 ; RETURN
+             HE_row_ptr( ne + 1 ) - 1
+        status = 2 ; GO TO 990
       END IF
 
       IF ( lhe_val < HE_val_ptr( ne + 1 ) - 1 ) THEN
         IF ( data%out > 0 ) WRITE( data%out, "( ' ** SUBROUTINE CSGREH: ',     &
        &  'Increase the dimension of HE_val to ',  I0 )" )                     &
-             HE_val_ptr( ne + 1 ) - 1 
-        status = 2 ; RETURN
+             HE_val_ptr( ne + 1 ) - 1
+        status = 2 ; GO TO 990
       END IF
 
 !  record the element Hessian
@@ -669,7 +672,7 @@
       work%nc2cg = work%nc2cg + work%pnc
       work%nc2ch = work%nc2ch + work%pnc
       status = 0
-      RETURN
+      GO TO 990
 
 !  unsuccessful returns
 
@@ -677,6 +680,14 @@
       IF ( data%out > 0 ) WRITE( data%out,                                     &
         "( ' ** SUBROUTINE CSGREH: error flag raised during SIF evaluation' )" )
       status = 3
+
+!  update elapsed CPU time if required
+
+  990 CONTINUE
+      IF ( work%record_times ) THEN
+        CALL CPU_TIME( time_out )
+        work%time_csgreh = work%time_csgreh + time_out - time_in
+      END IF
       RETURN
 
 !  end of subroutine CUTEST_csgreh_threadsafe

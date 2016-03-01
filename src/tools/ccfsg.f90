@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.1 - 22/08/2013 AT 12:55 GMT.
+! THIS VERSION: CUTEST 1.4 - 26/02/2016 AT 08:00 GMT.
 
 !-*-*-*-*-*-  C U T E S T  C I N T _ C C F S G    S U B R O U T I N E  -*-*-*-*-
 
@@ -33,7 +33,7 @@
 !  J_val  is an array which gives the values of the nonzeros of the
 !        general constraint functions evaluated at X and Y.
 !        The i-th entry of J_val gives the value of the derivative
-!        with respect to variable J_var(i) of constraint function 
+!        with respect to variable J_var(i) of constraint function
 !        J_fun(i) (i.e., J_fun(i) = j > 0 indicates the j-th
 !        general constraint function).
 !  ----------------------------------------------------------------------
@@ -82,7 +82,7 @@
 !  J_val  is an array which gives the values of the nonzeros of the
 !        general constraint functions evaluated at X and Y.
 !        The i-th entry of J_val gives the value of the derivative
-!        with respect to variable J_var(i) of constraint function 
+!        with respect to variable J_var(i) of constraint function
 !        J_fun(i) (i.e., J_fun(i) = j > 0 indicates the j-th
 !        general constraint function).
 !  ----------------------------------------------------------------------
@@ -129,7 +129,7 @@
 !  J_val  is an array which gives the values of the nonzeros of the
 !        general constraint functions evaluated at X and Y.
 !        The i-th entry of J_val gives the value of the derivative
-!        with respect to variable J_var(i) of constraint function 
+!        with respect to variable J_var(i) of constraint function
 !        J_fun(i) (i.e., J_fun(i) = j > 0 indicates the j-th
 !        general constraint function).
 !  ----------------------------------------------------------------------
@@ -190,7 +190,7 @@
 !  J_val  is an array which gives the values of the nonzeros of the
 !        general constraint functions evaluated at X and Y.
 !        The i-th entry of J_val gives the value of the derivative
-!        with respect to variable J_var(i) of constraint function 
+!        with respect to variable J_var(i) of constraint function
 !        J_fun(i) (i.e., J_fun(i) = j > 0 indicates the j-th
 !        general constraint function).
 !  ----------------------------------------------------------------------
@@ -200,11 +200,14 @@
       INTEGER :: i, j, iel, k, ig, ii, ig1, l, ll, icon, icnt
       INTEGER :: nin, nvarel, nelow, nelup, istrgv, iendgv, ifstat, igstat
       REAL ( KIND = wp ) :: ftt, gi, scalee
-      EXTERNAL :: RANGE 
+      REAL ( KIND = wp ) :: time_in, time_out
+      EXTERNAL :: RANGE
 
-      IF ( data%numcon == 0 ) RETURN
+      IF ( work%record_times ) CALL CPU_TIME( time_in )
 
-!  identify which elements are included in constraints. Use logical work 
+      IF ( data%numcon == 0 ) GO TO 990
+
+!  identify which elements are included in constraints. Use logical work
 !  vector to keep track of elements already included
 
       work%LOGIC( : data%nel ) = .FALSE.
@@ -260,7 +263,7 @@
         IF ( icon > 0 .AND. icon <= m ) THEN
           ftt = - data%B( ig )
 
-!  Include contributions from the linear element only if the variable belongs 
+!  Include contributions from the linear element only if the variable belongs
 !  to the first n variables
 
           DO i = data%ISTADA( ig ), data%ISTADA( ig + 1 ) - 1
@@ -290,7 +293,7 @@
         work%GVALS( : data%ng, 2 ) = 1.0_wp
       ELSE
 
-!  evaluate the group function values. Evaluate groups belonging to the first 
+!  evaluate the group function values. Evaluate groups belonging to the first
 !  m constraints only
 
         icnt = 0
@@ -299,7 +302,7 @@
           IF ( icon > 0 .AND. icon <= m ) THEN
             icnt = icnt + 1
             work%ICALCF( icnt ) = ig
-          END IF 
+          END IF
         END DO
         CALL GROUP( work%GVALS, data%ng, work%FT, data%GPVALU, icnt,           &
                     data%ITYPEG, data%ISTGP, work%ICALCF, data%ltypeg,         &
@@ -315,7 +318,7 @@
         IF ( i > 0 .AND. i <= m ) THEN
           IF ( data%GXEQX( ig ) ) THEN
             C( i ) = data%GSCALE( ig ) * work%FT( ig )
-          ELSE 
+          ELSE
             C( i ) = data%GSCALE( ig ) * work%GVALS( ig, 1 )
           END IF
         END IF
@@ -334,7 +337,7 @@
 
 !  compute the gradient values.  Initialize the Jacobian as zero
 
-         nnzj = 0 
+         nnzj = 0
          J_val( : lj ) = 0.0_wp
 
 !  consider the ig-th group
@@ -459,7 +462,7 @@
            IF ( data%out > 0 ) WRITE( data%out,                                &
              "( /,  ' ** SUBROUTINE CCFSG: array length lj too small', /,      &
             &   ' -- Increase the parameter lj to at least ', I0 )" ) nnzj
-           status = 2 ; RETURN
+           status = 2 ; GO TO 990
          END IF
       END IF
 
@@ -468,7 +471,7 @@
       work%nc2cf = work%nc2cf + work%pnc
       IF ( grad ) work%nc2cg = work%nc2cg + work%pnc
       status = 0
-      RETURN
+      GO TO 990
 
 !  unsuccessful returns
 
@@ -476,6 +479,14 @@
       IF ( data%out > 0 ) WRITE( data%out,                                     &
         "( ' ** SUBROUTINE CCFSG: error flag raised during SIF evaluation' )" )
       status = 3
+
+!  update elapsed CPU time if required
+
+  990 CONTINUE
+      IF ( work%record_times ) THEN
+        CALL CPU_TIME( time_out )
+        work%time_ccfsg = work%time_ccfsg + time_out - time_in
+      END IF
       RETURN
 
 !  end of subroutine CUTEST_cscfg_threadsafe

@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.0 - 28/12/2012 AT 17:10 GMT.
+! THIS VERSION: CUTEST 1.4 - 26/02/2016 AT 08:00 GMT.
 
 !-*-*-*-*-*-*-*-  C U T E S T    C F N    S U B R O U T I N E  -*-*-*-*-*-*-*-
 
@@ -111,6 +111,9 @@
 
       INTEGER :: i, j, ig, ifstat, igstat
       REAL ( KIND = wp ) :: ftt
+      REAL ( KIND = wp ) :: time_in, time_out
+
+      IF ( work%record_times ) CALL CPU_TIME( time_in )
 
 !  there are non-trivial group functions
 
@@ -202,7 +205,7 @@
       work%nc2of = work%nc2of + 1
       work%nc2cf = work%nc2cf + work%pnc
       status = 0
-      RETURN
+      GO TO 990
 
 !  unsuccessful returns
 
@@ -210,6 +213,14 @@
       IF ( data%out > 0 ) WRITE( data%out,                                     &
         "( ' ** SUBROUTINE CFN: error flag raised during SIF evaluation' )" )
       status = 3
+
+!  update elapsed CPU time if required
+
+  990 CONTINUE
+      IF ( work%record_times ) THEN
+        CALL CPU_TIME( time_out )
+        work%time_cfn = work%time_cfn + time_out - time_in
+      END IF
       RETURN
 
 !  end of subroutine CUTEST_cfn_threadsafe

@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.1 - 22/08/2013 AT 13:00 GMT.
+! THIS VERSION: CUTEST 1.4 - 26/02/2016 AT 08:00 GMT.
 
 !-*-*-*-*-  C U T E S T   C I N T _ C C I F S G    S U B R O U T I N E  -*-*-*-
 
@@ -189,18 +189,21 @@
       INTEGER :: i, j, iel, k, ig, ii, ig1, l, ll, neling
       INTEGER :: nin, nvarel, nelow, nelup, istrgv, iendgv, ifstat, igstat
       REAL ( KIND = wp ) :: ftt, gi, scalee
+      REAL ( KIND = wp ) :: time_in, time_out
       INTEGER, DIMENSION( 1 ) :: ICALCG
-      EXTERNAL :: RANGE 
+      EXTERNAL :: RANGE
+
+      IF ( work%record_times ) CALL CPU_TIME( time_in )
 
 !  return if there are no constraints
 
-      IF ( data%numcon == 0 ) RETURN
+      IF ( data%numcon == 0 ) GO TO 990
 
 !  check input parameters
 
       IF ( icon <= 0 ) THEN
         IF ( data%out > 0 ) WRITE( data%out, 2000 )
-        status = 2 ; RETURN
+        status = 2 ; GO TO 990
       END IF
 
 !  find group index ig of constraint icon
@@ -214,7 +217,7 @@
       END DO
       IF ( ig == 0 ) THEN
         IF ( data%out > 0 ) WRITE( data%out, 2000 )
-        status = 2 ; RETURN
+        status = 2 ; GO TO 990
       END IF
 
 !  determine nonlinear elements in group ig. Record their indices in ICALCF
@@ -238,12 +241,12 @@
                   1, ifstat )
       IF ( ifstat /= 0 ) GO TO 930
 
-!  compute the group argument value FTT. Consider only the group associated 
+!  compute the group argument value FTT. Consider only the group associated
 !  with constraint icon
 
       ftt = - data%B( ig )
 
-!  include contributions from the linear element only if the variable belongs 
+!  include contributions from the linear element only if the variable belongs
 !  to the first n variables
 
       DO i = data%ISTADA( ig ), data%ISTADA( ig + 1 ) - 1
@@ -279,7 +282,7 @@
 
       IF ( data%GXEQX( ig ) ) THEN
         ci = data%GSCALE( ig ) * work%FT( ig )
-      ELSE 
+      ELSE
         ci = data%GSCALE( ig ) * work%GVALS( ig, 1 )
       END IF
 
@@ -306,7 +309,7 @@
 
 !  compute the gradient values. Initialize the gradient vector as zero
 
-        nnzgci = 0 
+        nnzgci = 0
         GCI_val( : lgci ) = 0.0_wp
 
 !  consider only group ig
@@ -380,7 +383,7 @@
               GCI_val( nnzgci ) = gi * work%W_ws( ll )
               GCI_var( nnzgci ) = ll
             END IF
-          END DO 
+          END DO
 
 !  the group has only linear elements
 
@@ -416,7 +419,7 @@
       work%nc2cf = work%nc2cf + 1
       IF ( grad ) work%nc2cg = work%nc2cg + 1
       status = 0
-      RETURN
+      GO TO 990
 
 !  unsuccessful returns
 
@@ -424,6 +427,14 @@
       IF ( data%out > 0 ) WRITE( data%out,                                     &
         "( ' ** SUBROUTINE CCIFSG: error flag raised during SIF evaluation' )" )
       status = 3
+
+!  update elapsed CPU time if required
+
+  990 CONTINUE
+      IF ( work%record_times ) THEN
+        CALL CPU_TIME( time_out )
+        work%time_ccifsg = work%time_ccifsg + time_out - time_in
+      END IF
       RETURN
 
 !  non-executable statements

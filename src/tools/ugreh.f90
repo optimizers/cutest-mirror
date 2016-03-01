@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.2 - 05/09/2014 AT 08:15 GMT.
+! THIS VERSION: CUTEST 1.4 - 26/02/2016 AT 09:00 GMT.
 
 !-*-*-*-*-  C U T E S T  C I N T _  U G R E H    S U B R O U T I N E  -*-*-*-*-
 
@@ -27,13 +27,13 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lhe_val ) :: HE_val
 
 !  ----------------------------------------------------------------------------
-!  compute the gradient and Hessian matrix of a group partially separable 
+!  compute the gradient and Hessian matrix of a group partially separable
 !  function initially written in Standard Input Format (SIF)
 
-!  the matrix is represented in "finite element format", i.e., 
+!  the matrix is represented in "finite element format", i.e.,
 
 !           ne
-!      H = sum H_e, 
+!      H = sum H_e,
 !          e=1
 
 !  where each element H_i involves a small subset of the rows of H. H is stored
@@ -42,17 +42,17 @@
 
 !  ne (integer) number of elements
 !  HE_row (integer array) a list of the row indices involved which each
-!          element. Those for element e directly proceed those for 
+!          element. Those for element e directly proceed those for
 !          element e + 1, e = 1, ..., ne-1
-!  HE_row_ptr (integer array) pointers to the position in HE_row of the first 
-!          row index in each element. HE_row_ptr(ne+1) points to the first 
+!  HE_row_ptr (integer array) pointers to the position in HE_row of the first
+!          row index in each element. HE_row_ptr(ne+1) points to the first
 !          empty location in IRPNHI
 !  HE_val (real array) a list of the nonzeros in the upper triangle of
-!          H_e, stored by rows, or by columns, for each element. Those 
-!          for element i directly proceed those for element, e + 1, 
+!          H_e, stored by rows, or by columns, for each element. Those
+!          for element i directly proceed those for element, e + 1,
 !          e = 1, ..., ne-1
-!  HE_val_ptr (integer array) pointers to the position in HE_val of the first 
-!          nonzero in each element. HE_val_ptr(ne+1) points to the first 
+!  HE_val_ptr (integer array) pointers to the position in HE_val of the first
+!          nonzero in each element. HE_val_ptr(ne+1) points to the first
 !          empty location in HE_val
 !  byrows (booll) must be set .TRUE. if the upper triangle of each H_e is
 !          to be stored by rows, and .FALSE. if it is to be stored by columns
@@ -97,13 +97,13 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lhe_val ) :: HE_val
 
 !  ----------------------------------------------------------------------------
-!  compute the gradient and Hessian matrix of a group partially separable 
+!  compute the gradient and Hessian matrix of a group partially separable
 !  function initially written in Standard Input Format (SIF)
 
-!  the matrix is represented in "finite element format", i.e., 
+!  the matrix is represented in "finite element format", i.e.,
 
 !           ne
-!      H = sum H_e, 
+!      H = sum H_e,
 !          e=1
 
 !  where each element H_i involves a small subset of the rows of H. H is stored
@@ -112,17 +112,17 @@
 
 !  ne (integer) number of elements
 !  HE_row (integer array) a list of the row indices involved which each
-!          element. Those for element e directly proceed those for 
+!          element. Those for element e directly proceed those for
 !          element e + 1, e = 1, ..., ne-1
-!  HE_row_ptr (integer array) pointers to the position in HE_row of the first 
-!          row index in each element. HE_row_ptr(ne+1) points to the first 
+!  HE_row_ptr (integer array) pointers to the position in HE_row of the first
+!          row index in each element. HE_row_ptr(ne+1) points to the first
 !          empty location in IRPNHI
 !  HE_val (real array) a list of the nonzeros in the upper triangle of
-!          H_e, stored by rows, or by columns, for each element. Those 
-!          for element i directly proceed those for element, e + 1, 
+!          H_e, stored by rows, or by columns, for each element. Those
+!          for element i directly proceed those for element, e + 1,
 !          e = 1, ..., ne-1
-!  HE_val_ptr (integer array) pointers to the position in HE_val of the first 
-!          nonzero in each element. HE_val_ptr(ne+1) points to the first 
+!  HE_val_ptr (integer array) pointers to the position in HE_val of the first
+!          nonzero in each element. HE_val_ptr(ne+1) points to the first
 !          empty location in HE_val
 !  byrows (logical) must be set .TRUE. if the upper triangle of each H_e is
 !          to be stored by rows, and .FALSE. if it is to be stored by columns
@@ -165,13 +165,13 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lhe_val ) :: HE_val
 
 !  ----------------------------------------------------------------------------
-!  compute the gradient and Hessian matrix of a group partially separable 
+!  compute the gradient and Hessian matrix of a group partially separable
 !  function initially written in Standard Input Format (SIF)
 
-!  the matrix is represented in "finite element format", i.e., 
+!  the matrix is represented in "finite element format", i.e.,
 
 !           ne
-!      H = sum H_e, 
+!      H = sum H_e,
 !          e=1
 
 !  where each element H_i involves a small subset of the rows of H. H is stored
@@ -180,17 +180,17 @@
 
 !  ne (integer) number of elements
 !  HE_row (integer array) a list of the row indices involved which each
-!          element. Those for element e directly proceed those for 
+!          element. Those for element e directly proceed those for
 !          element e + 1, e = 1, ..., ne-1
-!  HE_row_ptr (integer array) pointers to the position in HE_row of the first 
-!          row index in each element. HE_row_ptr(ne+1) points to the first 
+!  HE_row_ptr (integer array) pointers to the position in HE_row of the first
+!          row index in each element. HE_row_ptr(ne+1) points to the first
 !          empty location in IRPNHI
 !  HE_val (real array) a list of the nonzeros in the upper triangle of
-!          H_e, stored by rows, or by columns, for each element. Those 
-!          for element i directly proceed those for element, e + 1, 
+!          H_e, stored by rows, or by columns, for each element. Those
+!          for element i directly proceed those for element, e + 1,
 !          e = 1, ..., ne-1
-!  HE_val_ptr (integer array) pointers to the position in HE_val of the first 
-!          nonzero in each element. HE_val_ptr(ne+1) points to the first 
+!  HE_val_ptr (integer array) pointers to the position in HE_val of the first
+!          nonzero in each element. HE_val_ptr(ne+1) points to the first
 !          empty location in HE_val
 !  byrows (logical) must be set .TRUE. if the upper triangle of each H_e is
 !          to be stored by rows, and .FALSE. if it is to be stored by columns
@@ -247,13 +247,13 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lhe_val ) :: HE_val
 
 !  ----------------------------------------------------------------------------
-!  compute the gradient and Hessian matrix of a group partially separable 
+!  compute the gradient and Hessian matrix of a group partially separable
 !  function initially written in Standard Input Format (SIF)
 
-!  the matrix is represented in "finite element format", i.e., 
+!  the matrix is represented in "finite element format", i.e.,
 
 !           ne
-!      H = sum H_e, 
+!      H = sum H_e,
 !          e=1
 
 !  where each element H_i involves a small subset of the rows of H. H is stored
@@ -262,17 +262,17 @@
 
 !  ne (integer) number of elements
 !  HE_row (integer array) a list of the row indices involved which each
-!          element. Those for element e directly proceed those for 
+!          element. Those for element e directly proceed those for
 !          element e + 1, e = 1, ..., ne-1
-!  HE_row_ptr (integer array) pointers to the position in HE_row of the first 
-!          row index in each element. HE_row_ptr(ne+1) points to the first 
+!  HE_row_ptr (integer array) pointers to the position in HE_row of the first
+!          row index in each element. HE_row_ptr(ne+1) points to the first
 !          empty location in IRPNHI
 !  HE_val (real array) a list of the nonzeros in the upper triangle of
-!          H_e, stored by rows, or by columns, for each element. Those 
-!          for element i directly proceed those for element, e + 1, 
+!          H_e, stored by rows, or by columns, for each element. Those
+!          for element i directly proceed those for element, e + 1,
 !          e = 1, ..., ne-1
-!  HE_val_ptr (integer array) pointers to the position in HE_val of the first 
-!          nonzero in each element. HE_val_ptr(ne+1) points to the first 
+!  HE_val_ptr (integer array) pointers to the position in HE_val of the first
+!          nonzero in each element. HE_val_ptr(ne+1) points to the first
 !          empty location in HE_val
 !  byrows (logical) must be set .TRUE. if the upper triangle of each H_e is
 !          to be stored by rows, and .FALSE. if it is to be stored by columns
@@ -283,8 +283,11 @@
       INTEGER :: i, ig, j, ifstat, igstat, lhe_row_int, lhe_val_int
       INTEGER :: alloc_status
       REAL ( KIND = wp ) :: ftt
+      REAL ( KIND = wp ) :: time_in, time_out
       CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
       EXTERNAL :: RANGE
+
+      IF ( work%record_times ) CALL CPU_TIME( time_in )
 
 !  there are non-trivial group functions
 
@@ -387,22 +390,22 @@
 
 !  check for errors in the assembly
 
-      IF ( status > 0 ) RETURN
+      IF ( status > 0 ) GO TO 990
 
 !  check that HE_row and HE_val are large enough
 
       IF ( lhe_row < HE_row_ptr( ne + 1 ) - 1 ) THEN
         IF ( data%out > 0 ) WRITE( data%out, "( ' ** SUBROUTINE UGREH: ',      &
        &  'Increase the dimension of HE_row to ',  I0 )" )                     &
-             HE_row_ptr( ne + 1 ) - 1 
-        status = 2 ; RETURN
+             HE_row_ptr( ne + 1 ) - 1
+        status = 2 ; GO TO 990
       END IF
 
       IF ( lhe_val < HE_val_ptr( ne + 1 ) - 1 ) THEN
         IF ( data%out > 0 ) WRITE( data%out, "( ' ** SUBROUTINE UGREH: ',      &
        &  'Increase the dimension of HE_val to ',  I0 )" )                     &
-             HE_val_ptr( ne + 1 ) - 1 
-        status = 2 ; RETURN
+             HE_val_ptr( ne + 1 ) - 1
+        status = 2 ; GO TO 990
       END IF
 
 !  record the element Hessian
@@ -417,7 +420,7 @@
       work%nc2og = work%nc2og + 1
       work%nc2oh = work%nc2oh + 1
       status = 0
-      RETURN
+      GO TO 990
 
 !  unsuccessful returns
 
@@ -425,6 +428,14 @@
       IF ( data%out > 0 ) WRITE( data%out,                                     &
         "( ' ** SUBROUTINE UGREH: error flag raised during SIF evaluation' )" )
       status = 3
+
+!  update elapsed CPU time if required
+
+  990 CONTINUE
+      IF ( work%record_times ) THEN
+        CALL CPU_TIME( time_out )
+        work%time_ugreh = work%time_ugreh + time_out - time_in
+      END IF
       RETURN
 
 !  end of subroutine CUTEST_ugreh_threadsafe

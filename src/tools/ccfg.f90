@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.1 - 22/08/2013 AT 11:30 GMT.
+! THIS VERSION: CUTEST 1.4 - 26/02/2016 AT 08:00 GMT.
 
 !-*-*-*-*-*-  C U T E S T   C I N T _  C C F G    S U B R O U T I N E  -*-*-*-*-
 
@@ -25,7 +25,7 @@
 
 ! ------------------------------------------------------------------------
 !  compute the values of the constraint functions and their gradients
-!  for constraints initially written in Standard Input Format (SIF).  
+!  for constraints initially written in Standard Input Format (SIF).
 !  The Jacobian must be stored in a dense format.
 !  (Subroutine CSCFG performs the same calculations for a sparse Jacobian)
 
@@ -76,7 +76,7 @@
 
 ! ------------------------------------------------------------------------
 !  compute the values of the constraint functions and their gradients
-!  for constraints initially written in Standard Input Format (SIF).  
+!  for constraints initially written in Standard Input Format (SIF).
 !  The Jacobian must be stored in a dense format.
 !  (Subroutine CSCFG performs the same calculations for a sparse Jacobian)
 
@@ -124,7 +124,7 @@
 
 ! ------------------------------------------------------------------------
 !  compute the values of the constraint functions and their gradients
-!  for constraints initially written in Standard Input Format (SIF).  
+!  for constraints initially written in Standard Input Format (SIF).
 !  The Jacobian must be stored in a dense format.
 !  (Subroutine CSCFG performs the same calculations for a sparse Jacobian)
 
@@ -186,7 +186,7 @@
 
 ! ------------------------------------------------------------------------
 !  compute the values of the constraint functions and their gradients
-!  for constraints initially written in Standard Input Format (SIF).  
+!  for constraints initially written in Standard Input Format (SIF).
 !  The Jacobian must be stored in a dense format.
 !  (Subroutine CSCFG performs the same calculations for a sparse Jacobian)
 
@@ -204,10 +204,13 @@
 
       INTEGER :: i, j, iel, k, ig, ii, ig1, l, ll, icon, nin, nvarel, nelow
       INTEGER :: icnt, ifstat, igstat, nelup, istrgv, iendgv
-      EXTERNAL :: RANGE 
       REAL ( KIND = wp ) :: ftt, gi, scalee
+      REAL ( KIND = wp ) :: time_in, time_out
+      EXTERNAL :: RANGE
 
-      IF ( data%numcon == 0 ) RETURN
+      IF ( work%record_times ) CALL CPU_TIME( time_in )
+
+      IF ( data%numcon == 0 ) GO TO 990
 
 !  check input parameters
 
@@ -216,18 +219,18 @@
           IF ( lcjac1 < n .OR. lcjac2 < m ) THEN
             IF ( lcjac1 < n .AND. data%out > 0 ) WRITE( data%out, 2000 )
             IF ( lcjac2 < m .AND. data%out > 0 ) WRITE( data%out, 2010 )
-            status = 2 ; RETURN
+            status = 2 ; GO TO 990
           END IF
         ELSE
           IF ( lcjac1 < m .OR. lcjac2 < n ) THEN
             IF ( lcjac1 < m .AND. data%out > 0 ) WRITE( data%out, 2000 )
             IF ( lcjac2 < n .AND. data%out > 0 ) WRITE( data%out, 2010 )
-            status = 2 ; RETURN
+            status = 2 ; GO TO 990
           END IF
         END IF
       END IF
 
-!  identify which elements are included in constraints. Use logical work 
+!  identify which elements are included in constraints. Use logical work
 !  vector to keep track of elements already included
 
       work%LOGIC( 1 : data%nel ) = .FALSE.
@@ -283,7 +286,7 @@
          IF ( icon > 0 .AND. icon <= m ) THEN
            ftt = - data%B( ig )
 
-!  include the contribution from the linear element only if the variable 
+!  include the contribution from the linear element only if the variable
 !  belongs to the first n variables
 
            DO i = data%ISTADA( ig ), data%ISTADA( ig + 1 ) - 1
@@ -312,7 +315,7 @@
         work%GVALS( : data%ng, 1 ) = work%FT( : data%ng )
         work%GVALS( : data%ng, 2 ) = 1.0_wp
 
-!  evaluate the group function values. Evaluate groups belonging to the first 
+!  evaluate the group function values. Evaluate groups belonging to the first
 !  m constraints only
 
       ELSE
@@ -322,7 +325,7 @@
           IF ( icon > 0 .AND. icon <= m ) THEN
             icnt = icnt + 1
             work%ICALCF( icnt ) = ig
-          END IF 
+          END IF
         END DO
         CALL GROUP( work%GVALS, data%ng, work%FT, data%GPVALU, icnt,           &
                     data%ITYPEG, data%ISTGP, work%ICALCF, data%ltypeg,         &
@@ -476,7 +479,7 @@
         END DO
       END IF
       status = 0
-      RETURN
+      GO TO 990
 
 !  unsuccessful returns
 
@@ -484,11 +487,19 @@
       IF ( data%out > 0 ) WRITE( data%out,                                     &
         "( ' ** SUBROUTINE CCFG: error flag raised during SIF evaluation' )" )
       status = 3
+
+!  update elapsed CPU time if required
+
+  990 CONTINUE
+      IF ( work%record_times ) THEN
+        CALL CPU_TIME( time_out )
+        work%time_ccfg = work%time_ccfg + time_out - time_in
+      END IF
       RETURN
 
 !  non-executable statements
 
- 2000 FORMAT( ' ** SUBROUTINE CCFG: Increase the leading dimension of CJAC' ) 
+ 2000 FORMAT( ' ** SUBROUTINE CCFG: Increase the leading dimension of CJAC' )
  2010 FORMAT( ' ** SUBROUTINE CCFG: Increase the second dimension of CJAC' )
 
 !  end of subroutine CUTEST_ccfg_threadsafe

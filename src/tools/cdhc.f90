@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.3 - 07/10/2015 AT 08:10 GMT.
+! THIS VERSION: CUTEST 1.4 - 26/02/2016 AT 08:00 GMT.
 
 !-*-*-*-*-*-*-*-  C U T E S T    C D H C   S U B R O U T I N E  -*-*-*-*-*-*-*-
 
@@ -21,11 +21,11 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lh1, n ) :: H_val
 
 !  ------------------------------------------------------------------------
-!  compute the Hessian matrix of the constraint part of the Lagrangian 
+!  compute the Hessian matrix of the constraint part of the Lagrangian
 !  function of a problem initially written in Standard Input Format (SIF).
 
 !  H is a two-dimensional array which gives the value of the Hessian matrix
-!    of the constraint part of the Lagrangian function evaluated at 
+!    of the constraint part of the Lagrangian function evaluated at
 !    X and Y. The i,j-th component of the array will contain
 !    the derivative with respect to variables X(i) and X(j).
 !  -------------------------------------------------------------------------
@@ -60,11 +60,11 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lh1, n ) :: H_val
 
 !  ------------------------------------------------------------------------
-!  compute the Hessian matrix of the constraint part of the Lagrangian 
+!  compute the Hessian matrix of the constraint part of the Lagrangian
 !  function of a problem initially written in Standard Input Format (SIF).
 
 !  H is a two-dimensional array which gives the value of the Hessian matrix
-!    of the constraint part of the Lagrangian function evaluated at 
+!    of the constraint part of the Lagrangian function evaluated at
 !    X and Y. The i,j-th component of the array will contain
 !    the derivative with respect to variables X(i) and X(j).
 !  -------------------------------------------------------------------------
@@ -113,11 +113,11 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lh1, n ) :: H_val
 
 !  ------------------------------------------------------------------------
-!  compute the Hessian matrix of the constraint part of the Lagrangian 
+!  compute the Hessian matrix of the constraint part of the Lagrangian
 !  function of a problem initially written in Standard Input Format (SIF).
 
 !  H is a two-dimensional array which gives the value of the Hessian matrix
-!    of the constraint part of the Lagrangian function evaluated at 
+!    of the constraint part of the Lagrangian function evaluated at
 !    X and Y. The i,j-th component of the array will contain
 !    the derivative with respect to variables X(i) and X(j).
 !  -------------------------------------------------------------------------
@@ -126,15 +126,18 @@
 
       INTEGER :: i, ig, j, k, nnzh, ifstat, igstat, alloc_status
       REAL ( KIND = wp ) :: ftt
+      REAL ( KIND = wp ) :: time_in, time_out
       CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
-      EXTERNAL :: RANGE 
+      EXTERNAL :: RANGE
+
+      IF ( work%record_times ) CALL CPU_TIME( time_in )
 
 !  check input parameters
 
       IF ( lh1 < n ) THEN
         IF ( data%out > 0 ) WRITE( data%out, "( ' ** SUBROUTINE CDHC: ',       &
        &   'Increase the leading dimension of H_val to ', I0 )" ) n
-        status = 2 ; RETURN
+        status = 2 ; GO TO 990
       END IF
 
 !  there are non-trivial group functions
@@ -274,13 +277,13 @@
 
 !  check for errors in the assembly
 
-      IF ( status > 0 ) RETURN
+      IF ( status > 0 ) GO TO 990
 
 !  initialize the dense matrix
 
       H_val( : n, : n ) = 0.0_wp
 
-!  transfer the matrix from co-ordinate to dense storage and symmetrize the 
+!  transfer the matrix from co-ordinate to dense storage and symmetrize the
 !  martix
 
       DO k = 1, nnzh
@@ -293,7 +296,7 @@
       work%nc2oh = work%nc2oh + 1
       work%nc2ch = work%nc2ch + work%pnc
       status = 0
-      RETURN
+      GO TO 990
 
 !  unsuccessful returns
 
@@ -301,6 +304,14 @@
       IF ( data%out > 0 ) WRITE( data%out,                                     &
         "( ' ** SUBROUTINE CDHC: error flag raised during SIF evaluation' )" )
       status = 3
+
+!  update elapsed CPU time if required
+
+  990 CONTINUE
+      IF ( work%record_times ) THEN
+        CALL CPU_TIME( time_out )
+        work%time_cdhc = work%time_cdhc + time_out - time_in
+      END IF
       RETURN
 
 !  end of subroutine CUTEST_cdhc_threadsafe

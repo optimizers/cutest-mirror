@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.1 - 22/08/2013 AT 11:50 GMT.
+! THIS VERSION: CUTEST 1.4 - 26/02/2016 AT 08:00 GMT.
 
 !-*-*-*-*-*-  C U T E S T  C I N T _  C O F G    S U B R O U T I N E  -*-*-*-*-
 
@@ -27,7 +27,7 @@
 !  for a function initially written in Standard Input Format (SIF)
 
 !  G is an array which gives the value of the gradient of the
-!    objective function evaluated at X. G(i) gives the partial 
+!    objective function evaluated at X. G(i) gives the partial
 !    derivative of the objective function wrt variable X(i)
 !  ---------------------------------------------------------------
 
@@ -68,7 +68,7 @@
 !  for a function initially written in Standard Input Format (SIF)
 
 !  G is an array which gives the value of the gradient of the
-!    objective function evaluated at X. G(i) gives the partial 
+!    objective function evaluated at X. G(i) gives the partial
 !    derivative of the objective function wrt variable X(i)
 !  ---------------------------------------------------------------
 
@@ -107,7 +107,7 @@
 !  for a function initially written in Standard Input Format (SIF)
 
 !  G is an array which gives the value of the gradient of the
-!    objective function evaluated at X. G(i) gives the partial 
+!    objective function evaluated at X. G(i) gives the partial
 !    derivative of the objective function wrt variable X(i)
 !  ---------------------------------------------------------------
 
@@ -160,7 +160,7 @@
 !  for a function initially written in Standard Input Format (SIF)
 
 !  G is an array which gives the value of the gradient of the
-!    objective function evaluated at X. G(i) gives the partial 
+!    objective function evaluated at X. G(i) gives the partial
 !    derivative of the objective function wrt variable X(i)
 !  ---------------------------------------------------------------
 
@@ -168,8 +168,11 @@
 
       INTEGER :: i, j, iel, k, ig, ii, ig1, l, ll, icon, icnt, ifstat, igstat
       INTEGER :: nin, nvarel, nelow, nelup, istrgv, iendgv
-      EXTERNAL :: RANGE 
       REAL ( KIND = wp ) :: ftt, gi, scalee
+      REAL ( KIND = wp ) :: time_in, time_out
+      EXTERNAL :: RANGE
+
+      IF ( work%record_times ) CALL CPU_TIME( time_in )
 
 !  identify which elements are included in objective function. Use LOGIC
 !  to keep track of elements already included
@@ -226,11 +229,11 @@
           IF ( data%KNDOFC( ig ) == 0 ) THEN
             ftt = - data%B( ig )
 
-!  include the contribution from the linear element only if the variable 
+!  include the contribution from the linear element only if the variable
 !  belongs to the first n variables
 
             DO i = data%ISTADA( ig ), data%ISTADA( ig + 1 ) - 1
-              j = data%ICNA( i ) 
+              j = data%ICNA( i )
               IF ( j <= n ) ftt = ftt + data%A( i ) * X( j )
             END DO
 
@@ -253,7 +256,7 @@
         DO ig = 1, data%ng
           ftt = - data%B( ig )
 
-!  include the contribution from the linear element only if the variable 
+!  include the contribution from the linear element only if the variable
 !  belongs to the first n variables
 
           DO i = data%ISTADA( ig ), data%ISTADA( ig + 1 ) - 1
@@ -283,7 +286,7 @@
         work%GVALS( : data%ng, 2 ) = 1.0_wp
       ELSE
 
-!  evaluate the group function values. Only evaluate groups belonging to the 
+!  evaluate the group function values. Only evaluate groups belonging to the
 !  objective function
 
         icnt = 0
@@ -291,7 +294,7 @@
           IF ( data%KNDOFC( ig ) == 0 ) THEN
             icnt = icnt + 1
             work%ICALCF( icnt ) = ig
-          END IF 
+          END IF
         END DO
         CALL GROUP( work%GVALS, data%ng, work%FT, data%GPVALU, icnt,           &
                     data%ITYPEG, data%ISTGP, work%ICALCF, data%ltypeg,         &
@@ -314,7 +317,7 @@
             ELSE
               f = f + data%GSCALE( ig ) * work%GVALS( ig, 1 )
             END IF
-          END IF 
+          END IF
         END DO
       ELSE
 
@@ -361,7 +364,7 @@
 !  compute the first derivative of the group
 
           gi = data%GSCALE( ig )
-          IF ( .NOT. data%GXEQX( ig ) ) gi = gi  * work%GVALS( ig, 2 ) 
+          IF ( .NOT. data%GXEQX( ig ) ) gi = gi  * work%GVALS( ig, 2 )
 
 !  the group has nonlinear elements
 
@@ -431,7 +434,7 @@
             DO k = data%ISTADA( ig ), data%ISTADA( ig1 ) - 1
               ll = data%ICNA( k )
 
-!  include the contributions from linear elements for only the first n 
+!  include the contributions from linear elements for only the first n
 !  variables
 
               IF ( ll <= n ) G( ll ) = G( ll ) + gi * data%A( k )
@@ -444,9 +447,8 @@
 
       work%nc2of = work%nc2of + 1
       IF ( grad ) work%nc2og = work%nc2og + 1
-
       status = 0
-      RETURN
+      GO TO 990
 
 !  unsuccessful returns
 
@@ -454,6 +456,14 @@
       IF ( data%out > 0 ) WRITE( data%out,                                     &
         "( ' ** SUBROUTINE COFG: error flag raised during SIF evaluation' )" )
       status = 3
+
+!  update elapsed CPU time if required
+
+  990 CONTINUE
+      IF ( work%record_times ) THEN
+        CALL CPU_TIME( time_out )
+        work%time_cofg = work%time_cofg + time_out - time_in
+      END IF
       RETURN
 
 !  end of subroutine CUTEST_cofg_threadsafe

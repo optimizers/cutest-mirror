@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.1 - 22/08/2013 AT 13:10 GMT.
+! THIS VERSION: CUTEST 1.4 - 26/02/2016 AT 08:00 GMT.
 
 !-*-*-*-*-  C U T E S T  C I N T _ C G R D H    S U B R O U T I N E  -*-*-*-*-
 
@@ -47,7 +47,7 @@
 
 !  H_val is a two-dimensional array which gives the value of the
 !        Hessian matrix of the Lagrangian function evaluated at
-!        X and Y. The i,j-th component of the array will contain 
+!        X and Y. The i,j-th component of the array will contain
 !        the derivative with respect to variables X(i) and X(j)
 !  ---------------------------------------------------------------
 
@@ -110,7 +110,7 @@
 
 !  H_val is a two-dimensional array which gives the value of the
 !        Hessian matrix of the Lagrangian function evaluated at
-!        X and Y. The i,j-th component of the array will contain 
+!        X and Y. The i,j-th component of the array will contain
 !        the derivative with respect to variables X(i) and X(j)
 !  ---------------------------------------------------------------
 
@@ -170,7 +170,7 @@
 
 !  H_val is a two-dimensional array which gives the value of the
 !        Hessian matrix of the Lagrangian function evaluated at
-!        X and Y. The i,j-th component of the array will contain 
+!        X and Y. The i,j-th component of the array will contain
 !        the derivative with respect to variables X(i) and X(j)
 !  ---------------------------------------------------------------
 
@@ -245,7 +245,7 @@
 
 !  H_val is a two-dimensional array which gives the value of the
 !        Hessian matrix of the Lagrangian function evaluated at
-!        X and Y. The i,j-th component of the array will contain 
+!        X and Y. The i,j-th component of the array will contain
 !        the derivative with respect to variables X(i) and X(j)
 !  ---------------------------------------------------------------
 
@@ -254,9 +254,12 @@
       INTEGER :: i, j, iel, k, ig, ii, ig1, l, jj, ll, nnzh, iendgv, icon
       INTEGER :: nin, nvarel, nelow, nelup, istrgv, ifstat, igstat, alloc_status
       REAL ( KIND = wp ) :: ftt, gi, gii, scalee
-      CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
+      REAL ( KIND = wp ) :: time_in, time_out
       LOGICAL :: nontrv
-      EXTERNAL :: RANGE 
+      CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
+      EXTERNAL :: RANGE
+
+      IF ( work%record_times ) CALL CPU_TIME( time_in )
 
 !  check input parameters
 
@@ -265,19 +268,19 @@
           IF ( lj1 < n .OR. lj2 < m ) THEN
             IF ( lj1 < n .AND. data%out > 0 ) WRITE( data%out, 2020 ) n
             IF ( lj2 < m .AND. data%out > 0 ) WRITE( data%out, 2030 ) m
-            status = 2 ; RETURN
+            status = 2 ; GO TO 990
           END IF
         ELSE
           IF ( lj1 < m .OR. lj2 < n ) THEN
             IF ( lj1 < m .AND. data%out > 0 ) WRITE( data%out, 2020 ) m
             IF ( lj2 < n .AND. data%out > 0 ) WRITE( data%out, 2030 ) n
-            status = 2 ; RETURN
+            status = 2 ; GO TO 990
           END IF
         END IF
       END IF
       IF ( lh1 < n ) THEN
         IF ( data%out > 0 ) WRITE( data%out, 2040 ) n
-        status = 2 ; RETURN
+        status = 2 ; GO TO 990
       END IF
 
 !  there are non-trivial group functions
@@ -342,7 +345,7 @@
         IF ( igstat /= 0 ) GO TO 930
       END IF
 
-!  for unconstrained problems, skip construction of work%W_ws( ig ) and skip 
+!  for unconstrained problems, skip construction of work%W_ws( ig ) and skip
 !  specialized construction of gradient and Jacobian.  Call ELGRD instead
 
 !  change the group weightings to include the contributions from the
@@ -358,7 +361,7 @@
           END IF
         END DO
 
-!  compute the gradient values. Initialize the gradient and Jacobian (or its 
+!  compute the gradient values. Initialize the gradient and Jacobian (or its
 !  transpose) as zero
 
         G( : n ) = 0.0_wp
@@ -465,7 +468,7 @@
                  jj = work%ISTAJC( ll )
                  work%FUVALS( data%lgrjac + jj ) = work%W_ws( ll )
 
-!  increment the address for the next nonzero in the column of the Jacobian 
+!  increment the address for the next nonzero in the column of the Jacobian
 !  for variable ll
 
                  work%ISTAJC( ll ) = jj + 1
@@ -499,7 +502,7 @@
               END IF
             END DO
 
-!  the group is non-trivial; increment the starting addresses for the groups 
+!  the group is non-trivial; increment the starting addresses for the groups
 !  used by each variable in the (unchanged) linear element to avoid resetting
 !  the nonzeros in the Jacobian
 
@@ -513,7 +516,7 @@
           END IF
         END DO
 
-!  reset the starting addresses for the lists of groups using each variable to 
+!  reset the starting addresses for the lists of groups using each variable to
 !  their values on entry
 
         DO i = n, 2, - 1
@@ -581,13 +584,13 @@
 
 !  check for errors in the assembly
 
-      IF ( status > 0 ) RETURN
+      IF ( status > 0 ) GO TO 990
 
 !  initialize the dense Hessian matrix
 
       H_val( : n, : n ) = 0.0_wp
 
-!  transfer the matrix from co-ordinate to dense storage and symmetrize the 
+!  transfer the matrix from co-ordinate to dense storage and symmetrize the
 !  martix
 
       DO k = 1, nnzh
@@ -602,7 +605,7 @@
       work%nc2oh = work%nc2oh + 1
       work%nc2ch = work%nc2ch + work%pnc
       status = 0
-      RETURN
+      GO TO 990
 
 !  unsuccessful returns
 
@@ -610,6 +613,14 @@
       IF ( data%out > 0 ) WRITE( data%out,                                     &
         "( ' ** SUBROUTINE CGRDH: error flag raised during SIF evaluation' )" )
       status = 3
+
+!  update elapsed CPU time if required
+
+  990 CONTINUE
+      IF ( work%record_times ) THEN
+        CALL CPU_TIME( time_out )
+        work%time_cgrdh = work%time_cgrdh + time_out - time_in
+      END IF
       RETURN
 
 !  non-executable statements

@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.1 - 22/08/2013 AT 13:25 GMT
+! THIS VERSION: CUTEST 1.4 - 26/02/2016 AT 08:00 GMT.
 
 !-*-*-*-*-  C U T E S T   C I N T _ C H P R O D    S U B R O U T I N E  -*-*-*-
 
@@ -23,11 +23,11 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: RESULT
 
 !  -----------------------------------------------------------------------
-!  compute the matrix-vector product between the Hessian matrix of 
+!  compute the matrix-vector product between the Hessian matrix of
 !  the Lagrangian function for the problem and  a given vector VECTOR.
 !  The result is placed in RESULT. If goth is .TRUE. the second
-!  derivatives are assumed to have already been computed. If the user is 
-!  unsure, set goth = .FALSE. the first time a product is required with 
+!  derivatives are assumed to have already been computed. If the user is
+!  unsure, set goth = .FALSE. the first time a product is required with
 !  the Hessian evaluated at X and Y. X and Y are not used if goth = .TRUE.
 !  -----------------------------------------------------------------------
 
@@ -64,11 +64,11 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: RESULT
 
 !  -----------------------------------------------------------------------
-!  compute the matrix-vector product between the Hessian matrix of 
+!  compute the matrix-vector product between the Hessian matrix of
 !  the Lagrangian function for the problem and  a given vector VECTOR.
 !  The result is placed in RESULT. If goth is .TRUE. the second
-!  derivatives are assumed to have already been computed. If the user is 
-!  unsure, set goth = .FALSE. the first time a product is required with 
+!  derivatives are assumed to have already been computed. If the user is
+!  unsure, set goth = .FALSE. the first time a product is required with
 !  the Hessian evaluated at X and Y. X and Y are not used if goth = .TRUE.
 !  -----------------------------------------------------------------------
 
@@ -104,11 +104,11 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: RESULT
 
 !  -----------------------------------------------------------------------
-!  compute the matrix-vector product between the Hessian matrix of 
+!  compute the matrix-vector product between the Hessian matrix of
 !  the Lagrangian function for the problem and  a given vector VECTOR.
 !  The result is placed in RESULT. If goth is .TRUE. the second
-!  derivatives are assumed to have already been computed. If the user is 
-!  unsure, set goth = .FALSE. the first time a product is required with 
+!  derivatives are assumed to have already been computed. If the user is
+!  unsure, set goth = .FALSE. the first time a product is required with
 !  the Hessian evaluated at X and Y. X and Y are not used if goth = .TRUE.
 !  -----------------------------------------------------------------------
 
@@ -158,11 +158,11 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( n ) :: RESULT
 
 !  -----------------------------------------------------------------------
-!  compute the matrix-vector product between the Hessian matrix of 
+!  compute the matrix-vector product between the Hessian matrix of
 !  the Lagrangian function for the problem and  a given vector VECTOR.
 !  The result is placed in RESULT. If goth is .TRUE. the second
-!  derivatives are assumed to have already been computed. If the user is 
-!  unsure, set goth = .FALSE. the first time a product is required with 
+!  derivatives are assumed to have already been computed. If the user is
+!  unsure, set goth = .FALSE. the first time a product is required with
 !  the Hessian evaluated at X and Y. X and Y are not used if goth = .TRUE.
 !  -----------------------------------------------------------------------
 
@@ -170,7 +170,10 @@
 
       INTEGER :: i, ig, j, ifstat, igstat
       REAL ( KIND = wp ) :: ftt
-      EXTERNAL :: RANGE 
+      REAL ( KIND = wp ) :: time_in, time_out
+      EXTERNAL :: RANGE
+
+      IF ( work%record_times ) CALL CPU_TIME( time_in )
 
 !  there are non-trivial group functions
 
@@ -308,7 +311,7 @@
         work%nc2ch = work%nc2ch + work%pnc
       END IF
       status = 0
-      RETURN
+      GO TO 990
 
 !  unsuccessful returns
 
@@ -316,6 +319,14 @@
       IF ( data%out > 0 ) WRITE( data%out,                                     &
         "( ' ** SUBROUTINE CHPROD: error flag raised during SIF evaluation' )" )
       status = 3
+
+!  update elapsed CPU time if required
+
+  990 CONTINUE
+      IF ( work%record_times ) THEN
+        CALL CPU_TIME( time_out )
+        work%time_chprod = work%time_chprod + time_out - time_in
+      END IF
       RETURN
 
 !  end of subroutine CUTEST_chprod_threadsafe

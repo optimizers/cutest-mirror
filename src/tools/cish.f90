@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.0 - 29/12/2012 AT 14:05 GMT.
+! THIS VERSION: CUTEST 1.4 - 26/02/2016 AT 08:00 GMT.
 
 !-*-*-*-*-*-*-*-  C U T E S T    C I S H    S U B R O U T I N E  -*-*-*-*-*-*-
 
@@ -22,13 +22,13 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lh ) :: H_val
 
 !  ---------------------------------------------------------------
-!  compute the Hessian matrix of a specified problem function 
-!  (iprob = 0 is the objective function, while iprob > 0 is the 
-!  iprob-th constraint) of a problem initially written in 
+!  compute the Hessian matrix of a specified problem function
+!  (iprob = 0 is the objective function, while iprob > 0 is the
+!  iprob-th constraint) of a problem initially written in
 !  Standard Input Format (SIF).
 
 !  The upper triangle of the Hessian is stored in coordinate form,
-!  i.e., the entry H_val(i) has row index H_row(i) and column index 
+!  i.e., the entry H_val(i) has row index H_row(i) and column index
 !  H_col(i) for i = 1, ...., nnzh
 !  ---------------------------------------------------------------
 
@@ -64,13 +64,13 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lh ) :: H_val
 
 !  ---------------------------------------------------------------
-!  compute the Hessian matrix of a specified problem function 
-!  (iprob = 0 is the objective function, while iprob > 0 is the 
-!  iprob-th constraint) of a problem initially written in 
+!  compute the Hessian matrix of a specified problem function
+!  (iprob = 0 is the objective function, while iprob > 0 is the
+!  iprob-th constraint) of a problem initially written in
 !  Standard Input Format (SIF).
 
 !  The upper triangle of the Hessian is stored in coordinate form,
-!  i.e., the entry H_val(i) has row index H_row(i) and column index 
+!  i.e., the entry H_val(i) has row index H_row(i) and column index
 !  H_col(i) for i = 1, ...., nnzh
 !  ---------------------------------------------------------------
 
@@ -120,13 +120,13 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lh ) :: H_val
 
 !  ---------------------------------------------------------------
-!  compute the Hessian matrix of a specified problem function 
-!  (iprob = 0 is the objective function, while iprob > 0 is the 
-!  iprob-th constraint) of a problem initially written in 
+!  compute the Hessian matrix of a specified problem function
+!  (iprob = 0 is the objective function, while iprob > 0 is the
+!  iprob-th constraint) of a problem initially written in
 !  Standard Input Format (SIF).
 
 !  The upper triangle of the Hessian is stored in coordinate form,
-!  i.e., the entry H_val(i) has row index H_row(i) and column index 
+!  i.e., the entry H_val(i) has row index H_row(i) and column index
 !  H_col(i) for i = 1, ...., nnzh
 !  ---------------------------------------------------------------
 
@@ -135,14 +135,17 @@
       INTEGER :: i, ig, j, ncalcf, ncalcg, ifstat, igstat, alloc_status
       REAL ( KIND = wp ) :: ftt
       CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
-      EXTERNAL :: RANGE 
+      REAL ( KIND = wp ) :: time_in, time_out
+      EXTERNAL :: RANGE
+
+      IF ( work%record_times ) CALL CPU_TIME( time_in )
 
 !  check input parameters
 
       IF ( iprob < 0 ) THEN
          IF ( data%out > 0 ) WRITE( data%out, "( ' ** SUBROUTINE CISH: ',      &
         &    'invalid problem index iprob = ', I0 )" ) iprob
-         status = 2 ; RETURN
+         status = 2 ; GO TO 990
       END IF
 
 !  find group index ig of constraint iprob
@@ -158,7 +161,7 @@
          IF ( ig == 0 ) THEN
            IF ( data%out > 0 ) WRITE( data%out, "( ' ** SUBROUTINE CISH: ',    &
           &    'invalid problem index iprob = ', I0 )" ) iprob
-            status = 2 ; RETURN
+            status = 2 ; GO TO 990
          END IF
       END IF
 
@@ -349,7 +352,7 @@
 
 !  check for errors in the assembly
 
-      IF ( status > 0 ) RETURN
+      IF ( status > 0 ) GO TO 990
 
 !  record the sparse Hessian
 
@@ -361,11 +364,11 @@
 
       IF( iprob == 0 ) THEN
         work%nc2oh = work%nc2oh + 1
-      ELSE 
+      ELSE
         work%nc2ch = work%nc2ch + 1
-      END IF 
+      END IF
       status = 0
-      RETURN
+      GO TO 990
 
 !  unsuccessful returns
 
@@ -373,6 +376,14 @@
       IF ( data%out > 0 ) WRITE( data%out,                                     &
         "( ' ** SUBROUTINE CISH: error flag raised during SIF evaluation' )" )
       status = 3
+
+!  update elapsed CPU time if required
+
+  990 CONTINUE
+      IF ( work%record_times ) THEN
+        CALL CPU_TIME( time_out )
+        work%time_cish = work%time_cish + time_out - time_in
+      END IF
       RETURN
 
 !  end of subroutine CUTEST_cish_threadsafe

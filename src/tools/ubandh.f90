@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.1 - 14/06/2013 AT 14:00 GMT.
+! THIS VERSION: CUTEST 1.4 - 26/02/2016 AT 09:00 GMT.
 
 !-*-*-*-*-*-*-  C U T E S T    U B A N D H    S U B R O U T I N E  -*-*-*-*-*-*-
 
@@ -25,8 +25,8 @@
 !  separable function which lies within a band of given semi-bandwidth.
 !  The diagonal and subdiagonal entries in column i are stored in
 !  locations BAND( j, i ), where j = 0 for the diagonal and j > 0 for
-!  the j-th subdiagonal entry, j = 1, ..., MIN( semibandwidth, n - i ) 
-!  and semibandwidth is the requested semi-bandwidth. max_semibandwidth 
+!  the j-th subdiagonal entry, j = 1, ..., MIN( semibandwidth, n - i )
+!  and semibandwidth is the requested semi-bandwidth. max_semibandwidth
 !  gives the true semibandwidth, i.e, all entries outside the band with
 !  this semibandwidth are zero
 !  -----------------------------------------------------------------------
@@ -66,8 +66,8 @@
 !  separable function which lies within a band of given semi-bandwidth.
 !  The diagonal and subdiagonal entries in column i are stored in
 !  locations BAND( j, i ), where j = 0 for the diagonal and j > 0 for
-!  the j-th subdiagonal entry, j = 1, ..., MIN( semibandwidth, n - i ) 
-!  and semibandwidth is the requested semi-bandwidth. max_semibandwidth 
+!  the j-th subdiagonal entry, j = 1, ..., MIN( semibandwidth, n - i )
+!  and semibandwidth is the requested semi-bandwidth. max_semibandwidth
 !  gives the true semibandwidth, i.e, all entries outside the band with
 !  this semibandwidth are zero
 !  -----------------------------------------------------------------------
@@ -122,8 +122,8 @@
 !  separable function which lies within a band of given semi-bandwidth.
 !  The diagonal and subdiagonal entries in column i are stored in
 !  locations BAND( j, i ), where j = 0 for the diagonal and j > 0 for
-!  the j-th subdiagonal entry, j = 1, ..., MIN( semibandwidth, n - i ) 
-!  and semibandwidth is the requested semi-bandwidth. max_semibandwidth 
+!  the j-th subdiagonal entry, j = 1, ..., MIN( semibandwidth, n - i )
+!  and semibandwidth is the requested semi-bandwidth. max_semibandwidth
 !  gives the true semibandwidth, i.e, all entries outside the band with
 !  this semibandwidth are zero
 !  -----------------------------------------------------------------------
@@ -132,8 +132,11 @@
 
       INTEGER :: i, ig, j, nsemiw, ifstat, igstat, alloc_status
       REAL ( KIND = wp ) :: ftt
+      REAL ( KIND = wp ) :: time_in, time_out
       CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
-      EXTERNAL :: RANGE 
+      EXTERNAL :: RANGE
+
+      IF ( work%record_times ) CALL CPU_TIME( time_in )
 
 !  check that there is room for the band matrix
 
@@ -141,7 +144,7 @@
       IF ( lbandh < nsemiw ) THEN
         IF ( data%out > 0 ) WRITE( data%out, "( ' ** SUBROUTINE UBANDH: ',     &
       &   'array dimension lbandh should be larger than semibandwidth' )" )
-        status = 2 ; RETURN
+        status = 2 ; GO TO 990
       END IF
 
 !  there are non-trivial group functions
@@ -238,7 +241,7 @@
              maxsbw = max_semibandwidth,                                       &
              DIAG = H_band( 0, : n ), OFFDIA = H_band( 1 : nsemiw, : n  ) )
 
-      RETURN
+      GO TO 990
 
 !  unsuccessful returns
 
@@ -247,6 +250,14 @@
         "( ' ** SUBROUTINE UBANDH: error flag raised during SIF evaluation' )" )
       status = 3
       RETURN
+
+!  update elapsed CPU time if required
+
+  990 CONTINUE
+      IF ( work%record_times ) THEN
+        CALL CPU_TIME( time_out )
+        work%time_ubandh = work%time_ubandh + time_out - time_in
+      END IF
 
 !  end of subroutine CUTEST_ubandh_threadsafe
 

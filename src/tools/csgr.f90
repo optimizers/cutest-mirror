@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.1 - 22/08/2013 AT 12:50 GMT.
+! THIS VERSION: CUTEST 1.4 - 26/02/2016 AT 08:00 GMT.
 
 !-*-*-*-*-*-  C U T E S T   C I N T _ C S G R   S U B R O U T I N E  -*-*-*-*-
 
@@ -208,8 +208,11 @@
       INTEGER :: i, j, iel, k, ig, ii, ig1, l, jj, ll, icon, ifstat, igstat
       INTEGER :: nin, nvarel, nelow, nelup, istrgv, iendgv
       REAL ( KIND = wp ) :: ftt, gi, scalee, gii
+      REAL ( KIND = wp ) :: time_in, time_out
       LOGICAL :: nontrv
-      EXTERNAL :: RANGE 
+      EXTERNAL :: RANGE
+
+      IF ( work%record_times ) CALL CPU_TIME( time_in )
 
 !  there are non-trivial group functions
 
@@ -270,7 +273,7 @@
         IF ( igstat /= 0 ) GO TO 930
       END IF
 
-!  compute the gradient values. Initialize the gradient of the objective 
+!  compute the gradient values. Initialize the gradient of the objective
 !  function as zero
 
       nnzj = 0
@@ -379,7 +382,7 @@
                 jj = work%ISTAJC( ll )
                 work%FUVALS( data%lgrjac + jj ) = work%W_ws( ll )
 
-!  increment the address for the next nonzero in the column of the Jacobian 
+!  increment the address for the next nonzero in the column of the Jacobian
 !  for variable ll
 
                 work%ISTAJC( ll ) = jj + 1
@@ -422,7 +425,7 @@
                    work%G_temp( ll ) = work%G_temp( ll ) + gii * work%W_ws( ll )
                END IF
 
-!  increment the address for the next nonzero in the column of the Jacobian 
+!  increment the address for the next nonzero in the column of the Jacobian
 !  for variable ll
 
                IF ( nontrv ) THEN
@@ -433,7 +436,7 @@
           END IF
         END DO
 
-!  reset the starting addresses for the lists of groups using each variable to 
+!  reset the starting addresses for the lists of groups using each variable to
 !  their values on entry
 
         DO i = n, 2, - 1
@@ -483,7 +486,7 @@
         IF ( data%out > 0 ) WRITE( data%out,                                   &
           "( /, ' ** SUBROUTINE CSGR: array length lj too small.',             &
          &    /, ' -- Increase the parameter lj to at least ', I0 )" ) nnzj
-        status = 2 ; RETURN
+        status = 2 ; GO TO 990
       END IF
 
 !  update the counters for the report tool
@@ -491,7 +494,7 @@
       work%nc2og = work%nc2og + 1
       work%nc2cg = work%nc2cg + work%pnc
       status = 0
-      RETURN
+      GO TO 990
 
 !  unsuccessful returns
 
@@ -499,6 +502,14 @@
       IF ( data%out > 0 ) WRITE( data%out,                                     &
         "( ' ** SUBROUTINE CSGR: error flag raised during SIF evaluation' )" )
       status = 3
+
+!  update elapsed CPU time if required
+
+  990 CONTINUE
+      IF ( work%record_times ) THEN
+        CALL CPU_TIME( time_out )
+        work%time_csgr = work%time_csgr + time_out - time_in
+      END IF
       RETURN
 
 !  end of subroutine CUTEST_csgr_threadsafe

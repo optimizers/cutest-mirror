@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.1 - 14/06/2013 AT 14:00 GMT.
+! THIS VERSION: CUTEST 1.4 - 26/02/2016 AT 09:00 GMT.
 
 !-*-*-*-*-*-*-*-  C U T E S T    U D H    S U B R O U T I N E  -*-*-*-*-*-*-*-
 
@@ -109,15 +109,18 @@
 
       INTEGER :: i, ig, j, k, nnzh, ifstat, igstat, alloc_status
       REAL ( KIND = wp ) :: ftt
+      REAL ( KIND = wp ) :: time_in, time_out
       CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
-      EXTERNAL :: RANGE 
+      EXTERNAL :: RANGE
+
+      IF ( work%record_times ) CALL CPU_TIME( time_in )
 
 !  check input parameters
 
       IF ( lh1 < n ) THEN
          IF ( data%out > 0 ) WRITE( data%out, "( ' ** SUBROUTINE UDH: ',       &
         &   'Increase the leading dimension of H to ', I0 )" ) n
-         status = 2 ; RETURN
+         status = 2 ; GO TO 990
       END IF
 
 !  there are non-trivial group functions
@@ -215,13 +218,13 @@
 
 !  check for errors in the assembly
 
-      IF ( status > 0 ) RETURN
+      IF ( status > 0 ) GO TO 990
 
 !  initialize the dense matrix
 
       H( : n, : n ) = 0.0_wp
 
-!  transfer the matrix from co-ordinate to dense storage and symmetrize the 
+!  transfer the matrix from co-ordinate to dense storage and symmetrize the
 !  martix
 
       DO k = 1, nnzh
@@ -233,7 +236,7 @@
 
       work%nc2oh = work%nc2oh + 1
       status = 0
-      RETURN
+      GO TO 990
 
 !  unsuccessful returns
 
@@ -241,6 +244,14 @@
       IF ( data%out > 0 ) WRITE( data%out,                                     &
         "( ' ** SUBROUTINE UDH: error flag raised during SIF evaluation' )" )
       status = 3
+
+!  update elapsed CPU time if required
+
+  990 CONTINUE
+      IF ( work%record_times ) THEN
+        CALL CPU_TIME( time_out )
+        work%time_udh = work%time_udh + time_out - time_in
+      END IF
       RETURN
 
 !  end of subroutine CUTEST_udh_threadsafe

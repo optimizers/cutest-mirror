@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.1 - 14/06/2013 AT 14:00 GMT.
+! THIS VERSION: CUTEST 1.4 - 26/02/2016 AT 09:00 GMT.
 
 !-*-*-*-*-*-*-*-  C U T E S T    U S H P  S U B R O U T I N E  -*-*-*-*-*-*-*-
 
@@ -18,9 +18,9 @@
       INTEGER, INTENT( OUT ), DIMENSION( lh ) :: H_row, H_col
 
 !  ---------------------------------------------------------------
-!  compute the spasity pattern of the Hessian matrix of a group 
-!  partially separable function. The upper triangle of the Hessian 
-!  is stored in coordinate form, i.e., the entry has row index 
+!  compute the spasity pattern of the Hessian matrix of a group
+!  partially separable function. The upper triangle of the Hessian
+!  is stored in coordinate form, i.e., the entry has row index
 !  H_row(i) and column index H_col(i) for i = 1, ...., nnzh
 !  ---------------------------------------------------------------
 
@@ -44,6 +44,7 @@
       SUBROUTINE CUTEST_ushp_threadsafe( data, work, status, n,                &
                                          nnzh, lh, H_row, H_col )
       USE CUTEST
+      INTEGER, PARAMETER :: wp = KIND( 1.0D+0 )
 
 !  dummy arguments
 
@@ -54,16 +55,19 @@
       INTEGER, INTENT( OUT ), DIMENSION( lh ) :: H_row, H_col
 
 !  ---------------------------------------------------------------
-!  compute the spasity pattern of the Hessian matrix of a group 
-!  partially separable function. The upper triangle of the Hessian 
-!  is stored in coordinate form, i.e., the entry has row index 
+!  compute the spasity pattern of the Hessian matrix of a group
+!  partially separable function. The upper triangle of the Hessian
+!  is stored in coordinate form, i.e., the entry has row index
 !  H_row(i) and column index H_col(i) for i = 1, ...., nnzh
 !  ---------------------------------------------------------------
 
 !  local variables
 
       INTEGER :: alloc_status
+      REAL ( KIND = wp ) :: time_in, time_out
       CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
+
+      IF ( work%record_times ) CALL CPU_TIME( time_in )
 
 !  determine the Hessian pattern
 
@@ -79,7 +83,7 @@
 
 !  check for errors
 
-      IF ( status > 0 ) RETURN
+      IF ( status > 0 ) GO TO 990
 
 !  record the sparse Hessian
 
@@ -90,6 +94,14 @@
 
       work%nc2oh = work%nc2oh + 1
       status = 0
+
+!  update elapsed CPU time if required
+
+  990 CONTINUE
+      IF ( work%record_times ) THEN
+        CALL CPU_TIME( time_out )
+        work%time_ushp = work%time_ushp + time_out - time_in
+      END IF
       RETURN
 
 !  end of subroutine CUTEST_ushp_threadsafe
