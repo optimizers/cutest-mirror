@@ -172,6 +172,7 @@
         REAL ( KIND = wp ) :: time_cshp = 0.0_wp
         REAL ( KIND = wp ) :: time_cshprod = 0.0_wp
         REAL ( KIND = wp ) :: time_csjprod = 0.0_wp
+        REAL ( KIND = wp ) :: time_cconst = 0.0_wp
         REAL ( KIND = wp ) :: time_ubandh = 0.0_wp
         REAL ( KIND = wp ) :: time_udh = 0.0_wp
         REAL ( KIND = wp ) :: time_ueh = 0.0_wp

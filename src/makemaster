@@ -1,7 +1,7 @@
 #  Main body of the installation makefile for the CUTEST packages
 
 #  N. Gould, D. Orban and Ph. L. Toint.
-#  This version: 18 XI 2012
+#  This version: 16 May 2016
 
 SHELL = /bin/$(BINSHELL)
 
@@ -37,8 +37,6 @@ all_single: tools_single
                    gen90  PRECIS=single PWD=$(PWD)/gen90 )
 	( cd genc  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    genc  PRECIS=single PWD=$(PWD)/genc )
-	( cd gsl  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
-                   gsl  PRECIS=single PWD=$(PWD)/gsl )
 	( cd hrb  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    hrb  PRECIS=single PWD=$(PWD)/hrb )
 	( cd ipopt  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
@@ -120,8 +118,6 @@ all_double: tools_double
                    gen90  PRECIS=double PWD=$(PWD)/gen90 )
 	( cd genc  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    genc  PRECIS=double PWD=$(PWD)/genc )
-	( cd gsl  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
-                   gsl  PRECIS=double PWD=$(PWD)/gsl )
 	( cd hrb  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    hrb  PRECIS=double PWD=$(PWD)/hrb )
 	( cd ipopt  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
@@ -190,6 +186,16 @@ all_2008_double: all_double
                    ral_nlls  PRECIS=double PWD=$(PWD)/ral_nlls )
 	( cd sqic  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    sqic  PRECIS=double PWD=$(PWD)/sqic )
+
+#  all tools (including gsl) and interfaces
+
+all_with_gsl: all_with_tao_$(PRECIS)
+all_with_gsl_single: all_single
+	( cd gsl  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   gsl  PRECIS=single PWD=$(PWD)/gsl )
+all_with_gsl_double: all_double
+	( cd gsl  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   gsl  PRECIS=double PWD=$(PWD)/gsl )
 
 #  all tools (including tao) and interfaces
 

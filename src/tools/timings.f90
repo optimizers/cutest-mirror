@@ -175,6 +175,8 @@
         time = work%time_cshprod
       CASE ( 'cutest_csjprod' )
         time = work%time_csjprod
+      CASE ( 'cutest_cconst' )
+        time = work%time_cconst
       CASE ( 'cutest_ubandh' )
         time = work%time_ubandh
       CASE ( 'cutest_udh' )
