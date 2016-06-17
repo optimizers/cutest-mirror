@@ -1,4 +1,4 @@
-C     ( Last modified on 11 Jan 2013 at 14:30:00 )
+C     ( Last modified on 13 Jun 2016 at 08:20:00 )
 
       PROGRAM NPSOL_main
 
@@ -9,7 +9,7 @@ C
 C     May 1993. Peihuang Chen
 C     modified September 1993. Ingrid Bongartz
 C     CUTEst evolution January 2013, Nick Gould
-C     
+C
 C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 C  Set up parameters, variables and arrays required by constrained tools
@@ -42,8 +42,8 @@ C  and dimension IPADNP and IPSVNP only once
       INTEGER :: lformh, lvlder, lverfy, msgnp , nlnf, nlnj, nlnx
       INTEGER :: nncnln, nsave, nload, ksave
       INTEGER :: ipadnp( 12 ), IPSVNP( mxparm )
-      COMMON / NPPAR1/ IPSVNP, idbgnp, itmxnp, jvrfy1, jvrfy2, jvrfy3, 
-     *                 jvrfy4, ldbgnp, lformh, lvlder, lverfy, msgnp, 
+      COMMON / NPPAR1/ IPSVNP, idbgnp, itmxnp, jvrfy1, jvrfy2, jvrfy3,
+     *                 jvrfy4, ldbgnp, lformh, lvlder, lverfy, msgnp,
      *                 nlnf, nlnj, nlnx, nncnln, nsave, nload, ksave,
      *                 IPADNP
       COMMON / NPSOL_m/ m
@@ -87,22 +87,22 @@ C
       liwork = 3 * npm
       lwork = 2 * n * n + 3 * n * m + 20 * n + 32 * m
 
-C  allocate space 
+C  allocate space
 
-      ALLOCATE( X( n ), BL( n ), BU( n ), Y( m ), CL( m ), CU( m ), 
-     *          G( n ), C( m ), EQUATN( m ), LINEAR( m ), 
-     *          WORK( lwork), IWORK( liwork ), 
-     *          ISTATE( npm ), CJAC( ldcj, n ), A( lda, n ), 
+      ALLOCATE( X( n ), BL( n ), BU( n ), Y( m ), CL( m ), CU( m ),
+     *          G( n ), C( m ), EQUATN( m ), LINEAR( m ),
+     *          WORK( lwork), IWORK( liwork ),
+     *          ISTATE( npm ), CJAC( ldcj, n ), A( lda, n ),
      *          R( LDR, n ), BLOWER( npm ), BUPPER( npm ),
      *          CLAMBDA( npm ), STAT = status )
       IF ( status /= 0 ) GO TO 990
 
-C  input problem data using CSETUP - reorder the constraints so that the 
-C  nonlinear constraints occur before the linear ones.  The constraints 
-C  are ordered in this way so that CCFG need evaluate the Jacobian for 
+C  input problem data using CSETUP - reorder the constraints so that the
+C  nonlinear constraints occur before the linear ones.  The constraints
+C  are ordered in this way so that CCFG need evaluate the Jacobian for
 C  only the first NCNLN constraints
 
-      CALL CUTEST_csetup( status, input, out, io_buffer, n, m, X, BL, 
+      CALL CUTEST_csetup( status, input, out, io_buffer, n, m, X, BL,
      *                    BU, Y, CL, CU,EQUATN, LINEAR, 0, 2, 0 )
       CLOSE( input )
       IF ( status /= 0 ) GO TO 910
@@ -113,12 +113,12 @@ C  determine the number of linear and nonlinear constraints
       ncnln = m - nclin
 
 C  set up the lower bound vector BLOWER and upper bound vector BUPPER
-C  in the order required by NPSOL. For i=1 to n, set BLOWER (BUPPER) 
-C  to the lower (upper) bound on the variables.  (CSETUP put these bounds 
-C  in BL and BU.). For i=n+1 to n+nclin, set BLOWER (BUPPER) to the lower 
+C  in the order required by NPSOL. For i=1 to n, set BLOWER (BUPPER)
+C  to the lower (upper) bound on the variables.  (CSETUP put these bounds
+C  in BL and BU.). For i=n+1 to n+nclin, set BLOWER (BUPPER) to the lower
 C  (upper) bounds on the linear constraints. For i=n+nclin+1 to n+nclin+
-C   ncnln, set BLOWER (BUPPER) to the lower (upper) bounds on the nonlinear 
-C  constraints. At the same time, copy the multiplier estimates from Y to 
+C   ncnln, set BLOWER (BUPPER) to the lower (upper) bounds on the nonlinear
+C  constraints. At the same time, copy the multiplier estimates from Y to
 C  CLAMBDA. CLAMBDA has the same ordering as BLOWER and BUPPER.
 
       DO 150 i = 1, n
@@ -142,11 +142,11 @@ C  CLAMBDA. CLAMBDA has the same ordering as BLOWER and BUPPER.
   170 CONTINUE
 
 C  compute the constraint values and Jacobian at X = G = 0
-      
-      CALL CUTEST_ccfg( status, n, m, G, C, .FALSE., 
+
+      CALL CUTEST_ccfg( status, n, m, G, C, .FALSE.,
      *                  ldcj, n, CJAC, .TRUE. )
       IF ( status .NE. 0 ) THEN
-        WRITE( 6, "( ' CUTEst error, status = ', i0, ', stopping' )") 
+        WRITE( 6, "( ' CUTEst error, status = ', i0, ', stopping' )")
      *   status
         STOP
       END IF
@@ -160,7 +160,7 @@ C  set A, the coefficients of the linear constraints
   210   CONTINUE
   230 CONTINUE
 
-C  Incorporate nonzero RHS constants of linear constraints into the 
+C  Incorporate nonzero RHS constants of linear constraints into the
 C  lower and upper bounds
 
       DO 250 i = 1, nclin
@@ -173,11 +173,11 @@ C  lower and upper bounds
 C  Incorporate nonzero RHS constants of nonlinear constraints into
 C  the lower and upper bounds.
 
-      DO 260 i = 1, ncnln
-        ib = n + nclin + i
-        BLOWER( ib ) = BLOWER( ib ) + C( i )
-        BUPPER( ib ) = BUPPER( ib ) + C( i )
-  260 CONTINUE
+C    DO 260 i = 1, ncnln
+C       ib = n + nclin + i
+C       BLOWER( ib ) = BLOWER( ib ) + C( i )
+C       BUPPER( ib ) = BUPPER( ib ) + C( i )
+C 260 CONTINUE
 
 C  Get the problem name and write some debug messages.
 
@@ -229,7 +229,7 @@ C  Solve the problem
 
       CALL NPSOL( n, nclin, ncnln, lda, ldcj, ldr, A, BLOWER, BUPPER,
      *             NPSOL_evalcj, NPSOL_evalfg, inform, ITER, ISTATE,
-     *             C, CJAC, CLAMBDA, f, G, R, X, IWORK, liwork, WORK, 
+     *             C, CJAC, CLAMBDA, f, G, R, X, IWORK, liwork, WORK,
      *             lwork )
 
       CALL CUTEST_creport( status, CALLS, CPU )
@@ -258,20 +258,20 @@ C  Print messages about abnormal NPSOL inform codes
 C  Output final objective function value and timing information
 
       IF ( iprint .GT. 0 )
-     *  WRITE ( iprint, 2000 ) pname, n, m, CALLS( 1 ), CALLS( 2 ), 
+     *  WRITE ( iprint, 2000 ) pname, n, m, CALLS( 1 ), CALLS( 2 ),
      *   CALLS( 5 ), CALLS( 6 ), inform, f, CPU( 1 ), CPU( 2 )
       IF ( out .GT. 0 )
-     *  WRITE ( out, 2000 ) pname, n, m, CALLS( 1 ), CALLS( 2 ), 
+     *  WRITE ( out, 2000 ) pname, n, m, CALLS( 1 ), CALLS( 2 ),
      *   CALLS( 5 ), CALLS( 6 ), inform, f, CPU( 1 ), CPU( 2 )
 
       DEALLOCATE( X, BL, BU, Y, CL, CU, G, C, EQUATN, LINEAR, WORK,
-     *            IWORK, ISTATE, CJAC, A, R, BLOWER, BUPPER, CLAMBDA, 
+     *            IWORK, ISTATE, CJAC, A, R, BLOWER, BUPPER, CLAMBDA,
      *            STAT = status )
       CALL CUTEST_cterminate( status )
       STOP
 
   910 CONTINUE
-      WRITE( out, "( ' CUTEst error, status = ', i0, ', stopping' )") 
+      WRITE( out, "( ' CUTEst error, status = ', i0, ', stopping' )")
      *   status
       STOP
 
@@ -287,7 +287,7 @@ C  Non-executable statements
      *    ,' # variables             =      ', I10 /
      *    ,' # constraints           =      ', I10 /
      *    ,' # objective functions   =        ', F8.2 /
-     *    ,' # objective gradients   =        ', F8.2 / 
+     *    ,' # objective gradients   =        ', F8.2 /
      *    ,' # constraints functions =        ', F8.2 /
      *    ,' # constraints gradients =        ', F8.2 /
      *    ,' Exit code               =      ', I10 /
@@ -351,7 +351,7 @@ C  evaluate the objective and its gradient
       END IF
       CALL CUTEST_cofg( status, n, X, f, G, grad )
       IF ( status .NE. 0 ) THEN
-        WRITE( 6, "( ' CUTEst error, status = ', i0, ', stopping' )") 
+        WRITE( 6, "( ' CUTEst error, status = ', i0, ', stopping' )")
      *   status
         STOP
       END IF
@@ -386,10 +386,10 @@ C  evaluate the constraints and their gradients (Jacobian)
       ELSE
         grad = .TRUE.
       END IF
-      CALL CUTEST_ccfg( status, n, m, X, C, .FALSE., 
+      CALL CUTEST_ccfg( status, n, m, X, C, .FALSE.,
      *                  ldcj, n, CJAC, grad )
       IF ( status .NE. 0 ) THEN
-        WRITE( 6, "( ' CUTEst error, status = ', i0, ', stopping' )") 
+        WRITE( 6, "( ' CUTEst error, status = ', i0, ', stopping' )")
      *   status
         STOP
       END IF
