@@ -60,19 +60,19 @@ PLIBS = $(LIBS) -lcutest_problem
 
 #  Archive manipulation strings
 
-ARR = $(AR) -rc $(LC)
+ARR = $(AR) -rcU $(LC)
 RMARFILE = $(CUTEST)/bin/rmarfile $(AR) $(GREP) $(LC)
 RMOBFILE = $(CUTEST)/bin/rmobfile $(RM) $(OBJ)
 
-BARR = $(AR) -rc $(BLC)
+BARR = $(AR) -rcU $(BLC)
 BRMARFILE = $(CUTEST)/bin/rmarfile $(AR) $(GREP) $(BLC)
 
-DARR = $(AR) -rc $(DLC)
+DARR = $(AR) -rcU $(DLC)
 
-LARR = $(AR) -rc $(LLC)
+LARR = $(AR) -rcU $(LLC)
 LRMARFILE = $(CUTEST)/bin/rmarfile $(AR) $(GREP) $(LLC)
 
-MARR = $(AR) -rc $(MLC)
+MARR = $(AR) -rcU $(MLC)
 MRMARFILE = $(CUTEST)/bin/rmarfile $(AR) $(GREP) $(MLC)
 
 #  Derived type dependencies
