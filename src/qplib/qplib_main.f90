@@ -12,7 +12,7 @@
 
      USE CUTEST_LQP_double
 
-     IMPLICIT NONE 
+     IMPLICIT NONE
 
 !--------------------
 !   P r e c i s i o n
@@ -34,7 +34,7 @@
       INTEGER, PARAMETER :: standard_out = 6
       INTEGER, PARAMETER :: qplib_out = 61
       INTEGER, PARAMETER :: qplib_out_dummy = 62
-      INTEGER, PARAMETER :: buffer = 77 
+      INTEGER, PARAMETER :: buffer = 77
       REAL ( KIND = wp ), PARAMETER :: zero = 0.0_wp
       REAL ( KIND = wp ), PARAMETER :: one = 1.0_wp
       REAL ( KIND = wp ), PARAMETER :: infinity = ( 10.0_wp ) ** 19
@@ -86,7 +86,7 @@
 
 !  problem_type = 1(QP,default),2,(QPQC),3(BQP),4(LP),5(LPQC)
 !  append_dim   = F(don't append _n_m to name where n.m = dims,default), T(do)
-!  qplib_wrfile = T(write to a file "probname".qplib), F(write to standard out) 
+!  qplib_wrfile = T(write to a file "probname".qplib), F(write to standard out)
 
 !  set up algorithmic input data
 
@@ -178,7 +178,7 @@
       ELSE
         WRITE( out, "( A24, ' CUTEst ', A,                                     &
        &       '.SIF with n = ', I0 )" ) out_p_name, TRIM( p_name ), n
-      END IF 
+      END IF
       IF ( int_var == 0 ) THEN
         SELECT CASE ( problem_type )
         CASE ( qpqc )
@@ -288,7 +288,7 @@
 
         ALLOCATE( X0( n ), STAT = status )
         IF ( status /= 0 ) GO TO 900
-        X0 = zero 
+        X0 = zero
         nnzh_i = 0 ; lh = SIZE( H_val )
 
 !  open a dummy file to store the Hessian values temporarily
@@ -356,7 +356,7 @@
       WRITE( out, "( /, A24, ' value of infinite bounds' )" ) char_val
 
 !  constraint lower bounds
-    
+
       IF ( problem_type /= bqp ) THEN
         IF ( m > 0 ) THEN
           mode_v = MODE( m, C_l )
@@ -386,7 +386,7 @@
         END IF
 
 !  constraint upper bounds
-    
+
         IF ( m > 0 ) THEN
           mode_v = MODE( m, C_u )
           l = COUNT( C_u( : m ) /= mode_v )
@@ -416,7 +416,7 @@
       END IF
 
 !  variable lower bounds
-    
+
       mode_v = MODE( n, X_l )
       l = COUNT( X_l( : n ) /= mode_v )
       char_l = TRIM_INT( l ) ; char_val = TRIM_VALUE( mode_v )
@@ -435,7 +435,7 @@
       END IF
 
 !  variable upper bounds
-    
+
       mode_v = MODE( n, X_u )
       l = COUNT( X_u( : n ) /= mode_v )
       char_l = TRIM_INT( l ) ; char_val = TRIM_VALUE( mode_v )
@@ -608,7 +608,7 @@
 
     CONTAINS
 
-!  ------------------------ M O D E  F U N C T I O N -------------------------- 
+!  ------------------------ M O D E  F U N C T I O N --------------------------
 
       FUNCTION MODE( n, V )
       IMPLICIT NONE
@@ -629,9 +629,9 @@
         V_sorted = V
         CALL SORT_heapsort_build( n, V_sorted, inform ) !  build the heap
         DO i = 1, n
-          m = n - i + 1 
+          m = n - i + 1
           CALL SORT_heapsort_smallest( m, V_sorted, inform ) !  reorder v
-        END DO  
+        END DO
 
 !  run through the sorted values, finding adjacent entries that are identical
 
@@ -758,7 +758,7 @@
 !         will have been moved into A(m) and the remaining values A(k),
 !         k = 1,..., m-1 will have been restored to a heap
 !
-!  inform integer, which informs the user of the success of 
+!  inform integer, which informs the user of the success of
 !         SORT_heapsort_smallest.
 !         If inform = 0 on exit, the smallest value has been found.
 !         If inform = 1 on exit, m was input with a value less than
@@ -853,7 +853,7 @@
       CHARACTER ( LEN = 24 ) :: TRIM_VALUE
       REAL ( KIND = wp ) :: value
 
-!  write a real value into 24 characters trimming as much as possible 
+!  write a real value into 24 characters trimming as much as possible
 !  without losing precision
 
       INTEGER :: i, i_start, i_point, i_end, j, k, l, zs
@@ -1009,6 +1009,7 @@
 
 !  find the positions of the decimal point and last digit in the mantissa
 
+      i_point = 24 ; i_end = 1
       DO i = 1, 23
         IF ( field24( i : i ) == '.' ) i_point = i
         IF ( field24( i + 1 : i + 1 ) == ' ' .OR.                             &
@@ -1051,7 +1052,7 @@
                 END IF
                 IF ( j == i_start ) THEN
                   DO l = i_end - 1, i_start, - 1
-                    field24( l + 1 : l + 1 ) = field24( l : l ) 
+                    field24( l + 1 : l + 1 ) = field24( l : l )
                   END DO
                   field24( i_start : i_start ) = '1'
                 END IF
@@ -1076,7 +1077,7 @@
 !       DO i = 2, 24
 !         TRIM_VALUE( i - 1 : i - 1 ) = TRIM_VALUE( i : i )
 !       END DO
-!     END IF 
+!     END IF
 
       zeros = .FALSE.
       DO i = 1, 24
