@@ -59,16 +59,16 @@ PLIBS = $(LIBS) -lcutest_problem
 
 #  Archive manipulation strings
 
-ARR = $(AR) -rcU $(LC)
+ARR = $(AR) -rcu $(LC)
 RMARFILE = $(CUTEST)/bin/rmarfile $(AR) $(GREP) $(LC)
 RMOBFILE = $(CUTEST)/bin/rmobfile $(RM) $(OBJ)
 
-BARR = $(AR) -rcU $(BLC)
+BARR = $(AR) -rcu $(BLC)
 BRMARFILE = $(CUTEST)/bin/rmarfile $(AR) $(GREP) $(BLC)
 
-DARR = $(AR) -rcU $(DLC)
+DARR = $(AR) -rcu $(DLC)
 
-LARR = $(AR) -rcU $(LLC)
+LARR = $(AR) -rcu $(LLC)
 LRMARFILE = $(CUTEST)/bin/rmarfile $(AR) $(GREP) $(LLC)
 
 #  compilation agenda
