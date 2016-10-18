@@ -249,10 +249,10 @@
           END IF
           work%FT( ig ) = ftt
         END DO
-      ELSE
 
 !  there are no constraints, so we need not check data%KNDOFC(ig)
 
+      ELSE
         DO ig = 1, data%ng
           ftt = - data%B( ig )
 
@@ -284,11 +284,11 @@
       IF ( data%altriv ) THEN
         work%GVALS( : data%ng, 1 ) = work%FT( : data%ng )
         work%GVALS( : data%ng, 2 ) = 1.0_wp
-      ELSE
 
 !  evaluate the group function values. Only evaluate groups belonging to the
 !  objective function
 
+      ELSE
         icnt = 0
         DO ig = 1, data%ng
           IF ( data%KNDOFC( ig ) == 0 ) THEN

@@ -20,6 +20,7 @@ if [[ -z "$MYMATLABARCH" ]]; then
 else
   ARCH=${MYMATLABARCH}
 fi
+echo $ARCH
 
 #  check that the architecture provided in MYMATLABARCH or MYARCH exists
 
@@ -32,7 +33,7 @@ fi
 
 #  check that a gfortran version is used (as this is what Matlab supports!)
 
-if [[ ${ARCH##*.} != 'gfo' ]] ; then
+if [[ ${ARCH##*.} != 'gfo' && ${ARCH##*.} != 'gfo47' ]] ; then
     echo ' The architecture privided by the environment variables MYMATLABARCH'
     echo ' (or otherwise MYARCH) must use the gfortran compiler. Install a '
     echo ' gfortran version of CUTEst unsing install_cutest and re-run.'

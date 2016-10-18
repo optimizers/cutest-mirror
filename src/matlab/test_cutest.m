@@ -27,7 +27,14 @@ if prob.m > 0
   fprintf('Evaluating objective and sparse gradient...\n');
   [f,g] = cutest_sobj(prob.x);
 
+    fprintf('Evaluating objective gradient...\n');
+    g = cutest_grad(prob.x);
 
+    fprintf('Evaluating a constraint gradient...\n');
+    g = cutest_grad(prob.x,1);
+
+    fprintf('Evaluating a sparse constraint gradient...\n');
+    sg = cutest_sgrad(prob.x,1);
 
     fprintf('Reading constraint names...\n');
     cnames = cutest_connames();
@@ -85,6 +92,9 @@ if prob.m > 0
     Hsp = cutest_sphess(prob.x,prob.v);
 
 else
+
+    fprintf('Evaluating objective gradient...\n');
+    g = cutest_grad(prob.x);
 
     fprintf('Evaluating dense objective Hessian...\n');
     H = cutest_hess(prob.x);

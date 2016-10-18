@@ -14,10 +14,14 @@
  * obj        uofg / cofg                 Evaluate objective function value
  *                                         and its gradient if requested
  *
- * grad       ugr / cgr                  Evaluate objective function gradient
+ * grad       ugr / cgr / cigr            Evaluate objective function or
+ *                                        constraint gradient
  *
- * sobj       cofsg                        Evaluate objective function value
+ * sobj       cofsg                       Evaluate objective function value
  *                                         and its sparse gradient if requested
+ *
+ * sgrad      ugr / cisgr                 Evaluate objective function or
+ *                                        constraint gradient as a sparse vector
  *
  * objcons    cfn                         Evaluate objective and constraints
  *
@@ -347,11 +351,11 @@ extern "C" {
           /*          efirst = *eFirst  ? TRUE_ : FALSE_;
           lfirst = *lFirst  ? TRUE_ : FALSE_;
           nvfrst = *nvFirst ? TRUE_ : FALSE_; */
-        } 
+        }
         else {
             mexErrMsgTxt("setup takes 0, 1 or 4 arguments\n");
         }
-      } 
+      }
       else {
         CUTEst_dertype = 2;
       }
@@ -449,7 +453,7 @@ extern "C" {
           }
       } else {
         CUTEst_nnzh = - 1 ;
-      } 
+      }
       if (CUTEst_dertype > 0) {
         if (CUTEst_ncon > 0) {
           CUTEST_cdimsj( &status, &CUTEst_nnzj);
@@ -789,10 +793,10 @@ extern "C" {
       }
 
       if (nlhs == 1)
-        CUTEST_clfg( &status, &CUTEst_nvar, &CUTEst_ncon, x, v, 
+        CUTEST_clfg( &status, &CUTEst_nvar, &CUTEst_ncon, x, v,
                      f, NULL, &somethingFalse);
       else
-        CUTEST_clfg( &status, &CUTEst_nvar, &CUTEst_ncon,x, v, 
+        CUTEST_clfg( &status, &CUTEst_nvar, &CUTEst_ncon,x, v,
                      f, g, &somethingTrue);
 
       if (status != 0) {
@@ -807,11 +811,12 @@ extern "C" {
     /* ------------------------------------------------------------------ */
 
     /* Return function gradient.
-     * Usage:  g = cutest_grad(x).
+     * Usage:  g = cutest_grad(x) or g = cutest_grad(x,i)
      */
     if (strcmp(toolName, "grad") == 0) {
 
-      if (nrhs != 2) mexErrMsgTxt("cutest_grad: Please specify x\n");
+      if (nrhs < 2 || nrhs > 4)
+        mexErrMsgTxt("cutest_grad: Please specify x and possibly index\n");
       if (nlhs < 1) mexErrMsgTxt("cutest_grad: Please specify an output argument\n");
       if (nlhs > 2) mexErrMsgTxt("cutest_grad: Too many output arguments\n");
 
@@ -821,16 +826,113 @@ extern "C" {
       if (mxGetNumberOfElements(prhs[1]) != CUTEst_nvar)
         mexErrMsgTxt("cutest_grad: Input array has erroneous size\n");
 
+      if (nrhs == 3) {
+        if (! isInteger(prhs[2]) && ! mxIsDouble(prhs[2]))
+          mexErrMsgTxt("cutest_cons: Constraint index must be integer\n");
+
+        if (isInteger(prhs[2])) {
+          icon_ptr = (integer *)mxGetData(prhs[2]);
+          icon = icon_ptr[0];
+        } else
+          icon = (integer)*mxGetPr(prhs[2]);
+
+        if (icon < 0 || icon > CUTEst_ncon) {
+          sprintf(msgBuf,
+                   "cutest_cons: Invalid constraint index %-d\n", icon);
+          mexErrMsgTxt(msgBuf);
+        }
+      } else {
+        icon = 0;
+      }
+
       x  = (doublereal *)mxGetData(prhs[1]);
       plhs[0] = mxCreateDoubleMatrix(CUTEst_nvar, 1, mxREAL);
       g  = (doublereal *)mxGetData(plhs[0]);
 
-      CUTEST_ugr( &status, &CUTEst_nvar, x, g);
+      /*      if (nrhs == 2) {
+        if (CUTEst_ncon > 0)
+          CUTEST_cigr( &status, &CUTEst_nvar, 0, x, g);
+        else
+          CUTEST_ugr( &status, &CUTEst_nvar, x, g);
+          } else { */
+        if (CUTEst_ncon > 0)
+          CUTEST_cigr( &status, &CUTEst_nvar, &icon, x, g);
+        else
+          CUTEST_ugr( &status, &CUTEst_nvar, x, g);
+/*      } */
       if (status != 0) {
           sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
           mexErrMsgTxt(msgBuf);
         }
 
+      mxFree((void *)toolName);
+      return;
+    }
+
+
+    /* ------------------------------------------------------------------ */
+
+    /* Return function gradient.
+     * Usage:  g = cutest_sgrad(x) or g = cutest_sgrad(x,i)
+     */
+    if (strcmp(toolName, "sgrad") == 0) {
+
+      if (nrhs < 2 || nrhs > 4)
+        mexErrMsgTxt("cutest_grad: Please specify x and possibly index\n");
+      if (nlhs < 1) mexErrMsgTxt("cutest_grad: Please specify an output argument\n");
+      if (nlhs > 2) mexErrMsgTxt("cutest_grad: Too many output arguments\n");
+
+      if (! mxIsDouble(prhs[1]))
+        mexErrMsgTxt("cutest_grad: Input array must have type double\n");
+
+      if (mxGetNumberOfElements(prhs[1]) != CUTEst_nvar)
+        mexErrMsgTxt("cutest_grad: Input array has erroneous size\n");
+
+      if (nrhs == 3) {
+        if (! isInteger(prhs[2]) && ! mxIsDouble(prhs[2]))
+          mexErrMsgTxt("cutest_cons: Constraint index must be integer\n");
+
+        if (isInteger(prhs[2])) {
+          icon_ptr = (integer *)mxGetData(prhs[2]);
+          icon = icon_ptr[0];
+        } else
+          icon = (integer)*mxGetPr(prhs[2]);
+
+        if (icon < 0 || icon > CUTEst_ncon) {
+          sprintf(msgBuf,
+                   "cutest_cons: Invalid constraint index %-d\n", icon);
+          mexErrMsgTxt(msgBuf);
+        }
+      } else {
+        icon = 0;
+      }
+
+      x  = (doublereal *)mxGetData(prhs[1]);
+
+      if (CUTEst_ncon == 0) {
+        /* sobj does not apply to unconstrained problems.
+         * Return dense gradient if requested.
+         */
+        sprintf(msgBuf, onlyConst, toolName);
+        mexWarnMsgTxt(msgBuf);
+        plhs[0] = mxCreateDoubleMatrix(CUTEst_nvar, 1, mxREAL);
+        g  = (doublereal *)mxGetData(plhs[0]);
+        CUTEST_ugr( &status, &CUTEst_nvar, x, g );
+      } else {
+        nnzgci = CUTEst_nvar;
+        ir = mxCalloc(nnzgci, sizeof(integer));
+        g = (doublereal *)mxCalloc(nnzgci, sizeof(doublereal));
+        CUTEST_cisgr( &status, &CUTEst_nvar, &icon, x, &nnzgci, &nnzgci, g,
+                      (integer *)ir);
+        if (status != 0) {
+          sprintf(msgBuf,"** CUTEst error, status = %d, aborting\n", status);
+          mexErrMsgTxt(msgBuf);
+        }
+        plhs[0] = SparseVector(CUTEst_nvar, nnzgci, (integer *)ir, (double *)g);
+
+        mxFree(ir);
+        mxFree(g);
+      }
       mxFree((void *)toolName);
       return;
     }

@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.4 - 01/03/2016 AT 13:30 GMT.
+! THIS VERSION: CUTEST 1.5 - 10/10/2016 AT 15:00 GMT.
 
 !-*-*-*-*-*-*-  C U T E S T    T R E P O R T    S U B R O U T I N E  -*-*-*-*-*-
 
@@ -145,6 +145,12 @@
         time = work%time_chcprod
       CASE ( 'cutest_chprod' )
         time = work%time_chprod
+      CASE ( 'cutest_cifn' )
+        time = work%time_cifn
+      CASE ( 'cutest_cigr' )
+        time = work%time_cigr
+      CASE ( 'cutest_cisgr' )
+        time = work%time_cisgr
       CASE ( 'cutest_cidh' )
         time = work%time_cidh
       CASE ( 'cutest_cish' )

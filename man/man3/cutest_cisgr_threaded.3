@@ -1,16 +1,17 @@
-'\" e  @(#)cutest_cfn_threaded v1.0 12/2012;
-.TH cutest_cfn_threaded 3M "31 Dec 2012" "CUTEst user documentation" "CUTEst user documentation"
+'\" e  @(#)cutest_cisgr_threaded v1.0 10/2016;
+.TH cutest_cisgr_threaded 3M "18 Oct 2016" "CUTEst user documentation" "CUTEst user documentation"
 .SH NAME
-CUTEST_cfn_threaded \- CUTEst tool to evaluate function and constraints values.
+CUTEST_cisgr_threaded \- CUTEst tool to evaluate the gradient of a
+problem function in sparse format
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_cfn_threaded( status, n, m, X, f, C, thread )
+CALL CUTEST_cisgr_threaded( status, n, iprob, X, nnzg, lg, G_val, G_var, thread )
 .SH DESCRIPTION
-The CUTEST_cfn_threaded subroutine evaluates the value of the objective
-function and
-general constraint functions of the problem decoded from a SIF file by
-the script \fIsifdecoder\fP at the point X.
-
+The CUTEST_cisgr_threaded subroutine evaluates the gradient of either the
+objective function or a constraint function
+of the problem decoded from a SIF file by the script
+\fIsifdecoder\fP at the point X, in the constrained minimization case.
+The gradient is stored in sparse format.
 The problem under consideration
 is to minimize or maximize an objective function
 .EQ
@@ -56,7 +57,7 @@ all constraint functions are partially separable.
 
 .LP
 .SH ARGUMENTS
-The arguments of CUTEST_cfn_threaded are as follows
+The arguments of CUTEST_cisgr_threaded are as follows
 .TP 5
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array
@@ -65,23 +66,31 @@ allocation/deallocation error, 2 for an array bound error,
 .TP
 .B n \fP[in] - integer
 the number of variables for the problem,
-.TP
-.B m \fP[in] - integer
-the total number of general constraints,
+.TP 5
+.B iprob \fP[in] - integer
+the number of the problem function to be considered. If iprob = 0, the
+value of the objective function will be evaluated, while if iprob =
+i > 0, that of the i-th constraint will be evaluated,
 .TP
 .B X \fP[in] - real/double precision
 an array which gives the current estimate of the solution of the
 problem,
 .TP
-.B f \fP[out] - real/double precision
-the value of the objective function evaluated at X,
+.B nnzg \fP[out] - integer
+the number of nonzeros in G_val,
 .TP
-.B C \fP[out] - real/double precision
-an array which gives the values of the general constraint functions
-evaluated at X. The i-th component of C will contain the value of
-.EQ
-c sub i (x),
-.EN
+.B lg \fP[in] - integer
+the declared length of G_val and G_var,
+.TP
+.B G_val \fP[out] - real/double precision
+an array which gives the nonzeros of the gradient of constraint
+function icon evaluated at X. The i-th entry of G_val gives the value
+of the derivative with respect to variable G_var(i) of function
+icon.
+.TP
+.B G_var \fP[out] - integer
+an array whose i-th component is the index of the variable with
+respect to which G_val(i) is the derivative,
 .TP
 .B thread \fP[in] - integer
 thread chosen for the evaluation; threads are numbered
@@ -104,4 +113,4 @@ Environment, revisited\fP,
    I. Bongartz, A.R. Conn, N.I.M. Gould and Ph.L. Toint,
    ACM TOMS, \fB21\fP:1, pp.123-160, 1995.
 
-cutest_setup_threaded(3M), cutest_ufn_threaded(3M), sifdecoder(1).
+sifdecoder(1), cutest_cigr(3), cutest_setup_threaded(3M).

@@ -5,7 +5,7 @@ CUTEST_ccifsg \- CUTEst tool to evaluate a single constraint function value and
 possibly gradient in sparse format.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_ccifsg( status, n, icon, X, ci, 
+CALL CUTEST_ccifsg( status, n, icon, X, ci,
 nnzgci, lgci, GCI_val, GCI_var, grad )
 .SH DESCRIPTION
 The CUTEST_ccifsg subroutine evaluates the value of a particular constraint
@@ -51,15 +51,15 @@ and simple bounds
 .EQ
 x sup l ~<=~ x ~<=~ x sup u.
 .EN
-The objective function is group-partially separable 
+The objective function is group-partially separable
 and all constraint functions are partially separable.
 
-.LP 
+.LP
 .SH ARGUMENTS
 The arguments of CUTEST_ccifsg are as follows
 .TP 5
 .B status \fP[out] - integer
-the outputr status: 0 for a succesful call, 1 for an array 
+the outputr status: 0 for a succesful call, 1 for an array
 allocation/deallocation error, 2 for an array bound error,
 3 for an evaluation error,
 .TP
@@ -85,7 +85,7 @@ the declared length of GCI_val and GCI_var,
 an array which gives the nonzeros of the gradient of constraint
 function icon evaluated at X. The i-th entry of GCI_val gives the value
 of the derivative with respect to variable GCI_var(i) of function
-icon. 
+icon.
 .TP
 .B GCI_var \fP[out] - integer
 an array whose i-th component is the index of the variable with
@@ -98,7 +98,7 @@ constraint functions are required and .FALSE. otherwise.
 .SH AUTHORS
 I. Bongartz, A.R. Conn, N.I.M. Gould, D. Orban and Ph.L. Toint
 .SH "SEE ALSO"
-\fICUTEst: a Constrained and Unconstrained Testing 
+\fICUTEst: a Constrained and Unconstrained Testing
 Environment with safe threads\fP,
    N.I.M. Gould, D. Orban and Ph.L. Toint,
    Computational Optimization and Applications \fB60\fP:3, pp.545-557, 2014.
@@ -109,7 +109,7 @@ Environment, revisited\fP,
    ACM TOMS, \fB29\fP:4, pp.373-394, 2003.
 
 \fICUTE: Constrained and Unconstrained Testing Environment\fP,
-   I. Bongartz, A.R. Conn, N.I.M. Gould and Ph.L. Toint, 
+   I. Bongartz, A.R. Conn, N.I.M. Gould and Ph.L. Toint,
    ACM TOMS, \fB21\fP:1, pp.123-160, 1995.
 
-sifdecoder(1)
+sifdecoder(1), cutest_ccifg(3)

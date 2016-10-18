@@ -1,4 +1,4 @@
-C THIS VERSION: CUTEST 1.3 - 07/10/2015 AT 08:30 GMT.
+C THIS VERSION: CUTEST 1.5 - 18/10/2016 AT 08:30 GMT.
 
 C-*-*-  C U T E S T    C T O O L S   G A T E W A Y    S U B R O U T I N E  -*-*-
 
@@ -71,7 +71,8 @@ C  Local variables
       CHARACTER * 7    TOOL, TSETUP, TNAMES, TFN, TGR, TOFG, TSGR,
      *                 TCFG, TLFG, TDH, TGRDH, TSH, TSGRSH, TPROD,
      *                 TCFSG, TCIFG, TDIMEN, TDIMSH, TDIMSJ, TVARTY,
-     *                 TCIFSG, TIDH, TISH, TSHC, TCPROD, TREPRT
+     *                 TCIFSG, TIFN, TIGR, TISGR, TIDH, TISH, TSHC,
+     *                 TCPROD, TREPRT
       CHARACTER * 150  msg
       REAL * 8         ci, GCI( NMAX ), N_real, M_real, NNZ_real
       REAL * 8         CALLS( 7 ), TIME( 2 )
@@ -121,6 +122,9 @@ C  Set up tool names.
       TSGRSH = NULLSTR( 'CUTEST_csgrsh' )
       TPROD  = NULLSTR( 'CUTEST_chprod' )
       TCPROD = NULLSTR( 'CUTEST_chcprod' )
+      TIFN   = NULLSTR( 'CUTEST_cifn' )
+      TIGR   = NULLSTR( 'CUTEST_cigr' )
+      TISGR  = NULLSTR( 'CUTEST_cisgr' )
       TCIFG  = NULLSTR( 'CUTEST_ccifg' )
       TCIFSG = NULLSTR( 'CUTEST_ccifsg' )
       TDIMEN = NULLSTR( 'CUTEST_cdimen' )
@@ -138,12 +142,12 @@ C  Call the requested tool.
 C  Check for proper number of arguments.
 
          IF ( nrhs .NE. 1 .AND. nrhs .NE. 2 ) THEN
-            msg = 'CUTEST_csetup requires either zero or one ' // 
+            msg = 'CUTEST_csetup requires either zero or one ' //
      *            'input arguments.'
             CALL MEXERRMSGTXT( msg )
          END IF
          IF ( nlhs .NE. 6 .AND. nlhs .NE. 8 ) THEN
-            msg = 'CUTEST_csetup returns either six or eight ' // 
+            msg = 'CUTEST_csetup returns either six or eight ' //
      *            'output arguments.'
             CALL MEXERRMSGTXT( msg )
          END IF
@@ -173,9 +177,9 @@ C  Open the relevant file.
 
 C  Set up the problem data structures.
 
-         CALL CUTEST_csetup( status, input, out, io_buffer, 
-     *                nvar, ncon, X , BL, BU, 
-     *                V , CL, CU, EQUATN, LINEAR, 
+         CALL CUTEST_csetup( status, input, out, io_buffer,
+     *                nvar, ncon, X , BL, BU,
+     *                V , CL, CU, EQUATN, LINEAR,
      *                e_order, l_order, v_order )
          IF ( status .NE. 0 ) GO TO 910
 
@@ -321,7 +325,7 @@ C  Copy C.
 C  Check number of input and output arguments.
 
          IF ( nrhs .LT. 2 .OR. nrhs .GT. 4 ) THEN
-            msg = 'CUTEST_cgr requires one, two, or three ' // 
+            msg = 'CUTEST_cgr requires one, two, or three ' //
      *            'input arguments.'
             CALL MEXERRMSGTXT( msg )
          END IF
@@ -371,7 +375,7 @@ C  Set dimensions of CJAC based on jtrans.
 
 C  Get the gradient of the objective and constraint functions.
 
-         CALL CUTEST_cgr( status, n, m, X, V, grlagf, G, jtrans, 
+         CALL CUTEST_cgr( status, n, m, X, V, grlagf, G, jtrans,
      *                    lc1, lc2, CJAC )
          IF ( status .NE. 0 ) GO TO 910
 
@@ -393,7 +397,7 @@ C  Copy CJAC.
 C  Check number of input and output arguments.
 
          IF ( nrhs .LT. 2 .OR. nrhs .GT. 4 ) THEN
-            msg = 'CUTEST_csgr requires one, two, or three ' // 
+            msg = 'CUTEST_csgr requires one, two, or three ' //
      *            'input arguments.'
             CALL MEXERRMSGTXT( msg )
          END IF
@@ -435,14 +439,14 @@ C  jtrans is ignored here and handled in the MATLAB function.
 
 C  Get the gradient of the objective or Lagrangian and constraint functions.
 
-         CALL CUTEST_csgr( status, n, m, X, V, grlagf, 
+         CALL CUTEST_csgr( status, n, m, X, V, grlagf,
      *                     nnzscj, NNZMAX, SCJAC, INDVAR, INDFUN )
          IF ( status .NE. 0 ) GO TO 910
 
 C  Make sure NNZMAX is big enough.
 
          IF ( nnzscj .GT. NNZMAX ) THEN
-            msg = 'Number of nonzeros in sparse jacobian exceeds ' // 
+            msg = 'Number of nonzeros in sparse jacobian exceeds ' //
      *            'declared size of sparse Jacobian in MEX-file.'
             CALL MEXERRMSGTXT( msg )
          END IF
@@ -549,7 +553,7 @@ C  Decide if the gradient is required.
 
 C  Get the value of the objective function, and possibly its gradient.
 
-         CALL CUTEST_cofsg( status, nvar, X, f, nnzgci, NNZIMAX, SGCI, 
+         CALL CUTEST_cofsg( status, nvar, X, f, nnzgci, NNZIMAX, SGCI,
      *                      INDVARI, grad )
          IF ( status .NE. 0 ) GO TO 910
 
@@ -611,7 +615,7 @@ C      Copy the column indices
 C  Check number of input and output arguments.
 
          IF ( nrhs .NE. 2 .AND. nrhs .NE. 3 ) THEN
-            msg = 'CUTEST_ccfg requires x as input. The jtrans ' // 
+            msg = 'CUTEST_ccfg requires x as input. The jtrans ' //
      *            'flag is optional.'
             CALL MEXERRMSGTXT( msg )
          END IF
@@ -648,7 +652,7 @@ C  Set row and column dimensions of CJAC based on jtrans.
 
 C  Get the values of the constraint functions, and possibly their gradients.
 
-         CALL CUTEST_ccfg( status, n, ncon, X, C, jtrans, 
+         CALL CUTEST_ccfg( status, n, ncon, X, C, jtrans,
      *                     lc1, lc2, CJAC, grad )
          IF ( status .NE. 0 ) GO TO 910
 
@@ -709,7 +713,7 @@ C  Set row and column dimensions of CJAC based on jtrans.
 
 C  Get the values of the constraint functions, and possibly their gradients.
 
-         CALL CUTEST_ccfsg( status, n, ncon, X, C, nnzscj, 
+         CALL CUTEST_ccfsg( status, n, ncon, X, C, nnzscj,
      *                      NNZMAX, SCJAC, INDVAR, INDFUN, grad )
          IF ( status .NE. 0 ) GO TO 910
 
@@ -799,7 +803,7 @@ C  Copy G, if it is required.
 C  Check number of input and output arguments.
 
          IF ( nrhs .NE. 3 ) THEN
-            msg = 'CUTEST_cdh requires x and Lagrange multipliers ' // 
+            msg = 'CUTEST_cdh requires x and Lagrange multipliers ' //
      *            'y as input.'
             CALL MEXERRMSGTXT( msg )
          END IF
@@ -834,7 +838,7 @@ C  Copy H.
 C  Check number of input and output arguments.
 
          IF ( nrhs .NE. 3 ) THEN
-            msg = 'CUTEST_cdhc requires x and Lagrange multipliers ' // 
+            msg = 'CUTEST_cdhc requires x and Lagrange multipliers ' //
      *            'y as input.'
             CALL MEXERRMSGTXT( msg )
          END IF
@@ -870,7 +874,7 @@ C  Copy H.
 C  Check number of input and output arguments.
 
          IF ( nrhs .NE. 3 .AND. nrhs .NE. 4 ) THEN
-            msg = 'CUTEST_cgrdh requires x and Lagrange multipliers' // 
+            msg = 'CUTEST_cgrdh requires x and Lagrange multipliers' //
      *            ' y as input.  The options vector is optional.'
             CALL MEXERRMSGTXT( msg )
          END IF
@@ -909,7 +913,7 @@ C  Set dimensions of CJAC based on jtrans.
 
 C  Get the dense Hessian of the Lagrangian evaluated at X and V.
 
-         CALL CUTEST_cgrdh( status, n, m, X, V, grlagf, G, jtrans, 
+         CALL CUTEST_cgrdh( status, n, m, X, V, grlagf, G, jtrans,
      *                      lc1, lc2, CJAC, n, DH )
          IF ( status .NE. 0 ) GO TO 910
 
@@ -938,7 +942,7 @@ C  Copy H.
 C  Check number of input and output arguments.
 
          IF ( nrhs .NE. 3 ) THEN
-            msg = 'CUTEST_csh requires x and Lagrange multipliers ' // 
+            msg = 'CUTEST_csh requires x and Lagrange multipliers ' //
      *            'y as input.'
             CALL MEXERRMSGTXT( msg )
          END IF
@@ -958,14 +962,14 @@ C  Copy second and third input arguments into X and V, respectively.
 
 C  Get the sparse Hessian of the Lagrangian evaluated at X and V.
 
-         CALL CUTEST_csh( status, n, m, X, V, 
+         CALL CUTEST_csh( status, n, m, X, V,
      *                    nnzsh, NNZMAX, SH, IRNSH, ICNSH )
          IF ( status .NE. 0 ) GO TO 910
 
 C  Make sure NNZMAX is big enough.
 
          IF ( nnzsh .GT. NNZMAX ) THEN
-            msg = 'Number of nonzeros in sparse Hessian exceeds ' // 
+            msg = 'Number of nonzeros in sparse Hessian exceeds ' //
      *            'declared size of sparse Hessian in MEX-file.'
             CALL MEXERRMSGTXT( msg )
          END IF
@@ -987,7 +991,7 @@ C  combined lower and upper triangular parts
   111    CONTINUE
          nnzsh = J
          IF ( nnz .GT. NNZMAX ) THEN
-            msg = 'Number of nonzeros in sparse Hessian exceeds ' // 
+            msg = 'Number of nonzeros in sparse Hessian exceeds ' //
      *            'declared size of sparse Hessian in MEX-file.'
             CALL MEXERRMSGTXT( msg )
          END IF
@@ -1048,7 +1052,7 @@ C  Copy second and third input arguments into X and V, respectively.
 C  Get the sparse Hessian of the contrained part of the
 C  Lagrangian evaluated at X and V.
 
-         CALL CUTEST_cshc( status, n, m, X, V, 
+         CALL CUTEST_cshc( status, n, m, X, V,
      *                     nnzsh, NNZMAX, SH, IRNSH, ICNSH )
          IF ( status .NE. 0 ) GO TO 910
 
@@ -1069,7 +1073,7 @@ C  combined lower and upper triangular parts
   113    CONTINUE
          nnzsh = J
          IF ( nnz .GT. NNZMAX ) THEN
-            msg = 'Number of nonzeros in sparse Hessian exceeds ' // 
+            msg = 'Number of nonzeros in sparse Hessian exceeds ' //
      *            'declared size of sparse Hessian in MEX-file.'
             CALL MEXERRMSGTXT( msg )
          END IF
@@ -1090,7 +1094,7 @@ C  Include both lower and upper triangular parts (for Matlab)
 C  Make sure NNZMAX is big enough.
 
          IF ( nnzsh .GT. NNZMAX ) THEN
-            msg = 'Number of nonzeros in sparse Hessian exceeds ' // 
+            msg = 'Number of nonzeros in sparse Hessian exceeds ' //
      *            'declared size of sparse Hessian in MEX-file.'
             CALL MEXERRMSGTXT( msg )
          END IF
@@ -1148,20 +1152,20 @@ C  jtrans is ignored here and handled in the MATLAB function.
 C  Get the gradient of the objective or Lagrangian and constraint functions,
 C  and get the sparse Hessian of the Lagrangian evaluated at X and V.
 
-         CALL CUTEST_csgrsh( status, n, m, X, V, grlagf, 
-     *                       nnzscj, NNZMAX, SCJAC, INDVAR, INDFUN, 
+         CALL CUTEST_csgrsh( status, n, m, X, V, grlagf,
+     *                       nnzscj, NNZMAX, SCJAC, INDVAR, INDFUN,
      *                       nnzsh, NNZMAX, SH, IRNSH, ICNSH )
          IF ( status .NE. 0 ) GO TO 910
 
 C  Make sure NNZMAX is big enough for the sparse Jacobian and Hessian.
 
          IF ( nnzscj .GT. NNZMAX ) THEN
-            msg = 'Number of nonzeros in sparse Jacobian exceeds ' // 
+            msg = 'Number of nonzeros in sparse Jacobian exceeds ' //
      *            'declared size of sparse Jacobian in MEX-file.'
             CALL MEXERRMSGTXT( msg )
          END IF
          IF ( nnzsh .GT. NNZMAX ) THEN
-            msg = 'Number of nonzeros in sparse Hessian exceeds ' // 
+            msg = 'Number of nonzeros in sparse Hessian exceeds ' //
      *            'declared size of sparse Hessian in MEX-file.'
             CALL MEXERRMSGTXT( msg )
          END IF
@@ -1183,7 +1187,7 @@ C  combined lower and upper triangular parts
   115    CONTINUE
          nnzsh = J
          IF ( nnz .GT. NNZMAX ) THEN
-            msg = 'Number of nonzeros in sparse Hessian exceeds ' // 
+            msg = 'Number of nonzeros in sparse Hessian exceeds ' //
      *            'declared size of sparse Hessian in MEx-FILE.'
             CALL MEXERRMSGTXT( msg )
          END IF
@@ -1402,7 +1406,7 @@ C  and make room for output.
 C  Check number of input and output arguments.
 
          IF ( nrhs .NE. 3 ) THEN
-            msg = 'CUTEST_ccifsg requires x and constraint index ' // 
+            msg = 'CUTEST_ccifsg requires x and constraint index ' //
      *            'as input'
             CALL MEXERRMSGTXT( msg )
          END IF
@@ -1431,7 +1435,7 @@ C  Decide if we want to evaluate the gradient or not
 C  and make room for output.
 
          IF( nlhs .EQ. 2 ) THEN
-            CALL CUTEST_ccifsg( status, nvar, i, X, ci, 
+            CALL CUTEST_ccifsg( status, nvar, i, X, ci,
      *                          nnzgci, NNZIMAX, SGCI, INDVARI, .TRUE. )
            IF ( status .NE. 0 ) GO TO 910
 
@@ -1490,6 +1494,161 @@ C      Copy the column indices
             pr = MXGETPR( PLHS( 1 ) )
             CALL MXCOPYREAL8TOPTR( ci, pr, 1 )
          ENDIF
+
+      ELSE IF ( EQUAL( TOOL, TIFN ) ) THEN
+
+C  Check number of input and output arguments.
+
+         IF ( nrhs .NE. 3 ) THEN
+           msg = 'CUTEST_cifn requires x and problem function index ' //
+     *           'as input'
+           CALL MEXERRMSGTXT( msg )
+         END IF
+         IF ( nlhs .NE. 1 ) THEN
+            msg = 'CUTEST_cifn returns one output arguments.'
+            CALL MEXERRMSGTXT( msg )
+         END IF
+
+C  Copy first input argument into X.
+
+         iptr = PRHS( 2 )
+         CALL GETVEC( iptr, X, nvar, n )
+
+C  Copy second input argument into I.
+
+         i = NINT( MXGETSCALAR( PRHS( 3 ) ) )
+
+C  Check consistency of problem index
+
+         IF( i .LT. 0 .OR. i .GT. ncon ) THEN
+           msg = 'CUTEST_cifn: invalid problem function index.'
+           CALL MEXERRMSGTXT( msg )
+         END IF
+
+C  evaluate the problem function
+
+         CALL CUTEST_cifn( status, n, i, X, ci )
+         IF ( status .NE. 0 ) GO TO 910
+         PLHS( 1 ) = MXCREATEFULL( 1, 1, 0 )
+         pr2 = MXGETPR( PLHS( 1 ) )
+         CALL MXCOPYREAL8TOPTR( ci,  pr2, 1 )
+
+      ELSE IF ( EQUAL( TOOL, TIGR ) ) THEN
+
+C  Check number of input and output arguments.
+
+         IF ( nrhs .NE. 3 ) THEN
+           msg = 'CUTEST_cigr requires x and problem function index ' //
+     *           'as input'
+           CALL MEXERRMSGTXT( msg )
+         END IF
+         IF ( nlhs .NE. 1 ) THEN
+            msg = 'CUTEST_cigr returns one output arguments.'
+            CALL MEXERRMSGTXT( msg )
+         END IF
+
+C  Copy first input argument into X.
+
+         iptr = PRHS( 2 )
+         CALL GETVEC( iptr, X, nvar, n )
+
+C  Copy second input argument into I.
+
+         i = NINT( MXGETSCALAR( PRHS( 3 ) ) )
+
+C  Check consistency of problem function index
+
+         IF( i .LT. 0 .OR. i .GT. ncon ) THEN
+           msg = 'CUTEST_cigr: invalid problem function index.'
+           CALL MEXERRMSGTXT( msg )
+         END IF
+
+C  evaluate the problem gradient
+
+         CALL CUTEST_cigr( status, n, i, X, GCI )
+         IF ( status .NE. 0 ) GO TO 910
+         PLHS( 1 ) = MXCREATEFULL( 1, 1, 0 )
+         pr2 = MXGETPR( PLHS( 1 ) )
+         CALL MXCOPYREAL8TOPTR( GCI, pr2, n )
+
+      ELSE IF ( EQUAL( TOOL, TISGR ) ) THEN
+
+C  Check number of input and output arguments.
+
+         IF ( nrhs .NE. 3 ) THEN
+           msg = 'CUTEST_cisgr requires x and problem function index ' //
+     *           'as input'
+           CALL MEXERRMSGTXT( msg )
+         END IF
+         IF ( nlhs .NE. 1 ) THEN
+            msg = 'CUTEST_cisgr returns one output arguments.'
+            CALL MEXERRMSGTXT( msg )
+         END IF
+
+C  Copy first input argument into X.
+
+         iptr = PRHS( 2 )
+         CALL GETVEC( iptr, X, nvar, n )
+
+C  Copy second input argument into I.
+
+         i = NINT( MXGETSCALAR( PRHS( 3 ) ) )
+
+C  Check consistency of problem function index
+
+         IF ( I .LT. 0 .OR. I .GT. ncon ) THEN
+            msg = 'CUTEST_cisgr: invalid problem function index.'
+            CALL MEXERRMSGTXT( msg )
+         END IF
+
+C  Decide if we want to evaluate the gradient or not
+C  and make room for output.
+
+         CALL CUTEST_cisgr( status, nvar, i, X,
+    *                       nnzgci, NNZIMAX, SGCI, INDVARI )
+         IF ( status .NE. 0 ) GO TO 910
+
+C  Make sure NNZIMAX is big enough.
+
+         IF ( nnzgci .GT. NNZIMAX ) THEN
+            msg = 'Number of nonzeros in sparse gradient exceeds ' //
+     *            'declared size of sparse gradient in MEX-file.'
+            CALL MEXERRMSGTXT( msg )
+         END IF
+
+C  Substract one to indices because Matlab uses C array storage
+
+         DO 119 j = 1, nnzgci
+            INDVARI( j ) = INDVARI( j ) - 1
+  119    CONTINUE
+
+C  Set column indices for the vector, still using C arrays
+
+         ONES( 1 ) = 0
+         DO 120 j = 2, nvar
+            ONES( j ) = - 1
+  120    CONTINUE
+         ONES( nvar + 1 ) = nnzgci
+
+C      Make room for the sparse vector SGCI
+
+         PLHS( 1 ) = MXCREATESPARSE( 1, nvar, nnzgci, 0 )
+         pr3 = PLHS( 1 )
+
+C      Copy the values of SGCI
+
+         pr2 = MXGETPR( pr3 )
+         CALL MXCOPYREAL8TOPTR( SGCI, pr2, nnzgci )
+
+C      Copy the row indices
+
+         ir = MXGETIR( pr3 )
+         CALL MXCOPYINTEGER4TOPTR( INDVARI, ir, nnzgci )
+
+C      Copy the column indices
+
+         jc = MXGETJC( pr3 )
+         CALL MXCOPYINTEGER4TOPTR( ONES, jc, nvar+1 )
 
       ELSE IF ( EQUAL( TOOL, TDIMEN ) ) THEN
 
@@ -1583,7 +1742,7 @@ C  Call CDIMSJ
 C  Check number of input and output arguments.
 
          IF ( nrhs .NE. 3 ) THEN
-           msg = 'CUTEST_cidh takes x and constraint index ' // 
+           msg = 'CUTEST_cidh takes x and constraint index ' //
      *           'as arguments.'
            CALL MEXERRMSGTXT( msg )
          END IF
@@ -1625,7 +1784,7 @@ C  Copy DHI.
 C  Check number of input and output arguments.
 
          IF ( nrhs .NE. 3 ) THEN
-           msg = 'CUTEST_cish takes x and constraint index ' // 
+           msg = 'CUTEST_cish takes x and constraint index ' //
      *           'as arguments.'
             CALL MEXERRMSGTXT( msg )
          END IF
@@ -1652,14 +1811,14 @@ C  Check consistency of constraint index. I=0 -> objective function.
 
 C  Call CISH
 
-         CALL CUTEST_cish( status, nvar, X, i, 
+         CALL CUTEST_cish( status, nvar, X, i,
      *                     nnzsh, NNZMAX, SH, IRNSH, ICNSH )
          IF ( status .NE. 0 ) GO TO 910
 
 C  Make sure NNZMAX is big enough.
 
          IF ( nnzsh .GT. NNZMAX ) THEN
-            msg = 'CUTEST_cish: number of nonzeros in sparse Hessian' // 
+            msg = 'CUTEST_cish: number of nonzeros in sparse Hessian' //
      *        ' exceeds declared size of sparse Hessian in MEX-file.'
             CALL MEXERRMSGTXT( msg )
          END IF
@@ -1669,7 +1828,7 @@ C  combined lower and upper triangular parts
 
          j = 0
          nnz = 0
-         DO 120 i = 1, nnzsh
+         DO 121 i = 1, nnzsh
            IF ( SH( i ) .NE. 0.0D+0 ) THEN
              j = j + 1
              nnz = nnz + 1
@@ -1678,10 +1837,10 @@ C  combined lower and upper triangular parts
              ICNSH( j ) = ICNSH( i )
              SH( j ) = SH( i )
            END IF
-  120    CONTINUE
+  121    CONTINUE
          nnzsh = J
          IF ( nnz .GT. NNZMAX ) THEN
-           msg = 'Number of nonzeros in sparse Hessian exceeds ' // 
+           msg = 'Number of nonzeros in sparse Hessian exceeds ' //
      *           'declared size of sparse Hessian in MEX-file.'
             CALL MEXERRMSGTXT( msg )
          END IF
@@ -1737,9 +1896,9 @@ C  Call CVARTY
 C  Convert to real
 
          N_real = nvar
-         DO 121 i = 1, nvar
+         DO 125 i = 1, nvar
            IVARTY_real( i ) = IVARTY( i )
-  121    CONTINUE
+  125      CONTINUE
 
 C  Make room for output
 

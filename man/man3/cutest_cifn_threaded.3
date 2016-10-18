@@ -1,16 +1,15 @@
-'\" e  @(#)cutest_ccifg v1.0 12/2012;
-.TH cutest_ccifg 3M "4 Dec 2012" "CUTEst user documentation" "CUTEst user documentation"
+'\" e  @(#)cutest_cifn_threaded v1.0 10/2016;
+.TH cutest_cifn_threaded 3M "18 Oct 2016" "CUTEst user documentation" "CUTEst user documentation"
 .SH NAME
-CUTEST_ccifg \- CUTEst tool to evaluate a single constraint function value and
-possibly its gradient.
+CUTEST_cifn_threaded \- CUTEst tool to evaluate a problem function value.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_ccifg( status, n, icon, X, ci, GCI_val, grad )
+CALL CUTEST_cifn_threaded( status, n, iprob, X, fn, thread )
 .SH DESCRIPTION
-The CUTEST_ccifg subroutine evaluates the value of a particular constraint
-function of the problem decoded from a SIF file by the script
-\fIsifdecoder\fP at the point X, and
-possibly its gradient in the constrained minimization case.
+The CUTEST_cifn_threaded subroutine evaluates the value of either the
+objective function or a constraint function
+of the problem decoded from a SIF file by the script
+\fIsifdecoder\fP at the point X, in the constrained minimization case.
 The problem under consideration
 is to minimize or maximize an objective function
 .EQ
@@ -56,33 +55,31 @@ all constraint functions are partially separable.
 
 .LP
 .SH ARGUMENTS
-The arguments of CUTEST_ccifg are as follows
+The arguments of CUTEST_cifn_threaded are as follows
 .TP 5
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array
 allocation/deallocation error, 2 for an array bound error,
-3 for an evaluation error,
+3 for an evaluation error, 4 for an out-of-range thread,
 .TP
 .B n \fP[in] - integer
 the number of variables for the problem,
 .TP 5
-.B icon \fP[in] - integer
-the index of the constraint function to be evaluated,
+.B iprob \fP[in] - integer
+the number of the problem function to be considered. If iprob = 0, the
+value of the objective function will be evaluated, while if iprob =
+i > 0, that of the i-th constraint will be evaluated,
 .TP
 .B X \fP[in] - real/double precision
 an array which gives the current estimate of the solution of the
 problem,
 .TP
-.B ci \fP[out] - real/double precision
-the value of constraint function icon at X,
+.B fn \fP[out] - real/double precision
+the value of problem function iprob at X,
 .TP
-.B GCI_val \fP[out] - real/double precision
-an array which gives the gradient of constraint function icon
-evaluated at X,
-.TP
-.B grad \fP[in] - logical
-a logical variable which should be set .TRUE. if the gradient of the
-constraint functions are required and .FALSE. otherwise.
+.B thread \fP[in] - integer
+thread chosen for the evaluation; threads are numbered
+from 1 to the value threads set when calling CUTEST_csetup_threaded.
 .LP
 .SH AUTHORS
 I. Bongartz, A.R. Conn, N.I.M. Gould, D. Orban and Ph.L. Toint
@@ -101,4 +98,4 @@ Environment, revisited\fP,
    I. Bongartz, A.R. Conn, N.I.M. Gould and Ph.L. Toint,
    ACM TOMS, \fB21\fP:1, pp.123-160, 1995.
 
-sifdecoder(1), cutest_ccifsg(3)
+sifdecoder(1), cutest_setup_threaded(3M).

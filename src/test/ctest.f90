@@ -88,7 +88,7 @@
       WRITE( out, "( ' CALL CUTEST_csetup ' )" )
       CALL CUTEST_csetup( status, input, out, buffer, n, m, X, X_l, X_u,       &
                       Y, C_l, C_u, EQUATION, LINEAR, 1, 1, 1 )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_X( out, n, X, X_l, X_u )
       CALL WRITE_Y( out, m, Y, C_l, C_u, EQUATION, LINEAR )
 
@@ -100,7 +100,7 @@
       CALL CUTEST_cstats( status, nonlinear_variables_objective,               &
                           nonlinear_variables_constraints,                     &
                           equality_constraints, linear_constraints )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       WRITE( out, "( ' * nonlinear_variables_objective = ', I0, /,             &
      &               ' * nonlinear_variables_constraints = ', I0, /,           &
      &               ' * equality_constraints = ', I0, /,                      &
@@ -112,7 +112,7 @@
 
       WRITE( out, "( ' CALL CUTEST_cnames' )" )
       CALL CUTEST_cnames( status, n, m, p_name, X_names, C_names )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_p_name( out, p_name )
       CALL WRITE_X_names( out, n, X_names )
       CALL WRITE_C_names( out, m, C_names )
@@ -121,24 +121,40 @@
 
       WRITE( out, "( ' Call CUTEST_connames' )" )
       CALL CUTEST_connames( status, m, C_names )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_C_names( out, m, C_names )
 
 !  obtain variable types
 
       WRITE( out, "( ' CALL CUTEST_cvartype' )" )
       CALL CUTEST_cvartype( status, n, X_type )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_X_type( out, n, X_type )
 
-!  compute the objective function value
+!  compute the objective and constraint function values
 
       WRITE( out, "( ' CALL CUTEST_cfn' )" )
 
       CALL CUTEST_cfn( status, n, m, X, f, C )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_f( out, f )
       CALL WRITE_C( out, m, C )
+
+!  compute the objective function value
+
+      WRITE( out, "( ' CALL CUTEST_cifn for the objective function' )" )
+      icon = 0
+      CALL CUTEST_cifn( status, n, icon, X, f )
+      IF ( status /= 0 ) GO TO 900
+      CALL WRITE_f( out, f )
+
+!  compute a constraint value
+
+      WRITE( out, "( ' CALL CUTEST_cifn for a constraint' )" )
+      icon = 1
+      CALL CUTEST_cifn( status, n, icon, X, ci )
+      IF ( status /= 0 ) GO TO 900
+      CALL WRITE_CI( out, icon, ci )
 
 !  compute the gradient and dense Jacobian values
 
@@ -147,7 +163,7 @@
      &               'jtrans = .TRUE.' )" )
       CALL CUTEST_cgr( status, n, m, X, Y, grlagf, G, jtrans,                  &
                        l_j2_1, l_j2_2, J2_val )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_G( out, n, G )
       CALL WRITE_JT_dense( out, n, m, l_j2_1, l_j2_2, J2_val )
       grlagf = .TRUE. ; jtrans = .FALSE.
@@ -155,7 +171,7 @@
      &               'jtrans = .FALSE.' )" )
       CALL CUTEST_cgr( status, n, m, X, Y, grlagf, G, jtrans,                  &
                        l_j2_1, l_j2_2, J2_val )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_G( out, n, G )
       CALL WRITE_J_dense( out, n, m, l_j2_1, l_j2_2, J2_val )
       grlagf = .FALSE. ; jtrans = .TRUE.
@@ -163,7 +179,7 @@
      &               'jtrans = .TRUE.' )" )
       CALL CUTEST_cgr( status, n, m, X, Y, grlagf, G, jtrans,                  &
                        l_j2_1, l_j2_2, J2_val )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_G( out, n, G )
       CALL WRITE_JT_dense( out, n, m, l_j2_1, l_j2_2, J2_val )
       grlagf = .FALSE. ; jtrans = .FALSE.
@@ -171,48 +187,64 @@
      &               'jtrans = .FALSE.' )" )
       CALL CUTEST_cgr( status, n, m, X, Y, grlagf, G, jtrans,                  &
                        l_j2_1, l_j2_2, J2_val )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_G( out, n, G )
       CALL WRITE_J_dense( out, n, m, l_j2_1, l_j2_2, J2_val )
 
 !  compute the objective function and gradient values
 
-      grad = .TRUE.
-      WRITE( out, "( ' CALL CUTEST_cofg with grad = .TRUE.' )" )
-      CALL CUTEST_cofg( status, n, X, f, G, grad )
-      IF ( status /= 0 ) GO to 900
-      CALL WRITE_f( out, f )
-      CALL WRITE_G( out, n, G )
       grad = .FALSE.
       WRITE( out, "( ' CALL CUTEST_cofg with grad = .FALSE.' )" )
       CALL CUTEST_cofg( status, n, X, f, G, grad )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_f( out, f )
+      grad = .TRUE.
+      WRITE( out, "( ' CALL CUTEST_cofg with grad = .TRUE.' )" )
+      CALL CUTEST_cofg( status, n, X, f, G, grad )
+      IF ( status /= 0 ) GO TO 900
+      CALL WRITE_f( out, f )
+      CALL WRITE_G( out, n, G )
+
+!  compute just its gradient
+
+      icon = 0
+      WRITE( out, "( ' CALL CUTEST_cigr for the objective function' )" )
+      CALL CUTEST_cigr( status, n, icon, X, G )
+      IF ( status /= 0 ) GO TO 900
+      CALL WRITE_G( out, n, G )
 
 !  compute the objective function and sparse gradient values
 
       l_g = n
       ALLOCATE( G_val( l_g ), G_var( l_g ), stat = alloc_stat )
       IF ( alloc_stat /= 0 ) GO TO 990
-      grad = .TRUE.
-      WRITE( out, "( ' CALL CUTEST_cofsg with grad = .TRUE.' )" )
-      CALL CUTEST_cofsg( status, n, X, f,                                      &
-                         G_ne, l_g, G_val, G_var, grad )
-      IF ( status /= 0 ) GO to 900
-      CALL WRITE_f( out, f )
-      CALL WRITE_SG( out, G_ne, l_g, G_val, G_var )
       grad = .FALSE.
       WRITE( out, "( ' CALL CUTEST_cofsg with grad = .FALSE.' )" )
       CALL CUTEST_cofsg( status, n, X, f,                                      &
                          G_ne, l_g, G_val, G_var, grad )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_f( out, f )
+      grad = .TRUE.
+      WRITE( out, "( ' CALL CUTEST_cofsg with grad = .TRUE.' )" )
+      CALL CUTEST_cofsg( status, n, X, f,                                      &
+                         G_ne, l_g, G_val, G_var, grad )
+      IF ( status /= 0 ) GO TO 900
+      CALL WRITE_f( out, f )
+      CALL WRITE_SG( out, G_ne, l_g, G_val, G_var )
+
+!  compute just its sparse gradient
+
+      icon = 0
+      WRITE( out, "( ' CALL CUTEST_cisgr for the objective function' )" )
+      CALL CUTEST_cisgr( status, n, icon, X, G_ne, l_g, G_val, G_var )
+      IF ( status /= 0 ) GO TO 900
+      CALL WRITE_SG( out, G_ne, l_g, G_val, G_var )
 
 !  compute the number of nonzeros in the sparse Jacobian
 
       WRITE( out, "( ' CALL CUTEST_cdimsj' )" )
       CALL CUTEST_cdimsj( status, J_ne )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       WRITE( out, "( ' * J_ne = ', I0 )" ) J_ne
 
       l_j = J_ne
@@ -225,13 +257,13 @@
       WRITE( out, "( ' CALL CUTEST_csgr with grlagf = .TRUE.' )" )
       CALL CUTEST_csgr( status, n, m, X, Y, grlagf,                            &
                         J_ne, l_j, J_val, J_var, J_fun )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_J_sparse( out, J_ne, l_j, J_val, J_fun, J_var )
       grlagf = .FALSE.
       WRITE( out, "( ' CALL CUTEST_csgr with grlagf = .FALSE.' )" )
       CALL CUTEST_csgr( status, n, m, X, Y, grlagf,                            &
                         J_ne, l_j, J_val, J_var, J_fun )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_J_sparse( out, J_ne, l_j, J_val, J_fun, J_var )
 
 !  compute the constraint and dense Jacobian values
@@ -241,7 +273,7 @@
      &               'jtrans = .TRUE.' )" )
       CALL CUTEST_ccfg( status, n, m, X, C, jtrans,                            &
                         l_j2_1, l_j2_2, J2_val, grad )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_C( out, m, C )
       CALL WRITE_JT_dense( out, n, m, l_j2_1, l_j2_2, J2_val )
       grad = .TRUE. ; jtrans = .FALSE.
@@ -249,7 +281,7 @@
      &               'jtrans = .FALSE.' )" )
       CALL CUTEST_ccfg( status, n, m, X, C, jtrans,                            &
                         l_j2_1, l_j2_2, J2_val, grad )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_C( out, m, C )
       CALL WRITE_J_dense( out, n, m, l_j2_1, l_j2_2, J2_val )
       grad = .FALSE. ; jtrans = .TRUE.
@@ -257,14 +289,14 @@
      &               'jtrans = .TRUE.' )" )
       CALL CUTEST_ccfg( status, n, m, X, C, jtrans,                            &
                         l_j2_1, l_j2_2, J2_val, grad )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_C( out, m, C )
       grad = .FALSE. ; jtrans = .FALSE.
       WRITE( out, "( ' CALL CUTEST_ccfg with grad = .FALSE. and ',             &
      &               'jtrans = .FALSE.' )" )
       CALL CUTEST_ccfg( status, n, m, X, C, jtrans,                            &
                         l_j2_1, l_j2_2, J2_val, grad )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_C( out, m, C )
 
 !  compute the constraint and sparse Jacobian values
@@ -273,14 +305,14 @@
       WRITE( out, "( ' CALL CUTEST_ccfsg with grad = .TRUE.' )" )
       CALL CUTEST_ccfsg( status, n, m, X, C,                                   &
                          J_ne, l_j, J_val, J_var, J_fun, grad )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_C( out, m, C )
       CALL WRITE_J_sparse( out, J_ne, l_j, J_val, J_fun, J_var )
       grad = .FALSE.
       WRITE( out, "( ' CALL CUTEST_ccfsg with grad = .FALSE.' )" )
       CALL CUTEST_ccfsg( status, n, m, X, C,                                   &
                          J_ne, l_j, J_val, J_var, J_fun, grad )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_C( out, m, C )
 
 !  compute the Lagrangian function and gradient values
@@ -288,58 +320,73 @@
       grad = .TRUE.
       WRITE( out, "( ' CALL CUTEST_clfg with grad = .TRUE.' )" )
       CALL CUTEST_clfg( status, n, m, X, Y, f, G, grad )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_f( out, f )
       CALL WRITE_G( out, n, G )
       grad = .FALSE.
       WRITE( out, "( ' CALL CUTEST_clfg with grad = .FALSE.' )" )
       CALL CUTEST_clfg( status, n, m, X, Y, f, G, grad )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_f( out, f )
 
 !  compute an individual constraint and its dense gradient
 
       icon = 1
-      grad = .TRUE.
-      WRITE( out, "( ' CALL CUTEST_ccifg with grad = .TRUE.' )" )
-      CALL CUTEST_ccifg( status, n, icon, X, ci, Ji, grad )
-      IF ( status /= 0 ) GO to 900
-      CALL WRITE_CI( out, icon, ci )
-      CALL WRITE_JI( out, n, icon, Ji )
       grad = .FALSE.
       WRITE( out, "( ' CALL CUTEST_ccifg with grad = .FALSE.' )" )
       CALL CUTEST_ccifg( status, n, icon, X, ci, Ji, grad )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_CI( out, icon, ci )
+      grad = .TRUE.
+      WRITE( out, "( ' CALL CUTEST_ccifg with grad = .TRUE.' )" )
+      CALL CUTEST_ccifg( status, n, icon, X, ci, Ji, grad )
+      IF ( status /= 0 ) GO TO 900
+      CALL WRITE_CI( out, icon, ci )
+      CALL WRITE_JI( out, n, icon, Ji )
+
+!  compute just its dense gradient
+
+      icon = 1
+      WRITE( out, "( ' CALL CUTEST_cigr for a constraint' )" )
+      CALL CUTEST_cigr( status, n, icon, X, Ji )
+      IF ( status /= 0 ) GO TO 900
+      CALL WRITE_JI( out, n, icon, Ji )
 
 !  compute an individual constraint and its sparse gradient
 
-      grad = .TRUE.
-      WRITE( out, "( ' CALL CUTEST_ccifsg with grad = .TRUE.' )" )
-      CALL CUTEST_ccifsg( status, n, icon, X, ci,                              &
-                          Ji_ne, n, Ji, J_var, grad )
-      IF ( status /= 0 ) GO to 900
-      CALL WRITE_CI( out, icon, ci )
-      CALL WRITE_SJI( out, icon, Ji_ne, n, Ji, J_var )
       grad = .FALSE.
       WRITE( out, "( ' CALL CUTEST_ccifsg with grad = .FALSE.' )" )
       CALL CUTEST_ccifsg( status, n, icon, X, ci,                              &
                           Ji_ne, n, Ji, J_var, grad )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_CI( out, icon, ci )
+      grad = .TRUE.
+      WRITE( out, "( ' CALL CUTEST_ccifsg with grad = .TRUE.' )" )
+      CALL CUTEST_ccifsg( status, n, icon, X, ci,                              &
+                          Ji_ne, n, Ji, J_var, grad )
+      IF ( status /= 0 ) GO TO 900
+      CALL WRITE_CI( out, icon, ci )
+      CALL WRITE_SJI( out, icon, Ji_ne, n, Ji, J_var )
+
+!  compute just its sparse gradient
+
+      WRITE( out, "( ' CALL CUTEST_cisgr for a constraint' )" )
+      CALL CUTEST_cisgr( status, n, icon, X, Ji_ne, n, Ji, J_var )
+      IF ( status /= 0 ) GO TO 900
+      CALL WRITE_SJI( out, icon, Ji_ne, n, Ji, J_var )
 
 !  compute the dense Hessian value
 
       WRITE( out, "( ' CALL CUTEST_cdh' )" )
       CALL CUTEST_cdh( status, n, m, X, Y, l_h2_1, H2_val )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_H_dense( out, n, l_h2_1, H2_val )
 
 !  compute the dense Hessian value without the objective function
 
       WRITE( out, "( ' CALL CUTEST_cdhc' )" )
       CALL CUTEST_cdhc( status, n, m, X, Y, l_h2_1, H2_val )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_H_dense( out, n, l_h2_1, H2_val )
 
 !  compute the dense Hessian value of the objective or a constraint
@@ -347,12 +394,12 @@
       iprob = 0
       WRITE( out, "( ' CALL CUTEST_cidh for objective' )" )
       CALL CUTEST_cidh( status, n, X, iprob, l_h2_1, H2_val )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_H_dense( out, n, l_h2_1, H2_val )
       iprob = 1
       WRITE( out, "( ' CALL CUTEST_cidh for a constraint' )" )
       CALL CUTEST_cidh( status, n, X, iprob, l_h2_1, H2_val )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_H_dense( out, n, l_h2_1, H2_val )
 
 !  compute the gradient and dense Hessian values
@@ -362,7 +409,7 @@
      &               'jtrans = .TRUE.' )" )
       CALL CUTEST_cgrdh( status, n, m, X, Y, grlagf, G, jtrans,                &
                          l_j2_1, l_j2_2, J2_val, l_h2_1, H2_val )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_G( out, n, G )
       CALL WRITE_H_dense( out, n, l_h2_1, H2_val )
       grlagf = .TRUE. ; jtrans = .FALSE.
@@ -370,7 +417,7 @@
      &               'jtrans = .FALSE.' )")
       CALL CUTEST_cgrdh( status, n, m, X, Y, grlagf, G, jtrans,                &
                          l_j2_1, l_j2_2, J2_val, l_h2_1, H2_val )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_G( out, n, G )
       CALL WRITE_H_dense( out, n, l_h2_1, H2_val )
       grlagf = .FALSE. ; jtrans = .TRUE.
@@ -378,7 +425,7 @@
      &               'jtrans = .TRUE.' )")
       CALL CUTEST_cgrdh( status, n, m, X, Y, grlagf, G, jtrans,                &
                          l_j2_1, l_j2_2, J2_val, l_h2_1, H2_val )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_G( out, n, G )
       CALL WRITE_H_dense( out, n, l_h2_1, H2_val )
       grlagf = .FALSE. ; jtrans = .FALSE.
@@ -386,7 +433,7 @@
      &               'jtrans = .FALSE.')")
       CALL CUTEST_cgrdh( status, n, m, X, Y, grlagf, G, jtrans,                &
                          l_j2_1, l_j2_2, J2_val, l_h2_1, H2_val )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_G( out, n, G )
       CALL WRITE_H_dense( out, n, l_h2_1, H2_val )
 
@@ -394,7 +441,7 @@
 
       WRITE( out, "( ' CALL CUTEST_cdimsh' )" )
       CALL CUTEST_cdimsh( status, H_ne )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       WRITE( out, "( ' * H_ne = ', I0 )" ) H_ne
 
       l_h = H_ne
@@ -405,7 +452,7 @@
 
       WRITE( out, "( ' Call CUTEST_cshp' )" )
       CALL CUTEST_cshp( status, n, H_ne, l_h, H_row, H_col )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_H_sparsity_pattern( out, H_ne, l_h, H_row, H_col )
 
 !  compute the sparse Hessian value
@@ -413,7 +460,7 @@
       WRITE( out, "( ' CALL CUTEST_csh' )" )
       CALL CUTEST_csh( status, n, m, X, Y,                                     &
                        H_ne, l_h, H_val, H_row, H_col )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_H_sparse( out, H_ne, l_h, H_val, H_row, H_col )
 
 !  compute the sparse Hessian value without the objective
@@ -421,7 +468,7 @@
       WRITE( out, "( ' CALL CUTEST_cshc' )" )
       CALL CUTEST_cshc( status, n, m, X, Y,                                    &
                         H_ne, l_h, H_val, H_row, H_col )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_H_sparse( out, H_ne, l_h, H_val, H_row, H_col )
 
 !  compute the sparse Hessian value of the objective or a constraint
@@ -430,13 +477,13 @@
       WRITE( out, "( ' CALL CUTEST_cish for objective' )" )
       CALL CUTEST_cish( status, n, X, iprob,                                   &
                         H_ne, l_h, H_val, H_row, H_col )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_H_sparse( out, H_ne, l_h, H_val, H_row, H_col )
       iprob = 1
       WRITE( out, "( ' CALL CUTEST_cish for a constraint' )" )
       CALL CUTEST_cish( status, n, X, iprob,                                   &
                         H_ne, l_h, H_val, H_row, H_col )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_H_sparse( out, H_ne, l_h, H_val, H_row, H_col )
 
 !  compute the gradient and sparse Hessian values
@@ -445,14 +492,14 @@
       WRITE( out, "( ' CALL CUTEST_csgrsh with grlagf = .TRUE.' )" )
       CALL CUTEST_csgrsh( status, n, m, X, Y, grlagf, J_ne, l_j, J_val,        &
                    J_var, J_fun, H_ne, l_h, H_val, H_row, H_col )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_J_sparse( out, J_ne, l_j, J_val, J_fun, J_var )
       CALL WRITE_H_sparse( out, H_ne, l_h, H_val, H_row, H_col )
       grlagf = .FALSE.
       WRITE( out, "( ' CALL CUTEST_csgrsh with grlagf = .FALSE.' )" )
       CALL CUTEST_csgrsh( status, n, m, X, Y, grlagf, J_ne, l_j, J_val,        &
                    J_var, J_fun, H_ne, l_h, H_val, H_row, H_col )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_J_sparse( out, J_ne, l_j, J_val, J_fun, J_var )
       CALL WRITE_H_sparse( out, H_ne, l_h, H_val, H_row, H_col )
 
@@ -460,7 +507,7 @@
 
       WRITE( out, "( ' CALL CUTEST_cdimse' )" )
       CALL CUTEST_cdimse( status, HE_nel, HE_val_ne, HE_row_ne )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       WRITE( out, "( ' * H_nel = ', I0, ' HE_val_ne = ', I0,                   &
      &                 ' HE_row_ne = ', I0 )" ) HE_nel, HE_val_ne, HE_row_ne
 
@@ -477,14 +524,14 @@
       WRITE( out, "( ' CALL CUTEST_ceh with byrows = .FALSE.' )" )
       CALL CUTEST_ceh( status, n, m, X, Y, HE_nel, lhe_ptr, HE_row_ptr,        &
                        HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val, byrows )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_H_element( out, HE_nel, lhe_ptr, HE_row_ptr,                  &
                             HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val )
       byrows = .TRUE.
       WRITE( out, "( ' CALL CUTEST_ceh with byrows = .TRUE.' )" )
       CALL CUTEST_ceh( status, n, m, X, Y, HE_nel, lhe_ptr, HE_row_ptr,        &
                        HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val, byrows )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_H_element( out, HE_nel, lhe_ptr, HE_row_ptr,                  &
                             HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val )
 
@@ -496,7 +543,7 @@
       CALL CUTEST_csgreh( status, n, m, X, Y, grlagf, J_ne, l_j,               &
                           J_val, J_var, J_fun, HE_nel, lhe_ptr, HE_row_ptr,    &
                           HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val, byrows )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_J_sparse( out, J_ne, l_j, J_val, J_fun, J_var )
       CALL WRITE_H_element( out, HE_nel, lhe_ptr, HE_row_ptr,                  &
                             HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val )
@@ -506,7 +553,7 @@
       CALL CUTEST_csgreh( status, n, m, X, Y, grlagf, J_ne, l_j,               &
                           J_val, J_var, J_fun, HE_nel, lhe_ptr, HE_row_ptr,    &
                           HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val, byrows )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_J_sparse( out, J_ne, l_j, J_val, J_fun, J_var )
       CALL WRITE_H_element( out, HE_nel, lhe_ptr, HE_row_ptr,                  &
                             HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val )
@@ -516,7 +563,7 @@
       CALL CUTEST_csgreh( status, n, m, X, Y, grlagf, J_ne, l_j,               &
                           J_val, J_var, J_fun, HE_nel, lhe_ptr, HE_row_ptr,    &
                           HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val, byrows )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_J_sparse( out, J_ne, l_j, J_val, J_fun, J_var )
       CALL WRITE_H_element( out, HE_nel, lhe_ptr, HE_row_ptr,                  &
                             HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val )
@@ -526,7 +573,7 @@
       CALL CUTEST_csgreh( status, n, m, X, Y, grlagf, J_ne, l_j,               &
                           J_val, J_var, J_fun, HE_nel, lhe_ptr, HE_row_ptr,    &
                           HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val, byrows )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_J_sparse( out, J_ne, l_j, J_val, J_fun, J_var )
       CALL WRITE_H_element( out, HE_nel, lhe_ptr, HE_row_ptr,                  &
                             HE_val_ptr, lhe_row, HE_row, lhe_val, HE_val )
@@ -537,12 +584,12 @@
       goth = .FALSE.
       WRITE( out, "( ' Call CUTEST_chprod with goth = .FALSE.' )" )
       CALL CUTEST_chprod( status, n, m, goth, X, Y, VECTOR, RESULT )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_RESULT( out, n, VECTOR, RESULT )
       goth = .TRUE.
       WRITE( out, "( ' Call CUTEST_chprod with goth = .TRUE.' )" )
       CALL CUTEST_chprod( status, n, m, goth, X, Y, VECTOR, RESULT )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_RESULT( out, n, VECTOR, RESULT )
 
 !  compute a sparse Hessian-vector product
@@ -553,7 +600,7 @@
       CALL CUTEST_cshprod( status, n, m, goth, X, Y,                           &
                            nnz_vector, INDEX_nz_vector, VECTOR,                &
                            nnz_result, INDEX_nz_result, RESULT )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_SRESULT( out, n, nnz_vector, INDEX_nz_vector, VECTOR,         &
                           nnz_result, INDEX_nz_result, RESULT )
 
@@ -562,7 +609,7 @@
       CALL CUTEST_cshprod( status, n, m, goth, X, Y,                           &
                            nnz_vector, INDEX_nz_vector, VECTOR,                &
                            nnz_result, INDEX_nz_result, RESULT )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_SRESULT( out, n, nnz_vector, INDEX_nz_vector, VECTOR,         &
                           nnz_result, INDEX_nz_result, RESULT )
 
@@ -571,12 +618,12 @@
       goth = .FALSE.
       WRITE( out, "( ' Call CUTEST_chcprod with goth = .FALSE.' )" )
       CALL CUTEST_chcprod( status, n, m, goth, X, Y, VECTOR, RESULT )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_RESULT( out, n, VECTOR, RESULT )
       goth = .TRUE.
       WRITE( out, "( ' Call CUTEST_chcprod with goth = .TRUE.' )" )
       CALL CUTEST_chcprod( status, n, m, goth, X, Y, VECTOR, RESULT )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_RESULT( out, n, VECTOR, RESULT )
 
 !  compute a sparse Hessian-vector product ignoring the objective
@@ -586,7 +633,7 @@
       CALL CUTEST_cshcprod( status, n, m, goth, X, Y,                          &
                            nnz_vector, INDEX_nz_vector, VECTOR,                &
                            nnz_result, INDEX_nz_result, RESULT )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_SRESULT( out, n, nnz_vector, INDEX_nz_vector, VECTOR,         &
                           nnz_result, INDEX_nz_result, RESULT )
 
@@ -595,7 +642,7 @@
       CALL CUTEST_cshcprod( status, n, m, goth, X, Y,                          &
                            nnz_vector, INDEX_nz_vector, VECTOR,                &
                            nnz_result, INDEX_nz_result, RESULT )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       CALL WRITE_SRESULT( out, n, nnz_vector, INDEX_nz_vector, VECTOR,         &
                           nnz_result, INDEX_nz_result, RESULT )
 
@@ -655,7 +702,7 @@
 
       WRITE( out, "( ' CALL CUTEST_cdimchp' )" )
       CALL CUTEST_cdimchp( status, CHP_ne )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
       WRITE( out, "( ' * CHP_ne = ', I0 )" ) CHP_ne
 
       l_chp = CHP_ne
@@ -689,20 +736,20 @@
 
       WRITE( out, "( ' Call CUTEST_cterminate' )" )
       CALL CUTEST_cterminate( status )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
 
 !  one more setup ...
 
       WRITE( out, "( ' CALL CUTEST_csetup ' )" )
       CALL CUTEST_csetup( status, input, out, buffer, n, m, X, X_l, X_u,       &
                       Y, C_l, C_u, EQUATION, LINEAR, 1, 1, 1 )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
 
 !  ... and terminal exit
 
       WRITE( out, "( ' Call CUTEST_cterminate' )" )
       CALL CUTEST_cterminate( status )
-      IF ( status /= 0 ) GO to 900
+      IF ( status /= 0 ) GO TO 900
 
       DEALLOCATE( X_type, H_row, H_col, HE_row, HE_row_ptr, HE_val_ptr, X,     &
                   X_l, X_u, G, Ji, Y, C_l, C_u, C, H_val, HE_val, H2_val,      &

@@ -134,13 +134,29 @@
       IF ( status /= 0 ) GO to 900
       CALL WRITE_X_type( out, n, X_type )
 
-!  compute the objective function value
+!  compute the objective and constraint function values
 
       WRITE( out, "( ' CALL CUTEST_cfn' )" )
       CALL CUTEST_cfn_threaded( status, n, m, X, f, C, thread )
       IF ( status /= 0 ) GO to 900
       CALL WRITE_f( out, f )
       CALL WRITE_C( out, m, C )
+
+!  compute the objective function value
+
+      WRITE( out, "( ' CALL CUTEST_cifn for the objective function' )" )
+      icon = 0
+      CALL CUTEST_cifn_threaded( status, n, icon, X, f, thread )
+      IF ( status /= 0 ) GO TO 900
+      CALL WRITE_f( out, f )
+
+!  compute a constraint value
+
+      WRITE( out, "( ' CALL CUTEST_cifn for a constraint' )" )
+      icon = 1
+      CALL CUTEST_cifn_threaded( status, n, icon, X, ci, thread )
+      IF ( status /= 0 ) GO TO 900
+      CALL WRITE_CI( out, icon, ci )
 
 !  compute the gradient and dense Jacobian values
 
@@ -179,23 +195,37 @@
 
 !  compute the objective function and gradient values
 
+      grad = .FALSE.
+      WRITE( out, "( ' CALL CUTEST_cofg with grad = .FALSE.' )" )
+      CALL CUTEST_cofg_threaded( status, n, X, f, G, grad, thread )
+      IF ( status /= 0 ) GO to 900
+      CALL WRITE_f( out, f )
       grad = .TRUE.
       WRITE( out, "( ' CALL CUTEST_cofg with grad = .TRUE.' )" )
       CALL CUTEST_cofg_threaded( status, n, X, f, G, grad, thread )
       IF ( status /= 0 ) GO to 900
       CALL WRITE_f( out, f )
       CALL WRITE_G( out, n, G )
-      grad = .FALSE.
-      WRITE( out, "( ' CALL CUTEST_cofg with grad = .FALSE.' )" )
-      CALL CUTEST_cofg_threaded( status, n, X, f, G, grad, thread )
-      IF ( status /= 0 ) GO to 900
-      CALL WRITE_f( out, f )
+
+!  compute just its gradient
+
+      icon = 0
+      WRITE( out, "( ' CALL CUTEST_cigr for the objective function' )" )
+      CALL CUTEST_cigr_threaded( status, n, icon, X, G, thread )
+      IF ( status /= 0 ) GO TO 900
+      CALL WRITE_G( out, n, G )
 
 !  compute the objective function and sparse gradient values
 
       l_g = n
       ALLOCATE( G_val( l_g ), G_var( l_g ), stat = alloc_stat )
       IF ( alloc_stat /= 0 ) GO TO 990
+      grad = .FALSE.
+      WRITE( out, "( ' CALL CUTEST_cofsg with grad = .FALSE.' )" )
+      CALL CUTEST_cofsg_threaded( status, n, X, f,                             &
+                         G_ne, l_g, G_val, G_var, grad, thread )
+      IF ( status /= 0 ) GO to 900
+      CALL WRITE_f( out, f )
       grad = .TRUE.
       WRITE( out, "( ' CALL CUTEST_cofsg with grad = .TRUE.' )" )
       CALL CUTEST_cofsg_threaded( status, n, X, f,                             &
@@ -203,12 +233,15 @@
       IF ( status /= 0 ) GO to 900
       CALL WRITE_f( out, f )
       CALL WRITE_SG( out, G_ne, l_g, G_val, G_var )
-      grad = .FALSE.
-      WRITE( out, "( ' CALL CUTEST_cofsg with grad = .FALSE.' )" )
-      CALL CUTEST_cofsg_threaded( status, n, X, f,                             &
-                         G_ne, l_g, G_val, G_var, grad, thread )
-      IF ( status /= 0 ) GO to 900
-      CALL WRITE_f( out, f )
+
+!  compute just its sparse gradient
+
+      icon = 0
+      WRITE( out, "( ' CALL CUTEST_cisgr for the objective function' )" )
+      CALL CUTEST_cisgr_threaded( status, n, icon, X,                          &
+                                  G_ne, l_g, G_val, G_var, thread )
+      IF ( status /= 0 ) GO TO 900
+      CALL WRITE_SG( out, G_ne, l_g, G_val, G_var )
 
 !  compute the number of nonzeros in the sparse Jacobian
 
@@ -302,20 +335,34 @@
 !  compute an individual constraint and its dense gradient
 
       icon = 1
+      grad = .FALSE.
+      WRITE( out, "( ' CALL CUTEST_ccifg with grad = .FALSE.' )" )
+      CALL CUTEST_ccifg_threaded( status, n, icon, X, ci, Ji, grad, thread )
+      IF ( status /= 0 ) GO to 900
+      CALL WRITE_CI( out, icon, ci )
       grad = .TRUE.
       WRITE( out, "( ' CALL CUTEST_ccifg with grad = .TRUE.' )" )
       CALL CUTEST_ccifg_threaded( status, n, icon, X, ci, Ji, grad, thread )
       IF ( status /= 0 ) GO to 900
       CALL WRITE_CI( out, icon, ci )
       CALL WRITE_JI( out, n, icon, Ji )
-      grad = .FALSE.
-      WRITE( out, "( ' CALL CUTEST_ccifg with grad = .FALSE.' )" )
-      CALL CUTEST_ccifg_threaded( status, n, icon, X, ci, Ji, grad, thread )
-      IF ( status /= 0 ) GO to 900
-      CALL WRITE_CI( out, icon, ci )
+
+!  compute just its dense gradient
+
+      icon = 1
+      WRITE( out, "( ' CALL CUTEST_cigr for a constraint' )" )
+      CALL CUTEST_cigr_threaded( status, n, icon, X, Ji, thread )
+      IF ( status /= 0 ) GO TO 900
+      CALL WRITE_JI( out, n, icon, Ji )
 
 !  compute an individual constraint and its sparse gradient
 
+      grad = .FALSE.
+      WRITE( out, "( ' CALL CUTEST_ccifsg with grad = .FALSE.' )" )
+      CALL CUTEST_ccifsg_threaded( status, n, icon, X, ci,                     &
+                          Ji_ne, n, Ji, J_var, grad, thread )
+      IF ( status /= 0 ) GO to 900
+      CALL WRITE_CI( out, icon, ci )
       grad = .TRUE.
       WRITE( out, "( ' CALL CUTEST_ccifsg with grad = .TRUE.' )" )
       CALL CUTEST_ccifsg_threaded( status, n, icon, X, ci,                     &
@@ -323,12 +370,14 @@
       IF ( status /= 0 ) GO to 900
       CALL WRITE_CI( out, icon, ci )
       CALL WRITE_SJI( out, icon, Ji_ne, n, Ji, J_var )
-      grad = .FALSE.
-      WRITE( out, "( ' CALL CUTEST_ccifsg with grad = .FALSE.' )" )
-      CALL CUTEST_ccifsg_threaded( status, n, icon, X, ci,                     &
-                          Ji_ne, n, Ji, J_var, grad, thread )
-      IF ( status /= 0 ) GO to 900
-      CALL WRITE_CI( out, icon, ci )
+
+!  compute just its sparse gradient
+
+      WRITE( out, "( ' CALL CUTEST_cisgr for a constraint' )" )
+      CALL CUTEST_cisgr_threaded( status, n, icon, X,                          &
+                                  Ji_ne, n, Ji, J_var, thread )
+      IF ( status /= 0 ) GO TO 900
+      CALL WRITE_SJI( out, icon, Ji_ne, n, Ji, J_var )
 
 !  compute the dense Hessian value
 

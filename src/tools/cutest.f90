@@ -1,4 +1,4 @@
-! THIS VERSION: CUTEST 1.1 - 26/06/2015 AT 08:30 GMT.
+! THIS VERSION: CUTEST 1.5 - 10/10/2016 AT 15:00 GMT.
 
 !-*-*-*-*-*-*-*-*-*-*-*-*-*- C U T E S T   M O D U l E -*-*-*-*-*-*-*-*-*-*-*-*-
 
@@ -157,6 +157,9 @@
         REAL ( KIND = wp ) :: time_cgrdh = 0.0_wp
         REAL ( KIND = wp ) :: time_chcprod = 0.0_wp
         REAL ( KIND = wp ) :: time_chprod = 0.0_wp
+        REAL ( KIND = wp ) :: time_cifn = 0.0_wp
+        REAL ( KIND = wp ) :: time_cigr = 0.0_wp
+        REAL ( KIND = wp ) :: time_cisgr = 0.0_wp
         REAL ( KIND = wp ) :: time_cidh = 0.0_wp
         REAL ( KIND = wp ) :: time_cish = 0.0_wp
         REAL ( KIND = wp ) :: time_cjprod = 0.0_wp
