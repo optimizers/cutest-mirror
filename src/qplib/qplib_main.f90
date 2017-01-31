@@ -41,10 +41,10 @@
       REAL ( KIND = wp ), PARAMETER :: infinity_used = ( 10.0_wp ) ** 20
 
       INTEGER, PARAMETER :: qp = 1
-      INTEGER, PARAMETER :: qpqc = 2
+      INTEGER, PARAMETER :: qcqp = 2
       INTEGER, PARAMETER :: bqp = 3
       INTEGER, PARAMETER :: lp = 4
-      INTEGER, PARAMETER :: lpqc = 5
+      INTEGER, PARAMETER :: qcp = 5
 
 !     CHARACTER ( len = 16 ) :: char_int_default = REPEAT( ' ', 16 )
 !     CHARACTER ( len = 24 ) :: char_val_default = REPEAT( ' ', 24 )
@@ -64,7 +64,7 @@
       REAL ( KIND = wp ), ALLOCATABLE, DIMENSION( : ) :: A_val, H_val
       CHARACTER ( len = 10 ), ALLOCATABLE, DIMENSION( : ) :: X_names, C_names
 
-      INTEGER :: i, int_var, l, lh, nehi, nnzh_i
+      INTEGER :: i, int_var, bin_var, l, lh, nehi, nnzh_i
       INTEGER :: problem_type = 1
       LOGICAL :: filexx
       LOGICAL :: append_dim = .FALSE.
@@ -84,7 +84,7 @@
 
 !  read input Spec data
 
-!  problem_type = 1(QP,default),2,(QPQC),3(BQP),4(LP),5(LPQC)
+!  problem_type = 1(QP,default),2,(QCQP),3(BQP),4(LP),5(QCP)
 !  append_dim   = F(don't append _n_m to name where n.m = dims,default), T(do)
 !  qplib_wrfile = T(write to a file "probname".qplib), F(write to standard out)
 
@@ -102,7 +102,7 @@
 !  sparse co-ordinate version
 
       h_pert = zero
-      IF ( problem_type == qpqc .OR. problem_type == lpqc ) THEN
+      IF ( problem_type == qcqp .OR. problem_type == qcp ) THEN
         CALL CUTEST_lqp_create( status, input, buffer, out, n, m, f, G,        &
                                 X, X_l, X_u, Z, Y, C_l, C_u, p_name,           &
                                 X_names, C_names,                              &
@@ -161,9 +161,10 @@
         REWIND ( out )
       END IF
 
-!  see if the problem has integer variables
+!  see if the problem has integer or binary variables
 
       int_var = COUNT( X_type( : n ) > 0 )
+      bin_var = COUNT( X_type( : n ) == 2 )
 
 !  set header
 
@@ -181,57 +182,76 @@
       END IF
       IF ( int_var == 0 ) THEN
         SELECT CASE ( problem_type )
-        CASE ( qpqc )
-          WRITE( out, "( 'QPQC                     a quadratic program',       &
+        CASE ( qcqp )
+          WRITE( out, "( 'QCQ                      a quadratic program',       &
          &               ' with quadratic constraints' )" )
         CASE ( bqp )
-          WRITE( out, "( 'BQP                      a bound-constrained',       &
+          WRITE( out, "( 'QCB                      a bound-constrained',       &
          &               ' quadratic program' )" )
         CASE ( lp )
-          WRITE( out, "( 'LP                       a linear program' )" )
-        CASE ( lpqc )
-          WRITE( out, "( 'LPQC                     a linear program',          &
+          WRITE( out, "( 'LCL                      a linear program' )" )
+        CASE ( qcp )
+          WRITE( out, "( 'LCQ                      a linear program',          &
          &                ' with quadratic constraints' )" )
         CASE DEFAULT
-          WRITE( out, "( 'QP                       a quadratic program' )")
+          WRITE( out, "( 'QCL                      a quadratic program' )")
+        END SELECT
+      ELSE IF ( bin_var == n ) THEN
+        SELECT CASE ( problem_type )
+        CASE ( qcqp )
+          WRITE( out, "( 'QBQ                      a binary',                  &
+         &    ' QP with quadratic constraints' )" )
+        CASE ( bqp )
+          WRITE( out, "( 'QBB                      a binary',                  &
+         &    ' bound-constrained quadratic program' )" )
+        CASE ( lp )
+          WRITE( out, "( 'LBL                      a binary',                  &
+       &     ' linear program' )" )
+        CASE ( qcp )
+          WRITE( out, "( 'LBQ                      a binary',                  &
+         &    ' LP with quadratic constraints' )" )
+        CASE DEFAULT
+          WRITE( out, "( 'QBL                      a binary',                  &
+         &   ' quadratic program' )")
         END SELECT
       ELSE IF ( int_var == n ) THEN
         SELECT CASE ( problem_type )
-        CASE ( qpqc )
-          WRITE( out, "( 'IQPQC                    an integer',                &
+        CASE ( qcqp )
+          WRITE( out, "( 'QIQ                      an integer',                &
          &    ' QP with quadratic constraints' )" )
         CASE ( bqp )
-          WRITE( out, "( 'IBQP                     an integer',                &
+          WRITE( out, "( 'QIB                      an integer',                &
          &    ' bound-constrained quadratic program' )" )
         CASE ( lp )
-          WRITE( out, "( 'ILP                      an integer',                &
+          WRITE( out, "( 'LIL                      an integer',                &
        &     ' linear program' )" )
-        CASE ( lpqc )
-          WRITE( out, "( 'ILPQC                    an integer',                &
+        CASE ( qcp )
+          WRITE( out, "( 'LIQ                      an integer',                &
          &    ' LP with quadratic constraints' )" )
         CASE DEFAULT
-          WRITE( out, "( 'IQP                      an integer',                &
+          WRITE( out, "( 'QIL                      an integer',                &
          &   ' quadratic program' )")
         END SELECT
       ELSE
         SELECT CASE ( problem_type )
-        CASE ( qpqc )
-          WRITE( out, "( 'MIQPQC                   a mixed-integer',           &
+        CASE ( qcqp )
+          WRITE( out, "( 'QGQ                      a mixed-integer',           &
          &    ' QP with quadratic constraints' )" )
         CASE ( bqp )
-          WRITE( out, "( 'MIBQP                    a mixed-integer',           &
+          WRITE( out, "( 'QGB                      a mixed-integer',           &
          &    ' bound-constrained quadratic program' )" )
         CASE ( lp )
-          WRITE( out, "( 'MILP                     a mixed-integer',           &
+          WRITE( out, "( 'QGL                      a mixed-integer',           &
        &     ' linear program' )" )
-        CASE ( lpqc )
-          WRITE( out, "( 'MILPQC                   a mixed-integer',           &
+        CASE ( qcp )
+          WRITE( out, "( 'LGQ                      a mixed-integer',           &
          &    ' LP with quadratic constraints' )" )
         CASE DEFAULT
-          WRITE( out, "( 'MIQP                     a mixed-integer',           &
+          WRITE( out, "( 'QGL                      a mixed-integer',           &
          &   ' quadratic program' )")
         END SELECT
       END IF
+      WRITE( out, "( 'Minimize' )" )
       char_l = TRIM_INT( n )
       WRITE( out, "( A16, 8X, ' # variables ' )" ) char_l
       IF ( problem_type /= bqp ) THEN
@@ -242,7 +262,7 @@
 !  Hessian values
 
       IF ( problem_type == qp .OR. problem_type == bqp .OR.                    &
-           problem_type == qpqc ) THEN
+           problem_type == qcqp ) THEN
         char_l = TRIM_INT( H_ne )
         IF ( H_ne == 0 ) THEN
           WRITE( out, "( /, A16, 8X, ' # nonzeros in upper triangle of H' )" ) &
@@ -284,8 +304,7 @@
 
 !  Hessian values for constraints
 
-      IF ( problem_type == qpqc .OR. problem_type == lpqc ) THEN
-
+      IF ( problem_type == qcqp .OR. problem_type == qcp ) THEN
         ALLOCATE( X0( n ), STAT = status )
         IF ( status /= 0 ) GO TO 900
         X0 = zero
@@ -315,7 +334,7 @@
         DEALLOCATE( X0, stat = status )
         CALL CUTEST_cterminate( status )
 
-!  record the total number of constraintg Hessian values
+!  record the total number of constraint Hessian values
 
         char_l = TRIM_INT( nnzh_i )
         WRITE( out, "( /, A16, 8X, ' # nonzeros in upper triangle',            &

@@ -27,6 +27,7 @@ extern "C" {   /* To prevent C++ compilers from mangling symbols */
 #define GENC    genc
 #define GENSPC  genspc
 #define GETINFO getinfo
+#define DEBUG
 
 double GENC( doublereal );
 void GENSPC( integer, char * );
@@ -108,7 +109,7 @@ int MAINENTRY( void ){
     integer gsl_status;        /* Exit flag from GSL */
     integer conv_status;       /* Status of the convergence of the alg */
     integer grad_status;       /* Exit flag from computing gradient */
-    
+
     FILE *indr, *summary, *iter_summary;
 
     VarTypes vtypes;
@@ -303,15 +304,15 @@ int MAINENTRY( void ){
     /*    maxiter = 1000;
     epsabs = 1e-12;
     epsrel = 1e-12;*/
-    
+
     /* Read parameters in from GSL.SPC */
-    indr = fopen("GSL.SPC","r"); 
+    indr = fopen("GSL.SPC","r");
     if ( indr == NULL ) {
       fprintf(stderr, "Error: can't find GLS.SPC\n");
       exit(1);
     }
     rewind( indr );
-    
+
     ierr = fscanf( indr, "%i%*[^\n]\n", &maxiter);
     if (ierr != 1) {
       printf("Error: failed to read max iterations from GSL.SPC; using default (1000). \n");
@@ -355,7 +356,7 @@ int MAINENTRY( void ){
 	     );
       strncpy(iter_summary_file,"GSL_iter.sum",20);
     }
-    
+
     fclose(indr);
 
     if ( write_summary == 1) {
@@ -366,10 +367,10 @@ int MAINENTRY( void ){
 	exit(1);
       }
       summary_size = ftell(summary);
-      if (summary_size == 0) { 
+      if (summary_size == 0) {
 	/* write where opened if file was empty */
 	  fprintf( summary, "%10s", pname );
-	} 
+	}
       else {
 	/* otherwise start with a new line */
 	fprintf( summary, "\n%10s", pname );
@@ -384,7 +385,7 @@ int MAINENTRY( void ){
 	exit(1);
       }
     }
-      
+
     /* Call the optimizer */
     /*ExitCode = gsl_multifit_fdfsolver_driver(gsl, maxiter, epsabs, epsrel);
     switch(ExitCode) {
@@ -409,7 +410,7 @@ int MAINENTRY( void ){
     normJf = gsl_blas_dnrm2(gradient);
     printf("||J0'f0||/||f0|| = %e\n", normJf/normf);
 
-    if ( write_iter_summary == 1) { 
+    if ( write_iter_summary == 1) {
       fprintf(iter_summary,"%23.15e  %23.15e\n",fnval, normJf);
     }
 
@@ -420,13 +421,13 @@ int MAINENTRY( void ){
       if (tol_gradient < epsabs){
 	tol_gradient = epsabs;
       }
-      
+
       /* set tol_func = max(epsabs, ||f|| * epsrel ) */
       tol_func = normf * epsrel;
-      if (tol_func < epsabs) { 
+      if (tol_func < epsabs) {
 	tol_func = epsabs;
       }
-            
+
     }
 
     /* now, to the main loop... */
@@ -445,7 +446,7 @@ int MAINENTRY( void ){
        normf = gsl_blas_dnrm2(gsl->f);
        fnval = 0.5*normf*normf;
        printf("0.5 ||f||^2 = %e\n", fnval);
-       
+
        grad_status = gsl_multifit_gradient(gsl->J, gsl->f, gradient);
        normJf = gsl_blas_dnrm2(gradient);
        printf("||J'f||/||f|| = %e\n", normJf/normf);
@@ -454,7 +455,7 @@ int MAINENTRY( void ){
 	 break;
        }
 
-       if ( write_iter_summary == 1 ) { 
+       if ( write_iter_summary == 1 ) {
 	 fprintf(iter_summary,"%23.15e  %23.15e\n", fnval, normJf);
        }
 
@@ -469,7 +470,7 @@ int MAINENTRY( void ){
 	   printf("Scaled gradient test successful\n");
 	   break;
 	 }
-	 
+
 	 /* test on the function value */
 	 if (normf > tol_func ){
 	   conv_status = GSL_CONTINUE;
@@ -484,11 +485,11 @@ int MAINENTRY( void ){
        else if (stopping_test == 2) {
 	 /* Stop if |dx_i| < epsabs + epsrel |x_i| for all i. */
 	 conv_status = gsl_multifit_test_delta(gsl->dx, gsl->x, epsabs, epsrel);
-       } 
-       else if (stopping_test == 3) { 
+       }
+       else if (stopping_test == 3) {
 	 /* stop if || g ||_inf < epsabs */
 	 conv_status = gsl_multifit_test_gradient(gradient,epsabs);
-       } 
+       }
        else {
 	 printf("Error: unsupported stopping test \n");
 	 conv_status = GSL_EINVAL; /* made up error code... */
@@ -497,11 +498,11 @@ int MAINENTRY( void ){
        if (gsl_status) {
 	 conv_status = gsl_status;
        }
-       
+
        printf("test status = %s\n", gsl_strerror(conv_status));
     }
     while(conv_status==GSL_CONTINUE && iter < maxiter);
-    
+
     /* Calculate final value */
     /*    normf = gsl_blas_dnrm2(gsl->f);
 	  fnval = 0.5*normf*normf;*/
@@ -518,9 +519,9 @@ int MAINENTRY( void ){
     fnevals = (int) calls[0];
     jacevals = (int) calls[1];
     hessevals = (int) calls[2];
-    
-    if ( iter == maxiter ) { 
-      gsl_status = -999; 
+
+    if ( iter == maxiter ) {
+      gsl_status = -999;
     }
 
     if ( gsl_status ) { /* count as a failure */
@@ -532,12 +533,12 @@ int MAINENTRY( void ){
 
     /* write summary if required */
     if ( write_summary == 1) {
-      fprintf( 
+      fprintf(
 	      summary, "%6i %6i %6i %6i %6i %6i %6i %23.15e %23.15e %23.15e",
 	      (int)CUTEst_nvar,
 	      (int)CUTEst_ncon,
-	      gsl_status, 
-	      iter, 
+	      gsl_status,
+	      iter,
 	      fnevals,
 	      jacevals,
 	      hessevals,

@@ -138,6 +138,7 @@
       TYPE, PUBLIC :: CUTEST_work_type
         INTEGER :: nc2of, nc2og, nc2oh, nc2cf, nc2cg, nc2ch, nhvpr, njvpr, pnc
         INTEGER :: llink, lrowst, lpos, lused, lfilled, nbprod
+        INTEGER :: nnzh = - 1
         INTEGER :: lh_row = lmin
         INTEGER :: lh_col = lmin
         INTEGER :: lh_val = lmin

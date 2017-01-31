@@ -17,7 +17,7 @@
       INTEGER, INTENT( OUT ) :: status, nnzh
 
 !  ------------------------------------------------------------------------
-!  Compute the space required to store the Hessian matrix of the Lagrangian 
+!  Compute the space required to store the Hessian matrix of the Lagrangian
 !  function of a problem initially written in Standard Input Format (SIF)
 
 !  NB. CSETUP must have been called first
@@ -56,7 +56,7 @@
       INTEGER, INTENT( OUT ) :: status, nnzh
 
 !  ------------------------------------------------------------------------
-!  Compute the space required to store the Hessian matrix of the Lagrangian 
+!  Compute the space required to store the Hessian matrix of the Lagrangian
 !  function of a problem initially written in Standard Input Format (SIF)
 
 !  NB. CSETUP must have been called first
@@ -71,14 +71,19 @@
       INTEGER :: alloc_status
       CHARACTER ( LEN = 80 ) :: bad_alloc = REPEAT( ' ', 80 )
 
-      CALL CUTEST_size_sparse_hessian(                                         &
-                      data%n, data%ng, data%nel, data%ntotel, data%nvrels,     &
-                      data%nvargp, data%IELVAR, data%IELING,                   &
-                      data%ISTADG, data%ISTAEV, data%ISTAGV, data%ISVGRP,      &
-                      data%GXEQX, data%out, status,                            &
-                      alloc_status, bad_alloc, work%hessian_setup_complete,    &
-                      work%ROW_start, work%POS_in_H, work%USED, work%lrowst,   &
-                      work%lpos, work%lused, nnzh )
+      IF ( work%nnzh < 0 ) THEN
+        CALL CUTEST_size_sparse_hessian(                                       &
+                        data%n, data%ng, data%nel, data%ntotel, data%nvrels,   &
+                        data%nvargp, data%IELVAR, data%IELING,                 &
+                        data%ISTADG, data%ISTAEV, data%ISTAGV, data%ISVGRP,    &
+                        data%GXEQX, data%out, status,                          &
+                        alloc_status, bad_alloc, work%hessian_setup_complete,  &
+                        work%ROW_start, work%POS_in_H, work%USED, work%lrowst, &
+                        work%lpos, work%lused, nnzh )
+        IF ( status == 0 ) work%nnzh = nnzh
+      ELSE
+        nnzh = work%nnzh
+      END IF
 
       RETURN
 
