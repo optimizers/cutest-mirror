@@ -10,7 +10,7 @@
 
 #  function to compile selected subset
 
-cutest_compile () { 
+cutest_compile () {
   echo -e "\n Installing the $PREC precision version"
   MACROS="PRECIS=$PREC PWD=$CUTEST/src CUTEST=$CUTEST"
 
@@ -106,6 +106,7 @@ echo 'RM = '$RM                                                    >> $MAKEFILE
 echo 'SED = '$SED                                                  >> $MAKEFILE
 echo 'GREP = '$GREP                                                >> $MAKEFILE
 echo 'AR = '$AR                                                    >> $MAKEFILE
+echo 'ARREPFLAGS = '$ARREPFLAGS                                    >> $MAKEFILE
 echo 'RANLIB = '$RANLIB                                            >> $MAKEFILE
 echo ' '                                                           >> $MAKEFILE
 echo '#  Directory for binaries'                                   >> $MAKEFILE
@@ -185,16 +186,16 @@ if [[ $? != 0 ]]; then
   fi
 
   if [[ $GALAHAD_REQPREC == [Ss] ]] ; then
-    PREC='single' 
+    PREC='single'
   else
-    PREC='double' 
+    PREC='double'
   fi
   cutest_compile
 
 #  optionally compile the selected packages in the other precision
 
   if [[ $GALAHAD_REQPREC == [Bb] ]] ; then
-    PREC='single' 
+    PREC='single'
     cutest_compile
   fi
   success 'CUTEst successfully installed'

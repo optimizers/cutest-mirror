@@ -166,6 +166,22 @@
       int_var = COUNT( X_type( : n ) > 0 )
       bin_var = COUNT( X_type( : n ) == 2 )
 
+      IF ( problem_type /= qcqp .AND. problem_type /= qcp ) THEN
+        IF ( A_ne == 0 ) THEN
+          IF ( H_ne > 0 ) THEN
+            problem_type = bqp
+          ELSE
+            problem_type = lp
+          END IF
+        ELSE
+          IF ( H_ne > 0 ) THEN
+            problem_type = qp
+          ELSE
+            problem_type = lp
+          END IF
+        END IF
+      END IF
+
 !  set header
 
       IF ( m > 0 ) THEN
@@ -436,40 +452,48 @@
 
 !  variable lower bounds
 
-      mode_v = MODE( n, X_l )
-      l = COUNT( X_l( : n ) /= mode_v )
-      char_l = TRIM_INT( l ) ; char_val = TRIM_VALUE( mode_v )
-      WRITE( out, "( /, A24, ' default value for entries in x_l' )" ) char_val
-      IF ( l == 0 ) THEN
-        WRITE( out, "( A16, 8X, ' # non default entries in x_l' )" ) char_l
-      ELSE
-        WRITE( out, "( A16, 8X, ' # non default entries in x_l:',              &
-       &  ' index,value' )" ) char_l
+      IF ( bin_var < n ) THEN
+        mode_v = MODE( n, X_l )
+        l = 0
         DO i = 1, n
-          IF ( X_l( i ) /= mode_v ) THEN
-            char_i = TRIM_INT( i ) ; char_val = TRIM_VALUE( X_l( i ) )
-            WRITE( out, "( A16, 1X, A24 )" ) char_i, char_val
-          END IF
+          IF ( X_l( i ) /= mode_v .AND. X_type( i ) /= 2 ) l = l + 1
         END DO
-      END IF
+        char_l = TRIM_INT( l ) ; char_val = TRIM_VALUE( mode_v )
+        WRITE( out, "( /, A24, ' default value for entries in x_l' )" ) char_val
+        IF ( l == 0 ) THEN
+          WRITE( out, "( A16, 8X, ' # non default entries in x_l' )" ) char_l
+        ELSE
+          WRITE( out, "( A16, 8X, ' # non default entries in x_l:',            &
+         &  ' index,value' )" ) char_l
+          DO i = 1, n
+            IF ( X_l( i ) /= mode_v .AND. X_type( i ) /= 2 ) THEN
+              char_i = TRIM_INT( i ) ; char_val = TRIM_VALUE( X_l( i ) )
+              WRITE( out, "( A16, 1X, A24 )" ) char_i, char_val
+            END IF
+          END DO
+        END IF
 
 !  variable upper bounds
 
-      mode_v = MODE( n, X_u )
-      l = COUNT( X_u( : n ) /= mode_v )
-      char_l = TRIM_INT( l ) ; char_val = TRIM_VALUE( mode_v )
-      WRITE( out, "( /, A24, ' default value for entries in x_u' )" ) char_val
-      IF ( l == 0 ) THEN
-        WRITE( out, "( A16, 8X, ' # non default entries in x_u' )" ) char_l
-      ELSE
-        WRITE( out, "( A16, 8X, ' # non default entries in x_u:',              &
-       &  ' index,value' )") char_l
+        mode_v = MODE( n, X_u )
+        l = 0
         DO i = 1, n
-          IF ( X_u( i ) /= mode_v ) THEN
-            char_i = TRIM_INT( i ) ; char_val = TRIM_VALUE( X_u( i ) )
-            WRITE( out, "( A16, 1X, A24 )" ) char_i, char_val
-          END IF
+          IF ( X_u( i ) /= mode_v .AND. X_type( i ) /= 2 ) l = l + 1
         END DO
+        char_l = TRIM_INT( l ) ; char_val = TRIM_VALUE( mode_v )
+        WRITE( out, "( /, A24, ' default value for entries in x_u' )" ) char_val
+        IF ( l == 0 ) THEN
+          WRITE( out, "( A16, 8X, ' # non default entries in x_u' )" ) char_l
+        ELSE
+          WRITE( out, "( A16, 8X, ' # non default entries in x_u:',            &
+         &  ' index,value' )") char_l
+          DO i = 1, n
+            IF ( X_u( i ) /= mode_v .AND. X_type( i ) /= 2 ) THEN
+              char_i = TRIM_INT( i ) ; char_val = TRIM_VALUE( X_u( i ) )
+              WRITE( out, "( A16, 1X, A24 )" ) char_i, char_val
+            END IF
+          END DO
+        END IF
       END IF
 
 !  variable types

@@ -581,6 +581,7 @@ echo 'RM = '$RM                                                    >> $MAKEFILE
 echo 'SED = '$SED                                                  >> $MAKEFILE
 echo 'GREP = '$GREP                                                >> $MAKEFILE
 echo 'AR = '$AR                                                    >> $MAKEFILE
+echo 'ARREPFLAGS = '$ARREPFLAGS                                    >> $MAKEFILE
 echo 'RANLIB = '$RANLIB                                            >> $MAKEFILE
 echo ' '                                                           >> $MAKEFILE
 echo '#  Directory for binaries'                                   >> $MAKEFILE

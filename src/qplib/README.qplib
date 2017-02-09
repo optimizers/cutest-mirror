@@ -77,14 +77,14 @@ either the character D or E, e.g. 12.56D+2 or 12.56E+2.
 "default value for entries in c_u"                                           [1]
 "number of non-default entries in c_u"                                       [1]
 "index" "value" for each non-default term in c_u (if any), one pair per line
-"default value for entries in x_l"
-"number of non-default entries in x_l"
-"index" "value" for each non-default term in x_l (if any), one pair per line
-"default value for entries in x_u"
-"number of non-default entries in x_u"
-"index" "value" for each non-default term in x_u (if any), one pair per line
-"default variable type"  (0 = continuous, 1 = integer, 2 = binary)           [4]
-"number of non-default variables"                                            [4]
+"default value for entries in x_l"                                           [4]
+"number of non-default entries in x_l"                                       [4]
+"index" "value" for each non-default term in x_l (if any), one pair per line [4]
+"default value for entries in x_u"                                           [4]
+"number of non-default entries in x_u"                                       [4]
+"index" "value" for each non-default term in x_u (if any), one pair per line [4]
+"default variable type"  (0 = continuous, 1 = integer, 2 = binary)           [5]
+"number of non-default variables"                                            [5]
 "index" "value" for each non-default variable type (if any), one pair per line
 "default value for starting value for variables x"
 "number of non-default starting entries in x"
@@ -145,8 +145,10 @@ and for mixed integer problems, the second character would by M or G.
 [1] for bound-constrained QPs, these sections are omitted.
 [2] for linear program with quadratic constraints, this section is omitted.
 [3] for problems without quadratic constraints, this section is omitted.
-[4] for purely-continuous or purely-integer & binary problems, this section
-    is omitted.
+[4] for purely binary problems, these section are omitted.
+[5] for purely-continuous, purely-binary or purely-integer problems,
+    this section is omitted. Lower and upper bounds on binary variables
+    will be 0 and 1, and this will override any other settings
 
 ---------------------------  example ------------------------------------
 

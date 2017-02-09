@@ -46,16 +46,16 @@ PLIBS = $(LIBS) -lcutest_problem
 
 #  Archive manipulation strings
 
-ARR = $(AR) -rcu $(LC)
+ARR = $(AR) $(ARREPFLAGS) $(LC)
 RMARFILE = $(CUTEST)/bin/rmarfile $(AR) $(GREP) $(LC)
 RMOBFILE = $(CUTEST)/bin/rmobfile $(RM) $(OBJ)
 
-BARR = $(AR) -rcu $(BLC)
+BARR = $(AR) $(ARREPFLAGS) $(BLC)
 BRMARFILE = $(CUTEST)/bin/rmarfile $(AR) $(GREP) $(BLC)
 
-DARR = $(AR) -rcu $(DLC)
+DARR = $(AR) $(ARREPFLAGS) $(DLC)
 
-LARR = $(AR) -rcu $(LLC)
+LARR = $(AR) $(ARREPFLAGS) $(LLC)
 LRMARFILE = $(CUTEST)/bin/rmarfile $(AR) $(GREP) $(LLC)
 
 #  sed scripts
