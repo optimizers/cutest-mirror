@@ -91,6 +91,8 @@ all_single: tools_single
                    uncmin  PRECIS=single PWD=$(PWD)/uncmin )
 	( cd vf13  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    vf13  PRECIS=single PWD=$(PWD)/vf13 )
+	( cd worhp  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   worhp  PRECIS=single PWD=$(PWD)/worhp )
 all_double: tools_double
 	( cd algencan  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    algencan PRECIS=double PWD=$(PWD)/algencan )
@@ -172,6 +174,8 @@ all_double: tools_double
                    uncmin  PRECIS=double PWD=$(PWD)/uncmin )
 	( cd vf13  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
                    vf13  PRECIS=double PWD=$(PWD)/vf13 )
+	( cd worhp  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+                   worhp  PRECIS=double PWD=$(PWD)/worhp )
 
 #  all tools (including fortran 2008) and interfaces
 
@@ -343,6 +347,9 @@ run_test_single: tools_single test_single
              run_test PRECIS=single PWD=$(PWD)/uncmin )
 	( cd vf13  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
              run_test PRECIS=single PWD=$(PWD)/vf13 )
+#	( cd worhp  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+#             run_test PRECIS=single PWD=$(PWD)/worhp )
+
 run_test_double: tools_double test_double
 	( cd algencan  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
              run_test PRECIS=double PWD=$(PWD)/algencan )
@@ -418,6 +425,8 @@ run_test_double: tools_double test_double
              run_test PRECIS=double PWD=$(PWD)/uncmin )
 	( cd vf13  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
              run_test PRECIS=double PWD=$(PWD)/vf13 )
+#	( cd worhp  ; $(MAKE) -f $(CUTEST)/makefiles/$(VERSION) \
+#             run_test PRECIS=double PWD=$(PWD)/worhp )
 
 #  all tools (including fortran 2008) and interfaces
 
