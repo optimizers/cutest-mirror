@@ -147,6 +147,7 @@
         REAL ( KIND = wp ) :: time_ccfsg = 0.0_wp
         REAL ( KIND = wp ) :: time_cch = 0.0_wp
         REAL ( KIND = wp ) :: time_cchprods = 0.0_wp
+        REAL ( KIND = wp ) :: time_cchprodsp = 0.0_wp
         REAL ( KIND = wp ) :: time_ccifg = 0.0_wp
         REAL ( KIND = wp ) :: time_ccifsg = 0.0_wp
         REAL ( KIND = wp ) :: time_cdh = 0.0_wp
@@ -168,8 +169,10 @@
         REAL ( KIND = wp ) :: time_cofg = 0.0_wp
         REAL ( KIND = wp ) :: time_cofsg = 0.0_wp
         REAL ( KIND = wp ) :: time_csgr = 0.0_wp
+        REAL ( KIND = wp ) :: time_csgrp = 0.0_wp
         REAL ( KIND = wp ) :: time_csgreh = 0.0_wp
         REAL ( KIND = wp ) :: time_csgrsh = 0.0_wp
+        REAL ( KIND = wp ) :: time_csgrshp = 0.0_wp
         REAL ( KIND = wp ) :: time_csh = 0.0_wp
         REAL ( KIND = wp ) :: time_cshc = 0.0_wp
         REAL ( KIND = wp ) :: time_cshcprod = 0.0_wp

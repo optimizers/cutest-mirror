@@ -81,19 +81,17 @@
              work%FILLED, work%lrowst, work%lpos, work%lused, work%lfilled,    &
              nnzh )
 
-!  check for errors
+!  record the pattern if it is available
 
-      IF ( status > 0 ) GO TO 990
-
-!  record the sparse Hessian
-
-      H_row( : nnzh ) = work%H_row( : nnzh )
-      H_col( : nnzh ) = work%H_col( : nnzh )
+      IF ( status == 0 ) THEN
+        H_row( : nnzh ) = work%H_row( : nnzh )
+        H_col( : nnzh ) = work%H_col( : nnzh )
 
 !  update the counters for the report tool
 
-      work%nc2oh = work%nc2oh + 1
-      status = 0
+        work%nc2oh = work%nc2oh + 1
+        work%nc2ch = work%nc2ch + work%pnc
+      END IF
 
 !  update elapsed CPU time if required
 

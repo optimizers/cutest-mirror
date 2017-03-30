@@ -1,19 +1,22 @@
-'\" e  @(#)cutest_cshp v1.0 04/2013;
-.TH cutest_cshp 3M "8 Apr 2013" "CUTEst user documentation" "CUTEst user documentation"
+'\" e  @(#)cutest_csgrshp v1.5 03/2017;
+.TH cutest_csgrshp 3M "30 Mar 2017" "CUTEst user documentation" "CUTEst user documentation"
 .SH NAME
-CUTEST_cshp \- CUTEst tool to evaluate the sparsity pattern of the Hessian
-of the Lagrangian function.
+CUTEST_csgrshp \- CUTEst tool to evaluate the sparsity patterns of the
+constraints gradients and gradient of objective/Lagrangian function,
+and the Hessian of the Lagrangian.
 .SH SYNOPSIS
 .HP 1i
-CALL CUTEST_cshp( status, n, nnzh, lh, H_row, H_col )
+CALL CUTEST_csgrshp( status, n, nnzj, lj, J_var, J_fun, nnzh, lh, H_row, H_col )
 .SH DESCRIPTION
-The CUTEST_cshp subroutine evaluates the sparsity pattern of the
-Hessian of the Lagrangian function
+The CUTEST_csgrshp subroutine evaluates sparsity pattern used when storing the
+gradients of the general constraints and of either the objective function
+or the Lagrangian function
 .EQ
-l(x,y) = f(x) + y sup T c(x)
+l(x,y) = f(x) + y sup T c(x),
 .EN
-for the problem, decoded from a SIF file by the script \fIsifdecoder\fP,
-in coordinate format.
+as well as the Hessian of the Lagrangian function,
+corresponding to the problem decoded from a SIF file by the script
+\fIsifdecoder\fP.
 
 The problem under consideration
 is to minimize or maximize an objective function
@@ -59,7 +62,7 @@ The objective function is group-partially separable and
 all constraint functions are partially separable.
 .LP
 .SH ARGUMENTS
-The arguments of CUTEST_cshp are as follows
+The arguments of CUTEST_csgrshp are as follows
 .TP 5
 .B status \fP[out] - integer
 the outputr status: 0 for a succesful call, 1 for an array
@@ -68,6 +71,22 @@ allocation/deallocation error, 2 for an array bound error,
 .TP
 .B n \fP[in] - integer
 the number of variables for the problem,
+.TP
+.B nnzj \fP[out] - integer
+the number of nonzeros in J_var and J_fun,
+.TP
+.B lj \fP[in] - integer
+the actual declared dimensions of J_var and J_fun,
+.TP
+.B J_var \fP[out] - integer
+an array whose i-th component is the index of the variable with
+respect to which the derivative is taken,
+.TP
+.B J_fun \fP[out] - integer
+an array whose i-th component is the index of the problem function
+whose derivative is taken. J_fun(i) = 0 indicates the
+objective or Lagrangian function, while J_fun(i) = j > 0 indicates the
+j-th general constraint function.
 .TP
 .B nnzh \fP[out] - integer
 the number of nonzeros in the Hessian matrix,
@@ -101,4 +120,4 @@ Environment, revisited\fP,
    I. Bongartz, A.R. Conn, N.I.M. Gould and Ph.L. Toint,
    ACM TOMS, \fB21\fP:1, pp.123-160, 1995.
 
-cutest_ush(3M), sifdecoder(1).
+cutest_csgrsh(3M), sifdecoder(1).

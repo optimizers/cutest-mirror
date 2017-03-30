@@ -28,8 +28,9 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lj ) :: J_val
 
 !  ----------------------------------------------------------------
-!  compute the Hessian matrix of the Lagrangian function of
-!  a problem initially written in Standard Input Format (SIF).
+!  compute the gradients of the objective function and general
+!  constraints of a function initially written in Standard
+!  Input Format (SIF). The gradients are given in a sparse format.
 !  Also compute the Hessian matrix of the Lagrangian function of
 !  the problem
 
@@ -43,10 +44,10 @@
 !        J_fun(i) = j > 0 indicates the j-th general constraint
 !        function
 
-! H      is an array which gives the values of entries of the
+!  H_val is an array which gives the values of entries of the
 !        upper triangular part of the Hessian matrix of the
 !        Lagrangian function, stored in coordinate form, i.e.,
-!        the entry H(i) is the derivative with respect to variables
+!        the entry H_val(i) is the derivative with respect to variables
 !        with indices H_row(i) and H_col(i) for i = 1, ...., nnzh
 !  ----------------------------------------------------------------
 
@@ -90,8 +91,9 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lj ) :: J_val
 
 !  ----------------------------------------------------------------
-!  compute the Hessian matrix of the Lagrangian function of
-!  a problem initially written in Standard Input Format (SIF).
+!  compute the gradients of the objective function and general
+!  constraints of a function initially written in Standard
+!  Input Format (SIF). The gradients are given in a sparse format.
 !  Also compute the Hessian matrix of the Lagrangian function of
 !  the problem
 
@@ -105,10 +107,10 @@
 !        J_fun(i) = j > 0 indicates the j-th general constraint
 !        function
 
-! H      is an array which gives the values of entries of the
+!  H_val is an array which gives the values of entries of the
 !        upper triangular part of the Hessian matrix of the
 !        Lagrangian function, stored in coordinate form, i.e.,
-!        the entry H(i) is the derivative with respect to variables
+!        the entry H_val(i) is the derivative with respect to variables
 !        with indices H_row(i) and H_col(i) for i = 1, ...., nnzh
 !  ----------------------------------------------------------------
 
@@ -150,8 +152,9 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lj ) :: J_val
 
 !  ----------------------------------------------------------------
-!  compute the Hessian matrix of the Lagrangian function of
-!  a problem initially written in Standard Input Format (SIF).
+!  compute the gradients of the objective function and general
+!  constraints of a function initially written in Standard
+!  Input Format (SIF). The gradients are given in a sparse format.
 !  Also compute the Hessian matrix of the Lagrangian function of
 !  the problem
 
@@ -165,10 +168,10 @@
 !        J_fun(i) = j > 0 indicates the j-th general constraint
 !        function
 
-! H      is an array which gives the values of entries of the
+!  H_val is an array which gives the values of entries of the
 !        upper triangular part of the Hessian matrix of the
 !        Lagrangian function, stored in coordinate form, i.e.,
-!        the entry H(i) is the derivative with respect to variables
+!        the entry H_val(i) is the derivative with respect to variables
 !        with indices H_row(i) and H_col(i) for i = 1, ...., nnzh
 !  ----------------------------------------------------------------
 
@@ -225,8 +228,9 @@
       REAL ( KIND = wp ), INTENT( OUT ), DIMENSION( lj ) :: J_val
 
 !  ----------------------------------------------------------------
-!  compute the Hessian matrix of the Lagrangian function of
-!  a problem initially written in Standard Input Format (SIF).
+!  compute the gradients of the objective function and general
+!  constraints of a function initially written in Standard
+!  Input Format (SIF). The gradients are given in a sparse format.
 !  Also compute the Hessian matrix of the Lagrangian function of
 !  the problem
 
@@ -240,10 +244,10 @@
 !        J_fun(i) = j > 0 indicates the j-th general constraint
 !        function
 
-! H      is an array which gives the values of entries of the
+!  H_val is an array which gives the values of entries of the
 !        upper triangular part of the Hessian matrix of the
 !        Lagrangian function, stored in coordinate form, i.e.,
-!        the entry H(i) is the derivative with respect to variables
+!        the entry H_val(i) is the derivative with respect to variables
 !        with indices H_row(i) and H_col(i) for i = 1, ...., nnzh
 !  ----------------------------------------------------------------
 
@@ -268,6 +272,7 @@
 
 !  evaluate the element function values
 
+write(6,*) 'in a'
       CALL ELFUN( work%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,          &
                   data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,          &
                   data%ISTEP, work%ICALCF, data%ltypee, data%lstaev,           &
@@ -275,6 +280,7 @@
                   data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,          &
                   1, ifstat )
       IF ( ifstat /= 0 ) GO TO 930
+write(6,*) 'out a'
 
 !  evaluate the element function gradient and Hessian values
 

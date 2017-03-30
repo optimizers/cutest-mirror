@@ -186,6 +186,10 @@ evaluate both the value and gradient of the objective function.
 .B cutest_cofsg \fP(unthreaded) and \fBcutest_cofsg_threaded \fP(threaded)
 evaluate both the value and sparse gradient of the objective function.
 .TP
+.B cutest_csgrp \fP(both unthreaded and threaded)
+evaluate the sparsity pattern of the gradients of the objective function
+and constraints
+.TP
 .B cutest_csgr \fP(unthreaded) and \fBcutest_csgr_threaded \fP(threaded)
 evaluate the sparse gradients of the objective function and constraints.
 .TP
@@ -233,6 +237,10 @@ including the objective as a sparse matrix.
 evaluate the Hessian of the objective function or
 an individual constraint as a sparse matrix.
 .TP
+.B cutest_csgrshp \fP(both unthreaded and threaded)
+evaluate the sparsity pattern of the gradients of the objective function
+and constraints and the Hessian of the Lagrangian function
+.TP
 .B cutest_csgrsh \fP(unthreaded) and \fBcutest_csgrsh_threaded \fP(threaded)
 evaluate the constraint Jacobian and Hessian of the Lagrangian function
 as sparse matrices.
@@ -265,6 +273,10 @@ evaluate the product of the constraint Jacobian or its transpose with a vector.
 .B cutest_csjprod \fP(unthreaded) and \fBcutest_csjprod_threaded \fP(threaded)
 evaluate the product of the constraint Jacobian or its transpose with a
 sparse vector.
+.TP
+.B cutest_cchprodsp \fP(both unthreaded and threaded)
+evaluate the sparsity pattern needed when computing the products of the
+constraint Hessians with a vector.
 .TP
 .B cutest_cchprods \fP(unthreaded) and \fBcutest_cchprods_threaded \fP(threaded)
 evaluate the products of the constraint Hessians with a vector.

@@ -254,6 +254,13 @@
       ALLOCATE( J_val( l_j ), J_fun( l_j ), J_var( l_j ), stat = alloc_stat )
       IF ( alloc_stat /= 0 ) GO TO 990
 
+!  compute the sparsity pattern of the Jacobian
+
+      WRITE( out, "( ' Call CUTEST_csgrp' )" )
+      CALL CUTEST_csgrp( status, n, J_ne, l_j, J_var, J_fun )
+      IF ( status /= 0 ) GO TO 900
+      CALL WRITE_J_sparsity_pattern( out, J_ne, l_j, J_fun, J_var )
+
 !  compute the gradient and sparse Jacobian values
 
       grlagf = .TRUE.
@@ -489,6 +496,15 @@
                         H_ne, l_h, H_val, H_row, H_col, thread )
       IF ( status /= 0 ) GO to 900
       CALL WRITE_H_sparse( out, H_ne, l_h, H_val, H_row, H_col )
+
+!  compute the sparsity pattern of the gradients and Hessian
+
+      WRITE( out, "( ' Call CUTEST_csgrshp' )" )
+      CALL CUTEST_csgrshp( status, n, J_ne, l_j, J_var, J_fun,                 &
+                           H_ne, l_h, H_row, H_col )
+      IF ( status /= 0 ) GO TO 900
+      CALL WRITE_J_sparsity_pattern( out, J_ne, l_j, J_fun, J_var )
+      CALL WRITE_H_sparsity_pattern( out, H_ne, l_h, H_row, H_col )
 
 !  compute the gradient and sparse Hessian values
 
@@ -728,6 +744,13 @@
       ALLOCATE( CHP_val( l_chp ), CHP_ind( l_chp ), CHP_ptr( m + 1 ),          &
                 stat = alloc_stat )
       IF ( alloc_stat /= 0 ) GO TO 990
+
+!  compute the sparsity pattern needed for the matrix-vector products between
+!  each constraint Hessian and a vector
+
+      WRITE( out, "( ' Call CUTEST_cchprodsp' )" )
+      CALL CUTEST_cchprodsp( status, m, l_chp, CHP_ind, CHP_ptr )
+      CALL WRITE_CHP_sparsity( out, m, l_chp, CHP_ind, CHP_ptr )
 
 !  compute the matrix-vector products between each constraint Hessian and a
 !  vector
@@ -1052,6 +1075,22 @@
       END DO
       END SUBROUTINE WRITE_H_sparse
 
+      SUBROUTINE WRITE_J_sparsity_pattern( out, J_ne, l_j, J_fun, J_var )
+      INTEGER :: l_j, J_ne, out
+      INTEGER, DIMENSION( l_j ) :: J_fun, J_var
+      INTEGER :: i
+      WRITE( out, "( ' * J(sparse)' )" )
+      WRITE( out, "( ' * ', 2( '    fun    var' ) )" )
+      DO i = 1, J_ne, 2
+        IF ( i + 1 <= J_ne ) THEN
+          WRITE( out, "( ' * ',  2( 2I7 ) )" )                                 &
+            J_fun( i ), J_var( i ), J_fun( i + 1 ), J_var( i + 1 )
+        ELSE
+          WRITE( out, "( ' * ',  2( 2I7 ) )" ) J_fun( i ), J_var( i )
+        END IF
+      END DO
+      END SUBROUTINE WRITE_J_sparsity_pattern
+
       SUBROUTINE WRITE_J_sparse( out, J_ne, l_j, J_val, J_fun, J_var )
       INTEGER :: l_j, J_ne, out
       INTEGER, DIMENSION( l_j ) :: J_fun, J_var
@@ -1161,6 +1200,24 @@
         WRITE( out, "( ' * ', I7, 2ES12.4 )" ) i, RESULT( i )
       END DO
       END SUBROUTINE WRITE_SRESULT2
+
+      SUBROUTINE WRITE_CHP_sparsity( out, m, l_chp, CHP_ind, CHP_ptr )
+      INTEGER :: m, l_chp, out
+      INTEGER, DIMENSION( m + 1 ) :: CHP_ptr
+      INTEGER, DIMENSION( l_chp ) :: CHP_ind
+      INTEGER :: i
+      WRITE( out, "( ' * CH(product_sparsity)' )" )
+      DO i = 1, m
+        IF (  CHP_ptr( i + 1 ) > CHP_ptr( i ) ) THEN
+          WRITE( out, "( ' * constraint Hessian ', I0 )" ) i
+          WRITE( out, "( ' * product indices ', 5I12, /,                       &
+         &  ( ' *', 17X, 5I12 ) )" )                                           &
+            CHP_ind( CHP_ptr( i ) : CHP_ptr( i + 1 ) - 1 )
+        ELSE
+          WRITE( out, "( ' * no Hessian indices for constraint ', I0 )" ) i
+        END IF
+      END DO
+      END SUBROUTINE WRITE_CHP_sparsity
 
       SUBROUTINE WRITE_CHP( out, m, l_chp, CHP_val, CHP_ind, CHP_ptr )
       INTEGER :: m, l_chp, out
