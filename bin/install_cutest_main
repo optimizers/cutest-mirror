@@ -36,7 +36,7 @@ export CUTEST=`echo $CUTEST | $SED 's"/tmp_mnt""'`
 
 if [[ -e $CUTEST/versions/$VERSION ]]; then
     warning " There is already an installed CUTEST version $VERSION"
-    yesno_default_no ' Do you wish to proceed ... existing version will be destroyed'
+    yesno_default_yes ' Do you wish to proceed ... existing version will be updated'
     [[ $? != 1 ]] && exit 4
 fi
 
