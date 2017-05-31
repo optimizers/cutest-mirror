@@ -272,7 +272,6 @@
 
 !  evaluate the element function values
 
-write(6,*) 'in a'
       CALL ELFUN( work%FUVALS, X, data%EPVALU, data%nel, data%ITYPEE,          &
                   data%ISTAEV, data%IELVAR, data%INTVAR, data%ISTADH,          &
                   data%ISTEP, work%ICALCF, data%ltypee, data%lstaev,           &
@@ -280,7 +279,6 @@ write(6,*) 'in a'
                   data%lcalcf, data%lfuval, data%lvscal, data%lepvlu,          &
                   1, ifstat )
       IF ( ifstat /= 0 ) GO TO 930
-write(6,*) 'out a'
 
 !  evaluate the element function gradient and Hessian values
 
