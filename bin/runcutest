@@ -222,7 +222,7 @@ Decode_Problem() {
     if [[ ${SIFDECODE+set} == 'set' ]]; then
         echo "sifdecoder -A ${ARCH} -st ${START} ${sd_opts[@]} $1"
         ${SIFDECODE}/bin/sifdecoder -A ${ARCH} ${sd_opts[@]} $1
-        cd -
+        cd - 2>&1 >/dev/null
         [[ $? != 0 ]] && exit $?
     else
         error "${thisprog}: environment variable SIFDECODE not set."
