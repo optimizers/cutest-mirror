@@ -11,20 +11,50 @@ Compilers
 
 Recent versions of OSX do not ship with gcc any more but instead with a
 replacement named clang. In order to install the C compiler and various
-command-line utilities that will be necessary to install CUTEst, you need to
-install the latest version of XCode available for your system.
+command-line utilities that will be necessary to install CUTEst, you have
+to options:
+
+1. install Xcode, or
+2. install only the command-line tools.
+
+Note that unless you specifically need Xcode for other reasons, or already
+have it installed, it is not strictly required to run CUTEst. Only the
+command-line tools are required. The only disadvantsage of Xcode is that it
+takes up a substantial amount of space of your drive.
+In either case, follow the instructions below to install the command-line tools.
+
+How to check that you already have the command-line tools
+---------------------------------------------------------
+
+Open a terminal window and enter the following command
+
+    xcode-select --install
+
+If the command-line tools are already installed, you should receive a message
+of the form
+
+    xcode-select: error: command line tools are already installed,
+    use "Software Update" to install updates
+
+If the command-line tools are not installed, a window should pop up with
+instructions on how to install them. Please follow those instructions.
+You will still be able to install Xcode later if you wish.
 
 XCode is available for free from the Mac App Store. If you require an older
-version of XCode (e.g., because you are running OSX 10.6), head to
-https://developer.apple.com/support/xcode.
+version of XCode (e.g., because you are running an older version of OSX),
+head to https://developer.apple.com/support/xcode.
 
-Important: when you install XCode, make sure to also install the command-line
-tools. For this, start up XCode and go to the menu XCode > Preferences. Click
+If you already have Xcode installed
+-----------------------------------
+
+When you install XCode, make sure to also install the command-line
+tools. For this, start up Xcode and go to the menu XCode > Preferences. Click
 on the Downloads icon, select the Components tab and click on the Install
 button located in front of 'Command Line Tools'.
 
-Unfortunately, no Fortran compiler is supplied as part of XCode. We need to
-install gcc. Enter Homebrew.
+
+Unfortunately, no Fortran compiler is supplied as part of XCode or the command-
+-line tools. We need to install gcc. Enter Homebrew.
 
 
 Homebrew
@@ -33,128 +63,107 @@ Homebrew
 Homebrew is the equivalent of a package manager for OSX. We have found it to be
 more reliable than other options such as MacPorts. With Homebrew you will be
 able to easily install multiple versions of gcc/gfortran and a multitude of
-other pieces of software.
+other software.
 
-To install Homebrew, execute the one-liner given at the bottom of its home
-page: http://mxcl.github.io/homebrew
+To install Homebrew, execute the one-liner given at the top of its home
+page: https://brew.sh
 
 Once Homebrew is installed, we can use it to install a recent version of gcc
-and gfortran. Homebrew's default repository's mission is to provide only
-software that is not provided by Apple. Since Apple ships a program called gcc
-(which in fact calls clang), gcc is found in a non-default Homebrew repository.
-Homebrew repositories are called taps. Execute the following command to tap
-from the 'versions' repository:
+and gfortran.
 
-    $ brew tap homebrew/versions
+    brew install gcc
 
-We may now install gcc with the command
+You may now follow the general installation instructions for CUTEst, or you may
+use Homebrew to install it for you. To do so, type the following in the terminal:
 
-    $ brew install gcc43 --enable-fortran --enable-profiled-build
+    brew tap optimizers/cutest
+    brew install cutest [--with-matlab]
 
-Here, we are installing gcc and gfortran 4.3, which are the versions supported
-by the Mathworks for interaction with Matlab. If you intend to use Matlab with
-CUTEst, this step is mandatory. If you do not intend to use Matlab, you may
-only install a more recent version of gcc / gfortran. Simply substitute 'gcc43'
-above by the version you wish to install. At the time of this writing, the most
-recent Homebrew formula is gcc48. See
-http://github.com/Homebrew/homebrew-versions for a list of versions available.
+and follow the instructions located at
 
-If you wish to install more than the C and Fortran compilers, you may do so by
-substituting --enable-fortran above with appropriate options. At the command
-line, type
-
-    $ brew info gcc43  # or the version you wish
-
-for information on build options.
-
-The compilers installed are available by invoking the executables gcc-4.3,
-gfortran-4.3, gcc-4.8, gfortran-4.8, etc. When installing CUTEst, make sure you
-edit the compiler settings and that those executables are correctly specified.
-
-You will have to define the environment variable MATLAB to point to the
-top-level directory of the Matlab tree. Typically, this path will have the form
-
-    /Applications/Matlab/R20xyz   # e.g., R2012a
+    https://github.com/optimizers/homebrew-cutest
 
 
 Matlab's MEX
 ------------
 
-We need to create a default MEX options file to ensure Matlab uses gcc-4.3 and
-gfortran-4.3 when compiling MEX files. If you do not already have a mexopts.sh
-file (typically located in ~/.matlab/R20xyz/), you may create one using the
-command
+The procedure below was tested on OSX 10.12.5 (Sierra) with Matlab R2016a.
+If it does not work for your version of OSX and/or Matlab, please get in
+touch so we can resolve the issue and improve these instructions.
 
-    $ /Applications/Matlab/R20xyz/bin/mex -setup
+As of R2015b (Matlab 8.5), the Mathworks no longer support gfortran on OSX.
+However, the procedure below circumvents this limitation so that even the latest
+version of gfortran can used to install CUTEst and use its Matlab interface.
 
-and choosing option 1, which copies Matlab's default mexopts.sh file to your
-~/.matlab/R20xyz/. Edit this file in your favorite editor and locate the
-section named 'maci64'. Now edit this section so it looks as follows:
+Because Homebrew no longer gives acess to gcc and gfortran 4.3 (the last
+versions supported by Matlab R2015a), the instructions below only apply to
+later versions of Matlab.
 
+Matlab's MEX file compilation process can be quite contrary. Compiler
+settings are stored in XML files located under
 
-        maci64)
-#----------------------------------------------------------------------------
-            # StorageVersion: 1.0
-            # CkeyName: GNU C
-            # CkeyManufacturer: GNU
-            # CkeyLanguage: C
-            # CkeyVersion:
-            CC='gcc-4.3'
-            SDKROOT='/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk'
-            MACOSX_DEPLOYMENT_TARGET='10.5'
-            ARCHS='x86_64'
-            CFLAGS="-fno-common -march=core2 -isysroot $SDKROOT -mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET"
-            CFLAGS="$CFLAGS  -fexceptions"
-            CLIBS="$MLIBS"
-            COPTIMFLAGS='-O2 -DNDEBUG'
-            CDEBUGFLAGS='-g'
-#
-            CLIBS="$CLIBS -lstdc++"
-            # C++keyName: GNU C++
-            # C++keyManufacturer: GNU
-            # C++keyLanguage: C++
-            # C++keyVersion:
-            CXX='g++-4.3'
-            CXXFLAGS="-fno-common -fexceptions -march=core2 -isysroot $SDKROOT -mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET"
-            CXXLIBS="$MLIBS -lstdc++"
-            CXXOPTIMFLAGS='-O2 -DNDEBUG'
-            CXXDEBUGFLAGS='-g'
-#
-            # FortrankeyName: GNU Fortran
-            # FortrankeyManufacturer: GNU
-            # FortrankeyLanguage: Fortran
-            # FortrankeyVersion:
-            FC='gfortran-4.3'
-            FFLAGS='-fexceptions -m64 -fbackslash'
-            FC_LIBDIR='/usr/local/Cellar/gcc43/4.3.6/gcc/lib'
-            FC_LIBDIR2='/usr/local/Cellar/gcc43/4.3.6/gcc/lib/gcc/x86_64-apple-darwin12/4.3.6'
-            FLIBS="$MLIBS -L$FC_LIBDIR -lgfortran -L$FC_LIBDIR2 -lgfortranbegin -lgcc_s.1"
-            FOPTIMFLAGS='-O'
-            FDEBUGFLAGS='-g'
-#
-            LD="$FC"
-            LDEXTENSION='.mexmaci64'
-            LDFLAGS="-Wl,-twolevel_namespace -undefined error -march=core2 -Wl,-syslibroot,$SDKROOT -mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET"
-            LDFLAGS="$LDFLAGS -bundle -Wl,-exported_symbols_list,$TMW_ROOT/extern/lib/$Arch/$MAPFILE"
-            LDOPTIMFLAGS='-O'
-            LDDEBUGFLAGS='-g'
-#
-            POSTLINK_CMDS=':'
-#----------------------------------------------------------------------------
+    /Applications/MATLAB/R2016a/bin/maci64/mexopts
 
+(the installation location of Matlab on your machine may be slightly different.)
 
-There are two items you may need to modify in the above to suit your system:
+Surprisingly, those files are not sufficiently up to date to detect recent
+versions of Xcode or the command-line tools. We supply XML files to replace
+the standard ones. The following command must be run as super-user as it
+overwrites one of the XML files that ships with Matlab:
 
-1. The line SDKROOT is set for a system running Mountain Lion (10.8). If you
-   are running a different system, look in the directory
-   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
-   for the highest version number and specify that in mexopts.sh.
+    sudo cp doc/matlab-osx/clang_maci64.xml /Applications/MATLAB/R2016a/bin/maci64/mexopts/
 
-2. The command-line option -march=core2 passed to gcc, g++ and gfortran
-   corresponds to Intel Core2 machines (e.g., MacBook Pros). If you are running
-   a different architecture (e.g., Xeon or you are a nostalgic of the PowerPC
-   era), please change -march= accordingly. Acceptable values can be found in
-   the gcc man page (man gcc).
+Next, run the following command for Matlab to set up compiler settings to build
+C MEX files:
+
+    /Applications/MATLAB/R2016a/bin/mex -setup C
+
+There should now be a file called clang_maci64 under ~/.matlab/R2016a. Unfortunately,
+it was necessary to first overwrite the XML file that ships with Matlab to get here.
+
+You should now be in position to compile C MEX files to interface CUTEst problems.
+From the working directory of your choice, run the following command
+
+    cutest2matlab_osx PROBLEM.SIF
+
+In the current directory, you should now see, among others, the following files:
+
+    libPROBLEM.dylib  # a shared library containing the decoded problem
+    OUTSDIF.d         # data file for the decoded problem
+    AUTOMAT.d         # data file for the decoded problem
+    mcutest.mexmaci64 # the compiled MEX file
+
+Note that we got here without Matlab knowing anything about Fortran. The trick is that
+mcutest.mexmaci, which is essentially also a shared library, points to libPROBLEM.dylib
+as a dependency. It is libPROBLEM.dylib that points to libgfortran as a dependency, and
+that was compiled independently of Matlab. You can check these facts using the following
+commands. The command
+
+    otool -L libPROBLEM.dylib
+
+outputs the libraries on which libPROBLEM.dylib depends. Among them, you should see
+libgfortran. On my system, the result of the above command is
+
+    libPROBLEM.dylib:
+      libPROBLEM.dylib (compatibility version 0.0.0, current version 0.0.0)
+      /usr/local/opt/gcc/lib/gcc/7/libgfortran.4.dylib (compatibility version 5.0.0, current version 5.0.0)
+      /usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1238.60.2)
+      /usr/local/lib/gcc/7/libgcc_s.1.dylib (compatibility version 1.0.0, current version 1.0.0)
+      /usr/local/opt/gcc/lib/gcc/7/libquadmath.0.dylib (compatibility version 1.0.0, current version 1.0.0)
+
+Because mcutest.mexmaci64 is also a shared library, the same command also works:
+
+    otool -L mcutest.mexmaci64
+
+    mcutest.mexmaci64:
+      libPROBLEM.dylib (compatibility version 0.0.0, current version 0.0.0)
+      /usr/local/opt/cutest/libexec/objects/mac64.osx.gfo/double/libcutest_double.dylib (compatibility version 0.0.0, current version 0.0.0)
+      @rpath/libmx.dylib (compatibility version 0.0.0, current version 0.0.0)
+      @rpath/libmex.dylib (compatibility version 0.0.0, current version 0.0.0)
+      /usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 307.5.0)
+      /usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1238.50.2)
+
+No mention of libgfortran.
 
 You should be all set. See $CUTEST/src/matlab/README.matlab for more
 information on the Matlab interface.
@@ -162,6 +171,6 @@ information on the Matlab interface.
 Good luck!
 
 
-Dominique Orban
+Dominique Orban <dominique.orban@gerad.ca>
 for the CUTEst team
-April 2013.
+July 2017.
