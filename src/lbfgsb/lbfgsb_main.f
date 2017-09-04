@@ -1,4 +1,4 @@
-C     ( Last modified on 2 Jan 2013 at 13:40:00 )
+C     ( Last modified on 4 Sep 2017 at 08:20:00 )
       PROGRAM          LBFGSB_main
 C
 C  LBFGSB test driver for problems derived from SIF files.

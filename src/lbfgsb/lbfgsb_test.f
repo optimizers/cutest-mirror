@@ -1,4 +1,4 @@
-C     ( Last modified on 4 Jan 2013 at 15:40:00 )
+C     ( Last modified on 4 Sep 2017 at 08:20:00 )
 
 C  Dummy SETULB for testing lbfgsb_main interface to CUTEst
 C  Nick Gould,  4th January 2013
@@ -10,8 +10,9 @@ C  Nick Gould,  4th January 2013
       CHARACTER ( LEN = 60 ) :: TASK, CSAVE
       LOGICAL LSAVE( 4 )
       INTEGER :: NBD( n ), IWA( 3 * n )
-      DOUBLE PRECISION X( n ), XL( n ), XU( n ),
-     *    G( n ), WA( 2 * m * n + 4 * n + 12 * m * m + 12 * m )
+      DOUBLE PRECISION X( n ), XL( n ), XU( n ), G( n ),
+     *  WA( 2 * m * n + 5 * n + 11 * m * m + 8 * m )
+C    *  WA( 2 * m * n + 4 * n + 12 * m * m + 12 * m )
 
       IF ( TASK( 1: 5 ) .EQ. 'START' ) THEN
         TASK( 1: 5 ) = 'FG   '
