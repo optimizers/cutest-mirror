@@ -23,7 +23,7 @@ C
       CHARACTER ( LEN = 10 ), ALLOCATABLE, DIMENSION( : )  :: XNAMES
       DOUBLE PRECISION :: CPU( 2 ), CALLS( 4 )
       EXTERNAL         SETULB
-C     
+C
 C  Open the Spec file for the method.
 C
       SPCDAT = 'LBFGSB.SPC'
@@ -65,8 +65,9 @@ C
       IF ( status /= 0 ) GO TO 910
 
       liwa = 3 * n
-      lwa  = 2 * m * n + 4 * n + 12 * m *m + 12 * m
-      ALLOCATE( NBD( n ), IWA( liwa ), X( n ), XL( n ), XU( n ), G( n ), 
+!     lwa  = 2 * m * n + 4 * n + 12 * m * m + 12 * m ! Version 2
+      lwa  = 2 * m * n + 5 * n + 11 * m * m + 8 * m  ! Version 3
+      ALLOCATE( NBD( n ), IWA( liwa ), X( n ), XL( n ), XU( n ), G( n ),
      +          WA( lwa ), XNAMES( n ), STAT = status )
       IF ( status /= 0 ) GO TO 990
 C
@@ -109,7 +110,7 @@ C
 C
 C  Call the optimizer
 C
-         CALL SETULB( N, M, X, XL, XU, NBD, F, G, FACTR, PGTOL, WA, 
+         CALL SETULB( N, M, X, XL, XU, NBD, F, G, FACTR, PGTOL, WA,
      +                IWA, TASK, IPRINT, CSAVE, LSAVE, ISAVE, DSAVE )
 C
 C  Evaluate the function, f, and gradient, G
@@ -120,7 +121,7 @@ C
             GO TO 30
 C
 C  Test for convergence
-C 
+C
          ELSE IF ( TASK( 1: 4 ) .EQ. 'CONV' ) THEN
             IFLAG = 0
          ELSE IF (  TASK( 1: 4 ) .EQ. 'ABNO' ) THEN
@@ -132,7 +133,7 @@ C
          ELSE IF (  TASK( 1: 5 ) .EQ. 'NEW_X' ) THEN
             IF ( ISAVE( 30 ) .GT. MAXIT ) THEN
               IFLAG = 3
-              WRITE( out, 
+              WRITE( out,
      *           "( ' Maximum number of iterations exceeded ' )" )
             ELSE
                GO TO 30
@@ -146,17 +147,17 @@ C
       GNORM = DSAVE( 13 )
       WRITE ( out, 2010 ) F, GNORM
       DO 120 I = 1, N
-         WRITE( out, 2020 ) XNAMES( I ), XL( I ), X( I ), XU( I ), 
+         WRITE( out, 2020 ) XNAMES( I ), XL( I ), X( I ), XU( I ),
      *                       G( I )
   120 CONTINUE
       WRITE ( out, 2000 ) PNAME, N, INT( CALLS(1) ), INT( CALLS(2) ),
-     *                    IFLAG, F, CPU(1), CPU(2) 
+     *                    IFLAG, F, CPU(1), CPU(2)
       CLOSE( INPUT  )
       CALL CUTEST_uterminate( status )
       STOP
 
   910 CONTINUE
-      WRITE( out, "( ' CUTEst error, status = ', i0, ', stopping' )") 
+      WRITE( out, "( ' CUTEst error, status = ', i0, ', stopping' )")
      *   status
       STOP
 
@@ -172,15 +173,15 @@ C
      *    ,' Problem                 :  ', A10,    /
      *    ,' # variables             =      ', I10 /
      *    ,' # objective functions   =      ', I10 /
-     *    ,' # objective gradients   =      ', I10 / 
+     *    ,' # objective gradients   =      ', I10 /
      *     ' Exit code               =      ', I10 /
      *    ,' Final f                 = ', E15.7 /
      *    ,' Set up time             =      ', 0P, F10.2, ' seconds' /
      *     ' Solve time              =      ', 0P, F10.2, ' seconds' //
      *     66('*') / )
- 2010 FORMAT( ' Final objective function value   = ', 1P, D12.4, 
+ 2010 FORMAT( ' Final objective function value   = ', 1P, D12.4,
      *        /, ' Final norm of projected gradient = ', 1P, D12.4,
-     *        //, '                XL           X        XU', 
+     *        //, '                XL           X        XU',
      *           '           G ' )
  2020 FORMAT(  1X, A10, 1P, 4D12.4 )
       END
@@ -222,7 +223,7 @@ C  a compressed collection into IP and IW
         IW( J - 1 ) = IP( J - 1 )
    30 CONTINUE
 
-C  Pass 2. Reorder the elements into column order. 
+C  Pass 2. Reorder the elements into column order.
 C          Fill in each column in turn
 
       DO 70 IC = 1, NC
@@ -243,7 +244,7 @@ C  See if the entry is already in place
              IF ( J .EQ. IC ) GO TO 50
              LOCAT = IW( J )
 
-C  As a new entry is placed in column J, increase the pointer 
+C  As a new entry is placed in column J, increase the pointer
 C  IW( J ) by one
 
              IW( J  ) = LOCAT + 1
@@ -256,8 +257,8 @@ C  Record details of the entry which currently occupies location LOCAT
 
 C  Move the new entry to its correct place
 
-             IRN( LOCAT ) = I 
-             JCN( LOCAT ) = J  
+             IRN( LOCAT ) = I
+             JCN( LOCAT ) = J
              A( LOCAT )   = ANEXT
 
 C  Make the displaced entry the new entry
@@ -267,7 +268,7 @@ C  Make the displaced entry the new entry
              ANEXT      = ATEMP
    40     CONTINUE
 
-C  Move the new entry to its correct place 
+C  Move the new entry to its correct place
 
    50     CONTINUE
           JCN( K ) = J
