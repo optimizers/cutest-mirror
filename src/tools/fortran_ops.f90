@@ -24,7 +24,7 @@
       IMPLICIT NONE
       INTEGER, INTENT( IN ) :: funit
       INTEGER, INTENT( OUT ) :: status
-      CHARACTER ( LEN = 64 ), INTENT( IN ) :: fname
+      CHARACTER ( LEN = 256 ), INTENT( IN ) :: fname
       
       OPEN( funit, FILE = fname, STATUS = 'UNKNOWN', ERR = 900 )
       status = 0
